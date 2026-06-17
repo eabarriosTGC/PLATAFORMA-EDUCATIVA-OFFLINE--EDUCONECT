@@ -1,0 +1,22 @@
+[Unit]
+Description=EduConect Rural - Plataforma Educativa Offline
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/educonect
+ExecStart=/opt/educonect/server/edu-conect-rural-server
+Restart=always
+RestartSec=10
+Environment=DB_PATH=/opt/educonect/data/educonect.db
+Environment=FRONTEND_PATH=/opt/educonect/dashboard/out
+Environment=LISTEN_ADDR=0.0.0.0:8080
+Environment=RUST_LOG=info
+LimitNOFILE=4096
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

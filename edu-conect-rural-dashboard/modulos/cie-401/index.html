@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CIE-401: Método Científico | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E8F5E9,#C8E6C9,#A5D6A7);min-height:100vh}
+.container{max-width:600px;margin:0 auto;padding:15px;position:relative;z-index:1}
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--verde);text-align:center;font-size:1rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.experimento{background:white;border-radius:20px;padding:20px;box-shadow:var(--sombra);border:2px solid var(--arena-oscura);margin:20px 0}
+.experimento h2{font-size:1.1rem;color:var(--tierra);margin-bottom:6px;text-align:center}
+.experimento .destilador{text-align:center;font-size:5rem;margin:10px 0}
+.experimento p{color:#666;font-size:0.9rem;text-align:center;line-height:1.5}
+
+.pasos{display:flex;flex-direction:column;gap:8px;margin:20px auto;max-width:500px}
+.paso{background:white;border:2px dashed #ccc;border-radius:14px;padding:14px 18px;cursor:grab;user-select:none;transition:all 0.2s;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);font-size:0.95rem}
+.paso .num{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--verde);color:white;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
+.paso .icono-p{font-size:1.6rem;flex-shrink:0}
+.paso .texto{color:var(--tierra);line-height:1.4}
+.paso.dragging{opacity:0.4;transform:scale(0.95)}
+.paso.over{border-color:var(--verde);border-width:2px;border-style:solid;transform:scale(1.02)}
+
+.acciones{text-align:center;margin:15px 0}
+.acciones .btn:disabled{opacity:0.4;cursor:not-allowed}
+
+.resultado{display:none;text-align:center;padding:20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@media(max-width:400px){
+  .paso{padding:10px 14px;font-size:0.85rem}
+  .paso .icono-p{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🔬 Método Científico</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Ciencia · Destilación solar de La Guajira</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    ☀️ En La Guajira el sol es fuerte. Vamos a construir un <strong>destilador solar</strong> que convierte agua salada en agua dulce. Ordena los pasos del método científico de abajo hacia arriba.
+  </div>
+
+  <div class="experimento">
+    <h2>☀️ Destilador Solar</h2>
+    <div class="destilador">🧪💧🌞</div>
+    <p>El sol calienta el agua salada. El vapor sube, se condensa en el plástico y gotea como agua dulce. ¡Pura ciencia wayuu!</p>
+  </div>
+
+  <div class="pasos" id="listaPasos"></div>
+
+  <div class="acciones">
+    <button class="btn btn-exito" id="btnVerificar" onclick="verificarOrden()" disabled>✅ Verificar orden</button>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🏆</div>
+    <h2>¡Científico Guajiro!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Has dominado el método científico. El sol de La Guajira es tu aliado.</p>
+    <div style="margin:15px 0;font-size:3rem">🧪</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Agua dulce para todos!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var ordenCorrecto = [
+  {icono:'🔎', texto:'Observación: el agua salada del mar no se puede tomar'},
+  {icono:'❓', texto:'Pregunta: ¿podemos quitarla sal usando el sol?'},
+  {icono:'💡', texto:'Hipótesis: el calor solar evaporará el agua y dejará la sal'},
+  {icono:'🧪', texto:'Experimento: construir un destilador con botella y plástico'},
+  {icono:'📊', texto:'Análisis: medir cuánta agua dulce se recolectó'},
+  {icono:'✅', texto:'Conclusión: el destilador solar funciona. ¡Agua dulce!'}
+];
+
+var pasosMezclados = [];
+var arrastrado = null;
+
+function init(){
+  mezclarPasos();
+  renderizar();
+  cargarProgreso();
+}
+
+function mezclarPasos(){
+  pasosMezclados = ordenCorrecto.map(function(p, i){ return {icono:p.icono, texto:p.texto, idx:i}; });
+  for(var i = pasosMezclados.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = pasosMezclados[i]; pasosMezclados[i] = pasosMezclados[j]; pasosMezclados[j] = tmp;
+  }
+}
+
+function renderizar(){
+  var lista = document.getElementById('listaPasos');
+  lista.innerHTML = '';
+  pasosMezclados.forEach(function(paso, i){
+    var div = document.createElement('div');
+    div.className = 'paso';
+    div.draggable = true;
+    div.innerHTML = '<span class="num">' + (i + 1) + '</span><span class="icono-p">' + paso.icono + '</span><span class="texto">' + paso.texto + '</span>';
+    div.dataset.idx = paso.idx;
+    div.addEventListener('dragstart', onDragStart);
+    div.addEventListener('dragend', onDragEnd);
+    div.addEventListener('dragover', onDragOver);
+    div.addEventListener('dragenter', onDragEnter);
+    div.addEventListener('dragleave', onDragLeave);
+    div.addEventListener('drop', onDrop);
+    lista.appendChild(div);
+  });
+  actualizarNumeros();
+  document.getElementById('btnVerificar').disabled = false;
+}
+
+function actualizarNumeros(){
+  var pasos = document.querySelectorAll('.paso');
+  pasos.forEach(function(el, i){
+    el.querySelector('.num').textContent = i + 1;
+  });
+}
+
+function onDragStart(e){
+  arrastrado = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+}
+
+function onDragEnd(e){
+  this.classList.remove('dragging');
+  document.querySelectorAll('.paso.over').forEach(function(el){ el.classList.remove('over'); });
+  arrastrado = null;
+}
+
+function onDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function onDragEnter(e){
+  e.preventDefault();
+  this.classList.add('over');
+}
+
+function onDragLeave(e){
+  this.classList.remove('over');
+}
+
+function onDrop(e){
+  e.preventDefault();
+  this.classList.remove('over');
+  if(arrastrado && arrastrado !== this){
+    var lista = document.getElementById('listaPasos');
+    var padres = Array.from(lista.children);
+    var idxA = padres.indexOf(arrastrado);
+    var idxB = padres.indexOf(this);
+    if(idxA !== -1 && idxB !== -1){
+      var temp = pasosMezclados[idxA];
+      pasosMezclados[idxA] = pasosMezclados[idxB];
+      pasosMezclados[idxB] = temp;
+      renderizar();
+    }
+  }
+}
+
+function verificarOrden(){
+  var correcto = true;
+  for(var i = 0; i < pasosMezclados.length; i++){
+    if(pasosMezclados[i].idx !== i){ correcto = false; break; }
+  }
+
+  if(correcto){
+    var pct = 100;
+    document.getElementById('progresoFill').style.width = pct + '%';
+    document.getElementById('progresoPct').textContent = pct + '%';
+    guardarProgreso();
+    guardarDiario();
+    document.getElementById('resultado').classList.add('visible');
+    hablar('¡Excelente! Has ordenado correctamente el método científico. El destilador solar te dará agua dulce.');
+  } else {
+    mostrarToast('❌ El orden no es correcto. Recuerda: observación, pregunta, hipótesis, experimento, análisis, conclusión.', 'error');
+    hablar('El orden no es correcto. Recuerda la secuencia del método científico: observación, pregunta, hipótesis, experimento, análisis y conclusión.');
+  }
+}
+
+function mostrarToast(msg, tipo){
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function(){ t.remove(); }, 300); }, 3500);
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('cie401_progreso', 100); } catch(e){}
+}
+
+function cargarProgreso(){
+  try {
+    var p = parseInt(localStorage.getItem('cie401_progreso')) || 0;
+    document.getElementById('progresoFill').style.width = p + '%';
+    document.getElementById('progresoPct').textContent = p + '%';
+  } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('cie-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Método Científico', '🔬');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

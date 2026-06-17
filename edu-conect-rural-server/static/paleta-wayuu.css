@@ -1,0 +1,116 @@
+/* EduConect Rural — Paleta de colores vibrante Wayuu
+   Inspirada en los tejidos tradicionales wayuu (mochilas, chinchorros, kanas)
+   Más llamativa, infantil y alegre que la paleta anterior */
+
+:root {
+  /* 🟥 Primarios vibrantes */
+  --wayuu-red:     #D4322F;  /* Rojo tradicional wayuu */
+  --wayuu-orange:  #E86820;  /* Naranja atardecer guajiro */
+  --wayuu-gold:    #F4A100;  /* Dorado sol del desierto */
+  --wayuu-green:   #2D9D4E;  /* Verde cardón / cactus */
+  --wayuu-blue:    #1A8FDD;  /* Azul Caribe */
+  --wayuu-purple:  #8B3E9D;  /* Púrpura de tejidos */
+  --wayuu-pink:    #E84393;  /* Rosa wayuu */
+
+  /* 🟨 Neutros cálidos */
+  --sand-50:  #FFFAF2;
+  --sand-100: #FFF2E0;
+  --sand-200: #FFE4C4;
+  --sand-800: #5C3820;
+  --sand-900: #2C1810;
+
+  /* 🎯 Colores funcionales */
+  --primary:   var(--wayuu-red);
+  --primary-hover: #B82A28;
+  --secondary: var(--wayuu-green);
+  --accent:    var(--wayuu-gold);
+  --info:      var(--wayuu-blue);
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+
+  /* Fondos */
+  --bg:        var(--sand-50);
+  --bg-card:   #FFFFFF;
+  --bg-alt:    var(--sand-100);
+
+  /* Texto */
+  --txt:       var(--sand-900);
+  --txt-muted: #6B5B4F;
+
+  /* Decoración */
+  --shadow:    0 4px 16px rgba(44,24,16,0.10);
+  --shadow-lg: 0 8px 32px rgba(44,24,16,0.15);
+  --radius:    14px;
+  --radius-sm: 8px;
+}
+
+/* Gradientes vibrantes */
+.bg-gradient-wayuu {
+  background: linear-gradient(135deg, #D4322F, #E86820);
+}
+.bg-gradient-ocean {
+  background: linear-gradient(135deg, #1A8FDD, #8B3E9D);
+}
+.bg-gradient-forest {
+  background: linear-gradient(135deg, #2D9D4E, #F4A100);
+}
+.bg-gradient-sunset {
+  background: linear-gradient(135deg, #E86820, #F4A100);
+}
+.bg-gradient-header {
+  background: linear-gradient(135deg, #D4322F 0%, #E86820 50%, #F4A100 100%);
+}
+
+/* Botones vibrantes */
+.btn-wayuu {
+  background: var(--wayuu-red);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.btn-wayuu:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212,50,47,0.3);
+}
+
+.btn-wayuu-gold {
+  background: var(--wayuu-gold);
+  color: var(--sand-900);
+}
+.btn-wayuu-green {
+  background: var(--wayuu-green);
+  color: #fff;
+}
+
+/* Tarjetas coloridas */
+.card-wayuu {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--wayuu-red);
+  transition: transform .2s, box-shadow .2s;
+}
+.card-wayuu:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Inputs */
+.input-wayuu {
+  border: 2px solid var(--sand-200);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: border-color .2s;
+}
+.input-wayuu:focus {
+  border-color: var(--wayuu-red);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212,50,47,0.15);
+}

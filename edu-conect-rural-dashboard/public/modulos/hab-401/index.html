@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HAB-401: Supervivencia Básica | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E8D5B5,#D4A843,#C9A96E);min-height:100vh}
+.container{max-width:650px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--tierra-clara);text-align:center;font-size:1rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.tarjeta-reto{background:white;border-radius:20px;padding:24px 20px;box-shadow:var(--sombra);border:2px solid var(--arena-oscura);text-align:center;animation:fadeIn 0.4s ease-out}
+.tarjeta-reto .reto-icono{font-size:5rem;margin-bottom:8px}
+.tarjeta-reto h3{font-size:1.1rem;color:var(--texto);line-height:1.6;margin-bottom:16px}
+.tarjeta-reto .contador{color:#999;font-size:0.85rem;margin-bottom:10px}
+
+.grid-opciones{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opcion-btn{padding:16px 12px;background:var(--blanco);border:2px solid var(--arena-oscura);border-radius:14px;cursor:pointer;font-size:1rem;font-weight:bold;transition:all 0.3s;font-family:inherit;color:var(--texto)}
+.opcion-btn:hover{border-color:var(--wayuu-oro);background:#FFF8E1;transform:translateY(-2px)}
+.opcion-btn:disabled{cursor:default;opacity:0.4;transform:none!important}
+.opcion-btn.correcta{border-color:var(--verde);background:#E8F5E9}
+.opcion-btn.incorrecta{border-color:var(--rojo);background:#FFEBEE}
+
+.feedback-reto{padding:16px;border-radius:14px;margin-top:16px;display:none;animation:fadeIn 0.3s ease-out;font-weight:bold;text-align:center}
+.feedback-reto.visible{display:block}
+.feedback-reto.bien{background:#E8F5E9;border:2px solid var(--verde);color:#2E7D32}
+.feedback-reto.mal{background:#FFEBEE;border:2px solid var(--rojo);color:#C62828}
+
+.resultado{display:none;text-align:center;padding:30px 20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+.consejos-supervivencia{background:white;border-radius:16px;padding:16px;margin-top:16px;border:2px solid var(--wayuu-oro);text-align:left}
+.consejos-supervivencia h4{color:var(--atardecer);margin-bottom:8px}
+.consejos-supervivencia li{margin:6px 0;font-size:0.9rem;color:var(--texto);line-height:1.5}
+
+@media(max-width:500px){
+  .grid-opciones{grid-template-columns:1fr}
+  .opcion-btn{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🏕️ Supervivencia Básica</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Habilidades Prácticas · Oriéntate en la naturaleza</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🧭 Aprende a orientarte y actuar en situaciones de la vida guajira. El conocimiento de la naturaleza es tu mejor herramienta.
+  </div>
+
+  <div id="mainContent"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var nivel = 0;
+var progresoVal = 0;
+var aciertos = 0;
+
+var retos = [
+  {
+    icono: '☀️',
+    situacion: 'Te has perdido en el monte. Son las 7 de la mañana y ves el Sol. ¿Hacia dónde queda el Este?',
+    opciones: ['Por donde sale el Sol 🌅', 'Por donde se oculta el Sol 🌇', 'Hacia el cardón más alto 🌵', 'Donde está la sombra más larga'],
+    correcta: 0,
+    feedback: '¡Exacto! El Sol sale por el Este (Oriente). Si extiendes tu brazo derecho hacia el sol de la mañana, el Norte estará al frente. Los wayuu usan el sol y las estrellas para orientarse.'
+  },
+  {
+    icono: '🔥',
+    situacion: 'Hiciste una fogata para cocinar. ¿Qué debes hacer ANTES de irte del lugar?',
+    opciones: ['Dejarla encendida para que otros la usen 🔥', 'Apagarla con agua y tierra hasta que no haya humo 💧', 'Cubrirla con hojas secas 🍂', 'Alejarte rápido y no mirar atrás 🏃'],
+    correcta: 1,
+    feedback: '¡Muy bien! Un incendio destruye la naturaleza y puede quemar casas. Siempre apaga el fuego con agua y tierra. Los wayuu cuidan el territorio como a su madre.'
+  },
+  {
+    icono: '💧',
+    situacion: 'Estás en el desierto y te quedaste sin agua. ¿Qué es lo mejor que puedes hacer?',
+    opciones: ['Buscar sombra y esperar a que refresque para caminar 🌵', 'Correr rápido buscando el mar 🏃', 'Beber agua salada del mar 🧂', 'Cavar en la arena seca al sol 🔆'],
+    correcta: 0,
+    feedback: '¡Correcto! En el desierto, lo primero es buscar sombra para no deshidratarte. Camina en las horas frescas (mañana temprano o al atardecer). Los wayuu conocen los jagüeyes y las plantas que guardan agua.'
+  },
+  {
+    icono: '🌵',
+    situacion: 'Ves una culebra venenosa cerca de tu casa. ¿Qué haces?',
+    opciones: ['Gritar y correr hacia ella para espantarla 🏃', 'Alejarte lentamente y avisar a un adulto 🐍', 'Tirarle piedras hasta matarla ', 'Ignorarla y seguir jugando cerca 🎮'],
+    correcta: 1,
+    feedback: '¡Correcto! Las culebras solo atacan si se sienten amenazadas. Lo mejor es alejarse con calma y avisar a un adulto. Los wayuu respetan a los animales y saben cuáles son peligrosos.'
+  }
+];
+
+function init(){
+  cargarReto();
+  actualizarProgreso();
+}
+
+function cargarReto(){
+  if(nivel >= retos.length){
+    mostrarFinal();
+    return;
+  }
+  var r = retos[nivel];
+  var html = '<div class="tarjeta-reto">';
+  html += '<div class="contador">Reto ' + (nivel + 1) + ' / ' + retos.length + '</div>';
+  html += '<div class="reto-icono">' + r.icono + '</div>';
+  html += '<h3>' + r.situacion + '</h3>';
+  html += '<div class="grid-opciones">';
+
+  var indices = [0,1,2,3];
+  for(var i = indices.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+  }
+
+  indices.forEach(function(idx){
+    html += '<button class="opcion-btn" data-idx="' + idx + '" onclick="verificar(' + idx + ', this)">' + r.opciones[idx] + '</button>';
+  });
+
+  html += '</div></div>';
+  html += '<div class="feedback-reto" id="feedbackReto"></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function verificar(idx, btn){
+  var r = retos[nivel];
+  var btns = document.querySelectorAll('.opcion-btn');
+  btns.forEach(function(b){ b.disabled = true; });
+  var fb = document.getElementById('feedbackReto');
+
+  if(idx === r.correcta){
+    btns.forEach(function(b){ if(parseInt(b.dataset.idx) === r.correcta) b.classList.add('correcta'); });
+    fb.className = 'feedback-reto visible bien';
+    fb.innerHTML = '✅ ' + r.feedback;
+    aciertos++;
+    progresoVal = Math.min(100, Math.round((aciertos / retos.length) * 100));
+    guardarProgreso();
+    actualizarProgreso();
+    hablar(r.feedback);
+    nivel++;
+    setTimeout(function(){ cargarReto(); if(aciertos >= retos.length) setTimeout(mostrarFinal, 500); }, 3000);
+  } else {
+    btn.classList.add('incorrecta');
+    btns.forEach(function(b){ if(parseInt(b.dataset.idx) === r.correcta) b.classList.add('correcta'); });
+    fb.className = 'feedback-reto visible mal';
+    fb.innerHTML = '❌ Piénsalo bien. ' + r.opciones[r.correcta] + ' es la respuesta correcta.';
+    hablar('No es correcto. ' + r.feedback);
+    setTimeout(function(){
+      btns.forEach(function(b){ b.disabled = false; b.classList.remove('correcta','incorrecta'); });
+      fb.className = 'feedback-reto';
+      fb.innerHTML = '';
+    }, 3000);
+  }
+}
+
+function mostrarFinal(){
+  var html = '<div class="resultado visible">';
+  html += '<div class="emoji-g">🦅</div>';
+  html += '<h2>¡Eres un Explorador!</h2>';
+  html += '<p style="color:var(--tierra);font-size:1.1rem">' + aciertos + ' / ' + retos.length + ' retos superados</p>';
+  if(aciertos >= 3){
+    html += '<div style="margin:15px 0;font-size:3rem">🏅</div>';
+    html += '<p style="font-weight:bold;color:var(--verde)">¡Explorador del Territorio!</p>';
+    guardarDiario();
+  }
+  html += '<div class="consejos-supervivencia">';
+  html += '<h4>🧭 Recuerda:</h4><ul style="padding-left:20px">';
+  html += '<li>El Sol sale por el Este y se oculta por el Oeste</li>';
+  html += '<li>Apaga siempre el fuego con agua y tierra</li>';
+  html += '<li>En el desierto, busca sombra y camina en horas frescas</li>';
+  html += '<li>Los animales se respetan; aléjate con calma de los peligrosos</li>';
+  html += '</ul></div>';
+  html += '<div style="margin-top:15px">';
+  html += '<button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>';
+  html += '<a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>';
+  html += '</div></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progresoVal + '%';
+  document.getElementById('progresoPct').textContent = progresoVal + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('hab401_progreso', progresoVal); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('hab-401', 'modulo_completado', { puntos: progresoVal, estrellas: Math.min(3, aciertos) }, 'Supervivencia Básica', '🏕️');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

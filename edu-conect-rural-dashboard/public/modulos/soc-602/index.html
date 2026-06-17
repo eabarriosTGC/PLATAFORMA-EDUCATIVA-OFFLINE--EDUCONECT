@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Colombia y sus Regiones</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--rojo:#E63946;--amarillo:#FFD166;--verde:#06D6A0;--azul:#118AB2;
+--naranja:#FF9F1C;--purpura:#7209B7;--negro:#073B4C;--blanco:#FFF;
+--rosado:#EF476F;--bg:#FFF9E6}
+html,body{height:100%}
+body{
+font-family:system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,sans-serif;
+background:var(--bg);display:flex;align-items:center;justify-content:center;
+min-height:100vh;padding:12px}
+.screen{display:none;width:100%;max-width:780px;max-height:96vh;overflow-y:auto}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+h1{font-size:2rem;color:var(--negro);text-align:center;margin-bottom:4px}
+h1 span{display:inline-block}
+.sub{font-size:1rem;color:var(--azul);text-align:center;margin-bottom:12px;font-weight:600}
+.btn{
+display:inline-flex;align-items:center;justify-content:center;gap:8px;
+border:none;border-radius:16px;padding:14px 32px;font-size:1.15rem;
+font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;
+font-family:inherit;text-decoration:none;min-height:52px;min-width:120px}
+.btn:active{transform:scale(.96)}
+.btn-primario{background:var(--rojo);color:var(--blanco);box-shadow:0 4px 0 #b71c1c}
+.btn-primario:hover{box-shadow:0 6px 0 #b71c1c;transform:translateY(-2px)}
+.btn-secundario{background:var(--amarillo);color:var(--negro);box-shadow:0 4px 0 #d4a843}
+.btn-secundario:hover{box-shadow:0 6px 0 #d4a843;transform:translateY(-2px)}
+.btn-tts{
+background:var(--azul);color:var(--blanco);border-radius:50%;width:44px;height:44px;
+padding:0;min-width:unset;min-height:unset;font-size:1.3rem;box-shadow:0 3px 0 #0a5d7a}
+
+/* Mapa SVG */
+#mapa-regiones{width:100%;max-width:500px;height:auto;margin:8px 0}
+#mapa-regiones .region{cursor:pointer;transition:opacity .2s,transform .2s}
+#mapa-regiones .region:hover{opacity:.85;transform:scale(1.02)}
+#mapa-regiones .region-label{font-size:10px;font-weight:700;fill:var(--blanco);pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#mapa-regiones .region-label-sm{font-size:7px;font-weight:600;fill:var(--blanco);pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.region-tooltip{
+position:absolute;background:var(--negro);color:var(--blanco);padding:6px 14px;
+border-radius:10px;font-size:.85rem;font-weight:600;pointer-events:none;
+opacity:0;transition:opacity .2s;z-index:10;white-space:nowrap}
+
+/* Info regiones */
+.info-regiones{
+display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;
+width:100%;margin:10px 0}
+.info-region{
+padding:8px 10px;border-radius:12px;text-align:center;font-size:.75rem;
+font-weight:700;color:var(--blanco);cursor:default;line-height:1.2}
+.info-region .emoji{font-size:1.2rem;display:block;margin-bottom:2px}
+
+/* Quiz */
+#quiz-header{
+display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:8px}
+#quiz-progress{font-size:.9rem;font-weight:700;color:var(--azul)}
+#quiz-score{font-size:.9rem;font-weight:700;color:var(--purpura)}
+.barra-progreso{width:100%;height:10px;background:#e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.barra-progreso-inner{height:100%;background:linear-gradient(90deg,var(--verde),var(--azul));border-radius:10px;transition:width .3s}
+#pregunta-card{
+background:var(--blanco);border-radius:20px;padding:20px;width:100%;
+box-shadow:0 4px 20px rgba(0,0,0,.08);border:3px solid var(--amarillo)}
+.pregunta-region{
+display:inline-block;padding:4px 14px;border-radius:20px;color:var(--blanco);
+font-size:.8rem;font-weight:700;margin-bottom:10px}
+.pregunta-texto{
+font-size:1.15rem;font-weight:700;color:var(--negro);margin-bottom:14px;line-height:1.4;
+display:flex;align-items:flex-start;gap:8px}
+.opciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opcion{
+background:#f5f0e8;border:3px solid transparent;border-radius:14px;padding:12px;
+font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;
+text-align:left;font-family:inherit;color:var(--negro);line-height:1.3}
+.opcion:hover{background:#efe8dc;border-color:var(--amarillo);transform:translateY(-1px)}
+.opcion:active{transform:scale(.97)}
+.opcion.correcta{background:var(--verde);color:var(--blanco);border-color:var(--verde)}
+.opcion.incorrecta{background:var(--rojo);color:var(--blanco);border-color:var(--rojo)}
+.opcion:disabled{cursor:default;opacity:.7}
+#feedback{
+margin-top:12px;padding:10px 16px;border-radius:14px;font-weight:700;
+font-size:.95rem;text-align:center;display:none}
+#feedback.show{display:block;animation:entrada .3s}
+#feedback.bien{background:#d4edda;color:#155724;border:2px solid var(--verde)}
+#feedback.mal{background:#f8d7da;color:#721c24;border:2px solid var(--rojo)}
+
+/* Resultados */
+#resultado-medalla{font-size:5rem;animation:medalla 1s ease-out;margin:8px 0}
+#resultado-puntaje{font-size:1.8rem;font-weight:800;color:var(--negro)}
+#resultado-texto{font-size:1.1rem;color:var(--azul);font-weight:600;margin-bottom:6px}
+#resultado-mensaje{font-size:.95rem;color:#666;margin-bottom:10px;text-align:center}
+#resultado-detalle{margin:8px 0;width:100%}
+.res-detalle-item{
+display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;margin-bottom:3px;font-size:.82rem;font-weight:500}
+.res-detalle-item.bien{background:#d4edda}
+.res-detalle-item.mal{background:#f8d7da}
+.res-detalle-item .num{font-weight:800;color:var(--azul);min-width:24px}
+.res-detalle-item .icono{font-size:.9rem}
+.botones-final{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+
+/* Confeti */
+.confeti-container{position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden}
+.confeti{position:absolute;width:10px;height:10px;opacity:.9;animation:caer linear forwards}
+@keyframes caer{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes medalla{0%{transform:scale(0) rotate(-180deg)}50%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0deg)}}
+@keyframes entrada{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes latido{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.bienvenida-estrellas{text-align:center;font-size:2.2rem;margin-bottom:2px;animation:latido 2s infinite}
+
+@media(max-width:500px){
+  .opciones{grid-template-columns:1fr}
+  h1{font-size:1.5rem}
+  .opcion{font-size:.88rem;padding:10px}
+  #pregunta-card{padding:14px}
+  .pregunta-texto{font-size:1.05rem}
+  .info-regiones{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+}
+@media(max-width:380px){
+  .info-regiones{grid-template-columns:repeat(3,1fr)}
+  #resultado-medalla{font-size:3.5rem}
+}
+</style>
+</head>
+<body>
+
+<div id="pantalla-bienvenida" class="screen active">
+  <div class="bienvenida-estrellas">⭐🌟⭐</div>
+  <h1><span>🇨🇴</span> Colombia y sus Regiones</h1>
+  <p class="sub">¡Aprende jugando!</p>
+
+  <svg id="mapa-regiones" viewBox="0 0 500 600" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="sombra"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity=".25"/></filter>
+      <filter id="sombra-mapa"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity=".15"/></filter>
+    </defs>
+
+    <!-- Región Caribe -->
+    <path class="region" data-region="Caribe" fill="#E63946" stroke="#FFF" stroke-width="1.5"
+      d="M 70,140 C 110,90 200,55 290,45 C 340,38 390,58 420,95
+         C 400,115 355,132 285,125 C 230,132 160,140 110,148
+         C 88,150 72,148 70,140 Z" filter="url(#sombra)"/>
+    <text class="region-label" x="210" y="100" text-anchor="middle">CARIBE</text>
+    <text class="region-label-sm" x="270" y="72">Guajira</text>
+    <circle cx="180" cy="103" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="180" y="97" text-anchor="middle">Barranquilla</text>
+    <circle cx="155" cy="110" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="155" y="104" text-anchor="middle">Cartagena</text>
+
+    <!-- Región Pacífica -->
+    <path class="region" data-region="Pacífica" fill="#118AB2" stroke="#FFF" stroke-width="1.5"
+      d="M 38,170 C 68,170 80,220 80,290 C 80,360 70,430 62,475
+         C 48,495 32,475 28,390 C 22,290 26,210 38,170 Z" filter="url(#sombra)"/>
+    <text class="region-label" x="55" y="320" text-anchor="middle" transform="rotate(-85,55,320)">PACÍFICA</text>
+    <circle cx="72" cy="250" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="72" y="244" text-anchor="middle">Buenaventura</text>
+
+    <!-- Región Andina -->
+    <path class="region" data-region="Andina" fill="#06D6A0" stroke="#FFF" stroke-width="1.5"
+      d="M 108,148 C 160,138 230,132 285,125 C 355,132 400,115 415,142
+         C 395,210 370,290 345,370 C 320,440 300,485 278,498
+         C 258,480 238,440 218,390 C 188,320 158,240 128,195 C 115,173 110,158 108,148 Z" filter="url(#sombra)"/>
+    <text class="region-label" x="260" y="280" text-anchor="middle">ANDINA</text>
+    <circle cx="260" cy="230" r="4" fill="#FFF"/>
+    <text class="region-label-sm" x="260" y="223" text-anchor="middle">Bogotá</text>
+    <circle cx="200" cy="195" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="200" y="189" text-anchor="middle">Medellín</text>
+    <circle cx="160" cy="245" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="160" y="239" text-anchor="middle">Cali</text>
+
+    <!-- Región Orinoquía -->
+    <path class="region" data-region="Orinoquía" fill="#FFD166" stroke="#FFF" stroke-width="1.5"
+      d="M 415,142 C 435,132 465,160 478,210 C 490,270 472,320 442,350
+         C 422,358 402,330 382,290 C 372,252 382,195 415,142 Z" filter="url(#sombra)"/>
+    <text class="region-label" x="430" y="245" text-anchor="middle" fill="#073B4C">ORINOQUÍA</text>
+    <circle cx="400" cy="290" r="3" fill="#073B4C"/>
+    <text class="region-label-sm" x="400" y="284" text-anchor="middle" fill="#073B4C">Villavicencio</text>
+
+    <!-- Región Amazonía -->
+    <path class="region" data-region="Amazonía" fill="#7209B7" stroke="#FFF" stroke-width="1.5"
+      d="M 278,498 C 298,488 342,460 390,420 C 415,395 438,378 458,388
+         C 478,415 470,482 442,530 C 400,562 345,572 305,562
+         C 268,545 255,520 278,498 Z" filter="url(#sombra)"/>
+    <text class="region-label" x="365" y="484" text-anchor="middle">AMAZONÍA</text>
+    <circle cx="315" cy="540" r="3" fill="#FFF"/>
+    <text class="region-label-sm" x="315" y="534" text-anchor="middle">Leticia</text>
+
+    <!-- Contorno Colombia -->
+    <path fill="none" stroke="#073B4C" stroke-width="2" opacity=".3"
+      d="M 70,140 C 110,90 200,55 290,45 C 340,38 390,58 420,95
+         C 435,120 465,160 478,210 C 490,270 472,320 442,350
+         C 458,388 478,415 470,482 C 442,530 400,562 345,572
+         C 305,562 268,545 255,520 C 238,440 300,485 278,498
+         C 300,485 320,440 345,370 C 370,290 395,210 415,142
+         C 400,115 355,132 285,125 C 230,132 160,140 110,148
+         C 88,150 72,148 70,140 Z"/>
+  </svg>
+
+  <div class="info-regiones">
+    <div class="info-region" style="background:var(--rojo)"><span class="emoji">🏖️</span>Caribe</div>
+    <div class="info-region" style="background:var(--azul)"><span class="emoji">🌊</span>Pacífica</div>
+    <div class="info-region" style="background:var(--verde)"><span class="emoji">⛰️</span>Andina</div>
+    <div class="info-region" style="background:#d4a843;color:var(--negro)"><span class="emoji">🌾</span>Orinoquía</div>
+    <div class="info-region" style="background:var(--purpura)"><span class="emoji">🌳</span>Amazonía</div>
+  </div>
+
+  <button class="btn btn-primario" onclick="iniciarJuego()">🎮 ¡COMENZAR!</button>
+  <button class="btn btn-secundario" style="margin-top:6px;font-size:.9rem;padding:8px 20px" onclick="leerInstrucciones()">🔊 Instrucciones</button>
+</div>
+
+<div id="pantalla-quiz" class="screen">
+  <div id="quiz-header">
+    <span id="quiz-progress">1 / 20</span>
+    <span id="quiz-score">⭐ 0</span>
+  </div>
+  <div class="barra-progreso"><div class="barra-progreso-inner" id="barra-progreso" style="width:5%"></div></div>
+
+  <div id="pregunta-card">
+    <div class="pregunta-region" id="pregunta-region-badge">Caribe</div>
+    <div class="pregunta-texto">
+      <span id="pregunta-texto">Cargando pregunta…</span>
+      <button class="btn btn-tts" id="btn-tts" onclick="leerPreguntaActual()" title="Escuchar pregunta">🔊</button>
+    </div>
+    <div class="opciones" id="opciones"></div>
+    <div id="feedback"></div>
+  </div>
+</div>
+
+<div id="pantalla-resultado" class="screen">
+  <div id="resultado-medalla">🏅</div>
+  <div id="resultado-puntaje">0 / 20</div>
+  <div id="resultado-texto">¡Excelente!</div>
+  <div id="resultado-mensaje">Sigue explorando Colombia</div>
+  <div id="resultado-detalle"></div>
+  <div class="botones-final">
+    <button class="btn btn-primario" onclick="reiniciarJuego()">🔄 ¡Otra vez!</button>
+    <button class="btn btn-secundario" onclick="volverInicio()">🏠 Inicio</button>
+  </div>
+</div>
+
+<script>
+const preguntas = [
+  {region:"Caribe",p:"¿Cuál es la capital del Atlántico?",o:["Cartagena","Barranquilla","Santa Marta","Sincelejo"],c:1},
+  {region:"Caribe",p:"¿El Carnaval de Barranquilla se celebra en la Región...?",o:["Pacífica","Andina","Caribe","Orinoquía"],c:2},
+  {region:"Caribe",p:"¿Cuál de estos ritmos musicales nació en la Región Caribe?",o:["Bambuco","Joropo","Currulao","Cumbia"],c:3},
+  {region:"Caribe",p:"La Región Caribe tiene costas en el...",o:["Océano Pacífico","Mar Caribe","Río Amazonas","Río Orinoco"],c:1},
+  {region:"Pacífica",p:"¿Qué océano baña la Región Pacífica?",o:["Atlántico","Pacífico","Índico","Ártico"],c:1},
+  {region:"Pacífica",p:"¿Cuál de estos bailes es típico de la Región Pacífica?",o:["Bambuco","Cumbia","Currulao","Joropo"],c:2},
+  {region:"Pacífica",p:"¿Cuál es la capital del Valle del Cauca?",o:["Cali","Buenaventura","Popayán","Pasto"],c:0},
+  {region:"Pacífica",p:"¿Cuál de estos departamentos está en la Región Pacífica?",o:["Cesar","Chocó","Meta","Boyacá"],c:1},
+  {region:"Andina",p:"¿Cuál es la capital de Colombia?",o:["Medellín","Cali","Bogotá","Barranquilla"],c:2},
+  {region:"Andina",p:"El bambuco es un baile típico de la Región...",o:["Andina","Caribe","Pacífica","Orinoquía"],c:0},
+  {region:"Andina",p:"¿Cuál de estas ciudades está en la Región Andina?",o:["Santa Marta","Leticia","Medellín","Riohacha"],c:2},
+  {region:"Andina",p:"¿Qué ave vive en la Cordillera de los Andes?",o:["Pingüino","Cóndor","Flamenco","Tucán"],c:1},
+  {region:"Orinoquía",p:"¿Cómo se le conoce también a la Región Orinoquía?",o:["Los Andes","Los Llanos Orientales","La Costa","El Pacífico"],c:1},
+  {region:"Orinoquía",p:"¿Con qué instrumento se acompaña el joropo?",o:["Guitarra eléctrica","Arpa","Piano","Violín"],c:1},
+  {region:"Orinoquía",p:"El coleo es un deporte típico de los...",o:["Llanos","Andes","Amazonía","Caribe"],c:0},
+  {region:"Orinoquía",p:"¿Cuál es la capital del Meta?",o:["Yopal","Villavicencio","Arauca","Puerto Carreño"],c:1},
+  {region:"Amazonía",p:"¿Cuál es la capital del departamento de Amazonas?",o:["Florencia","Mocoa","Leticia","San José"],c:2},
+  {region:"Amazonía",p:"En la Amazonía vive el delfín...",o:["Gris","Rosado","Azul","Verde"],c:1},
+  {region:"Amazonía",p:"La Amazonía tiene la selva más grande del...",o:["Mundo","País","Continente","Norte"],c:0},
+  {region:"Amazonía",p:"¿Cuál de estos animales vive en la Amazonía?",o:["Oso polar","Mono","Pingüino","León"],c:1}
+];
+
+const coloresRegion = {
+  "Caribe":"#E63946","Pacífica":"#118AB2",
+  "Andina":"#06D6A0","Orinoquía":"#d4a843","Amazonía":"#7209B7"
+};
+
+let indicePregunta = 0, aciertos = 0, respuestas = [], respondido = false;
+let preguntasMezcladas = [];
+
+function mezclar(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function iniciarJuego(){
+  preguntasMezcladas = mezclar([...preguntas]);
+  indicePregunta = 0; aciertos = 0; respuestas = [];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pantalla-quiz').classList.add('active');
+  mostrarPregunta();
+}
+
+function mostrarPregunta(){
+  if(indicePregunta>=preguntasMezcladas.length){mostrarResultado();return}
+  respondido = false;
+  const q = preguntasMezcladas[indicePregunta];
+  document.getElementById('quiz-progress').textContent = `${indicePregunta+1} / ${preguntasMezcladas.length}`;
+  document.getElementById('quiz-score').textContent = '⭐ '+aciertos;
+  document.getElementById('barra-progreso').style.width = ((indicePregunta+1)/preguntasMezcladas.length*100)+'%';
+
+  const badge = document.getElementById('pregunta-region-badge');
+  badge.textContent = '📍 '+q.region;
+  badge.style.background = coloresRegion[q.region] || '#666';
+
+  document.getElementById('pregunta-texto').textContent = q.p;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').style.display = 'none';
+
+  const contenedor = document.getElementById('opciones');
+  contenedor.innerHTML = '';
+  const indices = [0,1,2,3];
+  mezclar(indices);
+  q.o_original = [...q.o];
+  q.c_original = q.c;
+  // Re-mapear: la respuesta correcta sigue a q.o[q.c]
+  q.o_ordenado = indices.map(i=>q.o[i]);
+  q.c_ordenado = indices.indexOf(q.c);
+
+  q.o_ordenado.forEach((texto,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opcion';
+    btn.textContent = texto;
+    btn.dataset.idx = i;
+    btn.addEventListener('click',()=>responder(i));
+    contenedor.appendChild(btn);
+  });
+}
+
+function responder(idx){
+  if(respondido) return;
+  respondido = true;
+  const q = preguntasMezcladas[indicePregunta];
+  const btns = document.querySelectorAll('.opcion');
+  btns.forEach(b=>b.disabled=true);
+
+  const correcta = q.c_ordenado;
+  const esCorrecta = idx === correcta;
+
+  if(esCorrecta){
+    btns[idx].classList.add('correcta');
+    aciertos++;
+    document.getElementById('quiz-score').textContent = '⭐ '+aciertos;
+  } else {
+    btns[idx].classList.add('incorrecta');
+    btns[correcta].classList.add('correcta');
+  }
+
+  respuestas.push({pregunta:q.p,region:q.region,correcta:esCorrecta,respuestaUsuario:q.o_ordenado[idx],respuestaCorrecta:q.o_ordenado[correcta]});
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  if(esCorrecta){
+    fb.className = 'feedback show bien';
+    fb.innerHTML = '✅ ¡Correcto! Muy bien 🎉';
+    if('speechSynthesis' in window) hablar('¡Correcto! Muy bien');
+  } else {
+    fb.className = 'feedback show mal';
+    fb.innerHTML = '❌ La respuesta correcta es: <strong>'+q.o_ordenado[correcta]+'</strong>';
+    const texto = 'La respuesta correcta es: '+q.o_ordenado[correcta];
+    if('speechSynthesis' in window) hablar(texto);
+  }
+
+  setTimeout(()=>{
+    indicePregunta++;
+    mostrarPregunta();
+  },1800);
+}
+
+function mostrarResultado(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pantalla-resultado').classList.add('active');
+
+  const pct = aciertos/preguntasMezcladas.length;
+  let medalla, texto, mensaje;
+
+  if(pct>=.9){medalla='🥇';texto='¡Medalla de ORO!';mensaje='Eres un experto en Colombia 🌟'}
+  else if(pct>=.7){medalla='🥈';texto='¡Medalla de PLATA!';mensaje='Casi perfecto, sigue así 🚀'}
+  else if(pct>=.5){medalla='🥉';texto='¡Medalla de BRONCE!';mensaje='Buen trabajo, puedes mejorar 💪'}
+  else {medalla='🌟';texto='¡Sigue explorando!';mensaje='Sigue aprendiendo sobre Colombia 📚'}
+
+  document.getElementById('resultado-medalla').textContent = medalla;
+  document.getElementById('resultado-puntaje').textContent = aciertos+' / '+preguntasMezcladas.length;
+  document.getElementById('resultado-texto').textContent = texto;
+  document.getElementById('resultado-mensaje').textContent = mensaje;
+
+  const detalle = document.getElementById('resultado-detalle');
+  detalle.innerHTML = '';
+  respuestas.forEach((r,i)=>{
+    const div = document.createElement('div');
+    div.className = 'res-detalle-item '+(r.correcta?'bien':'mal');
+    div.innerHTML = `<span class="num">${i+1}.</span><span class="icono">${r.correcta?'✅':'❌'}</span><span>${r.pregunta}</span>`;
+    detalle.appendChild(div);
+  });
+
+  if(pct>=.5) lanzarConfeti();
+  if('speechSynthesis' in window) hablar(texto+'. '+mensaje);
+}
+
+function lanzarConfeti(){
+  const cont = document.createElement('div');
+  cont.className = 'confeti-container';
+  const colores = ['#E63946','#FFD166','#06D6A0','#118AB2','#FF9F1C','#7209B7','#EF476F'];
+  for(let i=0;i<60;i++){
+    const c = document.createElement('div');
+    c.className = 'confeti';
+    c.style.left = Math.random()*100+'%';
+    c.style.background = colores[Math.floor(Math.random()*colores.length)];
+    c.style.width = (6+Math.random()*8)+'px';
+    c.style.height = (6+Math.random()*8)+'px';
+    c.style.borderRadius = Math.random()>.5?'50%':'2px';
+    c.style.animationDuration = (2+Math.random()*3)+'s';
+    c.style.animationDelay = Math.random()*2+'s';
+    cont.appendChild(c);
+  }
+  document.body.appendChild(cont);
+  setTimeout(()=>cont.remove(),5000);
+}
+
+function hablar(texto){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'es-CO'; u.rate = .9; u.pitch = 1.15;
+  window.speechSynthesis.speak(u);
+}
+
+function leerPreguntaActual(){
+  const q = preguntasMezcladas[indicePregunta];
+  if(!q) return;
+  let texto = 'Pregunta número '+(indicePregunta+1)+': '+q.p;
+  q.o_ordenado.forEach((o,i)=>{texto += ' Opción '+(i+1)+': '+o+'. '});
+  hablar(texto);
+}
+
+function leerInstrucciones(){
+  hablar('Colombia y sus Regiones. Responde 20 preguntas sobre las 5 regiones de Colombia. Cada pregunta tiene 4 opciones. Gana medallas según tus aciertos. ¡Suerte!');
+}
+
+function reiniciarJuego(){
+  const cont = document.querySelector('.confeti-container');
+  if(cont) cont.remove();
+  window.speechSynthesis.cancel();
+  iniciarJuego();
+}
+
+function volverInicio(){
+  const cont = document.querySelector('.confeti-container');
+  if(cont) cont.remove();
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pantalla-bienvenida').classList.add('active');
+}
+
+// Interactividad en el mapa
+document.querySelectorAll('#mapa-regiones .region').forEach(el=>{
+  el.addEventListener('click',function(){
+    const region = this.dataset.region;
+    hablar('Región '+region);
+  });
+});
+</script>
+</body>
+</html>

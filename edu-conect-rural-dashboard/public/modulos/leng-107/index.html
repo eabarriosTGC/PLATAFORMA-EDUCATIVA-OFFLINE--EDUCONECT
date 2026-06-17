@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>LENG-107: Aventura en Wayuunaiki | EduConect Rural</title>
+  <link rel="stylesheet" href="../comun/educonect.css">
+  <style>
+    .aventura-card {
+      background: var(--blanco);
+      border-radius: var(--radio);
+      padding: 24px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--sombra);
+      border: var(--borde);
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+      position: relative;
+    }
+    .aventura-card.activo { display: block; }
+    .aventura-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 5px;
+      height: 100%;
+      border-radius: 5px 0 0 5px;
+      background: var(--atardecer);
+    }
+
+    .escena-emojis {
+      text-align: center;
+      font-size: 3.5rem;
+      margin: 8px 0 12px;
+      line-height: 1.3;
+      min-height: 5rem;
+    }
+    @media (max-width: 600px) {
+      .escena-emojis { font-size: 2.8rem; }
+    }
+
+    .historia-texto {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: var(--texto);
+      margin: 10px 0 16px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #FFFDF7, #FFF8E1);
+      border-radius: 14px;
+      border-left: 4px solid var(--wayuu-oro);
+    }
+    .historia-texto p { margin-bottom: 10px; }
+    .historia-texto p:last-child { margin-bottom: 0; }
+
+    .vocab-gloss {
+      display: inline-block;
+      background: var(--arena);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-weight: bold;
+      color: var(--atardecer-oscuro);
+      cursor: help;
+      border-bottom: 2px dotted var(--atardecer);
+    }
+    .vocab-gloss:hover { background: var(--wayuu-oro); color: var(--tierra); }
+
+    .choices-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 14px 0 8px;
+    }
+
+    .choice-btn {
+      display: block;
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid var(--arena-oscura);
+      border-radius: var(--radio-btn);
+      background: var(--blanco);
+      cursor: pointer;
+      font-size: 1.05rem;
+      font-weight: bold;
+      text-align: left;
+      transition: all 0.25s ease;
+      font-family: var(--fuente);
+      color: var(--texto);
+      position: relative;
+      overflow: hidden;
+    }
+    .choice-btn:hover {
+      border-color: var(--wayuu-oro);
+      background: #FFF8E1;
+      transform: translateX(6px);
+      box-shadow: 0 4px 14px rgba(212,168,67,0.25);
+    }
+    .choice-btn:active { transform: scale(0.97); }
+    .choice-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    .choice-btn.picked {
+      border-color: var(--verde);
+      background: #E8F5E9;
+    }
+
+    .screen-counter {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--tierra-clara);
+      margin: 4px 0;
+      font-weight: bold;
+    }
+
+    .tts-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .tts-row .label-tts {
+      font-size: 0.85rem;
+      color: var(--tierra);
+    }
+
+    /* Vocabulary learned box */
+    .vocab-aprendido {
+      background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 10px 0;
+      border: 2px solid var(--cardon);
+      display: none;
+    }
+    .vocab-aprendido.visible { display: block; }
+    .vocab-aprendido .vocab-title {
+      font-weight: bold;
+      color: var(--cardon-oscuro);
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .vocab-chip {
+      display: inline-block;
+      background: white;
+      border-radius: 20px;
+      padding: 3px 12px;
+      margin: 3px 4px;
+      font-size: 0.85rem;
+      border: 1px solid var(--cardon);
+      font-weight: bold;
+    }
+    .vocab-chip .wayuu-word { color: var(--atardecer); }
+    .vocab-chip .espanol-word { color: var(--tierra); }
+
+    /* Ending screens */
+    .ending-badge {
+      text-align: center;
+      font-size: 1.3rem;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 14px;
+      font-weight: bold;
+    }
+    .ending-badge.oro {
+      background: linear-gradient(135deg, #FFF8E1, #FFD70022);
+      color: #5D3A00;
+      border: 2px solid var(--wayuu-oro);
+    }
+    .ending-badge.plata {
+      background: linear-gradient(135deg, #F5F5F5, #E0E0E022);
+      color: #555;
+      border: 2px solid #BDBDBD;
+    }
+    .ending-badge.bronce {
+      background: linear-gradient(135deg, #FFF3E0, #CD7F3222);
+      color: #5D3A00;
+      border: 2px solid var(--tierra-clara);
+    }
+
+    .ending-visual {
+      text-align: center;
+      font-size: 4rem;
+      margin: 10px 0;
+    }
+    .ending-mensaje {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      text-align: center;
+      margin: 10px 0 16px;
+      padding: 16px;
+      background: var(--blanco);
+      border-radius: 14px;
+      border: var(--borde);
+    }
+
+    .reiniciar-wrap {
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    .estrellas-final {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 3rem;
+      margin: 12px 0;
+    }
+    .estrellas-final .estrella-anim {
+      animation: popIn 0.5s ease-out backwards;
+    }
+    .estrellas-final .estrella-anim:nth-child(2) { animation-delay: 0.2s; }
+    .estrellas-final .estrella-anim:nth-child(3) { animation-delay: 0.4s; }
+    .estrellas-final .estrella-vacia { opacity: 0.2; }
+
+    /* Confetti */
+    @keyframes confetti-fall {
+      0% { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+    }
+    .confetti-piece {
+      position: fixed;
+      top: -20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      animation: confetti-fall 3s ease-out forwards;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @media (max-width: 600px) {
+      .aventura-card { padding: 16px 14px; }
+      .historia-texto { font-size: 1rem; padding: 10px 12px; }
+      .choice-btn { padding: 12px 14px; font-size: 0.95rem; }
+      .estrellas-final { font-size: 2.2rem; }
+      .escena-emojis { font-size: 2.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🗺️ Aventura en Wayuunaiki</h1>
+    <span class="grado">LENG-107 · Elige tu propia aventura</span>
+    <div class="deco-line">🐐🦩🦎🌵🐚🏜️</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progreso-wrap">
+    <span class="progreso-label">📖 Aventura</span>
+    <div class="progreso-bar">
+      <div class="progreso-fill" id="progresoFill" style="width:0%"></div>
+    </div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <p class="screen-counter" id="screenCounter">Pantalla 1 de 10</p>
+
+  <!-- CARDS CONTAINER -->
+  <div id="cardsContainer">
+    <!-- Cards are generated by JS -->
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ================================================================
+  // VOCABULARIO WAYUU
+  // ================================================================
+  const VOCAB = {
+    Mma: { es: 'Tierra', emoji: '🌍' },
+    Juyá: { es: 'Lluvia', emoji: '🌧️' },
+    Wüin: { es: 'Agua', emoji: '💧' },
+    Mürü: { es: 'Chivo', emoji: '🐐' },
+    "Wale'erü": { es: 'Iguana', emoji: '🦎' },
+    Wüchü: { es: 'Flamenco', emoji: '🦩' },
+    Piichipala: { es: 'Ranchería', emoji: '🏠' },
+    Pütchi: { es: 'Palabra / Mensaje', emoji: '💬' },
+    Anashaa: { es: 'Gracias', emoji: '🙏' },
+    Chi: { es: 'Él / Ella', emoji: '👤' },
+    Oushü: { es: 'Abuela', emoji: '👵' },
+    Maleiwa: { es: 'Creador wayuu', emoji: '✨' },
+    Jagüey: { es: 'Pozo de agua', emoji: '🫗' }
+  };
+
+  // ================================================================
+  // STORY DATA
+  // ================================================================
+  const screens = [
+    // Screen 1 — Introduction
+    {
+      id: 1,
+      scene: '🌅🏜️',
+      text: `Eres **Waratü**, una niña wayuu de 10 años. Tu <span class="vocab-gloss" title="Abuela en wayuunaiki">Oushü</span> *(abuela)* te llama con voz seria desde la entrada de la <span class="vocab-gloss" title="Ranchería en wayuunaiki">piichipala</span> *(ranchería)*.
+
+"Waratü, necesito que lleves un **<span class="vocab-gloss" title="Mensaje en wayuunaiki">pütchi</span>** *(mensaje)* urgente a la ranchería de tu tío. La **<span class="vocab-gloss" title="Tierra en wayuunaiki">Mma</span>** *(tierra)* necesita que cumplas esta misión."
+
+Tu corazón late fuerte. Es tu primera misión importante.`,
+      choices: [
+        { text: '💪 Aceptar el mensaje con orgullo', score: 2 },
+        { text: '🤔 Preguntar qué dice el pütchi', score: 1 }
+      ]
+    },
+    // Screen 2 — Path choice
+    {
+      id: 2,
+      scene: '🏜️🌊',
+      text: `El sol calienta la **<span class="vocab-gloss" title="Tierra en wayuunaiki">Mma</span>** *(tierra)*. Llevas el **<span class="vocab-gloss" title="Mensaje en wayuunaiki">pütchi</span>** bien guardado en tu mochila tejida. Te paras frente a dos caminos:
+
+**Camino del desierto** — Un atajo entre cardones y dunas, pero el sol es implacable y el **<span class="vocab-gloss" title="Agua en wayuunaiki">wüin</span>** *(agua)* escasea.
+
+**Camino de la playa** — Más largo, pero con brisa del mar y palmeras que dan sombra.
+
+¿Cuál eliges, Waratü?`,
+      choices: [
+        { text: '🏜️ Camino del desierto (atajo peligroso)', score: 2 },
+        { text: '🌊 Camino de la playa (seguro pero largo)', score: 1 }
+      ]
+    },
+    // Screen 3 — Desert path (if choice 2 was desert)
+    {
+      id: 3,
+      scene: '🐐🌵',
+      text: `Caminas entre cardones gigantes. El calor es intenso. Escuchas un balido triste detrás de unas rocas: es un **<span class="vocab-gloss" title="Chivo en wayuunaiki">mürü</span>** *(chivo)* que se ha perdido de su rebaño. Tiembla de sed bajo el sol ardiente.
+
+Tu abuela siempre dice: *"En la **Mma** *(tierra)*, ayudar a los seres vivos es ayudar a uno mismo."*`,
+      choices: [
+        { text: '🐐 Ayudar al mürü a encontrar su rebaño', score: 3 },
+        { text: '⏩ Seguir de largo, el mensaje es urgente', score: 0 }
+      ]
+    },
+    // Screen 4 — Beach path (if choice 2 was beach)
+    {
+      id: 4,
+      scene: '🦩🌊',
+      text: `Llegas a la playa. El **<span class="vocab-gloss" title="Agua en wayuunaiki">wüin</span>** *(agua)* del mar brilla como miles de estrellas. Un grupo de **<span class="vocab-gloss" title="Flamencos en wayuunaiki">wüchü</span>** *(flamencos)* rosados camina elegantemente por la orilla.
+
+Una anciana wayuu teje una mochila bajo una palmera. Te sonríe y dice:
+
+— *"**<span class="vocab-gloss" title="Él / Ella en wayuunaiki">Chi</span>** *(ella)* que sigue a los wüchü siempre encuentra el camino."*`,
+      choices: [
+        { text: '🦩 Seguir la dirección de los flamencos', score: 2 },
+        { text: '🐚 Recoger conchas marinas en la orilla', score: 1 }
+      ]
+    },
+    // Screen 5 — Helped the goat
+    {
+      id: 5,
+      scene: '🧓🐐💧',
+      text: `Ayudas al **<span class="vocab-gloss" title="Chivo en wayuunaiki">mürü</span>** *(chivo)* a reunirse con su rebaño. El pastor, un anciano wayuu de rostro curtido, te recibe con los brazos abiertos:
+
+— *"**<span class="vocab-gloss" title="Gracias en wayuunaiki">Anashaa</span>** *(gracias)*, pequeña. Toma **<span class="vocab-gloss" title="Agua en wayuunaiki">wüin</span>** para tu camino."*
+
+Te da agua fresca en un totumo. Aprendes que **Mürü** significa "chivo" y que los wayuu cuidan sus rebaños como parte de la familia.
+
+— *"Sigue el sendero entre los dos cardones más altos —dice el anciano—. Te llevará directo a la ranchería de tu tío."*`,
+      choices: [
+        { text: '🚶 Tomar el atajo que te indicó', score: 2 },
+        { text: '🛤️ Seguir el camino principal (más seguro)', score: 1 }
+      ]
+    },
+    // Screen 6 — Did not help the goat
+    {
+      id: 6,
+      scene: '🦎🌵☀️',
+      text: `Sigues caminando sin detenerte. El calor se vuelve insoportable. Ves una **<span class="vocab-gloss" title="Iguana en wayuunaiki">wale'erü</span>** *(iguana)* tomando sol sobre una roca, inmóvil, observándote con sus ojos antiguos.
+
+El **<span class="vocab-gloss" title="Agua en wayuunaiki">wüin</span>** en tu cantimplora se está acabando. El horizonte tiembla con el calor. El viento silba entre los cardones como advirtiéndote:
+
+— *"Ten cuidado, Waratü. El desierto exige respeto."*`,
+      choices: [
+        { text: '🌵 Refugiarte bajo un cardón a descansar', score: 1 },
+        { text: '💪 Seguir caminando sin rendirte', score: 2 }
+      ]
+    },
+    // Screen 7 — Followed the flamingos
+    {
+      id: 7,
+      scene: '🏠🦩👨‍👩‍👧',
+      text: `Los **<span class="vocab-gloss" title="Flamencos en wayuunaiki">wüchü</span>** *(flamencos)* vuelan hacia el norte. Siguiéndolos, encuentras un sendero que se adentra en el desierto. ¡Ves una **<span class="vocab-gloss" title="Ranchería en wayuunaiki">piichipala</span>** a lo lejos!
+
+Pero no es la de tu tío. Una familia wayuu te recibe con amabilidad:
+
+— *"¿A dónde vas, niña?"*
+— *"Llevo un **pütchi** de mi abuela."*
+
+Te ofrecen **<span class="vocab-gloss" title="Agua en wayuunaiki">wüin</span>** *(agua)* y te indican el camino correcto. La mujer te dice: *"Los wüchü siempre guían a quien tiene un propósito."*`,
+      choices: [
+        { text: '🗣️ Preguntar más sobre la cultura wayuu', score: 2 },
+        { text: '🚶 Agradecer y seguir camino rápido', score: 1 }
+      ]
+    },
+    // Screen 8 — Collected shells / got lost
+    {
+      id: 8,
+      scene: '🏝️🐚😰',
+      text: `Te entretienes recogiendo conchas de colores en la orilla: blancas, rosadas, rayadas. Pero cuando levantas la vista... ¡no reconoces el paisaje!
+
+El mar se extiende infinito a tu izquierda. El **<span class="vocab-gloss" title="Lluvia en wayuunaiki">juyá</span>** *(lluvia)* no ha caído en semanas y todo se ve igual. No hay **<span class="vocab-gloss" title="Ranchería en wayuunaiki">piichipala</span>** a la vista.
+
+El sol comienza a caer. El **pütchi** *(mensaje)* debe llegar hoy. El miedo empieza a crecer en tu pecho. ¿Qué harías?`,
+      choices: [
+        { text: '🧭 Buscar señales en la naturaleza para orientarte', score: 1 },
+        { text: '🙏 Pedir ayuda a Maleiwa (el creador)', score: 2 }
+      ]
+    },
+    // Screen 9 — Final stretch
+    {
+      id: 9,
+      scene: '🌇🏃‍♀️💬',
+      text: `El sol tiñe el desierto de tonos dorados y rojos. A lo lejos, finalmente ves la **<span class="vocab-gloss" title="Ranchería en wayuunaiki">piichipala</span>** de tu tío. Las mochilas wayuu cuelgan de los postes. Se escuchan risas de niños.
+
+Tu tío está afuera, mirando el horizonte. Corres hacia él y le entregas el **<span class="vocab-gloss" title="Mensaje en wayuunaiki">pütchi</span>**. Lo abre y lee.
+
+— *"Gracias, Waratü. Tu abuela dice que debo regresar para la reunión de **palabreros**. Llegaste justo a tiempo."*
+
+Misión cumplida. Pero, ¿qué aprendiste en el camino?`,
+      choices: [
+        { text: '🌟 Entregar el mensaje y contar toda tu aventura', score: 3 },
+        { text: '📖 Entregar y pedir que te enseñen más palabras', score: 2 },
+        { text: '😓 Entregar y disculparte por la demora', score: 1 }
+      ]
+    }
+  ];
+
+  const endings = {
+    A: {
+      title: '⭐ ¡Mensajera Legendaria! ⭐⭐⭐',
+      subtitle: 'La sabiduría del camino',
+      badge: 'oro',
+      scene: '🏆🌟🎉',
+      text: `Has entregado el **pütchi** con éxito, ayudando a quienes encontraste en el camino y aprendiendo valiosas palabras en wayuunaiki.
+
+Tu abuela te recibe con orgullo: *"**Anashaa** *(gracias)*, Waratü. Hoy has demostrado que eres una verdadera hija de la **Mma** *(tierra)*. El **pütchi** no solo son palabras: es el corazón de nuestro pueblo."*
+
+Has aprendido que la sabiduría wayuu está en cada ser del desierto, en cada gota de **<span class="vocab-gloss" title="Agua">wüin</span>**, en cada **<span class="vocab-gloss" title="Chivo">mürü</span>** y en cada **<span class="vocab-gloss" title="Flamenco">wüchü</span>**. ¡Eres una verdadera mensajera wayuu! 🌟`,
+      confetti: true,
+      stars: 3
+    },
+    B: {
+      title: '⭐ Mensajera Aprendiz ⭐⭐',
+      subtitle: 'Nunca es tarde para aprender',
+      badge: 'plata',
+      scene: '🌅📖🙂',
+      text: `Has entregado el **pütchi**... pero llegaste justo al borde del atardecer. Tu tío frunce el ceño:
+
+— *"Waratü, tu abuela esperaba este mensaje desde la mañana. ¿Qué te detuvo?"*
+
+Bajas la cabeza. Pero luego levantas la mirada y le cuentas todo lo que viviste: el **<span class="vocab-gloss" title="Chivo">mürü</span>**, la anciana, las palabras que aprendiste. Tu tío sonríe.
+
+— *"Has aprendido más hoy que muchos en un año. Pero recuerda: un **pütchi** urgente no puede esperar. La próxima vez, confía en tu camino y en las personas buenas que encuentres."*`,
+      confetti: false,
+      stars: 2
+    },
+    C: {
+      title: '⭐ Mensajera en Camino ⭐',
+      subtitle: 'Hasta perderse se aprende',
+      badge: 'bronce',
+      scene: '🌵👴💫',
+      text: `Te perdiste en el camino. El sol se ocultó y el desierto se volvió oscuro y frío. Sentada junto a un cardón, sentiste miedo.
+
+Entonces apareció un anciano wayuu con una lámpara de aceite. Su rostro estaba lleno de arrugas como la **<span class="vocab-gloss" title="Tierra">Mma</span>** misma.
+
+— *"No llores, **warüle** *(niña)*. Hasta los **wüchü** *(flamencos)* se pierden a veces. Ven, yo conozco el camino a la **piichipala** de tu tío."*
+
+Te guió a través de la noche. Llegaste tarde, pero el **pütchi** llegó. A veces, perderse es la mejor manera de encontrar el camino.`,
+      confetti: false,
+      stars: 1
+    }
+  };
+
+  // ================================================================
+  // STATE
+  // ================================================================
+  const state = {
+    currentScreen: 0,       // index in screens array (0-8)
+    choices: [],            // array of choice indices made
+    score: 0,               // accumulated score
+    fase: 'aventura',       // 'aventura' | 'ending'
+    currentEnding: null,    // 'A' | 'B' | 'C'
+    vocabLearned: new Set()
+  };
+
+  let transitionLock = false;
+
+  // ================================================================
+  // HELPERS
+  // ================================================================
+  function $(sel) { return document.querySelector(sel); }
+  function $$(sel) { return document.querySelectorAll(sel); }
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ================================================================
+  // TTS
+  // ================================================================
+  function hablar(texto) {
+    if (!('speechSynthesis' in window)) {
+      mostrarToast('Tu navegador no soporta voz.', 'error');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    // Strip HTML and clean text for TTS
+    const limpio = texto.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const utterance = new SpeechSynthesisUtterance(limpio);
+    utterance.lang = 'es-CO';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.1;
+    utterance.volume = 0.9;
+
+    const voices = window.speechSynthesis.getVoices();
+    const voz = voices.find(v => v.lang.indexOf('es') === 0 && v.name.indexOf('Female') >= 0)
+             || voices.find(v => v.lang.indexOf('es') === 0);
+    if (voz) utterance.voice = voz;
+
+    window.speechSynthesis.speak(utterance);
+
+    // TTS button feedback
+    const ttsBtn = $('.tts-btn');
+    if (ttsBtn) {
+      ttsBtn.classList.add('hablando');
+      utterance.onend = function() {
+        ttsBtn.classList.remove('hablando');
+      };
+    }
+  }
+
+  // ================================================================
+  // TOAST
+  // ================================================================
+  function mostrarToast(msg, tipo) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + (tipo || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function() { t.remove(); }, 300);
+    }, 2800);
+  }
+
+  // ================================================================
+  // CONFETTI
+  // ================================================================
+  function lanzarConfeti() {
+    const colors = ['#E07A5F','#D4A843','#4CAF50','#4A90D9','#9B59B6','#FF6B6B','#FFD700','#E8B86D'];
+    for (let i = 0; i < 40; i++) {
+      setTimeout(function() {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+        piece.style.animationDelay = Math.random() * 0.5 + 's';
+        piece.style.width = (8 + Math.random() * 10) + 'px';
+        piece.style.height = (8 + Math.random() * 10) + 'px';
+        document.body.appendChild(piece);
+        setTimeout(function() { piece.remove(); }, 4000);
+      }, i * 50);
+    }
+  }
+
+  // ================================================================
+  // VOCAB TRACKING
+  // ================================================================
+  function aprenderVocab(palabra) {
+    if (!state.vocabLearned.has(palabra)) {
+      state.vocabLearned.add(palabra);
+      mostrarToast('📖 Aprendiste: ' + palabra + ' = ' + VOCAB[palabra].es, 'exito');
+    }
+  }
+
+  // ================================================================
+  // RENDER
+  // ================================================================
+  function renderScreen(screenIndex) {
+    if (transitionLock) return;
+    transitionLock = true;
+
+    const container = $('#cardsContainer');
+    container.innerHTML = '';
+    state.currentScreen = screenIndex;
+    const screen = screens[screenIndex];
+
+    // Add vocab from this screen
+    for (const word in VOCAB) {
+      if (screen.text.includes(word)) {
+        aprenderVocab(word);
+      }
+    }
+
+    // Build card
+    const card = document.createElement('div');
+    card.className = 'aventura-card activo';
+
+    // Scene emojis
+    const sceneDiv = document.createElement('div');
+    sceneDiv.className = 'escena-emojis';
+    sceneDiv.textContent = screen.scene;
+    card.appendChild(sceneDiv);
+
+    // Story text
+    const storyDiv = document.createElement('div');
+    storyDiv.className = 'historia-texto';
+    storyDiv.innerHTML = screen.text;
+    card.appendChild(storyDiv);
+
+    // Choices
+    const choicesWrap = document.createElement('div');
+    choicesWrap.className = 'choices-wrap';
+
+    screen.choices.forEach(function(choice, idx) {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = choice.text;
+      btn.addEventListener('click', function() {
+        handleChoice(screenIndex, idx);
+      });
+      choicesWrap.appendChild(btn);
+    });
+    card.appendChild(choicesWrap);
+
+    // TTS row
+    const ttsRow = document.createElement('div');
+    ttsRow.className = 'tts-row';
+    const ttsLabel = document.createElement('span');
+    ttsLabel.className = 'label-tts';
+    ttsLabel.textContent = '🎧 Escuchar historia';
+    ttsRow.appendChild(ttsLabel);
+    const ttsBtn = document.createElement('button');
+    ttsBtn.className = 'tts-btn';
+    ttsBtn.innerHTML = '🔊';
+    ttsBtn.setAttribute('title', 'Escuchar narración');
+    ttsBtn.addEventListener('click', function() {
+      hablar(screen.text);
+    });
+    ttsRow.appendChild(ttsBtn);
+    card.appendChild(ttsRow);
+
+    container.appendChild(card);
+    updateProgress();
+    transitionLock = false;
+  }
+
+  function renderEnding(endingKey) {
+    if (transitionLock) return;
+    transitionLock = true;
+
+    state.fase = 'ending';
+    state.currentEnding = endingKey;
+    const ending = endings[endingKey];
+    const container = $('#cardsContainer');
+    container.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'aventura-card activo';
+
+    // Ending visual
+    const visDiv = document.createElement('div');
+    visDiv.className = 'ending-visual';
+    visDiv.textContent = ending.scene;
+    card.appendChild(visDiv);
+
+    // Stars
+    const starsDiv = document.createElement('div');
+    starsDiv.className = 'estrellas-final';
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('span');
+      if (i < ending.stars) {
+        s.className = 'estrella-anim';
+        s.textContent = '⭐';
+      } else {
+        s.className = 'estrella-vacia';
+        s.textContent = '☆';
+      }
+      starsDiv.appendChild(s);
+    }
+    card.appendChild(starsDiv);
+
+    // Badge
+    const badge = document.createElement('div');
+    badge.className = 'ending-badge ' + ending.badge;
+    badge.innerHTML = '<strong>' + ending.title + '</strong><br>' + ending.subtitle;
+    card.appendChild(badge);
+
+    // Message
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'ending-mensaje';
+    msgDiv.innerHTML = ending.text;
+    card.appendChild(msgDiv);
+
+    // TTS for ending
+    const ttsRow = document.createElement('div');
+    ttsRow.className = 'tts-row';
+    const ttsLabel = document.createElement('span');
+    ttsLabel.className = 'label-tts';
+    ttsLabel.textContent = '🎧 Escuchar final';
+    ttsRow.appendChild(ttsLabel);
+    const ttsBtn = document.createElement('button');
+    ttsBtn.className = 'tts-btn';
+    ttsBtn.innerHTML = '🔊';
+    ttsBtn.addEventListener('click', function() {
+      hablar(ending.text);
+    });
+    ttsRow.appendChild(ttsBtn);
+    card.appendChild(ttsRow);
+
+    // Vocabulary learned summary
+    if (state.vocabLearned.size > 0) {
+      const vocabBox = document.createElement('div');
+      vocabBox.className = 'vocab-aprendido visible';
+      let vocabHtml = '<div class="vocab-title">📚 Palabras que aprendiste en el camino:</div>';
+      state.vocabLearned.forEach(function(word) {
+        const info = VOCAB[word];
+        vocabHtml += '<span class="vocab-chip"><span class="wayuu-word">' + word + '</span> → <span class="espanol-word">' + info.es + ' ' + info.emoji + '</span></span>';
+      });
+      vocabBox.innerHTML = vocabHtml;
+      card.appendChild(vocabBox);
+    }
+
+    // Reiniciar button
+    const restartWrap = document.createElement('div');
+    restartWrap.className = 'reiniciar-wrap';
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'btn btn-primario';
+    restartBtn.innerHTML = '🔄 Volver a empezar la aventura';
+    restartBtn.addEventListener('click', reiniciarAventura);
+    restartWrap.appendChild(restartBtn);
+    card.appendChild(restartWrap);
+
+    container.appendChild(card);
+    updateProgress();
+
+    if (ending.confetti) {
+      lanzarConfeti();
+    }
+
+    transitionLock = false;
+  }
+
+  // ================================================================
+  // CHOICE HANDLER
+  // ================================================================
+  function handleChoice(screenIndex, choiceIdx) {
+    if (transitionLock) return;
+
+    const screen = screens[screenIndex];
+    const choice = screen.choices[choiceIdx];
+
+    // Disable all choice buttons
+    $$('.choice-btn').forEach(function(btn, idx) {
+      btn.disabled = true;
+      if (idx === choiceIdx) btn.classList.add('picked');
+    });
+
+    // Add score
+    state.score += choice.score;
+    state.choices.push(choiceIdx);
+
+    // Determine next screen
+    const nextScreenIndex = screenIndex + 1;
+
+    if (nextScreenIndex < 9) {
+      // Skip screen 3 if they chose beach (screen 4), skip screen 4 if desert (screen 3)
+      // Actually we need to handle branching: screens 3 and 4 are mutually exclusive.
+      // If they chose desert (screen 2 choice A), go to screen 3.
+      // If they chose beach (screen 2 choice B), go to screen 4.
+
+      // The branching: screen index 1 (screen 2) determines if we go to screen 3 or 4
+      if (screenIndex === 1) {
+        // After screen 2, choose 3 or 4
+        if (choiceIdx === 0) {
+          // Desert path → go to screen 3 (index 2)
+          setTimeout(function() { renderScreen(2); }, 400);
+        } else {
+          // Beach path → go to screen 4 (index 3)
+          setTimeout(function() { renderScreen(3); }, 400);
+        }
+        return;
+      }
+
+      // After screen 3 (index 2), go to screen 5 (index 4) or screen 6 (index 5)
+      if (screenIndex === 2) {
+        if (choiceIdx === 0) {
+          setTimeout(function() { renderScreen(4); }, 400);
+        } else {
+          setTimeout(function() { renderScreen(5); }, 400);
+        }
+        return;
+      }
+
+      // After screen 4 (index 3), go to screen 7 (index 6) or screen 8 (index 7)
+      if (screenIndex === 3) {
+        if (choiceIdx === 0) {
+          setTimeout(function() { renderScreen(6); }, 400);
+        } else {
+          setTimeout(function() { renderScreen(7); }, 400);
+        }
+        return;
+      }
+
+      // After screen 5,6,7,8 (indices 4-7), go to screen 9 (index 8)
+      if (screenIndex >= 4 && screenIndex <= 7) {
+        setTimeout(function() { renderScreen(8); }, 400);
+        return;
+      }
+
+      // Fallback
+      setTimeout(function() { renderScreen(nextScreenIndex); }, 400);
+
+    } else if (nextScreenIndex === 9 || screenIndex === 8) {
+      // Final screen → determine ending
+      setTimeout(function() {
+        determinarEnding();
+      }, 500);
+    }
+  }
+
+  // ================================================================
+  // ENDING DETERMINATION
+  // ================================================================
+  function determinarEnding() {
+    let endingKey;
+    if (state.score >= 15) {
+      endingKey = 'A';
+    } else if (state.score >= 9) {
+      endingKey = 'B';
+    } else {
+      endingKey = 'C';
+    }
+    renderEnding(endingKey);
+  }
+
+  // ================================================================
+  // PROGRESS UPDATE
+  // ================================================================
+  function updateProgress() {
+    let pct, counter;
+
+    if (state.fase === 'aventura') {
+      const totalScreens = 10;
+      const current = state.currentScreen + 1; // 1-indexed
+      pct = Math.round((current / totalScreens) * 100);
+      counter = 'Pantalla ' + current + ' de ' + totalScreens;
+    } else {
+      pct = 100;
+      counter = '🎉 ¡Aventura completada!';
+    }
+
+    $('#progresoFill').style.width = pct + '%';
+    $('#progresoPct').textContent = pct + '%';
+    $('#screenCounter').textContent = counter;
+  }
+
+  // ================================================================
+  // RESTART
+  // ================================================================
+  function reiniciarAventura() {
+    state.currentScreen = 0;
+    state.choices = [];
+    state.score = 0;
+    state.fase = 'aventura';
+    state.currentEnding = null;
+    state.vocabLearned = new Set();
+    window.speechSynthesis.cancel();
+
+    $$('.confetti-piece').forEach(function(el) { el.remove(); });
+
+    renderScreen(0);
+  }
+
+  // ================================================================
+  // INIT
+  // ================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Preload voices
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = function() {
+        window.speechSynthesis.getVoices();
+      };
+    }
+    renderScreen(0);
+  });
+
+})();
+</script>
+
+</body>
+</html>

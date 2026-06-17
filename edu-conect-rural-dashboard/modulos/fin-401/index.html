@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FIN-401: La Mochila del Ahorro | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#FFF8E1,#FFECB3,#FFE082);min-height:100vh}
+.container{max-width:750px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--wayuu-oro);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.monedas-display{text-align:center;background:linear-gradient(135deg,#353b48,#2d3436);padding:14px 20px;border-radius:16px;margin:16px auto;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.monedas-display .label{color:#aaa;font-size:0.85rem}
+.monedas-display .cantidad{font-size:2.2rem;font-weight:800;color:#f1c40f;display:flex;align-items:center;justify-content:center;gap:8px}
+
+.grid-mochilas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+.mochila-card{background:white;border-radius:20px;padding:18px 14px;box-shadow:0 6px 20px rgba(0,0,0,0.08);border:2px solid #eee;text-align:center;transition:all 0.3s;position:relative}
+.mochila-card:hover{transform:translateY(-3px)}
+.mochila-card .icono{font-size:2.2rem;margin-bottom:6px}
+.mochila-card h3{font-size:0.95rem;color:var(--tierra);margin-bottom:4px}
+.mochila-card p{font-size:0.8rem;color:#999;margin-bottom:10px;line-height:1.4}
+
+.mochila-card .control-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0}
+.mochila-card .btn-ctrl{width:44px;height:44px;border-radius:50%;border:none;font-size:1.5rem;cursor:pointer;transition:all 0.2s;font-weight:bold;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.mochila-card .btn-ctrl:hover{transform:scale(1.1)}
+.mochila-card .btn-ctrl.menos{background:#FFCDD2;color:#C62828}
+.mochila-card .btn-ctrl.mas{background:#C8E6C9;color:#2E7D32}
+.mochila-card .btn-ctrl:disabled{opacity:0.3;cursor:not-allowed;transform:none!important}
+.mochila-card .valor{font-size:2rem;font-weight:800;min-width:40px;color:var(--tierra)}
+
+.mochila-card .desc-detalle{font-size:0.75rem;color:#888;margin-top:6px}
+.mochila-card .ribbon{position:absolute;top:-6px;right:-6px;background:var(--wayuu-oro);color:var(--tierra);padding:2px 10px;border-radius:8px;font-size:0.7rem;font-weight:bold;display:none}
+.mochila-card .ribbon.visible{display:block}
+
+.acciones{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+
+.barra-distribucion{display:flex;height:30px;border-radius:15px;overflow:hidden;margin:16px 0;opacity:0;transition:opacity 0.5s}
+.barra-distribucion.visible{opacity:1}
+.barra-segmento{transition:width 0.5s;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:bold;color:white;min-width:0}
+.barra-consumo{background:#e74c3c}
+.barra-inversion{background:#3498db}
+.barra-ahorro{background:#2ecc71}
+
+.resultado{display:none;background:white;border-radius:20px;padding:24px;box-shadow:var(--sombra);border:2px solid var(--verde);margin-top:20px}
+.resultado.visible{display:block}
+.resultado h2{color:var(--tierra);margin-bottom:8px}
+.resultado .analisis{color:#666;font-size:0.95rem;line-height:1.6;margin-bottom:12px}
+.resultado .puntaje{font-size:1.5rem;font-weight:800;color:var(--wayuu-oro)}
+
+.sugerencias{background:var(--arena);border-radius:14px;padding:14px;margin:12px 0;text-align:left;font-size:0.9rem;color:var(--texto)}
+.sugerencias h4{color:var(--atardecer);margin-bottom:6px}
+
+@media(max-width:600px){
+  .grid-mochilas{grid-template-columns:1fr;gap:10px}
+  .mochila-card{padding:14px}
+  .monedas-display .cantidad{font-size:1.8rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>💵 La Mochila del Ahorro</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Educación Financiera · Cómo administrar tus recursos</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🧶 Las mujeres wayuu tejen mochilas y las venden en el mercado. ¡Ganaste <strong>10 monedas</strong> vendiendo tus artesanías! Reparte tu dinero en las 3 mochilas: consumo, inversión y ahorro.
+  </div>
+
+  <div class="monedas-display">
+    <div class="label">🪙 Monedas por repartir</div>
+    <div class="cantidad"><span id="monedasRestantes">10</span></div>
+  </div>
+
+  <div class="grid-mochilas">
+    <div class="mochila-card" id="cardConsumo">
+      <div class="ribbon" id="ribbonConsumo">🍲</div>
+      <div class="icono">🍲</div>
+      <h3>Consumo</h3>
+      <p>Comida y necesidades del hoy</p>
+      <div class="control-row">
+        <button class="btn-ctrl menos" id="btnConsumoMenos" onclick="modificar('consumo', -1)">−</button>
+        <span class="valor" id="valConsumo">0</span>
+        <button class="btn-ctrl mas" id="btnConsumoMas" onclick="modificar('consumo', 1)">+</button>
+      </div>
+      <div class="desc-detalle">🍞 Pan, leche, frutas</div>
+    </div>
+
+    <div class="mochila-card" id="cardInversion">
+      <div class="ribbon" id="ribbonInversion">🧵</div>
+      <div class="icono">🧵</div>
+      <h3>Inversión</h3>
+      <p>Materiales para más mochilas</p>
+      <div class="control-row">
+        <button class="btn-ctrl menos" id="btnInvMenos" onclick="modificar('inversion', -1)">−</button>
+        <span class="valor" id="valInversion">0</span>
+        <button class="btn-ctrl mas" id="btnInvMas" onclick="modificar('inversion', 1)">+</button>
+      </div>
+      <div class="desc-detalle">🧶 Hilos, agujas, tintes</div>
+    </div>
+
+    <div class="mochila-card" id="cardAhorro">
+      <div class="ribbon" id="ribbonAhorro">🏦</div>
+      <div class="icono">🏦</div>
+      <h3>Ahorro</h3>
+      <p>Emergencias y futuro</p>
+      <div class="control-row">
+        <button class="btn-ctrl menos" id="btnAhorroMenos" onclick="modificar('ahorro', -1)">−</button>
+        <span class="valor" id="valAhorro">0</span>
+        <button class="btn-ctrl mas" id="btnAhorroMas" onclick="modificar('ahorro', 1)">+</button>
+      </div>
+      <div class="desc-detalle">💰 Para emergencias</div>
+    </div>
+  </div>
+
+  <div class="acciones">
+    <button class="btn btn-azul" id="btnReiniciar" onclick="reiniciar()">🔄 Reiniciar</button>
+    <button class="btn btn-exito" id="btnValidar" onclick="validar()">✅ Revisar distribución</button>
+  </div>
+
+  <div class="barra-distribucion" id="barraDistribucion">
+    <div class="barra-segmento barra-consumo" id="segConsumo" style="width:0%">🍲</div>
+    <div class="barra-segmento barra-inversion" id="segInversion" style="width:0%">🧵</div>
+    <div class="barra-segmento barra-ahorro" id="segAhorro" style="width:0%">🏦</div>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <h2 id="resultadoTitulo">📊 Análisis</h2>
+    <div class="analisis" id="resultadoTexto"></div>
+    <div class="puntaje" id="resultadoPuntaje">⭐ 0 puntos</div>
+    <div class="sugerencias" id="sugerencias"></div>
+    <div style="margin-top:12px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var totalMonedas = 10;
+var dist = { consumo: 0, inversion: 0, ahorro: 0 };
+var restantes = totalMonedas;
+var progreso = 0;
+
+function init(){
+  cargarProgreso();
+  actualizarUI();
+}
+
+function modificar(cat, cant){
+  if(cant > 0 && restantes <= 0){
+    mostrarToast('❌ No te quedan monedas por repartir', 'error');
+    return;
+  }
+  if(cant < 0 && dist[cat] <= 0) return;
+
+  dist[cat] += cant;
+  restantes -= cant;
+
+  actualizarUI();
+  guardarProgreso();
+}
+
+function actualizarUI(){
+  document.getElementById('valConsumo').textContent = dist.consumo;
+  document.getElementById('valInversion').textContent = dist.inversion;
+  document.getElementById('valAhorro').textContent = dist.ahorro;
+  document.getElementById('monedasRestantes').textContent = restantes;
+
+  document.getElementById('btnConsumoMas').disabled = restantes <= 0;
+  document.getElementById('btnInvMas').disabled = restantes <= 0;
+  document.getElementById('btnAhorroMas').disabled = restantes <= 0;
+
+  progreso = restantes > 0 ? 0 : 100;
+  actualizarProgreso();
+}
+
+function validar(){
+  if(restantes > 0){
+    mostrarToast('❌ Aún te quedan ' + restantes + ' monedas por repartir', 'error');
+    return;
+  }
+
+  var analisis = [];
+  var sugerencias = [];
+  var puntaje = 0;
+
+  if(dist.consumo === 0){
+    analisis.push('❌ No asignaste dinero a la comida. Tu familia no tiene qué comer hoy.');
+    sugerencias.push('Siempre prioriza al menos 2 monedas para necesidades básicas (comida, agua).');
+  } else if(dist.consumo < 2){
+    analisis.push('⚠️ Asignaste solo ' + dist.consumo + ' moneda a comida. Es muy poco para alimentar a la familia.');
+    sugerencias.push('Destina al menos 2-3 monedas para consumo diario.');
+  } else {
+    analisis.push('✅ Tienes ' + dist.consumo + ' monedas para comida. Bien, la familia comerá.');
+    puntaje += 30;
+  }
+
+  if(dist.inversion === 0){
+    analisis.push('❌ No invertiste en materiales. Mañana no podrás hacer más mochilas.');
+    sugerencias.push('Invertir en materiales te permite seguir generando ingresos.');
+  } else if(dist.inversion < 2){
+    analisis.push('⚠️ Invertiste solo ' + dist.inversion + ' moneda en materiales. Será difícil producir mucho.');
+    sugerencias.push('Invertir al menos 2-3 monedas te permitirá comprar suficientes hilos.');
+  } else {
+    analisis.push('✅ Invertiste ' + dist.inversion + ' monedas en materiales. ¡Podrás tejer más mochilas!');
+    puntaje += 30;
+  }
+
+  if(dist.ahorro === 0){
+    analisis.push('❌ No ahorraste nada. Si alguien se enferma, no tendrás para emergencias.');
+    sugerencias.push('Ahorrar aunque sea 1 moneda te protege ante imprevistos.');
+  } else if(dist.ahorro < 2){
+    analisis.push('⚠️ Ahorraste solo ' + dist.ahorro + ' moneda. Es un buen comienzo.');
+    sugerencias.push('Intenta ahorrar al menos 2 monedas para tener un colchón de seguridad.');
+    puntaje += 20;
+  } else {
+    analisis.push('✅ Ahorraste ' + dist.ahorro + ' monedas. Estás preparado para emergencias.');
+    puntaje += 40;
+  }
+
+  if(puntaje >= 80){
+    analisis.push('\n🏆 ¡Distribución excelente! Sabes administrar tu dinero como un verdadero wayuu emprendedor.');
+    guardarDiario();
+  } else if(puntaje >= 50){
+    analisis.push('\n👍 Buena distribución, pero puedes mejorar.');
+  } else {
+    analisis.push('\n💪 Sigue intentando. La educación financiera se aprende practicando.');
+  }
+
+  document.getElementById('resultadoTitulo').textContent = '📊 Análisis de tu distribución';
+  document.getElementById('resultadoTexto').innerHTML = analisis.join('<br>');
+  document.getElementById('resultadoPuntaje').textContent = '⭐ ' + puntaje + ' puntos';
+  document.getElementById('sugerencias').innerHTML = '<h4>💡 Consejos:</h4><ul style="padding-left:18px;margin:0">' + sugerencias.map(function(s){ return '<li>' + s + '</li>'; }).join('') + '</ul>';
+  document.getElementById('resultado').classList.add('visible');
+
+  mostrarToast('✅ Distribución analizada', 'info');
+
+  actualizarBarraDistribucion();
+  progreso = 100;
+  actualizarProgreso();
+  guardarProgreso();
+}
+
+function actualizarBarraDistribucion(){
+  var barra = document.getElementById('barraDistribucion');
+  barra.classList.add('visible');
+
+  document.getElementById('segConsumo').style.width = (dist.consumo / totalMonedas * 100) + '%';
+  document.getElementById('segInversion').style.width = (dist.inversion / totalMonedas * 100) + '%';
+  document.getElementById('segAhorro').style.width = (dist.ahorro / totalMonedas * 100) + '%';
+}
+
+function reiniciar(){
+  dist = { consumo: 0, inversion: 0, ahorro: 0 };
+  restantes = totalMonedas;
+  document.getElementById('resultado').classList.remove('visible');
+  document.getElementById('barraDistribucion').classList.remove('visible');
+  actualizarUI();
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progreso + '%';
+  document.getElementById('progresoPct').textContent = progreso + '%';
+}
+
+function guardarProgreso(){
+  try {
+    localStorage.setItem('fin401_dist', JSON.stringify(dist));
+    localStorage.setItem('fin401_progreso', progreso);
+  } catch(e){}
+}
+
+function cargarProgreso(){
+  try {
+    var saved = JSON.parse(localStorage.getItem('fin401_dist'));
+    if(saved){
+      dist = saved;
+      restantes = totalMonedas - dist.consumo - dist.inversion - dist.ahorro;
+      if(restantes < 0) restantes = 0;
+      actualizarUI();
+
+      var p = parseInt(localStorage.getItem('fin401_progreso')) || 0;
+      progreso = p;
+      actualizarProgreso();
+    }
+  } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('fin-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'La Mochila del Ahorro', '💵');
+    }
+  } catch(e){}
+}
+
+function mostrarToast(msg, tipo){
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function(){
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ toast.remove(); }, 300);
+  }, 3000);
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+window.modificar = modificar;
+window.validar = validar;
+window.reiniciar = reiniciar;
+init();
+
+})();
+</script>
+</body>
+</html>

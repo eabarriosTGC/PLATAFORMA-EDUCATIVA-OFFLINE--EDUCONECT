@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OFI-401: El Arte del Kaanás | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#FFF8E1,#FFE0B2,#FFCC80);min-height:100vh}
+.container{max-width:650px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--atardecer);text-align:center;font-size:1rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.taller-container{display:flex;flex-wrap:wrap;justify-content:center;gap:30px;align-items:flex-start;margin:20px 0}
+
+.patron-section{text-align:center}
+.patron-section h3{font-size:1rem;color:var(--tierra);margin-bottom:10px}
+
+.grid{display:grid;grid-template-columns:repeat(5,44px);gap:3px;padding:4px;border-radius:8px}
+.grid-modelo{background:var(--tierra);padding:4px;border-radius:8px}
+.grid-jugador{background:var(--tierra);padding:4px;border-radius:8px;cursor:pointer}
+.celda{width:44px;height:44px;border-radius:4px;transition:all 0.15s;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.1)}
+.celda.blanca{background:#FFFDF7}
+.celda.roja{background:#d63031}
+.celda.interactiva{cursor:pointer}
+.celda.interactiva:hover{transform:scale(1.1);box-shadow:0 0 0 2px var(--wayuu-oro)}
+
+.info-patron{color:#999;font-size:0.85rem;margin-top:6px;text-align:center}
+.leyenda{display:flex;gap:16px;justify-content:center;margin:12px 0;font-size:0.85rem;color:var(--tierra)}
+.leyenda span{display:flex;align-items:center;gap:6px}
+.leyenda .muestra{width:20px;height:20px;border-radius:4px;border:1px solid #ccc}
+
+.accion-tejido{display:flex;justify-content:center;gap:12px;margin:20px 0;flex-wrap:wrap}
+
+.resultado{display:none;text-align:center;padding:20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@media(max-width:500px){
+  .grid{grid-template-columns:repeat(5,36px)}
+  .celda{width:36px;height:36px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🧵 El Arte del Kaanás</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Oficios · Patrones geométricos del tejido wayuu</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🧶 Los <strong>Kaanás</strong> son los patrones geométricos que las wayuu tejen en sus mochilas. Cada figura tiene un significado. Copia el patrón en tu telar tocando los cuadros.
+  </div>
+
+  <div class="leyenda">
+    <span><span class="muestra" style="background:#FFFDF7;border-color:#ccc"></span> Blanco</span>
+    <span><span class="muestra" style="background:#d63031"></span> Rojo (Achiote)</span>
+    <span><span class="muestra" style="background:#2d3436"></span> Tejido</span>
+  </div>
+
+  <div class="taller-container">
+    <div class="patron-section">
+      <h3>🎯 Modelo Kaanás</h3>
+      <div class="grid grid-modelo" id="gridModelo"></div>
+      <div class="info-patron">Patrón Jalianaya (X)</div>
+    </div>
+
+    <div class="patron-section">
+      <h3>🧶 Tu Telar</h3>
+      <div class="grid grid-jugador" id="gridJugador"></div>
+      <div class="info-patron">Toca los cuadros para tejer</div>
+    </div>
+  </div>
+
+  <div class="accion-tejido">
+    <button class="btn btn-danger" onclick="limpiarTejido()">🗑️ Limpiar</button>
+    <button class="btn btn-exito" onclick="validarTejido()">✅ Revisar tejido</button>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🏆</div>
+    <h2>¡Tejido Perfecto!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Dominas la geometría de tus ancestros. El Kaanás vive en ti.</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Maestro Tejedor!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var patron = [
+  1,0,0,0,1,
+  0,1,0,1,0,
+  0,0,1,0,0,
+  0,1,0,1,0,
+  1,0,0,0,1
+];
+
+var estado = new Array(25).fill(0);
+var progresoVal = 0;
+
+function init(){
+  renderizarModelo();
+  renderizarJugador();
+  cargarProgreso();
+}
+
+function renderizarModelo(){
+  var grid = document.getElementById('gridModelo');
+  grid.innerHTML = '';
+  for(var i = 0; i < 25; i++){
+    var celda = document.createElement('div');
+    celda.className = 'celda ' + (patron[i] === 1 ? 'roja' : 'blanca');
+    grid.appendChild(celda);
+  }
+}
+
+function renderizarJugador(){
+  var grid = document.getElementById('gridJugador');
+  grid.innerHTML = '';
+  for(var i = 0; i < 25; i++){
+    var celda = document.createElement('div');
+    celda.className = 'celda interactiva ' + (estado[i] === 1 ? 'roja' : 'blanca');
+    celda.dataset.idx = i;
+    celda.addEventListener('click', function(){
+      var idx = parseInt(this.dataset.idx);
+      estado[idx] = estado[idx] === 0 ? 1 : 0;
+      this.className = 'celda interactiva ' + (estado[idx] === 1 ? 'roja' : 'blanca');
+    });
+    grid.appendChild(celda);
+  }
+}
+
+function limpiarTejido(){
+  estado = new Array(25).fill(0);
+  renderizarJugador();
+}
+
+function validarTejido(){
+  var igual = true;
+  for(var i = 0; i < 25; i++){
+    if(estado[i] !== patron[i]){ igual = false; break; }
+  }
+
+  if(igual){
+    progresoVal = 100;
+    document.getElementById('progresoFill').style.width = '100%';
+    document.getElementById('progresoPct').textContent = '100%';
+    guardarProgreso();
+    document.getElementById('resultado').classList.add('visible');
+    guardarDiario();
+    mostrarToast('🧵 ¡Tejido perfecto! Eres un Maestro Tejedor.', 'exito');
+    hablar('¡Excelente! Has reproducido el patrón Kaanás perfectamente. Los diseños wayuu llevan la memoria de tus ancestros.');
+  } else {
+    mostrarToast('❌ Hay hilos fuera de lugar. Observa bien el modelo e inténtalo de nuevo.', 'error');
+    hablar('Hay hilos fuera de lugar. Compara tu telar con el modelo y corrige los cuadros rojos.');
+  }
+}
+
+function mostrarToast(msg, tipo){
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function(){ t.remove(); }, 300); }, 3000);
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('ofi401_progreso', 100); } catch(e){}
+}
+
+function cargarProgreso(){
+  try {
+    var p = parseInt(localStorage.getItem('ofi401_progreso')) || 0;
+    progresoVal = p;
+    document.getElementById('progresoFill').style.width = progresoVal + '%';
+    document.getElementById('progresoPct').textContent = progresoVal + '%';
+  } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('ofi-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'El Arte del Kaanás', '🧵');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

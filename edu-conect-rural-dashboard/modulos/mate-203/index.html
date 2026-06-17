@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATE-203: Multiplicación y Reparto Wayuu | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --azul: #4A90D9;
+ --morado: #9B59B6;
+ --naranja: #F0A030;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+.container{max-width:900px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.4rem,4vw,2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+.btn-azul{
+ background:var(--azul);
+ color:white;
+ box-shadow:0 4px 12px rgba(74,144,217,0.4);
+}
+.btn-morado{
+ background:var(--morado);
+ color:white;
+ box-shadow:0 4px 12px rgba(155,89,182,0.4);
+}
+
+/* ============ SECTION 1: MULTIPLICACION COMO SUMA REPETIDA ============ */
+.mult-area{
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.mult-controles{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:15px;
+ margin:15px 0;
+ flex-wrap:wrap;
+}
+.mult-controles .grupo{
+ text-align:center;
+ min-width:100px;
+}
+.mult-controles .grupo .grupo-label{
+ font-weight:bold;
+ color:var(--tierra);
+ margin-bottom:5px;
+ font-size:0.9rem;
+}
+.mult-controles .grupo .grupo-valor{
+ font-size:2rem;
+ font-weight:bold;
+ color:var(--atardecer);
+}
+.mult-controles .operador{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--tierra);
+}
+.mult-visual{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:15px;
+ margin:15px 0;
+}
+.mult-familia{
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:12px;
+ padding:10px 14px;
+ text-align:center;
+ min-width:80px;
+}
+.mult-familia .familia-icono{font-size:1.8rem}
+.mult-familia .familia-chivos{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:2px;
+ margin-top:4px;
+}
+.mult-familia .familia-chivos span{
+ font-size:1.1rem;
+ animation:aparecer 0.3s ease-out;
+}
+@keyframes aparecer{from{opacity:0;transform:scale(0) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.mult-suma{
+ font-size:1.3rem;
+ font-weight:bold;
+ color:var(--tierra);
+ margin:10px 0;
+ background:#FFF8E1;
+ padding:8px 15px;
+ border-radius:10px;
+ display:inline-block;
+}
+.mult-resultado{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+}
+.mult-ejercicio{
+ margin-top:15px;
+ padding:15px;
+ background:var(--blanco);
+ border-radius:12px;
+ border:2px solid #e0d5c5;
+}
+.mult-ejercicio .pregunta{
+ font-size:1.1rem;
+ font-weight:bold;
+ color:var(--tierra);
+}
+.mult-input{
+ width:80px;
+ height:45px;
+ font-size:1.8rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+ margin:0 5px;
+}
+.mult-input.correcto{border-color:var(--verde);background:#E8F5E9}
+.mult-input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.mult-feedback{
+ text-align:center;
+ min-height:25px;
+ margin-top:8px;
+ font-weight:bold;
+}
+
+/* ============ SECTION 2: TABLAS DEL 6 AL 10 ============ */
+.tablas-area{
+ background:linear-gradient(135deg,#F0F8FF,#E8F5E9);
+ border:2px dashed var(--cardon);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.tabla-selector{
+ display:flex;
+ justify-content:center;
+ gap:8px;
+ margin:10px 0;
+ flex-wrap:wrap;
+}
+.tabla-btn{
+ padding:8px 16px;
+ border-radius:20px;
+ border:2px solid var(--arena);
+ background:var(--blanco);
+ font-weight:bold;
+ font-size:1.1rem;
+ cursor:pointer;
+ transition:all 0.2s;
+ color:var(--texto);
+}
+.tabla-btn:hover{
+ background:var(--wayuu-oro);
+ color:white;
+ border-color:var(--wayuu-oro);
+}
+.tabla-btn.activa{
+ background:var(--cardon);
+ color:white;
+ border-color:var(--cardon);
+}
+.tabla-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));
+ gap:8px;
+ max-width:600px;
+ margin:15px auto;
+}
+.tabla-item{
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:10px;
+ padding:10px;
+ text-align:center;
+ font-size:1.1rem;
+ font-weight:bold;
+ transition:all 0.3s;
+}
+.tabla-item .operacion{
+ color:var(--tierra);
+ font-size:0.95rem;
+}
+.tabla-item .producto{
+ font-size:1.4rem;
+ color:var(--atardecer);
+ margin-top:3px;
+}
+.tabla-item.hueco{
+ border-style:dashed;
+ border-color:var(--wayuu-oro);
+ background:#FFF8E1;
+}
+.tabla-item.hueco .producto{
+ font-size:1.4rem;
+}
+.tabla-item-input{
+ width:60px;
+ height:35px;
+ font-size:1.3rem;
+ text-align:center;
+ border:2px dashed var(--wayuu-oro);
+ border-radius:8px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+.tabla-item-input.correcto{border-color:var(--verde);background:#E8F5E9}
+.tabla-item-input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+
+.tabla-array{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:3px;
+ margin:10px 0;
+}
+.tabla-array .fila{
+ display:flex;
+ gap:3px;
+}
+.tabla-array .celda{
+ width:28px;
+ height:28px;
+ border-radius:4px;
+ background:var(--atardecer);
+ opacity:0.7;
+ animation:aparecer 0.3s ease-out;
+}
+
+/* ============ SECTION 3: REPARTO (DIVISION) ============ */
+.reparto-area{
+ background:linear-gradient(135deg,#FFFDF7,#E8F0FE);
+ border:2px dashed var(--azul);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.reparto-enunciado{
+ font-size:1.1rem;
+ color:var(--tierra);
+ margin:10px 0;
+ font-weight:bold;
+ max-width:500px;
+ margin-left:auto;
+ margin-right:auto;
+}
+.reparto-grupos{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:10px;
+ margin:15px 0;
+}
+.reparto-grupo{
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:12px;
+ padding:10px;
+ text-align:center;
+ min-width:100px;
+ transition:all 0.3s;
+}
+.reparto-grupo .grupo-titulo{
+ font-weight:bold;
+ color:var(--azul);
+ font-size:0.9rem;
+ margin-bottom:5px;
+}
+.reparto-grupo .grupo-fichas{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:3px;
+ min-height:30px;
+}
+.reparto-grupo .grupo-fichas span{
+ font-size:1.2rem;
+ animation:aparecer 0.3s ease-out;
+}
+.reparto-operacion{
+ font-size:1.5rem;
+ font-weight:bold;
+ color:var(--tierra);
+ margin:10px 0;
+}
+.reparto-operacion .dividendo{color:var(--atardecer)}
+.reparto-operacion .divisor{color:var(--azul)}
+.reparto-operacion .cociente{color:var(--verde)}
+.reparto-input{
+ width:80px;
+ height:45px;
+ font-size:1.8rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+.reparto-input.correcto{border-color:var(--verde);background:#E8F5E9;border-style:solid}
+.reparto-input.incorrecto{border-color:var(--rojo);background:#FFEBEE;border-style:solid}
+.reparto-feedback{
+ text-align:center;
+ min-height:25px;
+ margin-top:8px;
+ font-weight:bold;
+}
+
+/* ============ SECTION 4: JUEGO DE REPARTO JUSTO ============ */
+.juego-area{
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+}
+.juego-header{
+ text-align:center;
+ margin-bottom:12px;
+}
+.juego-header h3{
+ color:var(--tierra);
+ margin-bottom:5px;
+}
+.juego-header p{
+ color:#8B7355;
+ font-size:0.95rem;
+}
+.juego-mesa{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:10px;
+ margin:10px 0;
+}
+.juego-cesta{
+ background:var(--blanco);
+ border:3px solid var(--arena);
+ border-radius:14px;
+ padding:12px;
+ text-align:center;
+ min-width:100px;
+ cursor:pointer;
+ transition:all 0.2s;
+ user-select:none;
+}
+.juego-cesta:hover{
+ border-color:var(--wayuu-oro);
+ box-shadow:var(--sombra);
+ transform:translateY(-2px);
+}
+.juego-cesta .cesta-titulo{
+ font-weight:bold;
+ color:var(--tierra);
+ font-size:0.9rem;
+ margin-bottom:5px;
+}
+.juego-cesta .cesta-fichas{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:4px;
+ min-height:35px;
+ padding:5px;
+}
+.juego-cesta .cesta-fichas .ficha-reparto{
+ width:34px;
+ height:34px;
+ border-radius:50%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:1.1rem;
+ cursor:pointer;
+ transition:all 0.3s;
+ animation:rebotar 0.4s;
+}
+@keyframes rebotar{0%,100%{transform:scale(1)}30%{transform:scale(1.2)}60%{transform:scale(0.9)}}
+.ficha-reparto.chivo{background:linear-gradient(135deg,#F5DEB3,#DEB887);border:2px solid #C4A265}
+.ficha-reparto.agua{background:linear-gradient(135deg,#87CEEB,#4A90D9);border:2px solid #2E6FB0}
+.ficha-reparto.maiz{background:linear-gradient(135deg,#FFD700,#F0A030);border:2px solid #C08020}
+.juego-cesta.origen{
+ border-color:var(--atardecer);
+ border-style:dashed;
+ background:#FFF0E8;
+}
+.juego-cesta.destino.completo{
+ border-color:var(--verde);
+}
+.juego-contador{
+ font-size:1.2rem;
+ font-weight:bold;
+ color:var(--tierra);
+ text-align:center;
+ margin:8px 0;
+}
+.juego-botones{
+ text-align:center;
+ display:flex;
+ gap:10px;
+ justify-content:center;
+ flex-wrap:wrap;
+ margin-top:12px;
+}
+
+/* ============ SECTION 5: EVALUACION ============ */
+.eval-area{
+ background:linear-gradient(135deg,#F3E5F5,#E8EAF6);
+ border:2px dashed var(--morado);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+}
+.eval-pregunta{
+ background:var(--blanco);
+ border-radius:14px;
+ padding:18px;
+ margin:12px 0;
+ box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.eval-pregunta .eval-enunciado{
+ font-size:1.05rem;
+ font-weight:bold;
+ color:var(--tierra);
+ margin-bottom:12px;
+}
+.eval-pregunta .eval-opciones{
+ display:flex;
+ justify-content:center;
+ gap:12px;
+ flex-wrap:wrap;
+}
+.eval-opcion{
+ padding:12px 22px;
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:14px;
+ font-size:1.2rem;
+ font-weight:bold;
+ cursor:pointer;
+ transition:all 0.2s;
+ min-width:70px;
+ text-align:center;
+ user-select:none;
+}
+.eval-opcion:hover{
+ background:var(--arena);
+ border-color:var(--wayuu-oro);
+}
+.eval-opcion.seleccionada{
+ background:var(--morado);
+ color:white;
+ border-color:var(--morado);
+}
+.eval-opcion.correcta{
+ background:var(--verde);
+ color:white;
+ border-color:var(--verde);
+}
+.eval-opcion.incorrecta{
+ background:var(--rojo);
+ color:white;
+ border-color:var(--rojo);
+}
+.eval-feedback{
+ text-align:center;
+ font-size:1rem;
+ font-weight:bold;
+ min-height:28px;
+ margin-top:8px;
+}
+.eval-score{
+ text-align:center;
+ font-size:1.5rem;
+ font-weight:bold;
+ color:var(--morado);
+ margin:10px 0;
+}
+
+/* Resultados finales */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+}
+.resultados-finales .estrella{
+ font-size:5rem;
+ animation:brillar 1.5s ease-in-out infinite;
+}
+.resultados-finales .puntaje{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ margin:10px 0;
+}
+.resultados-finales .mensaje{
+ font-size:1.2rem;
+ color:var(--tierra);
+ margin:10px 0;
+}
+
+/* Toast */
+.toast{
+ position:fixed;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:12px 30px;
+ border-radius:25px;
+ font-weight:bold;
+ font-size:1rem;
+ z-index:1000;
+ animation:slideDown 0.4s ease-out;
+ box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Responsive */
+@media(max-width:600px){
+ .mult-controles .grupo-valor{font-size:1.5rem}
+ .mult-controles .operador{font-size:1.8rem}
+ .mult-resultado{font-size:2rem}
+ .tabla-grid{grid-template-columns:repeat(auto-fill, minmax(100px, 1fr))}
+ .reparto-grupo{min-width:80px}
+ .juego-cesta{min-width:80px}
+ .eval-opcion{padding:10px 15px;font-size:1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>🐐 Multiplicación y Reparto Wayuu</h1>
+ <span class="grado">3° Grado · Matemáticas</span>
+ <div class="desierto-deco">🌵🐐🌵👜🌵💧🌵</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- SECTION 1: MULTIPLICACION COMO SUMA REPETIDA  -->
+<!-- ============================================= -->
+<section class="card activo" id="seccion1">
+ <h2><span class="icono">🐐</span> 1. Multiplicación: Suma de Chivos por Familia <span class="etiqueta-check" id="check1" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  En la ranchería wayuu, cada familia tiene su propio rebaño. Si varias familias tienen la misma cantidad de chivos, ¡usamos la <strong>multiplicación</strong> para contarlos más rápido!
+ </p>
+
+ <div class="mult-area">
+  <div class="mult-controles">
+   <div class="grupo">
+    <div class="grupo-label">👨‍👩‍👧‍👦 Familias</div>
+    <div class="grupo-valor" id="multFamiliasVal">3</div>
+    <div style="margin-top:5px">
+     <button class="btn btn-secundario" id="btnMenosFamilias" style="padding:5px 12px;font-size:0.9rem">◀</button>
+     <button class="btn btn-primario" id="btnMasFamilias" style="padding:5px 12px;font-size:0.9rem">▶</button>
+    </div>
+   </div>
+   <div class="operador">×</div>
+   <div class="grupo">
+    <div class="grupo-label">🐐 Chivos por familia</div>
+    <div class="grupo-valor" id="multChivosVal">4</div>
+    <div style="margin-top:5px">
+     <button class="btn btn-secundario" id="btnMenosChivos" style="padding:5px 12px;font-size:0.9rem">◀</button>
+     <button class="btn btn-primario" id="btnMasChivos" style="padding:5px 12px;font-size:0.9rem">▶</button>
+    </div>
+   </div>
+  </div>
+
+  <div class="mult-visual" id="multVisual"></div>
+
+  <div class="mult-suma" id="multSuma">4 + 4 + 4 = 12</div>
+  <div style="margin:5px 0">
+   <span style="font-size:1.2rem;font-weight:bold;color:var(--tierra)">Total de chivos:</span>
+   <span class="mult-resultado" id="multTotal">12 🐐</span>
+  </div>
+ </div>
+
+ <!-- Mini ejercicio -->
+ <div class="mult-ejercicio">
+  <span class="pregunta" id="multEjercicioTexto">Si tenemos 5 familias con 3 chivos cada una, ¿cuántos chivos hay en total?</span>
+  <div style="margin-top:10px">
+   <input type="number" class="mult-input" id="multEjercicioInput" placeholder="?" min="0" max="100">
+   <button class="btn btn-primario" id="btnMultVerificar">✓ Verificar</button>
+  </div>
+  <div class="mult-feedback" id="multFeedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion1Ok" style="display:none">✓ ¡Listo! Siguiente actividad →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 2: TABLAS DEL 6 AL 10                -->
+<!-- ============================================= -->
+<section class="card" id="seccion2" style="display:none">
+ <h2><span class="icono">🧮</span> 2. Tablas de Multiplicar del 6 al 10 <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Las tablas de multiplicar nos ayudan a calcular rápido. ¡Como cuando repartimos agua del jagüey entre las familias! Practica las tablas del <strong>6 al 10</strong>.
+ </p>
+
+ <div class="tablas-area">
+  <p style="color:var(--tierra);font-weight:bold;margin-bottom:5px">Selecciona una tabla:</p>
+  <div class="tabla-selector" id="tablaSelector">
+   <button class="tabla-btn" data-tabla="6">× 6</button>
+   <button class="tabla-btn" data-tabla="7">× 7</button>
+   <button class="tabla-btn" data-tabla="8">× 8</button>
+   <button class="tabla-btn" data-tabla="9">× 9</button>
+   <button class="tabla-btn" data-tabla="10">× 10</button>
+  </div>
+
+  <div class="tabla-array" id="tablaArray"></div>
+  <div class="tabla-grid" id="tablaGrid"></div>
+
+  <div style="margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-azul" id="btnTablaAleatoria">🎲 Al azar</button>
+   <button class="btn btn-primario" id="btnTablaVerificar">✓ Verificar respuestas</button>
+   <button class="btn btn-peligro" id="btnTablaRevelar" style="display:none">👁 Revelar</button>
+  </div>
+  <div class="mult-feedback" id="tablaFeedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion2Ok">✓ ¡Entendido! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 3: REPARTO (DIVISION)                -->
+<!-- ============================================= -->
+<section class="card" id="seccion3" style="display:none">
+ <h2><span class="icono">💧</span> 3. Reparto Justo: División entre Familias <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  En la comunidad wayuu, el agua del <strong>jagüey</strong> se reparte entre todas las familias por igual. También se reparten los <strong>chivos</strong> entre los clanes. ¡Eso es <strong>dividir</strong>!
+ </p>
+
+ <div class="reparto-area">
+  <div class="reparto-enunciado" id="repartoEnunciado">
+   En el jagüey hay 24 litros de agua. Se deben repartir por igual entre 4 familias. ¿Cuántos litros recibe cada familia?
+  </div>
+
+  <div class="reparto-grupos" id="repartoGrupos"></div>
+
+  <div class="reparto-operacion">
+   <span class="dividendo" id="repartoDividendo">24</span>
+   ÷
+   <span class="divisor" id="repartoDivisor">4</span>
+   =
+   <input type="number" class="reparto-input" id="repartoInput" placeholder="?" min="0" max="100">
+  </div>
+
+  <div class="reparto-feedback" id="repartoFeedback"></div>
+
+  <div style="margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnRepartoNuevo">🎲 Nuevo reparto</button>
+   <button class="btn btn-primario" id="btnRepartoVerificar">✓ Verificar</button>
+  </div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion3Ok" style="display:none">✓ ¡Siguiente! →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 4: JUEGO DE REPARTO JUSTO            -->
+<!-- ============================================= -->
+<section class="card" id="seccion4" style="display:none">
+ <h2><span class="icono">🎮</span> 4. Juego de Reparto Justo con Fichas <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+
+ <div class="juego-area" id="juego1Area">
+  <div class="juego-header">
+   <h3>🎯 Reparte las fichas entre las familias</h3>
+   <p id="juegoInstruccion">
+    Haz clic en una ficha de la cesta para asignarla a una familia. Reparte <strong>todas</strong> las fichas por igual.
+   </p>
+  </div>
+
+  <div class="juego-contador" id="juegoContador">Fichas por repartir: <strong id="juegoPendientes">12</strong></div>
+
+  <div class="juego-cesta origen" id="juegoOrigen">
+   <div class="cesta-titulo">🧺 Cesta de fichas</div>
+   <div class="cesta-fichas" id="juegoFichasOrigen"></div>
+  </div>
+
+  <div class="juego-mesa" id="juegoDestinos"></div>
+
+  <div class="juego-botones">
+   <button class="btn btn-secundario" id="btnJuegoNuevo">🎲 Nuevo juego</button>
+   <button class="btn btn-primario" id="btnJuegoVerificar">✓ Verificar reparto</button>
+   <button class="btn btn-peligro" id="btnJuegoAuto" style="display:none">🔄 Reiniciar</button>
+  </div>
+  <div class="reparto-feedback" id="juegoFeedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:15px">
+  <button class="btn btn-exito" id="btnSeccion4Ok" style="display:none">✓ ¡Terminar módulo! 🎉</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 5: EVALUACION                        -->
+<!-- ============================================= -->
+<section class="card" id="seccion5" style="display:none">
+ <h2><span class="icono">📝</span> 5. Evaluación Interactiva <span class="etiqueta-check" id="check5" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  ¡Demuestra lo que has aprendido! Responde estas preguntas sobre multiplicación, división y reparto en la comunidad wayuu.
+ </p>
+
+ <div class="eval-area">
+  <div class="eval-score" id="evalScore">Pregunta 1 de 6 | Aciertos: 0</div>
+  <div class="eval-pregunta" id="evalPregunta">
+   <div class="eval-enunciado" id="evalEnunciado"></div>
+   <div class="eval-opciones" id="evalOpciones"></div>
+   <div class="eval-feedback" id="evalFeedback"></div>
+  </div>
+  <div style="text-align:center;margin-top:10px">
+   <button class="btn btn-primario" id="btnEvalSiguiente" style="display:none">Siguiente pregunta ▶</button>
+  </div>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- RESULTADOS FINALES                           -->
+<!-- ============================================= -->
+<section class="card" id="seccionResultados" style="display:none">
+ <div class="resultados-finales" id="resultadosContent">
+  <div class="estrella">🌟</div>
+  <h2>¡Módulo Completado!</h2>
+  <div class="puntaje" id="puntajeFinal"></div>
+  <div class="mensaje" id="mensajeFinal"></div>
+  <p style="color:var(--tierra);margin:15px 0">
+   Has aprendido a multiplicar como suma repetida, las tablas del 6 al 10, y a dividir repartiendo recursos entre la comunidad wayuu. ¡Como un sabio palabrero resolviendo el reparto justo! 🐐💧🌵
+  </p>
+  <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ DOM HELPERS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ STATE ============
+const state = {
+ multFamilias: 3,
+ multChivos: 4,
+ multAciertos: 0,
+ multMeta: 3,
+ multEjercicioActual: 0,
+
+ tablaActual: 6,
+ tablaAciertos: new Set(),
+
+ repartoAciertos: 0,
+ repartoMeta: 4,
+
+ juegoFichas: [],
+ juegoDestinos: [],
+ juegoFichaSeleccionada: null,
+ juegoCompleto: false,
+ juegoAciertos: 0,
+ juegoMeta: 2,
+
+ evalPreguntas: [],
+ evalActual: 0,
+ evalAciertos: 0,
+ evalTotal: 6,
+
+ seccion1Completa: false,
+ seccion2Completa: false,
+ seccion3Completa: false,
+ seccion4Completa: false,
+ seccion5Completa: false
+};
+
+// ============ TOAST ============
+function mostrarToast(msg, tipo){
+ const t = document.createElement('div');
+ t.className = 'toast ' + tipo;
+ t.textContent = msg;
+ document.body.appendChild(t);
+ setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; }, 2000);
+ setTimeout(() => t.remove(), 2500);
+}
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.seccion1Completa) completadas++;
+ if(state.seccion2Completa) completadas++;
+ if(state.seccion3Completa) completadas++;
+ if(state.seccion4Completa) completadas++;
+ if(state.seccion5Completa) completadas++;
+ const pct = Math.round((completadas / 5) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECTION 1: MULTIPLICACION COMO SUMA REPETIDA ============
+function actualizarMultiplicacion(){
+ const f = state.multFamilias;
+ const c = state.multChivos;
+ const total = f * c;
+
+ $('#multFamiliasVal').textContent = f;
+ $('#multChivosVal').textContent = c;
+
+ // Construir visual
+ const visual = $('#multVisual');
+ visual.innerHTML = '';
+ for(let i = 0; i < f; i++){
+  const familia = document.createElement('div');
+  familia.className = 'mult-familia';
+  familia.innerHTML = '<div class="familia-icono">👨‍👩‍👧‍👦</div><div style="font-size:0.8rem;color:var(--tierra);margin:2px 0">Familia ' + (i+1) + '</div>';
+  const chivosDiv = document.createElement('div');
+  chivosDiv.className = 'familia-chivos';
+  for(let j = 0; j < c; j++){
+   const chivo = document.createElement('span');
+   chivo.textContent = '🐐';
+   chivosDiv.appendChild(chivo);
+  }
+  familia.appendChild(chivosDiv);
+  visual.appendChild(familia);
+ }
+
+ // Suma
+ const sumandos = Array(f).fill(c).join(' + ');
+ $('#multSuma').textContent = sumandos + ' = ' + total;
+ $('#multTotal').textContent = total + ' 🐐';
+
+ // Disable buttons at edges
+ $('#btnMenosFamilias').disabled = (f <= 1);
+ $('#btnMasFamilias').disabled = (f >= 10);
+ $('#btnMenosChivos').disabled = (c <= 1);
+ $('#btnMasChivos').disabled = (c >= 10);
+}
+
+function generarMultEjercicio(){
+ const ejercicios = [
+  {f:5, c:3, texto:'Si tenemos 5 familias con 3 chivos cada una, ¿cuántos chivos hay en total?', resp:15},
+  {f:4, c:6, texto:'Hay 4 clanes y cada clan tiene 6 chivos. ¿Cuántos chivos hay?', resp:24},
+  {f:7, c:2, texto:'En la ranchería hay 7 familias. Cada familia tiene 2 burros. ¿Cuántos burros en total?', resp:14},
+  {f:3, c:8, texto:'3 jagüeyes reciben 8 litros de lluvia cada uno. ¿Cuántos litros se juntan?', resp:24},
+  {f:6, c:4, texto:'6 artesanas tejen 4 mochilas cada una. ¿Cuántas mochilas se tejen?', resp:24},
+  {f:9, c:3, texto:'9 niños recogen 3 totumas de agua cada uno del jagüey. ¿Cuántas totumas en total?', resp:27},
+  {f:2, c:9, texto:'2 pastores cuidan 9 chivos cada uno. ¿Cuántos chivos en total?', resp:18},
+  {f:8, c:5, texto:'Hay 8 corrales con 5 chivos cada uno. ¿Cuántos chivos hay?', resp:40},
+ ];
+ const ej = ejercicios[Math.floor(Math.random() * ejercicios.length)];
+ state.multEjercicioActual = ej;
+ $('#multEjercicioTexto').textContent = ej.texto;
+ $('#multEjercicioInput').value = '';
+ $('#multEjercicioInput').className = 'mult-input';
+ $('#multFeedback').textContent = '';
+}
+
+$('#btnMenosFamilias').addEventListener('click', () => { state.multFamilias--; actualizarMultiplicacion(); });
+$('#btnMasFamilias').addEventListener('click', () => { state.multFamilias++; actualizarMultiplicacion(); });
+$('#btnMenosChivos').addEventListener('click', () => { state.multChivos--; actualizarMultiplicacion(); });
+$('#btnMasChivos').addEventListener('click', () => { state.multChivos++; actualizarMultiplicacion(); });
+
+$('#btnMultVerificar').addEventListener('click', () => {
+ const val = parseInt($('#multEjercicioInput').value);
+ const ej = state.multEjercicioActual;
+ if(isNaN(val)){
+  $('#multFeedback').textContent = '❌ Escribe un número.';
+  $('#multFeedback').style.color = 'var(--rojo)';
+  return;
+ }
+ if(val === ej.resp){
+  $('#multEjercicioInput').classList.add('correcto');
+  $('#multFeedback').textContent = '✅ ¡Correcto! ' + ej.f + ' × ' + ej.c + ' = ' + ej.resp;
+  $('#multFeedback').style.color = 'var(--verde)';
+  state.multAciertos++;
+  if(state.multAciertos >= state.multMeta && !state.seccion1Completa){
+   state.seccion1Completa = true;
+   $('#check1').style.display = 'inline-block';
+   $('#seccion1').classList.remove('activo');
+   $('#seccion1').classList.add('completado');
+   $('#btnSeccion1Ok').style.display = 'inline-block';
+   actualizarProgreso();
+   mostrarToast('✅ ¡Sección 1 completada!', 'exito');
+  }
+  setTimeout(generarMultEjercicio, 1200);
+ } else {
+  $('#multEjercicioInput').classList.add('incorrecto');
+  $('#multFeedback').textContent = '❌ Incorrecto. ' + ej.f + ' × ' + ej.c + ' = ' + ej.resp + '. Intenta de nuevo.';
+  $('#multFeedback').style.color = 'var(--rojo)';
+ }
+});
+
+$('#btnSeccion1Ok').addEventListener('click', () => {
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 2: TABLAS DEL 6 AL 10 ============
+function cambiarTabla(n){
+ state.tablaActual = n;
+ $$('#tablaSelector .tabla-btn').forEach(b => {
+  b.classList.toggle('activa', parseInt(b.dataset.tabla) === n);
+ });
+ mostrarTabla();
+}
+
+function mostrarTabla(mode){
+ const n = state.tablaActual;
+ const grid = $('#tablaGrid');
+ const arrayDiv = $('#tablaArray');
+ $('#tablaFeedback').textContent = '';
+ $('#btnTablaRevelar').style.display = 'none';
+
+ // Mostrar array visual para el primer factor
+ arrayDiv.innerHTML = '';
+ if(mode !== 'verificar'){
+  const filas = Math.min(n, 5);
+  const cols = Math.min(2, 5);
+  for(let i = 0; i < filas; i++){
+   const fila = document.createElement('div');
+   fila.className = 'fila';
+   for(let j = 0; j < cols; j++){
+    const celda = document.createElement('div');
+    celda.className = 'celda';
+    celda.style.animationDelay = (i*cols+j)*0.05 + 's';
+    fila.appendChild(celda);
+   }
+   arrayDiv.appendChild(fila);
+  }
+  arrayDiv.innerHTML += '<div style="font-size:0.85rem;color:var(--tierra);margin-top:3px">' + n + ' grupos de algo = tabla del ' + n + '</div>';
+ }
+
+ // Crear items con 2 huecos aleatorios
+ const huecosSet = new Set();
+ while(huecosSet.size < 2){
+  huecosSet.add(Math.floor(Math.random() * 10) + 1);
+ }
+
+ grid.innerHTML = '';
+ for(let i = 1; i <= 10; i++){
+  const item = document.createElement('div');
+  item.className = 'tabla-item';
+  if(huecosSet.has(i)){
+   item.classList.add('hueco');
+   item.innerHTML = '<div class="operacion">' + n + ' × ' + i + '</div><div class="producto"><input type="number" class="tabla-item-input" data-idx="' + i + '" placeholder="?" min="0" max="100"></div>';
+  } else {
+   item.innerHTML = '<div class="operacion">' + n + ' × ' + i + '</div><div class="producto">= ' + (n * i) + '</div>';
+  }
+  grid.appendChild(item);
+ }
+
+ if(mode === 'aleatoria'){
+  generarMultiplicacionAleatoria();
+ }
+}
+
+function generarMultiplicacionAleatoria(){
+ const n = state.tablaActual;
+ const idx = Math.floor(Math.random() * 10) + 1;
+ const resp = n * idx;
+
+ const grid = $('#tablaGrid');
+ grid.innerHTML = '';
+ grid.style.gridTemplateColumns = '1fr';
+
+ const item = document.createElement('div');
+ item.className = 'tabla-item hueco';
+ item.style.cssText = 'max-width:300px;margin:0 auto;padding:18px';
+ item.innerHTML = '<div class="operacion" style="font-size:1.3rem">' + n + ' × ' + idx + '</div><div class="producto"><input type="number" class="tabla-item-input" data-idx="' + idx + '" data-resp="' + resp + '" placeholder="?" min="0" max="100" style="font-size:1.5rem;width:80px;height:40px"></div>';
+ grid.appendChild(item);
+
+ $('#btnTablaRevelar').style.display = 'inline-block';
+}
+
+$('#tablaSelector').addEventListener('click', (e) => {
+ if(e.target.classList.contains('tabla-btn')){
+  cambiarTabla(parseInt(e.target.dataset.tabla));
+ }
+});
+
+$('#btnTablaAleatoria').addEventListener('click', () => {
+ mostrarTabla('aleatoria');
+});
+
+$('#btnTablaVerificar').addEventListener('click', () => {
+ const inputs = $$('.tabla-item-input');
+ let correctos = 0;
+ let total = 0;
+
+ inputs.forEach(inp => {
+  total++;
+  const val = parseInt(inp.value);
+  const idx = parseInt(inp.dataset.idx);
+  const resp = state.tablaActual * idx;
+
+  if(!isNaN(val) && val === resp){
+   inp.classList.add('correcto');
+   inp.classList.remove('incorrecto');
+   inp.disabled = true;
+   correctos++;
+   state.tablaAciertos.add(state.tablaActual + '-' + idx);
+  } else {
+   inp.classList.add('incorrecto');
+   inp.classList.remove('correcto');
+  }
+ });
+
+ if(correctos === total && total > 0){
+  $('#tablaFeedback').textContent = '✅ ¡Perfecto! Todos correctos.';
+  $('#tablaFeedback').style.color = 'var(--verde)';
+ } else if(correctos > 0){
+  $('#tablaFeedback').textContent = '⚠️ Acertaste ' + correctos + ' de ' + total + '. Corrige los marcados en rojo.';
+  $('#tablaFeedback').style.color = 'var(--naranja)';
+ } else if(total > 0){
+  $('#tablaFeedback').textContent = '❌ Revisa tus respuestas.';
+  $('#tablaFeedback').style.color = 'var(--rojo)';
+ }
+ $('#btnTablaRevelar').style.display = (total === 1) ? 'inline-block' : 'none';
+});
+
+$('#btnTablaRevelar').addEventListener('click', () => {
+ const inp = $('.tabla-item-input');
+ if(inp){
+  const idx = parseInt(inp.dataset.idx);
+  inp.value = state.tablaActual * idx;
+  inp.classList.add('correcto');
+  inp.classList.remove('incorrecto');
+  inp.disabled = true;
+  $('#tablaFeedback').textContent = 'La respuesta es ' + (state.tablaActual * idx) + '. ¡Apréndela para la próxima!';
+  $('#tablaFeedback').style.color = 'var(--azul)';
+ }
+});
+
+$('#btnSeccion2Ok').addEventListener('click', () => {
+ if(!state.seccion2Completa){
+  state.seccion2Completa = true;
+  $('#check2').style.display = 'inline-block';
+  $('#seccion2').classList.add('completado');
+  actualizarProgreso();
+  mostrarToast('✅ ¡Sección 2 completada!', 'exito');
+ }
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 3: REPARTO (DIVISION) ============
+let repartoData = { total: 24, grupos: 4, cociente: 6, contexto: 'agua', item: '💧', unidad: 'litros' };
+
+function generarReparto(){
+ const contextos = [
+  {item:'💧', unidad:'litros', contexto:'agua', frase:'En el jagüey hay {total} {unidad} de agua. Se deben repartir por igual entre {grupos} familias. ¿Cuántos {unidad} recibe cada familia?'},
+  {item:'🐐', unidad:'chivos', contexto:'chivos', frase:'El clan tiene {total} {unidad}. Deben repartirse entre {grupos} pastores. ¿Cuántos {unidad} cuida cada pastor?'},
+  {item:'🌽', unidad:'mazorcas', contexto:'maíz', frase:'La cosecha dio {total} {unidad} de maíz. Se reparten entre {grupos} familias. ¿Cuántas {unidad} recibe cada una?'},
+  {item:'👜', unidad:'mochilas', contexto:'mochilas', frase:'Las artesanas tejieron {total} {unidad}. Las venden en {grupos} mercados por igual. ¿Cuántas {unidad} van a cada mercado?'},
+  {item:'🥖', unidad:'arepas', contexto:'arepas', frase:'Cocinaron {total} {unidad} para la reunión. Se reparten entre {grupos} clanes. ¿Cuántas {unidad} recibe cada clan?'},
+ ];
+
+ const ctx = contextos[Math.floor(Math.random() * contextos.length)];
+ const cociente = Math.floor(Math.random() * 9) + 2; // 2-10
+ const grupos = Math.floor(Math.random() * 8) + 2; // 2-9
+ const total = cociente * grupos;
+
+ repartoData = {
+  total: total,
+  grupos: grupos,
+  cociente: cociente,
+  item: ctx.item,
+  unidad: ctx.unidad,
+  contexto: ctx.contexto,
+  frase: ctx.frase.replace('{total}', total).replace('{grupos}', grupos).replace('{unidad}', ctx.unidad)
+ };
+
+ $('#repartoEnunciado').textContent = repartoData.frase;
+ $('#repartoDividendo').textContent = total;
+ $('#repartoDivisor').textContent = grupos;
+ $('#repartoInput').value = '';
+ $('#repartoInput').className = 'reparto-input';
+ $('#repartoFeedback').textContent = '';
+
+ // Dibujar grupos
+ const gruposDiv = $('#repartoGrupos');
+ gruposDiv.innerHTML = '';
+ for(let i = 0; i < grupos; i++){
+  const grupo = document.createElement('div');
+  grupo.className = 'reparto-grupo';
+  grupo.innerHTML = '<div class="grupo-titulo">👨‍👩‍👧‍👦 Familia ' + (i+1) + '</div><div class="grupo-fichas" id="grupoFichas' + i + '"></div>';
+  gruposDiv.appendChild(grupo);
+ }
+}
+
+function dibujarReparto(respuesta){
+ const d = repartoData;
+ for(let i = 0; i < d.grupos; i++){
+  const fichasDiv = $('#grupoFichas' + i);
+  if(!fichasDiv) continue;
+  fichasDiv.innerHTML = '';
+  for(let j = 0; j < respuesta; j++){
+   const ficha = document.createElement('span');
+   ficha.textContent = d.item;
+   ficha.style.animationDelay = (i*d.cociente+j)*0.05 + 's';
+   fichasDiv.appendChild(ficha);
+  }
+ }
+}
+
+$('#btnRepartoNuevo').addEventListener('click', generarReparto);
+
+$('#btnRepartoVerificar').addEventListener('click', () => {
+ const val = parseInt($('#repartoInput').value);
+ const correcto = repartoData.cociente;
+
+ if(isNaN(val)){
+  $('#repartoFeedback').textContent = '❌ Escribe un número.';
+  $('#repartoFeedback').style.color = 'var(--rojo)';
+  return;
+ }
+
+ if(val === correcto){
+  $('#repartoInput').classList.add('correcto');
+  $('#repartoFeedback').textContent = '✅ ¡Correcto! ' + repartoData.total + ' ÷ ' + repartoData.grupos + ' = ' + correcto + '. Cada familia recibe ' + correcto + ' ' + repartoData.unidad + '.';
+  $('#repartoFeedback').style.color = 'var(--verde)';
+  dibujarReparto(correcto);
+  state.repartoAciertos++;
+  if(state.repartoAciertos >= state.repartoMeta && !state.seccion3Completa){
+   state.seccion3Completa = true;
+   $('#check3').style.display = 'inline-block';
+   $('#seccion3').classList.add('completado');
+   $('#btnSeccion3Ok').style.display = 'inline-block';
+   actualizarProgreso();
+   mostrarToast('✅ ¡Sección 3 completada!', 'exito');
+  }
+ } else {
+  $('#repartoInput').classList.add('incorrecto');
+  $('#repartoFeedback').textContent = '❌ Incorrecto. ' + repartoData.total + ' ÷ ' + repartoData.grupos + ' = ' + correcto + '. Piensa: ¿cuántas veces cabe ' + repartoData.grupos + ' en ' + repartoData.total + '?';
+  $('#repartoFeedback').style.color = 'var(--rojo)';
+  // Mostrar la división incorrecta visualmente
+  dibujarReparto(val);
+ }
+});
+
+$('#btnSeccion3Ok').addEventListener('click', () => {
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+ iniciarJuegoReparto();
+});
+
+// ============ SECTION 4: JUEGO DE REPARTO JUSTO ============
+function iniciarJuegoReparto(){
+ const configs = [
+  {fichas: 12, destinos: 3, tipo: 'agua', emoji: '💧', item:'litros de agua'},
+  {fichas: 15, destinos: 5, tipo: 'chivo', emoji: '🐐', item:'chivos'},
+  {fichas: 18, destinos: 6, tipo: 'maiz', emoji: '🌽', item:'mazorcas'},
+  {fichas: 20, destinos: 4, tipo: 'chivo', emoji: '🐐', item:'chivos'},
+  {fichas: 14, destinos: 7, tipo: 'agua', emoji: '💧', item:'litros de agua'},
+  {fichas: 16, destinos: 8, tipo: 'maiz', emoji: '🌽', item:'mazorcas'},
+  {fichas: 24, destinos: 4, tipo: 'chivo', emoji: '🐐', item:'chivos'},
+  {fichas: 21, destinos: 3, tipo: 'agua', emoji: '💧', item:'litros de agua'},
+  {fichas: 27, destinos: 9, tipo: 'maiz', emoji: '🌽', item:'mazorcas'},
+  {fichas: 30, destinos: 6, tipo: 'chivo', emoji: '🐐', item:'chivos'},
+ ];
+
+ const cfg = configs[Math.floor(Math.random() * configs.length)];
+ const fichasPorDestino = cfg.fichas / cfg.destinos;
+
+ state.juegoFichas = [];
+ state.juegoDestinos = [];
+ state.juegoFichaSeleccionada = null;
+
+ // Crear fichas
+ for(let i = 0; i < cfg.fichas; i++){
+  state.juegoFichas.push({id:i, asignada:false});
+ }
+
+ // Crear destinos
+ for(let i = 0; i < cfg.destinos; i++){
+  state.juegoDestinos.push({id:i, fichas:[], nombre:'Familia ' + (i+1)});
+ }
+
+ // Renderizar
+ $('#juegoInstruccion').innerHTML = 'Haz clic en una ficha de la cesta y luego en una familia para asignarla. Reparte <strong>todas</strong> las ' + cfg.fichas + ' ' + cfg.item + ' por igual entre ' + cfg.destinos + ' familias (<strong>' + fichasPorDestino + ' ' + cfg.item + ' cada una</strong>).';
+ $('#juegoPendientes').textContent = cfg.fichas;
+ $('#juegoFeedback').textContent = '';
+ $('#btnJuegoAuto').style.display = 'none';
+ $('#btnJuegoVerificar').style.display = 'inline-block';
+
+ // Dibujar cesta de origen
+ const origenDiv = $('#juegoFichasOrigen');
+ origenDiv.innerHTML = '';
+ state.juegoFichas.forEach(f => {
+  const ficha = document.createElement('span');
+  ficha.className = 'ficha-reparto ' + cfg.tipo;
+  ficha.textContent = cfg.emoji;
+  ficha.dataset.fichaId = f.id;
+  ficha.addEventListener('click', () => seleccionarFicha(f.id, ficha, cfg));
+  origenDiv.appendChild(ficha);
+ });
+
+ // Dibujar destinos
+ const destinosDiv = $('#juegoDestinos');
+ destinosDiv.innerHTML = '';
+ state.juegoDestinos.forEach(d => {
+  const cesta = document.createElement('div');
+  cesta.className = 'juego-cesta destino';
+  cesta.id = 'destino-' + d.id;
+  cesta.innerHTML = '<div class="cesta-titulo">👨‍👩‍👧‍👦 ' + d.nombre + '</div><div class="cesta-fichas" id="destFichas-' + d.id + '"><span style="color:#aaa;font-size:0.8rem">0 ' + cfg.item + '</span></div>';
+  cesta.addEventListener('click', () => asignarFichaADestino(d.id, cfg));
+  destinosDiv.appendChild(cesta);
+ });
+}
+
+function seleccionarFicha(fichaId, elemento, cfg){
+ if(state.juegoFichaSeleccionada === fichaId){
+  // Deseleccionar
+  state.juegoFichaSeleccionada = null;
+  $$('.ficha-reparto').forEach(f => f.style.outline = '');
+  return;
+ }
+ state.juegoFichaSeleccionada = fichaId;
+ $$('.ficha-reparto').forEach(f => f.style.outline = '');
+ elemento.style.outline = '3px solid var(--atardecer)';
+ elemento.style.outlineOffset = '2px';
+}
+
+function asignarFichaADestino(destinoId, cfg){
+ if(state.juegoFichaSeleccionada === null) return;
+
+ const ficha = state.juegoFichas.find(f => f.id === state.juegoFichaSeleccionada);
+ if(!ficha || ficha.asignada) return;
+
+ const destino = state.juegoDestinos.find(d => d.id === destinoId);
+ if(!destino) return;
+
+ // Asignar
+ ficha.asignada = true;
+ destino.fichas.push(ficha.id);
+
+ // Quitar de origen
+ const fichasOrigen = $$('#juegoFichasOrigen .ficha-reparto');
+ fichasOrigen.forEach(f => {
+  if(parseInt(f.dataset.fichaId) === ficha.id){
+   f.style.opacity = '0';
+   f.style.pointerEvents = 'none';
+   setTimeout(() => f.remove(), 300);
+  }
+ });
+
+ // Añadir a destino
+ const fichasDest = $('#destFichas-' + destinoId);
+ if(fichasDest.querySelector('span[style]')){
+  fichasDest.innerHTML = '';
+ }
+ const nuevaFicha = document.createElement('span');
+ nuevaFicha.className = 'ficha-reparto ' + cfg.tipo;
+ nuevaFicha.textContent = cfg.emoji;
+ nuevaFicha.style.animation = 'rebotar 0.4s';
+ fichasDest.appendChild(nuevaFicha);
+
+ state.juegoFichaSeleccionada = null;
+ $$('.ficha-reparto').forEach(f => f.style.outline = '');
+
+ // Actualizar contador
+ const pendientes = state.juegoFichas.filter(f => !f.asignada).length;
+ $('#juegoPendientes').textContent = pendientes;
+
+ if(pendientes === 0){
+  $('#juegoFeedback').textContent = '✅ ¡Todas las fichas repartidas! Verifica si el reparto es justo.';
+  $('#juegoFeedback').style.color = 'var(--verde)';
+ }
+}
+
+$('#btnJuegoNuevo').addEventListener('click', iniciarJuegoReparto);
+
+$('#btnJuegoVerificar').addEventListener('click', () => {
+ const pendientes = state.juegoFichas.filter(f => !f.asignada).length;
+ if(pendientes > 0){
+  $('#juegoFeedback').textContent = '❌ Aún quedan ' + pendientes + ' fichas por repartir. ¡Reparte todas!';
+  $('#juegoFeedback').style.color = 'var(--rojo)';
+  return;
+ }
+
+ // Verificar que todos los destinos tengan la misma cantidad
+ const conteos = state.juegoDestinos.map(d => d.fichas.length);
+ const todosIguales = conteos.every(c => c === conteos[0]);
+
+ if(todosIguales && conteos[0] > 0){
+  $('#juegoFeedback').textContent = '✅ ¡Reparto justo! Cada familia recibe ' + conteos[0] + ' fichas. ¡Excelente!';
+  $('#juegoFeedback').style.color = 'var(--verde)';
+  $$('.juego-cesta.destino').forEach(c => c.classList.add('completo'));
+  $('#btnJuegoVerificar').style.display = 'none';
+  state.juegoAciertos++;
+  if(state.juegoAciertos >= state.juegoMeta && !state.seccion4Completa){
+   state.seccion4Completa = true;
+   $('#check4').style.display = 'inline-block';
+   $('#seccion4').classList.add('completado');
+   $('#btnSeccion4Ok').style.display = 'inline-block';
+   actualizarProgreso();
+   mostrarToast('🎉 ¡Juego de reparto completado!', 'exito');
+  }
+ } else {
+  // Mostrar cuáles están mal
+  const esperado = state.juegoFichas.length / state.juegoDestinos.length;
+  let msg = '❌ El reparto no es justo. Cada familia debe recibir ' + esperado + ' fichas. ';
+  state.juegoDestinos.forEach((d,i) => {
+   if(d.fichas.length !== esperado){
+    msg += 'Familia ' + (i+1) + ' tiene ' + d.fichas.length + '. ';
+   }
+  });
+  $('#juegoFeedback').textContent = msg;
+  $('#juegoFeedback').style.color = 'var(--rojo)';
+  $('#btnJuegoAuto').style.display = 'inline-block';
+ }
+});
+
+$('#btnJuegoAuto').addEventListener('click', iniciarJuegoReparto);
+
+$('#btnSeccion4Ok').addEventListener('click', () => {
+ $('#seccion5').style.display = 'block';
+ $('#seccion5').scrollIntoView({behavior:'smooth'});
+ iniciarEvaluacion();
+});
+
+// ============ SECTION 5: EVALUACION ============
+function iniciarEvaluacion(){
+ state.evalPreguntas = [
+  {enunciado:'¿Cuánto es 7 × 8?', opciones:[48, 54, 56, 63], correcta:2, explicacion:'7 × 8 = 56. ¡Como 7 grupos de 8 chivos!'},
+  {enunciado:'En la ranchería hay 6 familias. Cada familia tiene 9 chivos. ¿Cuántos chivos hay en total?', opciones:[48, 54, 60, 45], correcta:1, explicacion:'6 × 9 = 54 chivos en total.'},
+  {enunciado:'Si 36 litros de agua se reparten entre 6 familias, ¿cuántos litros recibe cada una?', opciones:[4, 5, 6, 8], correcta:2, explicacion:'36 ÷ 6 = 6 litros por familia.'},
+  {enunciado:'¿Qué operación representa mejor "3 + 3 + 3 + 3 + 3"?', opciones:['3 + 5', '5 × 3', '3 × 3', '5 + 3'], correcta:1, explicacion:'5 veces 3 = 5 × 3 = 15. La multiplicación es suma repetida.'},
+  {enunciado:'Un pastor wayuu reparte 40 chivos entre 8 clanes por igual. ¿Cuántos chivos recibe cada clan?', opciones:[4, 5, 6, 8], correcta:1, explicacion:'40 ÷ 8 = 5 chivos por clan.'},
+  {enunciado:'¿Cuál es el resultado de 10 × 10?', opciones:[20, 50, 100, 110], correcta:2, explicacion:'10 × 10 = 100. ¡Una centena!'},
+ ];
+ state.evalActual = 0;
+ state.evalAciertos = 0;
+ mostrarPreguntaEval();
+}
+
+function mostrarPreguntaEval(){
+ const p = state.evalPreguntas[state.evalActual];
+ if(!p) return;
+
+ $('#evalEnunciado').textContent = p.enunciado;
+ $('#evalScore').textContent = 'Pregunta ' + (state.evalActual + 1) + ' de ' + state.evalTotal + ' | Aciertos: ' + state.evalAciertos;
+ $('#evalFeedback').textContent = '';
+ $('#btnEvalSiguiente').style.display = 'none';
+
+ const opcionesDiv = $('#evalOpciones');
+ opcionesDiv.innerHTML = '';
+ p.opciones.forEach((op, idx) => {
+  const btn = document.createElement('div');
+  btn.className = 'eval-opcion';
+  btn.textContent = op;
+  btn.addEventListener('click', () => responderEval(idx, btn));
+  opcionesDiv.appendChild(btn);
+ });
+}
+
+function responderEval(idx, btn){
+ const p = state.evalPreguntas[state.evalActual];
+ if(btn.classList.contains('seleccionada')) return;
+
+ // Desmarcar todas
+ $$('.eval-opcion').forEach(o => {
+  o.classList.remove('seleccionada', 'correcta', 'incorrecta');
+  o.style.pointerEvents = 'none';
+ });
+
+ btn.classList.add('seleccionada');
+
+ if(idx === p.correcta){
+  btn.classList.add('correcta');
+  $('#evalFeedback').textContent = '✅ ¡Correcto! ' + p.explicacion;
+  $('#evalFeedback').style.color = 'var(--verde)';
+  state.evalAciertos++;
+ } else {
+  btn.classList.add('incorrecta');
+  // Mostrar la correcta
+  const correctaBtn = $$('.eval-opcion')[p.correcta];
+  correctaBtn.classList.add('correcta');
+  $('#evalFeedback').textContent = '❌ La respuesta correcta es ' + p.opciones[p.correcta] + '. ' + p.explicacion;
+  $('#evalFeedback').style.color = 'var(--rojo)';
+ }
+
+ $('#btnEvalSiguiente').style.display = 'inline-block';
+}
+
+$('#btnEvalSiguiente').addEventListener('click', () => {
+ state.evalActual++;
+ if(state.evalActual >= state.evalTotal){
+  // Evaluación completada
+  state.seccion5Completa = true;
+  $('#check5').style.display = 'inline-block';
+  $('#seccion5').classList.add('completado');
+  actualizarProgreso();
+  mostrarToast('📝 ¡Evaluación completada!', 'exito');
+  setTimeout(mostrarResultados, 800);
+ } else {
+  mostrarPreguntaEval();
+  $('#evalPregunta').scrollIntoView({behavior:'smooth'});
+ }
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccion5').classList.remove('activo');
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ const totalSecciones = 5;
+ const completadas = (state.seccion1Completa?1:0)+(state.seccion2Completa?1:0)+(state.seccion3Completa?1:0)+(state.seccion4Completa?1:0)+(state.seccion5Completa?1:0);
+ const pct = Math.round((completadas/totalSecciones)*100);
+ const evalPct = Math.round((state.evalAciertos/state.evalTotal)*100);
+
+ $('#puntajeFinal').textContent = pct + '% Completado | Evaluación: ' + state.evalAciertos + '/' + state.evalTotal;
+
+ let mensaje = '';
+ if(pct >= 100 && evalPct >= 80){
+  mensaje = '🏆 ¡Excelente! Eres un maestro de la multiplicación y el reparto wayuu. Conoces las tablas, la división y el reparto justo. ¡Como un verdadero palabrero de la comunidad!';
+ } else if(pct >= 80){
+  mensaje = '🌟 ¡Muy bien! Has aprendido mucho sobre multiplicación y reparto. Sigue practicando.';
+ } else if(pct >= 60){
+  mensaje = '👍 ¡Buen trabajo! Has avanzado en multiplicación y división. Repite el módulo para mejorar.';
+ } else {
+  mensaje = '🌱 Vas comenzando. ¡No te rindas! Vuelve a intentarlo para dominar la multiplicación y el reparto.';
+ }
+ $('#mensajeFinal').textContent = mensaje;
+
+ // Confetti
+ const emojis = ['🌟','🐐','👜','🌵','💧','🌽','🎉','💫','✨','🧮'];
+ for(let i = 0; i < 24; i++){
+  setTimeout(() => {
+   const e = document.createElement('span');
+   e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+   e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2s ease-out forwards;';
+   e.style.left = Math.random()*90+'%';
+   e.style.top = '-50px';
+   document.body.appendChild(e);
+   setTimeout(() => e.remove(), 2100);
+  }, i*90);
+ }
+
+ if(!document.getElementById('animCaer')){
+  const style = document.createElement('style');
+  style.id = 'animCaer';
+  style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+  document.head.appendChild(style);
+ }
+
+ actualizarProgreso();
+}
+
+// ============ INIT ============
+actualizarMultiplicacion();
+generarMultEjercicio();
+cambiarTabla(6);
+generarReparto();
+actualizarProgreso();
+
+})();
+</script>
+
+<script src="../comun/volver.js"></script>
+</body>
+</html>

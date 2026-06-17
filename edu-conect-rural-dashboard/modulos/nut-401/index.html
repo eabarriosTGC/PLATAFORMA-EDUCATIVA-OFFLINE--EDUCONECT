@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NUT-401: Nutrición y Soberanía Alimentaria Wayuu | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#FFF8E1,#FFE0B2,#FFCC80);min-height:100vh}
+.container{max-width:850px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:20px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+.header .sub{color:var(--tierra-clara);font-size:0.95rem}
+
+.intro-card{background:white;border-radius:20px;padding:20px;box-shadow:var(--sombra);border:2px solid var(--arena);margin-bottom:20px}
+.intro-card p{line-height:1.7;color:var(--texto);font-size:0.95rem}
+.intro-card .wayuu-term{color:var(--atardecer);font-weight:bold}
+
+.plato-area{display:flex;flex-direction:column;align-items:center;gap:20px;margin:20px 0}
+.instruccion{text-align:center;font-size:1.1rem;color:var(--tierra);line-height:1.5;min-height:3rem;padding:10px 16px;background:white;border-radius:16px;box-shadow:var(--sombra);border:2px solid var(--wayuu-oro);width:100%}
+
+.plato-wrap{position:relative;width:280px;height:280px}
+.plato-base{width:260px;height:260px;border-radius:50%;background:conic-gradient(#FFF8E1,#FFE0B2,#FFCC80,#FFE0B2,#FFF8E1);border:6px solid var(--arena-oscura);display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.15);position:relative;margin:auto}
+.plato-base.drag-over{border-color:var(--verde);box-shadow:0 0 20px rgba(76,175,80,0.3)}
+.plato-base .placeholder{color:#bbb;font-size:1rem;text-align:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.plato-item{font-size:2.8rem;animation:popIn 0.3s ease-out;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
+.plato-item .item-nombre{display:block;font-size:0.6rem;color:var(--tierra);text-align:center;font-weight:bold}
+
+.bandeja{background:white;border-radius:20px;padding:20px;box-shadow:var(--sombra);border:2px solid var(--arena);width:100%}
+.bandeja h3{color:var(--tierra);margin-bottom:12px;font-size:1rem;text-align:center}
+.bandeja-grid{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.alimento{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 10px 8px;background:var(--blanco);border:2px solid var(--arena-oscura);border-radius:16px;cursor:grab;user-select:none;transition:all 0.2s;touch-action:none;min-width:80px}
+.alimento:hover{transform:translateY(-4px);box-shadow:0 6px 20px rgba(0,0,0,0.1);border-color:var(--wayuu-oro)}
+.alimento:active{cursor:grabbing;transform:scale(0.95)}
+.alimento .emoji{font-size:2.5rem}
+.alimento .nombre{font-size:0.75rem;font-weight:bold;color:var(--tierra);text-align:center}
+.alimento .tipo{font-size:0.65rem;color:#999;text-align:center}
+.alimento.usado{opacity:0.3;pointer-events:none;filter:grayscale(0.5)}
+.alimento.chatarra{border-color:var(--rojo);background:#FFF0F0}
+.alimento.chatarra .tipo{color:var(--rojo)}
+.alimento.chatarra:hover{border-color:var(--rojo)}
+.alimento.drag-clone{position:fixed;z-index:9999;pointer-events:none;opacity:0.8;transform:scale(1.1)}
+
+.fase-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-weight:bold;font-size:0.85rem;margin:8px 0}
+.fase-badge.proteina{background:#FFCDD2;color:#C62828}
+.fase-badge.energia{background:#FFF9C4;color:#F57F17}
+.fase-badge.vitamina{background:#C8E6C9;color:#2E7D32}
+.fase-badge.completado{background:#BBDEFB;color:#1565C0}
+
+.checklist{display:flex;gap:16px;justify-content:center;margin:15px 0;flex-wrap:wrap}
+.check-item{display:flex;align-items:center;gap:6px;padding:8px 14px;background:white;border-radius:12px;border:2px solid #ddd;font-size:0.85rem;font-weight:bold;transition:all 0.3s}
+.check-item.hecho{border-color:var(--verde);background:#E8F5E9}
+.check-item .icono{font-size:1.3rem}
+
+.trivia-area{background:white;border-radius:20px;padding:20px;box-shadow:var(--sombra);border:2px solid var(--arena);margin-top:20px;display:none}
+.trivia-area.visible{display:block}
+.trivia-pregunta{font-size:1.1rem;color:var(--tierra);margin-bottom:12px;font-weight:bold}
+.trivia-opciones{display:flex;flex-direction:column;gap:8px}
+.trivia-opciones .opcion{display:block;width:100%;padding:14px 18px;background:var(--blanco);border:2px solid var(--arena-oscura);border-radius:14px;cursor:pointer;font-size:1rem;font-weight:bold;text-align:left;transition:all 0.2s;font-family:inherit;color:var(--tierra)}
+.trivia-opciones .opcion:hover{border-color:var(--wayuu-oro);background:#FFF8E1;transform:translateX(3px)}
+.trivia-opciones .opcion.correcta{border-color:var(--verde);background:#E8F5E9}
+.trivia-opciones .opcion.incorrecta{border-color:var(--rojo);background:#FFEBEE}
+.trivia-opciones .opcion:disabled{cursor:default;transform:none!important}
+
+.puntos-finales{text-align:center;padding:30px 20px;display:none}
+.puntos-finales.visible{display:block}
+.puntos-finales .emoji-g{font-size:4rem}
+.puntos-finales h2{color:var(--tierra);margin:10px 0}
+.puntos-finales .puntaje{font-size:2rem;font-weight:800;color:var(--wayuu-oro)}
+
+@keyframes popIn{from{opacity:0;transform:scale(0.3)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+@media(max-width:600px){
+  .plato-wrap{width:220px;height:220px}
+  .plato-base{width:200px;height:200px;padding:14px}
+  .alimento{padding:8px;min-width:65px}
+  .alimento .emoji{font-size:2rem}
+  .intro-card{padding:14px}
+  .checklist{gap:8px}
+  .check-item{font-size:0.75rem;padding:6px 10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver a Módulos</a>
+
+  <div class="header">
+    <h1>🥗 Soberanía Alimentaria Wayuu</h1>
+    <div class="sub">Aprende sobre los alimentos nativos de La Guajira · Nutrición 3°-5°</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="intro-card">
+    <p>🌵 En La Guajira, la comida tradicional wayuu está llena de nutrientes que vienen de la tierra y el mar. Alimentos como el <span class="wayuu-term">kapüshua</span> (frijol), el <span class="wayuum-term">aiki</span> (maíz), el chivo y el pescado son parte de la soberanía alimentaria: la capacidad de un pueblo de decidir qué come y cómo lo produce.</p>
+    <p style="margin-top:8px">🎯 Arrastra los alimentos al plato para construir una comida saludable y completa, como la que preparan las abuelas wayuu.</p>
+  </div>
+
+  <div class="plato-area">
+    <div class="instruccion" id="instruccion">
+      <strong>Fase 1:</strong> Arrastra una <strong>proteína</strong> al plato 🥩
+    </div>
+
+    <div class="fase-badge proteina" id="faseBadge">🥩 Proteína</div>
+
+    <div class="plato-wrap">
+      <div class="plato-base" id="platoBase">
+        <span class="placeholder" id="placeholder">🍽️ Arrastra aquí</span>
+      </div>
+    </div>
+
+    <div class="checklist" id="checklist">
+      <div class="check-item" id="checkProteina"><span class="icono">🔴</span> Proteína</div>
+      <div class="check-item" id="checkEnergia"><span class="icono">🟡</span> Energía</div>
+      <div class="check-item" id="checkVitamina"><span class="icono">🟢</span> Vitaminas</div>
+    </div>
+
+    <div class="bandeja">
+      <h3>🧺 Alimentos de la tierra guajira</h3>
+      <div class="bandeja-grid" id="bandeja">
+        <div class="alimento" draggable="true" data-tipo="proteina" data-nombre="Kapüshua (Frijol guajiro)" data-wayuu="Kapüshua" data-desc="Los frijoles guajiros son ricos en proteína vegetal. Se cultivan en las temporadas de lluvia.">
+          <span class="emoji">🫘</span>
+          <span class="nombre">Kapüshua</span>
+          <span class="tipo">🥩 Proteína</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="proteina" data-nombre="Carne de Chivo" data-wayuu="Kaa'ula" data-desc="El chivo es la principal fuente de proteína animal en La Guajira. Su carne es magra y nutritiva.">
+          <span class="emoji">🍖</span>
+          <span class="nombre">Chivo</span>
+          <span class="tipo">🥩 Proteína</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="proteina" data-nombre="Pescado Fresco" data-wayuu="Wayakua" data-desc="El pescado del mar Caribe y de los jagüeyes es rico en omega-3 y proteínas.">
+          <span class="emoji">🐟</span>
+          <span class="nombre">Pescado</span>
+          <span class="tipo">🥩 Proteína</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="energia" data-nombre="Maíz (Aiki)" data-wayuu="Aiki" data-desc="El maíz es la base de la alimentación wayuu. Se muele para hacer arepas, chicha y mazamorra.">
+          <span class="emoji">🌽</span>
+          <span class="nombre">Maíz Aiki</span>
+          <span class="tipo">⚡ Energía</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="energia" data-nombre="Yuca" data-wayuu="Yuka" data-desc="La yuca es un tubérculo que da energía. Se come cocida, frita o en forma de casabe (pan de yuca).">
+          <span class="emoji">🍠</span>
+          <span class="nombre">Yuca</span>
+          <span class="tipo">⚡ Energía</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="vitamina" data-nombre="Ahuyama" data-wayuu="Wale'erü" data-desc="La ahuyama (calabaza) es rica en vitamina A. Fortalece la vista y el sistema inmunológico. Crece bien en el clima guajiro.">
+          <span class="emoji">🎃</span>
+          <span class="nombre">Ahuyama</span>
+          <span class="tipo">🥦 Vitaminas</span>
+        </div>
+        <div class="alimento" draggable="true" data-tipo="vitamina" data-nombre="Patilla (Sandía)" data-wayuu="Patala" data-desc="La patilla es una fruta jugosa que hidrata y aporta vitaminas A y C. ¡Perfecta para el calor guajiro!">
+          <span class="emoji">🍉</span>
+          <span class="nombre">Patilla</span>
+          <span class="tipo">🥦 Vitaminas</span>
+        </div>
+        <div class="alimento chatarra" draggable="true" data-tipo="chatarra" data-nombre="Gaseosa y Dulces" data-desc="Las gaseosas y dulces procesados tienen mucho azúcar pero pocos nutrientes. No ayudan a crecer fuertes.">
+          <span class="emoji">🍬</span>
+          <span class="nombre">Dulces</span>
+          <span class="tipo">⚠️ Chatarra</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trivia-area" id="triviaArea">
+    <div class="trivia-pregunta" id="triviaPregunta">❓ Pregunta</div>
+    <div class="trivia-opciones" id="triviaOpciones"></div>
+    <div style="text-align:center;margin-top:12px">
+      <span class="puntos-display" style="font-size:0.9rem;padding:4px 12px">⭐ <span id="triviaPuntos">0</span></span>
+    </div>
+  </div>
+
+  <div class="puntos-finales" id="puntosFinales">
+    <div class="emoji-g">🏆</div>
+    <h2>¡Plato Saludable Completado!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Conoces los alimentos que dan fuerza y salud en La Guajira.</p>
+    <div class="puntaje">⭐ <span id="puntosTotal">0</span> puntos</div>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var faseActual = 'proteina';
+var puntos = 0;
+var triviaCorrectas = 0;
+var preguntasRespondidas = 0;
+var arrastrando = null;
+var clone = null;
+
+var fases = ['proteina', 'energia', 'vitamina'];
+var faseIdx = 0;
+
+var triviaData = [
+  {p:'¿Qué significa "soberanía alimentaria"?', r:2, o:['Comprar toda la comida en el supermercado', 'Que un pueblo decide qué come y cómo lo produce', 'Comer solo un tipo de alimento']},
+  {p:'¿Cuál es la principal fuente de proteína en La Guajira?', r:1, o:['El pollo', 'El chivo (kaa\'ula)', 'La leche de vaca']},
+  {p:'¿Cómo se dice "maíz" en wayuunaiki?', r:1, o:['Kapüshua', 'Aiki', 'Wale\'erü']},
+  {p:'¿Por qué la patilla es buena para el clima guajiro?', r:0, o:['Porque hidrata y aporta vitaminas', 'Porque tiene mucha grasa', 'Porque se conserva sin nevera']},
+  {p:'¿Qué alimento guajiro es rico en vitamina A y fortalece la vista?', r:2, o:['La yuca', 'El chivo', 'La ahuyama']},
+  {p:'Los alimentos chatarra son malos porque:', r:1, o:['Son muy caros', 'Tienen mucho azúcar y pocos nutrientes', 'Vienen de otro país']}
+];
+
+function init(){
+  document.getElementById('progresoFill').style.width = '0%';
+  document.getElementById('progresoPct').textContent = '0%';
+  configurarDragDrop();
+  actualizarFaseUI();
+}
+
+function configurarDragDrop(){
+  var alimentos = document.querySelectorAll('.alimento');
+
+  alimentos.forEach(function(a){
+    a.addEventListener('dragstart', function(e){
+      arrastrando = this;
+      this.classList.add('drag-clone');
+      e.dataTransfer.setData('text/plain', this.dataset.tipo);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    a.addEventListener('dragend', function(){
+      this.classList.remove('drag-clone');
+      arrastrando = null;
+    });
+
+    a.addEventListener('touchstart', function(e){
+      arrastrando = this;
+      var touch = e.targetTouches[0];
+      clone = this.cloneNode(true);
+      clone.classList.add('drag-clone');
+      clone.style.width = this.offsetWidth + 'px';
+      clone.style.left = (touch.pageX - this.offsetWidth/2) + 'px';
+      clone.style.top = (touch.pageY - this.offsetHeight/2) + 'px';
+      document.body.appendChild(clone);
+      this.style.opacity = '0.3';
+    }, {passive:true});
+
+    a.addEventListener('touchmove', function(e){
+      if(!clone) return;
+      e.preventDefault();
+      var touch = e.targetTouches[0];
+      clone.style.left = (touch.pageX - clone.offsetWidth/2) + 'px';
+      clone.style.top = (touch.pageY - clone.offsetHeight/2) + 'px';
+    }, {passive:false});
+
+    a.addEventListener('touchend', function(e){
+      if(!arrastrando) return;
+      this.style.opacity = '1';
+      if(clone && clone.parentNode) clone.parentNode.removeChild(clone);
+      clone = null;
+
+      var touch = e.changedTouches[0];
+      var plato = document.getElementById('platoBase');
+      var rect = plato.getBoundingClientRect();
+      if(touch.clientX >= rect.left && touch.clientX <= rect.right &&
+         touch.clientY >= rect.top && touch.clientY <= rect.bottom){
+        soltarAlimento(arrastrando);
+      }
+      arrastrando = null;
+    });
+  });
+
+  var plato = document.getElementById('platoBase');
+  plato.addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('drag-over'); });
+  plato.addEventListener('dragleave', function(){ this.classList.remove('drag-over'); });
+  plato.addEventListener('drop', function(e){
+    e.preventDefault();
+    this.classList.remove('drag-over');
+    if(arrastrando) soltarAlimento(arrastrando);
+  });
+}
+
+function soltarAlimento(el){
+  var tipo = el.dataset.tipo;
+  var nombre = el.dataset.nombre;
+  var desc = el.dataset.desc;
+  var wayuu = el.dataset.wayuu || '';
+
+  if(tipo === 'chatarra'){
+    mostrarToast('⚠️ ' + nombre + ': ' + desc, 'error');
+    hablar('Cuidado. Los dulces y gaseosas no te dan energía verdadera. Mejor elige alimentos naturales de la tierra.');
+    return;
+  }
+
+  if(tipo !== faseActual){
+    mostrarToast('❌ Eso es saludable, pero ahora necesitamos: ' + traducirFase(faseActual), 'error');
+    hablar('Ese alimento es bueno, pero ahora necesitas ' + traducirFase(faseActual) + '. Sigue intentando.');
+    return;
+  }
+
+  if(el.classList.contains('usado')) return;
+  el.classList.add('usado');
+
+  var plato = document.getElementById('platoBase');
+  document.getElementById('placeholder').style.display = 'none';
+
+  var item = document.createElement('span');
+  item.className = 'plato-item';
+  item.textContent = el.querySelector('.emoji').textContent;
+  plato.appendChild(item);
+
+  puntos += 10;
+  actualizarPuntos();
+
+  mostrarToast('✅ ¡' + nombre + '! ' + desc, 'exito');
+  hablar('¡Excelente! Has agregado ' + nombre + '. ' + (wayuu ? 'En wayuunaiki se dice ' + wayuu + '. ' : '') + desc);
+
+  marcarChecklist(faseActual);
+  faseIdx++;
+  if(faseIdx < fases.length){
+    faseActual = fases[faseIdx];
+    actualizarFaseUI();
+  } else {
+    // Plato completado
+    completado();
+  }
+}
+
+function marcarChecklist(fase){
+  var idMap = {proteina:'checkProteina', energia:'checkEnergia', vitamina:'checkVitamina'};
+  var el = document.getElementById(idMap[fase]);
+  if(el){
+    el.classList.add('hecho');
+    var iconos = {proteina:'✅ Proteína', energia:'✅ Energía', vitamina:'✅ Vitaminas'};
+    el.innerHTML = '<span class="icono">✅</span> ' + iconos[fase].split(' ')[1];
+  }
+}
+
+function completado(){
+  document.getElementById('instruccion').innerHTML = '🎉 <strong>¡Plato saludable completado!</strong> Tienes proteína, energía y vitaminas. ¡Así come un wayuu fuerte!';
+  document.getElementById('faseBadge').textContent = '🏆 ¡Completado!';
+  document.getElementById('faseBadge').className = 'fase-badge completado';
+
+  puntos += 20;
+  actualizarPuntos();
+
+  mostrarToast('🏆 ¡Plato saludable completo! Ahora responde la trivia.', 'exito');
+  hablar('¡Felicidades! Has preparado un plato saludable con alimentos de La Guajira. Ahora responde algunas preguntas.');
+
+  document.getElementById('triviaArea').classList.add('visible');
+  mostrarTrivia();
+}
+
+function mostrarTrivia(){
+  if(triviaCorrectas >= triviaData.length){
+    finalizar();
+    return;
+  }
+  var item = triviaData[triviaCorrectas];
+  document.getElementById('triviaPregunta').textContent = item.p;
+  var opts = document.getElementById('triviaOpciones');
+  opts.innerHTML = '';
+
+  item.o.forEach(function(texto, idx){
+    var btn = document.createElement('button');
+    btn.className = 'opcion';
+    btn.textContent = texto;
+    btn.addEventListener('click', function(){
+      if(this.disabled) return;
+      var correctas = opts.querySelectorAll('.correcta');
+      if(correctas.length > 0) return;
+
+      document.querySelectorAll('#triviaOpciones .opcion').forEach(function(b){ b.disabled = true; });
+
+      if(idx === item.r){
+        btn.classList.add('correcta');
+        puntos += 15;
+        triviaCorrectas++;
+        actualizarPuntos();
+        mostrarToast('✅ ¡Correcto!', 'exito');
+        hablar('¡Correcto! ' + item.p + ' La respuesta es: ' + item.o[item.r]);
+        setTimeout(mostrarTrivia, 1500);
+      } else {
+        btn.classList.add('incorrecta');
+        opts.children[item.r].classList.add('correcta');
+        mostrarToast('❌ La respuesta correcta es: ' + item.o[item.r], 'error');
+        hablar('La respuesta correcta es: ' + item.o[item.r]);
+        setTimeout(function(){
+          triviaCorrectas++;
+          mostrarTrivia();
+        }, 2500);
+      }
+    });
+    opts.appendChild(btn);
+  });
+}
+
+function finalizar(){
+  document.getElementById('triviaArea').classList.remove('visible');
+  document.getElementById('puntosFinales').classList.add('visible');
+  document.getElementById('puntosTotal').textContent = puntos;
+  actualizarPuntos();
+  guardarDiario();
+
+  if(puntos >= 100){
+    mostrarToast('🏆 ¡Eres un guardián de la soberanía alimentaria!', 'exito');
+  }
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('nut-401', 'modulo_completado', { puntos: puntos, estrellas: Math.min(3, Math.floor(puntos/40)) }, 'Nutrición y Soberanía Alimentaria Wayuu', '🥗');
+    }
+  } catch(e){}
+}
+
+function actualizarFaseUI(){
+  var labels = {proteina:['🥩 Proteína', 'proteina'], energia:['⚡ Energía', 'energia'], vitamina:['🥦 Vitaminas', 'vitamina']};
+  var data = labels[faseActual];
+  document.getElementById('faseBadge').textContent = data[0];
+  document.getElementById('faseBadge').className = 'fase-badge ' + data[1];
+
+  var textos = {
+    proteina:'<strong>Fase 1:</strong> Arrastra una <strong>proteína</strong> al plato 🥩<br><small style="color:#666">Ejemplos: kapüshua (frijol), chivo, pescado</small>',
+    energia:'<strong>Fase 2:</strong> Arrastra un alimento de <strong>energía</strong> ⚡<br><small style="color:#666">Ejemplos: maíz (aiki), yuca</small>',
+    vitamina:'<strong>Fase 3:</strong> Arrastra un alimento con <strong>vitaminas</strong> 🥦<br><small style="color:#666">Ejemplos: ahuyama, patilla (sandía)</small>'
+  };
+  document.getElementById('instruccion').innerHTML = textos[faseActual];
+}
+
+function traducirFase(f){
+  return {proteina:'una proteína 🥩', energia:'un alimento de energía ⚡', vitamina:'una vitamina 🥦'}[f] || '';
+}
+
+function actualizarPuntos(){
+  document.getElementById('puntosDisplay').textContent = puntos;
+  document.getElementById('triviaPuntos').textContent = puntos;
+  var pct = Math.min(100, Math.round((puntos / 130) * 100));
+  document.getElementById('progresoFill').style.width = pct + '%';
+  document.getElementById('progresoPct').textContent = pct + '%';
+}
+
+function mostrarToast(msg, tipo){
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function(){
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ toast.remove(); }, 300);
+  }, 3000);
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.05;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

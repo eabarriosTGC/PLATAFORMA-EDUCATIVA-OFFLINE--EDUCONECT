@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CIEN-308: Tabla Periódica 3D | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root{
+  --cielo:#87CEEB;
+  --electron:#3498db;
+  --proton:#e74c3c;
+  --neutron:#95a5a6;
+}
+body{background:linear-gradient(180deg,#2a1f14,#1a1a2e,#16213e);color:#eee;overflow-x:hidden;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:40px 15px 20px}
+.header h1{font-size:clamp(1.8rem,5vw,2.8rem);color:#FFD4A3;text-shadow:0 0 20px rgba(212,168,67,0.5)}
+.header .sol{font-size:2.5rem;animation:flotar 3s ease-in-out infinite}
+.header p{color:#ccc;margin-top:5px}
+
+.progreso-wrap{background:rgba(255,253,247,0.1);border:1px solid rgba(255,253,247,0.2);border-radius:15px;padding:10px 18px;margin:10px 0 18px;display:flex;align-items:center;gap:12px;backdrop-filter:blur(4px)}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap;color:#FFD4A3}
+.progreso-bar{flex:1;height:14px;background:rgba(255,255,255,0.15);border-radius:10px;overflow:hidden}
+.progreso-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));transition:width 0.5s;width:0%}
+.progreso-pct{font-weight:bold;color:var(--wayuu-oro);font-size:0.9rem;min-width:36px}
+
+.puntos-display{background:linear-gradient(135deg,var(--wayuu-oro),#B8942A);color:var(--tierra);padding:8px 16px;border-radius:15px;font-weight:bold;font-size:1.1rem;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(212,168,67,0.3)}
+
+.reto-panel{background:linear-gradient(135deg,#2d1f00,#4a3a1a);border:2px solid var(--wayuu-oro);border-radius:16px;padding:15px 20px;margin-bottom:20px;text-align:center}
+.reto-panel h3{color:var(--wayuu-oro);margin:0;font-size:1.1rem}
+.reto-panel .reto-target{font-size:1.6rem;font-weight:bold;color:#FFD4A3;margin:6px 0}
+
+.tabla-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin:20px 0;max-width:700px;margin:20px auto}
+.elemento-btn{background:linear-gradient(145deg,#2a3a5c,#1a2a4c);color:#c8d8ff;border:2px solid #4a6a9c;border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.3s;font-family:inherit}
+.elemento-btn:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(74,106,156,0.4);border-color:#6a8abc}
+.elemento-btn.completado{background:linear-gradient(145deg,#1a4a2a,#0a3a1a);border-color:#4CAF50;color:#a0e0a0}
+.elemento-btn strong{display:block;font-size:1.6rem;font-weight:800}
+.elemento-btn .z-small{font-size:0.7rem;opacity:0.7}
+
+.visor-container{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,15,0.95);z-index:1000;flex-direction:column;align-items:center;justify-content:center}
+.visor-container.visible{display:flex}
+.canvas-wrap{width:100vw;height:65vh}
+.canvas-wrap canvas{display:block;width:100%!important;height:100%!important}
+.info-panel{background:rgba(255,253,247,0.95);padding:18px 30px;border-radius:20px;text-align:center;margin-top:-30px;z-index:1001;max-width:500px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+.info-panel h2{font-size:1.8rem;color:var(--tierra);margin:0}
+.info-panel .simbolo{font-size:3rem;font-weight:800;color:var(--atardecer)}
+.info-panel p{margin:4px 0;color:#555}
+.btn-cerrar{position:absolute;top:20px;right:20px;background:var(--rojo);color:white;border:none;padding:10px 22px;border-radius:12px;font-size:1.1rem;cursor:pointer;z-index:1002;font-weight:bold;font-family:inherit;transition:transform 0.2s}
+.btn-cerrar:hover{transform:scale(1.05)}
+
+.feedback{text-align:center;font-size:1.5rem;min-height:2rem;padding:8px;transition:opacity 0.3s}
+.feedback.exito{color:#4CAF50}
+.feedback.error{color:var(--rojo)}
+
+.estrellas-wrap{display:flex;justify-content:center;gap:6px;margin:10px 0}
+.estrella{font-size:2rem;transition:all 0.3s;opacity:0.2}
+.estrella.activa{opacity:1;animation:popIn 0.3s ease-out}
+
+@keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+
+@media(max-width:600px){
+  .tabla-grid{grid-template-columns:repeat(4,1fr);gap:5px}
+  .elemento-btn{padding:8px 4px}
+  .elemento-btn strong{font-size:1.2rem}
+  .info-panel{padding:14px 16px;margin-top:-20px}
+  .info-panel h2{font-size:1.4rem}
+  .info-panel .simbolo{font-size:2rem}
+  .reto-panel{padding:12px 14px}
+  .reto-panel .reto-target{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="sol">🔬</div>
+    <h1>⚛️ Tabla Periódica 3D</h1>
+    <p>Explora la materia que forma todo lo que existe · Ciencias Naturales 5°</p>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="reto-panel">
+    <h3>🎯 Reto: Encuentra el elemento</h3>
+    <div class="reto-target" id="retoTarget">🔍 Cargando...</div>
+    <p style="color:#aaa;font-size:0.85rem;margin-top:6px">Toca un elemento para ver su interior en 3D</p>
+  </div>
+
+  <div style="text-align:center;margin-bottom:12px">
+    <span class="puntos-display">⭐ <span id="puntosDisplay">0</span> puntos</span>
+  </div>
+
+  <div class="tabla-grid" id="tablaGrid"></div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="estrellas-wrap" id="estrellasWrap"></div>
+</div>
+
+<div class="visor-container" id="visorContainer">
+  <button class="btn-cerrar" id="btnCerrarVisor">✖ Cerrar</button>
+  <div class="canvas-wrap" id="canvasWrap"></div>
+  <div class="info-panel">
+    <div class="simbolo" id="infoSimbolo">X</div>
+    <h2 id="infoNombre">Nombre</h2>
+    <p>Número Atómico: <strong id="infoZ">0</strong></p>
+    <p id="infoDesc" style="font-style:italic;color:#666">Descripción</p>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+      <button class="btn btn-azul" id="btnEscuchar">🔊 Escuchar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../comun/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+if(typeof THREE === 'undefined'){
+  document.body.innerHTML = '<div style="padding:40px;text-align:center;color:red"><h2>❌ Error</h2><p>Three.js no está cargado. Verifica que ../comun/three.min.js existe.</p></div>';
+  return;
+}
+
+var elementos = [
+  {z:1, sim:'H', nom:'Hidrógeno', desc:'El elemento más ligero. Forma el agua que bebemos.'},
+  {z:2, sim:'He', nom:'Helio', desc:'Gas noble que hace flotar los globos.'},
+  {z:3, sim:'Li', nom:'Litio', desc:'Metal que se usa en baterías recargables.'},
+  {z:4, sim:'Be', nom:'Berilio', desc:'Metal ligero usado en ventanas de rayos X.'},
+  {z:5, sim:'B', nom:'Boro', desc:'Semimetal presente en detergentes.'},
+  {z:6, sim:'C', nom:'Carbono', desc:'Base de toda la vida en la Tierra.'},
+  {z:7, sim:'N', nom:'Nitrógeno', desc:'El 78% del aire que respiras es nitrógeno.'},
+  {z:8, sim:'O', nom:'Oxígeno', desc:'Vital para respirar. 21% del aire.'},
+  {z:9, sim:'F', nom:'Flúor', desc:'Protege tus dientes en la pasta dental.'},
+  {z:10, sim:'Ne', nom:'Neón', desc:'Gas noble que brilla en los letreros luminosos.'},
+  {z:11, sim:'Na', nom:'Sodio', desc:'Metal que junto al cloro forma la sal de cocina.'},
+  {z:12, sim:'Mg', nom:'Magnesio', desc:'Mineral importante para tus músculos.'},
+  {z:13, sim:'Al', nom:'Aluminio', desc:'Metal ligero para latas y ventanas.'},
+  {z:14, sim:'Si', nom:'Silicio', desc:'Base de los chips de computadora.'},
+  {z:15, sim:'P', nom:'Fósforo', desc:'Importante para los huesos y el ADN.'},
+  {z:16, sim:'S', nom:'Azufre', desc:'Huele a huevo podrido. Está en las proteínas.'},
+  {z:17, sim:'Cl', nom:'Cloro', desc:'Junto al sodio forma la sal de cocina.'},
+  {z:18, sim:'Ar', nom:'Argón', desc:'Gas noble tranquilo que no reacciona.'},
+  {z:19, sim:'K', nom:'Potasio', desc:'Mineral para el corazón y los músculos.'},
+  {z:20, sim:'Ca', nom:'Calcio', desc:'Fortalece tus huesos y dientes.'}
+];
+
+var completados = {};
+var puntos = 0;
+var estrellas = 0;
+var retoActual = null;
+
+// ---------- THREE.JS ----------
+var scene, camera, renderer, atomGroup, orbitLines;
+var electrones = [];
+var animando = false;
+
+// ---------- INIT ----------
+function init(){
+  cargarProgreso();
+  renderTabla();
+  elegirReto();
+  document.getElementById('btnCerrarVisor').addEventListener('click', cerrarVisor);
+  document.getElementById('btnEscuchar').addEventListener('click', function(){
+    var nom = document.getElementById('infoNombre').textContent;
+    var desc = document.getElementById('infoDesc').textContent;
+    hablar(nom + '. ' + desc);
+  });
+  renderEstrellas();
+}
+
+function renderTabla(){
+  var grid = document.getElementById('tablaGrid');
+  grid.innerHTML = '';
+  elementos.forEach(function(el){
+    var btn = document.createElement('button');
+    btn.className = 'elemento-btn' + (completados[el.z] ? ' completado' : '');
+    btn.innerHTML = '<strong>' + el.sim + '</strong><span class="z-small">Z=' + el.z + '</span>';
+    btn.addEventListener('click', function(){ abrirElemento(el); });
+    grid.appendChild(btn);
+  });
+}
+
+function elegirReto(){
+  var pendientes = elementos.filter(function(el){ return !completados[el.z]; });
+  if(pendientes.length === 0){
+    document.getElementById('retoTarget').innerHTML = '🏆 ¡Descubriste todos los elementos!';
+    return;
+  }
+  var el = pendientes[Math.floor(Math.random() * pendientes.length)];
+  retoActual = el.z;
+  document.getElementById('retoTarget').innerHTML = '🔍 ' + el.nom + ' (' + el.sim + ') — Z=' + el.z;
+  hablar('Encuentra el ' + el.nom + '. ' + el.desc);
+}
+
+function abrirElemento(el){
+  document.getElementById('visorContainer').classList.add('visible');
+  document.getElementById('infoSimbolo').textContent = el.sim;
+  document.getElementById('infoNombre').textContent = el.nom;
+  document.getElementById('infoZ').textContent = el.z;
+  document.getElementById('infoDesc').textContent = el.desc;
+
+  if(el.z === retoActual && !completados[el.z]){
+    completados[el.z] = true;
+    puntos += 10;
+    estrellas++;
+    guardarProgreso();
+    renderTabla();
+    renderEstrellas();
+    actualizarPuntos();
+    mostrarFeedback('✅ ¡Correcto! Descubriste el ' + el.nom, 'exito');
+    hablar('¡Excelente! Has descubierto el ' + el.nom);
+    setTimeout(function(){
+      elegirReto();
+      if(estrellas >= elementos.length){
+        setTimeout(function(){ alert('🏆 ¡Felicidades! Descubriste todos los elementos de la tabla periódica. Eres un científico 3D.'); }, 500);
+      }
+    }, 1500);
+  } else if(completados[el.z]) {
+    mostrarFeedback('🔄 Ya descubriste este elemento', 'info');
+  } else {
+    mostrarFeedback('❌ No es el elemento que buscamos. ¡Sigue intentando!', 'error');
+    hablar('Este es el ' + el.nom + '. ' + el.desc);
+  }
+
+  generarAtomo3D(el.z);
+}
+
+function cerrarVisor(){
+  document.getElementById('visorContainer').classList.remove('visible');
+  animando = false;
+  if(renderer){
+    renderer.dispose();
+    renderer.forceContextLoss && renderer.forceContextLoss();
+    document.getElementById('canvasWrap').innerHTML = '';
+  }
+}
+
+function renderEstrellas(){
+  var wrap = document.getElementById('estrellasWrap');
+  var html = '';
+  var maxEstrellas = Math.ceil(elementos.length / 5);
+  for(var i = 0; i < maxEstrellas; i++){
+    html += '<span class="estrella' + (i < Math.ceil(estrellas/5) ? ' activa' : '') + '">⭐</span>';
+  }
+  wrap.innerHTML = html;
+}
+
+function actualizarPuntos(){
+  document.getElementById('puntosDisplay').textContent = puntos;
+  var pct = Math.min(100, Math.round((puntos / (elementos.length * 10)) * 100));
+  document.getElementById('progresoFill').style.width = pct + '%';
+  document.getElementById('progresoPct').textContent = pct + '%';
+}
+
+function mostrarFeedback(msg, tipo){
+  var fb = document.getElementById('feedback');
+  fb.textContent = msg;
+  fb.className = 'feedback';
+  if(tipo) fb.classList.add(tipo);
+  clearTimeout(fb._timeout);
+  fb._timeout = setTimeout(function(){ fb.textContent = ''; fb.className = 'feedback'; }, 3000);
+}
+
+// ---------- LOCAL STORAGE ----------
+function guardarProgreso(){
+  try {
+    localStorage.setItem('cien308_completados', JSON.stringify(Object.keys(completados).map(Number)));
+    localStorage.setItem('cien308_puntos', puntos);
+    localStorage.setItem('cien308_estrellas', estrellas);
+  } catch(e){}
+  actualizarPuntos();
+}
+
+function cargarProgreso(){
+  try {
+    var saved = JSON.parse(localStorage.getItem('cien308_completados')) || [];
+    saved.forEach(function(z){ completados[z] = true; });
+    puntos = parseInt(localStorage.getItem('cien308_puntos')) || 0;
+    estrellas = parseInt(localStorage.getItem('cien308_estrellas')) || 0;
+  } catch(e){}
+  actualizarPuntos();
+}
+
+// ---------- TTS ----------
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = 0.9;
+    utterance.pitch = 1.05;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// ---------- THREE.JS ATOM ----------
+function generarAtomo3D(Z){
+  var wrap = document.getElementById('canvasWrap');
+  wrap.innerHTML = '';
+
+  scene = new THREE.Scene();
+  var aspect = window.innerWidth / (window.innerHeight * 0.65);
+  camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+  camera.position.z = Math.max(10, Z * 1.2 + 4);
+
+  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight * 0.65);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  wrap.appendChild(renderer.domElement);
+
+  var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
+  var backLight = new THREE.DirectionalLight(0x4488ff, 0.5);
+  backLight.position.set(-5, -5, -10);
+  scene.add(backLight);
+
+  atomGroup = new THREE.Group();
+  scene.add(atomGroup);
+  electrones = [];
+
+  // Núcleo: protones (rojo) y neutrones (gris)
+  var nucleoSize = Math.max(0.5, Z * 0.06);
+  for(var i = 0; i < Math.min(Z * 2, 80); i++){
+    var color = i % 2 === 0 ? 0xe74c3c : 0x95a5a6;
+    var geo = new THREE.SphereGeometry(nucleoSize, 12, 12);
+    var mat = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
+    var p = new THREE.Mesh(geo, mat);
+    var spread = Math.min(Z * 0.15, 1.5);
+    p.position.set(
+      (Math.random() - 0.5) * spread * 2,
+      (Math.random() - 0.5) * spread * 2,
+      (Math.random() - 0.5) * spread * 2
+    );
+    atomGroup.add(p);
+  }
+
+  // Órbitas y electrones
+  var numElectrones = Math.min(Z, 20);
+  var nivel = 1;
+  var eNivel = 0;
+  var maxPorNivel = [0, 2, 8, 8];
+
+  for(i = 0; i < numElectrones; i++){
+    if(eNivel >= (maxPorNivel[nivel] || 8)){ nivel++; eNivel = 0; }
+    var radio = 1.8 + nivel * 1.5;
+
+    // Anillo orbital
+    if(eNivel === 0){
+      var ringGeo = new THREE.TorusGeometry(radio, 0.04, 8, 40);
+      var ringMat = new THREE.MeshBasicMaterial({ color: 0x4488cc, transparent: true, opacity: 0.25 });
+      var ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2.5;
+      atomGroup.add(ring);
+
+      var ring2 = ring.clone();
+      ring2.rotation.x = Math.PI / 1.5;
+      ring2.rotation.y = Math.PI / 4;
+      atomGroup.add(ring2);
+    }
+
+    var eleGeo = new THREE.SphereGeometry(0.2 + Z * 0.003, 8, 8);
+    var eleMat = new THREE.MeshPhongMaterial({
+      color: 0x3498db,
+      emissive: 0x3498db,
+      emissiveIntensity: 0.3
+    });
+    var electron = new THREE.Mesh(eleGeo, eleMat);
+    var angle = (eNivel / (maxPorNivel[nivel] || 8)) * Math.PI * 2 + Math.random() * 0.5;
+    electron.position.x = Math.cos(angle) * radio;
+    electron.position.z = Math.sin(angle) * radio;
+    atomGroup.add(electron);
+    electrones.push({
+      mesh: electron,
+      angle: angle,
+      radio: radio,
+      velocidad: 0.015 / nivel,
+      inclinacion: (nivel - 1) * 0.3
+    });
+    eNivel++;
+  }
+
+  animando = true;
+  animate();
+}
+
+function animate(){
+  if(!animando) return;
+  requestAnimationFrame(animate);
+
+  atomGroup.rotation.y += 0.003;
+  atomGroup.rotation.x += 0.001;
+
+  electrones.forEach(function(e){
+    e.angle += e.velocidad;
+    e.mesh.position.x = Math.cos(e.angle) * e.radio;
+    e.mesh.position.z = Math.sin(e.angle) * e.radio;
+    e.mesh.position.y = Math.sin(e.angle * 0.7 + e.inclinacion) * e.radio * 0.15;
+  });
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', function(){
+  if(renderer && document.getElementById('visorContainer').classList.contains('visible')){
+    var w = window.innerWidth;
+    var h = window.innerHeight * 0.65;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+});
+
+init();
+
+})();
+</script>
+</body>
+</html>

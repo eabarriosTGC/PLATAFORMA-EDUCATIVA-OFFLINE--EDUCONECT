@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ING-401: Mi Primer Inglés | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E3F2FD,#BBDEFB,#90CAF9);min-height:100vh}
+.container{max-width:650px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--azul);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.stats-row{display:flex;justify-content:center;gap:20px;margin:12px 0;flex-wrap:wrap}
+.stats-row .stat{background:white;border-radius:12px;padding:6px 16px;box-shadow:var(--sombra);font-size:0.9rem;font-weight:bold;color:var(--tierra)}
+
+.memoria-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px auto;max-width:500px}
+.carta{background:linear-gradient(145deg,#2f3542,#57606f);border-radius:14px;height:110px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 16px rgba(0,0,0,0.15);user-select:none;color:white;font-weight:bold;position:relative;transform-style:preserve-3d}
+.carta:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,0,0,0.2)}
+.carta .back{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;backface-visibility:hidden}
+.carta .front{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;display:none}
+.carta.revelada{background:white;color:var(--tierra);border:3px solid var(--azul);transform:scale(1.02)}
+.carta.revelada .back{display:none}
+.carta.revelada .front{display:flex}
+.carta.emparejada{background:#C8E6C9;border:3px solid var(--verde);color:#2E7D32;cursor:default;opacity:0.7;transform:scale(0.95)}
+.carta.emparejada .back{display:none}
+.carta.emparejada .front{display:flex}
+
+.carta .texto{font-size:1.4rem;font-weight:800}
+.carta .emoji{font-size:2.8rem}
+
+.intentos{color:#999;font-size:0.85rem;margin-top:8px;text-align:center}
+
+.resultado{display:none;text-align:center;padding:30px 20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@media(max-width:500px){
+  .memoria-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .carta{height:90px;font-size:1.8rem}
+  .carta .texto{font-size:1.1rem}
+  .carta .emoji{font-size:2.2rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🌐 Mi Primer Inglés</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Aprende inglés jugando · Memory Match</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🎯 Encuentra las parejas: junta la palabra en <strong>inglés</strong> con su <strong>dibujo</strong>.
+  </div>
+
+  <div class="stats-row">
+    <span class="stat">🎯 <span id="parejasEncontradas">0</span> / <span id="totalParejas">6</span></span>
+    <span class="stat">👆 <span id="intentosCount">0</span> intentos</span>
+  </div>
+
+  <div class="memoria-grid" id="tablero"></div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🌟</div>
+    <h2>¡You are amazing!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Completaste todas las parejas en <span id="intentosFinal">0</span> intentos</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Bilingüe Junior!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var parejas = [
+  {id:1, eng:'Water', emoji:'💧'},
+  {id:2, eng:'Sun', emoji:'☀️'},
+  {id:3, eng:'Red', emoji:'🔴'},
+  {id:4, eng:'Hello', emoji:'👋'},
+  {id:5, eng:'Dog', emoji:'🐶'},
+  {id:6, eng:'Tree', emoji:'🌳'},
+  {id:7, eng:'Fish', emoji:'🐟'},
+  {id:8, eng:'Moon', emoji:'🌙'}
+];
+
+var cartas = [];
+var primera = null;
+var bloqueado = false;
+var encontradas = 0;
+var intentos = 0;
+var progresoVal = 0;
+
+function init(){
+  renderizarTablero();
+  actualizarProgreso();
+}
+
+function renderizarTablero(){
+  cartas = [];
+  parejas.forEach(function(p){
+    cartas.push({matchId:p.id, display:p.eng, tipo:'texto'});
+    cartas.push({matchId:p.id, display:p.emoji, tipo:'emoji'});
+  });
+  cartas.sort(function(){ return 0.5 - Math.random(); });
+
+  var tablero = document.getElementById('tablero');
+  tablero.innerHTML = '';
+  document.getElementById('totalParejas').textContent = parejas.length;
+
+  cartas.forEach(function(c, idx){
+    var div = document.createElement('div');
+    div.className = 'carta';
+    div.dataset.idx = idx;
+    div.innerHTML = '<div class="back">❓</div><div class="front ' + c.tipo + '">' + (c.tipo === 'texto' ? '<span class="texto">' + c.display + '</span>' : '<span class="emoji">' + c.display + '</span>') + '</div>';
+    div.addEventListener('click', function(){ voltear(div, c, idx); });
+    tablero.appendChild(div);
+  });
+}
+
+function voltear(div, carta, idx){
+  if(bloqueado || div.classList.contains('revelada') || div.classList.contains('emparejada')) return;
+
+  div.classList.add('revelada');
+
+  if(!primera){
+    primera = {div:div, carta:carta, idx:idx};
+    return;
+  }
+
+  intentos++;
+  document.getElementById('intentosCount').textContent = intentos;
+  bloqueado = true;
+
+  if(primera.carta.matchId === carta.matchId && primera.idx !== idx){
+    setTimeout(function(){
+      div.classList.add('emparejada');
+      primera.div.classList.add('emparejada');
+      encontradas++;
+      document.getElementById('parejasEncontradas').textContent = encontradas;
+      hablar(primera.carta.tipo === 'texto' ? primera.carta.display : carta.display);
+
+      if(encontradas >= parejas.length){
+        progresoVal = 100;
+        guardarProgreso();
+        actualizarProgreso();
+        setTimeout(function(){
+          document.getElementById('intentosFinal').textContent = intentos;
+          document.getElementById('resultado').classList.add('visible');
+          guardarDiario();
+          hablar('Congratulations! You matched all the words!');
+        }, 600);
+      }
+      resetearTurno();
+    }, 500);
+  } else {
+    setTimeout(function(){
+      div.classList.remove('revelada');
+      primera.div.classList.remove('revelada');
+      resetearTurno();
+    }, 1200);
+  }
+
+  progresoVal = Math.min(100, Math.round((encontradas / parejas.length) * 100));
+  actualizarProgreso();
+}
+
+function resetearTurno(){
+  primera = null;
+  bloqueado = false;
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progresoVal + '%';
+  document.getElementById('progresoPct').textContent = progresoVal + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('ing401_progreso', progresoVal); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('ing-401', 'modulo_completado', { puntos: Math.max(100 - intentos * 2, 10), estrellas: 3 }, 'Mi Primer Inglés', '🌐');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'en-US';
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

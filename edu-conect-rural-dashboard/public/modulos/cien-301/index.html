@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIEN-301: Seres Vivos del Desierto | EduConect Rural</title>
+    <link rel="stylesheet" href="../comun/educonect.css">
+    <style>
+        :root {
+            --wayuu-orange: #E8782A;
+            --wayuu-yellow: #F4C542;
+            --wayuu-red: #D94040;
+            --wayuu-blue: #3A7CC3;
+            --wayuu-green: #4CAF50;
+            --wayuu-purple: #8E44AD;
+            --wayuu-sand: #F5E6D3;
+            --wayuu-brown: #5D3A1A;
+            --wayuu-teal: #26A69A;
+            --bg-warm: #FFF8F0;
+            --card-bg: #FFFFFF;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.2);
+            --desert-sky-top: #87CEEB;
+            --desert-sky-bottom: #FFE5B4;
+            --desert-sand-light: #F5DEB3;
+            --desert-sand-mid: #DEB887;
+            --desert-cactus: #2E7D32;
+            --desert-rock: #8D6E63;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, var(--desert-sky-top) 0%, var(--desert-sky-bottom) 40%, var(--desert-sand-light) 70%, var(--desert-sand-mid) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            min-height: 92vh;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            background: linear-gradient(135deg, var(--wayuu-orange), #C85A1A);
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-light);
+            min-height: 50px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .top-bar .module-code {
+            font-weight: 700;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .top-bar .grade-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .top-bar .hud {
+            display: flex;
+            gap: 14px;
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+        .top-bar .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* --- PROGRESS BAR --- */
+        .progress-wrap {
+            height: 6px;
+            background: rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--wayuu-yellow), var(--wayuu-orange), var(--wayuu-green));
+            transition: width 0.5s ease;
+            width: 0%;
+            border-radius: 0 3px 3px 0;
+        }
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px;
+            background: #fafafa;
+        }
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+        }
+        .progress-dot.active {
+            background: var(--wayuu-orange);
+            box-shadow: 0 0 6px rgba(232,120,42,0.5);
+            transform: scale(1.3);
+        }
+        .progress-dot.done {
+            background: var(--wayuu-green);
+        }
+
+        /* --- BACK BUTTON --- */
+        .btn-back {
+            position: absolute;
+            top: 58px;
+            left: 10px;
+            z-index: 10;
+            background: rgba(255,255,255,0.9);
+            border: 2px solid var(--wayuu-orange);
+            color: var(--wayuu-orange);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-back:hover { background: var(--wayuu-orange); color: white; }
+
+        /* --- SCREENS --- */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 16px 20px 24px;
+            overflow-y: auto;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+        .screen.active { display: flex; }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-4deg); }
+            75% { transform: rotate(4deg); }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        @keyframes popCoin {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* --- WELCOME SCREEN --- */
+        .welcome-scene {
+            text-align: center;
+            padding-top: 10px;
+        }
+        .welcome-scene .desert-svg {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        .welcome-scene .shaman-msg {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            border-left: 5px solid var(--wayuu-orange);
+            text-align: left;
+        }
+        .shaman-msg h2 {
+            color: var(--wayuu-orange);
+            font-size: 1.3em;
+            margin-bottom: 6px;
+        }
+        .shaman-msg p {
+            font-size: 1em;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        .welcome-info-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 14px 0;
+        }
+        .info-card-mini {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .info-card-mini .num {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--wayuu-orange);
+        }
+        .wayuu-pattern {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .wayuu-pattern span {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            transform: rotate(45deg);
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-block;
+            padding: 14px 36px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .btn:active { transform: scale(0.94); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--wayuu-orange), var(--wayuu-red));
+            color: white;
+            box-shadow: 0 6px 20px rgba(232,120,42,0.4);
+        }
+        .btn-primary:hover { box-shadow: 0 8px 25px rgba(232,120,42,0.5); transform: translateY(-2px); }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--wayuu-blue), #2E5FA1);
+            color: white;
+            box-shadow: 0 6px 20px rgba(58,124,195,0.35);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--wayuu-green), #388E3C);
+            color: white;
+            box-shadow: 0 6px 20px rgba(76,175,80,0.35);
+        }
+        .btn-small { padding: 10px 22px; font-size: 0.95em; min-width: auto; }
+        .btn-tts {
+            background: var(--wayuu-sand);
+            border: 2px solid var(--wayuu-orange);
+            color: var(--wayuu-orange);
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .btn-tts:hover { background: var(--wayuu-orange); color: white; }
+
+        /* --- LESSON SCREEN --- */
+        .lesson-header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .lesson-header h2 {
+            font-size: 1.5em;
+            color: var(--wayuu-brown);
+        }
+        .characteristic-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .char-card {
+            background: white;
+            border-radius: 14px;
+            padding: 12px 16px;
+            border: 2px solid #f0e0d0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .char-card:hover {
+            border-color: var(--wayuu-orange);
+            box-shadow: 0 4px 12px rgba(232,120,42,0.15);
+        }
+        .char-card .char-icon {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+        .char-card .char-text h3 {
+            font-size: 1em;
+            color: var(--wayuu-orange);
+            margin-bottom: 2px;
+        }
+        .char-card .char-text p {
+            font-size: 0.85em;
+            color: #666;
+            line-height: 1.4;
+        }
+        .char-card .char-example {
+            font-size: 0.8em;
+            color: var(--wayuu-teal);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+        .lesson-animals {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .animal-card {
+            background: var(--wayuu-sand);
+            border-radius: 14px;
+            padding: 10px;
+            text-align: center;
+            min-width: 80px;
+            transition: transform 0.2s;
+        }
+        .animal-card:hover { transform: scale(1.05); }
+        .animal-card svg { width: 70px; height: 70px; display: block; margin: 0 auto 6px; }
+        .animal-card .name-es { font-weight: 700; font-size: 0.85em; color: var(--text-dark); }
+        .animal-card .name-wy { font-size: 0.75em; color: var(--wayuu-orange); }
+
+        /* --- DRAG & DROP GAME --- */
+        .drag-game-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+        .drag-source {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 10px;
+            background: var(--wayuu-sand);
+            border-radius: 14px;
+            min-height: 80px;
+        }
+        .drag-targets {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+        .drag-column {
+            flex: 1;
+            border: 3px dashed #ccc;
+            border-radius: 14px;
+            padding: 10px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+        .drag-column.highlight {
+            border-color: var(--wayuu-orange);
+            background: #FFF3E0;
+            box-shadow: inset 0 0 20px rgba(232,120,42,0.1);
+        }
+        .drag-column.wrong-highlight {
+            border-color: var(--wayuu-red);
+            background: #FFEBEE;
+            animation: shake 0.4s;
+        }
+        .drag-column h3 {
+            text-align: center;
+            font-size: 1em;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .drag-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 8px 12px;
+            cursor: grab;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9em;
+            touch-action: none;
+            user-select: none;
+        }
+        .drag-item:active { cursor: grabbing; }
+        .drag-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        .drag-item.placed {
+            cursor: default;
+            opacity: 0.8;
+            border-color: var(--wayuu-green);
+        }
+        .drag-item.wrong {
+            border-color: var(--wayuu-red);
+            background: #FFEBEE;
+            animation: shake 0.4s;
+        }
+        .drag-item.correct-reveal {
+            border-color: var(--wayuu-green);
+            background: #E8F5E9;
+        }
+        .drag-item .item-icon {
+            font-size: 1.4em;
+        }
+        .drag-column .placed-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 8px 12px;
+        }
+
+        /* --- INTRUDER GAME --- */
+        .intruder-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .intruder-card {
+            background: white;
+            border: 3px solid #eee;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .intruder-card:hover {
+            border-color: var(--wayuu-orange);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .intruder-card:active { transform: scale(0.95); }
+        .intruder-card .card-icon {
+            font-size: 3em;
+        }
+        .intruder-card .card-name {
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+        .intruder-card.found-intruder {
+            border-color: var(--wayuu-green);
+            background: #E8F5E9;
+        }
+        .intruder-card.wrong-pick {
+            border-color: var(--wayuu-red);
+            background: #FFEBEE;
+            animation: shake 0.4s;
+        }
+        .intruder-feedback {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 10px;
+            min-height: 44px;
+        }
+
+        /* --- FINAL SCREEN --- */
+        .final-header { text-align: center; padding-top: 10px; }
+        .final-header .trophy {
+            font-size: 5em;
+            animation: bounceIn 0.8s ease-out;
+        }
+        .final-header h2 {
+            color: var(--wayuu-orange);
+            font-size: 1.6em;
+            margin: 6px 0;
+        }
+        .stars-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            font-size: 2.5em;
+        }
+        .stars-row .star {
+            animation: bounceIn 0.5s ease-out;
+        }
+        .stars-row .star:nth-child(2) { animation-delay: 0.15s; }
+        .stars-row .star:nth-child(3) { animation-delay: 0.3s; }
+        .achievement-card {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 12px 0;
+            border-left: 5px solid var(--wayuu-green);
+        }
+        .achievement-card .ach-item {
+            font-size: 0.95em;
+            padding: 4px 0;
+            color: var(--text-dark);
+        }
+        .achievement-card .wayuu-blessing {
+            margin-top: 10px;
+            text-align: center;
+            font-style: italic;
+            color: var(--wayuu-orange);
+            font-weight: 600;
+        }
+        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+
+        /* --- CONFETTI --- */
+        .confetti {
+            position: fixed;
+            top: -20px;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: 3px;
+        }
+        .coin-popup {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            font-weight: 800;
+            font-size: 1.4em;
+            color: var(--wayuu-yellow);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: popCoin 1s ease-out forwards;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 500px) {
+            .drag-targets { flex-direction: column; }
+            .drag-column { min-height: 120px; }
+            .intruder-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .intruder-card { padding: 10px; }
+            .welcome-info-cards { grid-template-columns: 1fr; }
+            .btn { padding: 12px 28px; font-size: 1.05em; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <span class="module-code">CIEN-301</span>
+        <span class="grade-badge">Grado 1°</span>
+        <div class="hud">
+            <div class="hud-item">⭐ <span id="hud-stars">0</span></div>
+            <div class="hud-item">💎 <span id="hud-points">0</span></div>
+        </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrap"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-dots" id="progress-dots"></div>
+
+    <!-- BACK BUTTON -->
+    <a class="btn-back" href="../index.html" title="Volver al catálogo">← Salir</a>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 0: WELCOME -->
+    <!-- ============================================================ -->
+    <section class="screen active" id="screen-welcome">
+        <div class="welcome-scene">
+            <!-- Desert SVG scene with chivo and cardón -->
+            <svg class="desert-svg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" style="animation: float 3s ease-in-out infinite;">
+                <!-- Sky gradient -->
+                <defs>
+                    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#87CEEB"/>
+                        <stop offset="100%" stop-color="#FFE5B4"/>
+                    </linearGradient>
+                    <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#F5DEB3"/>
+                        <stop offset="100%" stop-color="#DEB887"/>
+                    </linearGradient>
+                </defs>
+                <!-- Sky -->
+                <rect width="320" height="120" fill="url(#skyGrad)"/>
+                <!-- Sun -->
+                <circle cx="270" cy="40" r="22" fill="#FFD700" opacity="0.9"/>
+                <circle cx="270" cy="40" r="28" fill="#FFD700" opacity="0.2"/>
+                <!-- Sand dunes -->
+                <path d="M0,120 Q40,95 80,115 Q130,90 180,112 Q230,95 280,115 Q310,105 320,110 L320,200 L0,200 Z" fill="url(#sandGrad)"/>
+                <path d="M0,135 Q60,120 120,140 Q180,125 240,140 Q290,130 320,135 L320,200 L0,200 Z" fill="#DEB887" opacity="0.5"/>
+                <!-- Cardón cactus (left) -->
+                <rect x="60" y="70" width="10" height="50" rx="5" fill="#2E7D32"/>
+                <rect x="55" y="92" width="6" height="20" rx="3" fill="#388E3C" transform="rotate(-20,58,102)"/>
+                <rect x="72" y="82" width="6" height="22" rx="3" fill="#388E3C" transform="rotate(15,75,92)"/>
+                <rect x="50" y="72" width="5" height="14" rx="3" fill="#43A047" transform="rotate(-30,52,79)"/>
+                <!-- Chivo / Mürü (center-right) -->
+                <ellipse cx="200" cy="115" rx="18" ry="12" fill="#C8A882"/>
+                <circle cx="215" cy="105" r="9" fill="#C8A882"/>
+                <circle cx="218" cy="103" r="2.5" fill="#333"/>
+                <rect x="218" y="110" width="3" height="6" rx="1" fill="#A08060"/>
+                <!-- Chivo horns -->
+                <path d="M210,98 Q214,82 222,80" stroke="#8D6E63" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <path d="M212,100 Q220,86 226,85" stroke="#8D6E63" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <!-- Chivo legs -->
+                <rect x="192" y="125" width="3" height="12" rx="1" fill="#A08060"/>
+                <rect x="198" y="125" width="3" height="12" rx="1" fill="#A08060"/>
+                <rect x="204" y="125" width="3" height="12" rx="1" fill="#A08060"/>
+                <rect x="210" y="125" width="3" height="12" rx="1" fill="#A08060"/>
+                <!-- Chivo ear -->
+                <ellipse cx="207" cy="100" rx="5" ry="7" fill="#B8956A" transform="rotate(-20,207,100)"/>
+                <!-- Small cactus right -->
+                <rect x="260" y="100" width="7" height="30" rx="4" fill="#388E3C"/>
+                <rect x="255" y="112" width="5" height="14" rx="3" fill="#43A047" transform="rotate(-25,257,118)"/>
+                <rect x="270" y="108" width="5" height="16" rx="3" fill="#43A047" transform="rotate(20,272,116)"/>
+            </svg>
+
+            <div class="shaman-msg">
+                <h2>🌵 ¡El chamán te necesita!</h2>
+                <p>¡Joutai (saludos)! Soy el chamán de la ranchería. En nuestro desierto guajiro viven muchos animales y plantas. Pero necesito tu ayuda para <strong>clasificar los seres vivos</strong> y distinguirlos de lo que no tiene vida.</p>
+                <p style="margin-top:6px;">¿Sabes cuáles son los seres vivos del desierto? ¡Vamos a descubrirlo juntos!</p>
+            </div>
+
+            <div class="wayuu-pattern">
+                <span style="background:#E8782A;"></span><span style="background:#F4C542;"></span><span style="background:#D94040;"></span>
+                <span style="background:#3A7CC3;"></span><span style="background:#4CAF50;"></span><span style="background:#8E44AD;"></span>
+                <span style="background:#26A69A;"></span><span style="background:#E8782A;"></span>
+            </div>
+
+            <div class="welcome-info-cards">
+                <div class="info-card-mini"><div class="num">🐐</div><div>Animales<br>del desierto</div></div>
+                <div class="info-card-mini"><div class="num">🌵</div><div>Plantas<br>nativas</div></div>
+                <div class="info-card-mini"><div class="num">🏜️</div><div>Cultura<br>Wayuu</div></div>
+                <div class="info-card-mini"><div class="num">🎮</div><div>2 Juegos<br>divertidos</div></div>
+            </div>
+
+            <button class="btn btn-primary" onclick="goToScreen('screen-lesson')" style="margin: 0 auto 10px;">
+                🚀 ¡A explorar!
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 1: LESSON - ¿Qué es un ser vivo? -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-lesson">
+        <div class="lesson-header">
+            <h2>🌱 ¿Qué es un ser vivo?</h2>
+            <p style="color:#888;margin-top:4px;">Toca cada tarjeta para escuchar</p>
+        </div>
+
+        <div class="characteristic-cards">
+            <!-- Card 1: Nacen -->
+            <div class="char-card" onclick="Gamificacion.pronunciar('Los seres vivos nacen. Un chivito nace de su mamá cabra.');">
+                <svg class="char-icon" viewBox="0 0 60 60">
+                    <circle cx="30" cy="22" r="12" fill="#FFCC80"/>
+                    <circle cx="27" cy="20" r="2" fill="#333"/>
+                    <circle cx="33" cy="20" r="2" fill="#333"/>
+                    <path d="M26,26 Q30,31 34,26" stroke="#333" stroke-width="1.5" fill="none"/>
+                    <ellipse cx="30" cy="42" rx="14" ry="8" fill="#90CAF9"/>
+                    <!-- Baby animal -->
+                    <ellipse cx="30" cy="52" rx="5" ry="4" fill="#FFE0B2"/>
+                    <circle cx="30" cy="49" r="2.5" fill="#FFCC80"/>
+                </svg>
+                <div class="char-text">
+                    <h3>1️⃣ Nacen</h3>
+                    <p>Todos los seres vivos nacen. Una cabrita nace de su mamá.</p>
+                    <div class="char-example">🐐 Mürü (chivo) nace de su mamá</div>
+                </div>
+                <button class="btn-tts" onclick="event.stopPropagation(); Gamificacion.pronunciar('Los seres vivos nacen. Un chivito nace de su mamá cabra.');">🔊</button>
+            </div>
+
+            <!-- Card 2: Crecen -->
+            <div class="char-card" onclick="Gamificacion.pronunciar('Los seres vivos crecen. Un cardón crece desde una semillita.');">
+                <svg class="char-icon" viewBox="0 0 60 60">
+                    <!-- Small seed -->
+                    <ellipse cx="30" cy="50" rx="3" ry="4" fill="#8D6E63"/>
+                    <!-- Small sprout -->
+                    <rect x="27" y="38" width="6" height="12" rx="2" fill="#66BB6A"/>
+                    <circle cx="30" cy="36" r="6" fill="#81C784"/>
+                    <!-- Medium plant -->
+                    <rect x="16" y="24" width="6" height="16" rx="2" fill="#43A047" opacity="0.5"/>
+                    <rect x="38" y="20" width="6" height="20" rx="2" fill="#43A047" opacity="0.4"/>
+                    <!-- Growth arrow -->
+                    <path d="M8,15 L20,15" stroke="#4CAF50" stroke-width="2"/>
+                    <polygon points="20,12 20,18 25,15" fill="#4CAF50"/>
+                </svg>
+                <div class="char-text">
+                    <h3>2️⃣ Crecen</h3>
+                    <p>Los seres vivos crecen con el tiempo. Una semilla se vuelve planta.</p>
+                    <div class="char-example">🌵 El cardón (yotojoro) crece muy alto</div>
+                </div>
+                <button class="btn-tts" onclick="event.stopPropagation(); Gamificacion.pronunciar('Los seres vivos crecen. Un cardón crece desde una semillita.');">🔊</button>
+            </div>
+
+            <!-- Card 3: Se alimentan -->
+            <div class="char-card" onclick="Gamificacion.pronunciar('Los seres vivos se alimentan. El chivo come hojas de cardón.');">
+                <svg class="char-icon" viewBox="0 0 60 60">
+                    <!-- Mouth eating -->
+                    <circle cx="30" cy="30" r="14" fill="#FFCC80"/>
+                    <path d="M22,28 Q30,36 38,28" fill="#E57373" stroke="#C62828" stroke-width="1"/>
+                    <circle cx="26" cy="26" r="2" fill="#333"/>
+                    <circle cx="34" cy="26" r="2" fill="#333"/>
+                    <!-- Food leaf -->
+                    <path d="M10,18 Q15,12 20,18 Q15,16 10,18" fill="#66BB6A" transform="rotate(-20,15,15)"/>
+                    <path d="M48,20 Q52,14 56,20 Q52,18 48,20" fill="#66BB6A" transform="rotate(15,52,17)"/>
+                </svg>
+                <div class="char-text">
+                    <h3>3️⃣ Se alimentan</h3>
+                    <p>Los seres vivos necesitan alimento para vivir y tener energía.</p>
+                    <div class="char-example">🐐 El chivo come hojas y cardón</div>
+                </div>
+                <button class="btn-tts" onclick="event.stopPropagation(); Gamificacion.pronunciar('Los seres vivos se alimentan. El chivo come hojas de cardón.');">🔊</button>
+            </div>
+
+            <!-- Card 4: Se reproducen -->
+            <div class="char-card" onclick="Gamificacion.pronunciar('Los seres vivos se reproducen. Tienen crías para que haya más animales.');">
+                <svg class="char-icon" viewBox="0 0 60 60">
+                    <!-- Parent animal -->
+                    <ellipse cx="30" cy="25" rx="12" ry="10" fill="#FFE0B2"/>
+                    <circle cx="26" cy="22" r="2" fill="#333"/>
+                    <circle cx="34" cy="22" r="2" fill="#333"/>
+                    <path d="M27,28 Q30,32 33,28" stroke="#333" stroke-width="1.2" fill="none"/>
+                    <!-- Baby animal -->
+                    <ellipse cx="48" cy="40" rx="7" ry="6" fill="#FFE0B2" opacity="0.8"/>
+                    <circle cx="46" cy="38" r="1.5" fill="#333"/>
+                    <circle cx="50" cy="38" r="1.5" fill="#333"/>
+                    <path d="M47,42 Q49,44 51,42" stroke="#333" stroke-width="1" fill="none"/>
+                    <!-- Heart -->
+                    <text x="9" y="45" font-size="14">❤️</text>
+                </svg>
+                <div class="char-text">
+                    <h3>4️⃣ Se reproducen</h3>
+                    <p>Los seres vivos tienen crías. Así hay más animales en el desierto.</p>
+                    <div class="char-example">🦎 Wale'erü (iguana) pone huevos</div>
+                </div>
+                <button class="btn-tts" onclick="event.stopPropagation(); Gamificacion.pronunciar('Los seres vivos se reproducen. Tienen crías para que haya más animales.');">🔊</button>
+            </div>
+        </div>
+
+        <div class="lesson-animals">
+            <div class="animal-card">
+                <svg viewBox="0 0 70 70"><ellipse cx="30" cy="40" rx="16" ry="12" fill="#C8A882"/><circle cx="38" cy="32" r="8" fill="#C8A882"/><circle cx="40" cy="30" r="2.5" fill="#333"/><path d="M34,36 Q38,40 42,36" stroke="#333" stroke-width="1.2" fill="none"/><rect x="24" y="50" width="3" height="10" rx="1" fill="#A08060"/><rect x="35" y="50" width="3" height="10" rx="1" fill="#A08060"/></svg>
+                <div class="name-es">Chivo</div><div class="name-wy">Mürü</div>
+            </div>
+            <div class="animal-card">
+                <svg viewBox="0 0 70 70"><ellipse cx="32" cy="38" rx="18" ry="8" fill="#66BB6A"/><circle cx="38" cy="30" r="7" fill="#81C784"/><circle cx="40" cy="29" r="2" fill="#333"/><rect x="28" y="44" width="3" height="8" rx="1" fill="#558B2F"/><rect x="36" y="44" width="3" height="8" rx="1" fill="#558B2F"/><path d="M20,30 Q28,20 35,28" stroke="#558B2F" stroke-width="2" fill="none"/></svg>
+                <div class="name-es">Iguana</div><div class="name-wy">Wale'erü</div>
+            </div>
+            <div class="animal-card">
+                <svg viewBox="0 0 70 70"><circle cx="30" cy="35" r="16" fill="#FF8A80"/><circle cx="36" cy="32" r="2.5" fill="#333"/><path d="M30,38 L40,20 L48,38" fill="#FF5252"/><rect x="24" y="50" width="3" height="12" rx="1" fill="#E57373"/><rect x="36" y="50" width="3" height="14" rx="1" fill="#E57373"/></svg>
+                <div class="name-es">Flamenco</div><div class="name-wy">Wüchü</div>
+            </div>
+            <div class="animal-card">
+                <svg viewBox="0 0 70 70"><rect x="28" y="25" width="7" height="30" rx="4" fill="#2E7D32"/><rect x="22" y="38" width="5" height="12" rx="3" fill="#388E3C" transform="rotate(-25,24,44)"/><rect x="38" y="35" width="5" height="14" rx="3" fill="#388E3C" transform="rotate(20,40,42)"/><rect x="20" y="30" width="4" height="10" rx="2" fill="#43A047" transform="rotate(-40,22,35)"/></svg>
+                <div class="name-es">Cardón</div><div class="name-wy">Yotojoro</div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="goToScreen('screen-game1')" style="margin: 10px auto; display: block;">
+            🎮 ¡A jugar! ¿Vivo o no vivo?
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 2: GAME 1 - Drag & Drop ¿Vivo o no vivo? -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-game1">
+        <h2 style="text-align:center;color:var(--wayuu-brown);margin-bottom:4px;">🎯 Juego 1: ¿Vivo o no vivo?</h2>
+        <p style="text-align:center;color:#888;font-size:0.9em;margin-bottom:8px;">Arrastra cada tarjeta a la columna correcta</p>
+
+        <div class="drag-game-layout" id="drag-game-layout">
+            <!-- Source items -->
+            <div class="drag-source" id="drag-source"></div>
+
+            <!-- Target columns -->
+            <div class="drag-targets">
+                <div class="drag-column" id="col-vivo" data-category="vivo"
+                     ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                    <h3>🐾 SER VIVO</h3>
+                </div>
+                <div class="drag-column" id="col-novivo" data-category="novivo"
+                     ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                    <h3>🪨 NO VIVO</h3>
+                </div>
+            </div>
+        </div>
+
+        <div id="game1-feedback" style="text-align:center;font-weight:700;font-size:1em;min-height:28px;padding:6px;"></div>
+        <div style="text-align:center;color:#888;font-size:0.85em;">
+            <span id="game1-placed">0</span> / <span id="game1-total">8</span> colocados ·
+            Aciertos: <span id="game1-correct">0</span>
+        </div>
+
+        <button class="btn btn-success" id="game1-continue" style="display:none;margin:10px auto;" onclick="goToScreen('screen-game2')">
+            ✅ ¡Siguiente juego!
+        </button>
+        <button class="btn btn-small btn-secondary" style="display:inline-block;margin:8px auto;" onclick="resetGame1()">
+            🔄 Intentar de nuevo
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 3: GAME 2 - Encuentra el intruso -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-game2">
+        <h2 style="text-align:center;color:var(--wayuu-brown);margin-bottom:4px;">🔍 Juego 2: Encuentra el intruso</h2>
+        <p style="text-align:center;color:#888;font-size:0.9em;margin-bottom:4px;">Toca el que <strong>NO</strong> es un ser vivo</p>
+
+        <div style="text-align:center;color:var(--wayuu-orange);font-weight:700;margin-bottom:4px;">
+            Ronda <span id="intruder-round">1</span> de 5 ·
+            Aciertos: <span id="intruder-score">0</span>
+        </div>
+
+        <div class="intruder-grid" id="intruder-grid"></div>
+        <div class="intruder-feedback" id="intruder-feedback"></div>
+
+        <button class="btn btn-success" id="game2-continue" style="display:none;margin:10px auto;" onclick="goToScreen('screen-final')">
+            🏆 ¡Ver resultados!
+        </button>
+        <button class="btn btn-small btn-secondary" style="display:inline-block;margin:4px auto;" onclick="resetGame2()">
+            🔄 Reiniciar juego
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 4: FINAL -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-final">
+        <div class="final-header">
+            <div class="trophy">🏆</div>
+            <h2>¡Lo lograste, explorador!</h2>
+            <p style="color:#666;">El chamán está muy orgulloso de ti</p>
+        </div>
+
+        <div class="stars-row" id="final-stars">
+            <span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span>
+        </div>
+
+        <div class="achievement-card" id="achievement-card"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="restartModule()">🔄 Jugar otra vez</button>
+            <a class="btn btn-secondary" href="../index.html" style="text-decoration:none;">📚 Más módulos</a>
+        </div>
+    </section>
+
+</div><!-- /app-container -->
+
+<!-- External dependencies (fallback if not loaded) -->
+<script src="../comun/gamificacion.js"></script>
+<script src="../comun/progreso.js"></script>
+
+<script>
+// ============================================================
+// GAMIFICACION (self-contained, overridden if ../comun/gamificacion.js loads)
+// ============================================================
+var Gamificacion = window.Gamificacion || {};
+
+Gamificacion.puntos = Gamificacion.puntos || 0;
+Gamificacion.estrellas = Gamificacion.estrellas || 0;
+Gamificacion.logros = Gamificacion.logros || [];
+Gamificacion._inited = Gamificacion._inited || false;
+
+if (!Gamificacion._inited) {
+    Gamificacion._inited = true;
+
+    Gamificacion.registrarAcierto = function() {
+        Gamificacion.puntos += 10;
+        Gamificacion._flashCoin();
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.registrarError = function() {
+        // No points lost, just feedback
+    };
+
+    Gamificacion.sumarPuntos = function(n) {
+        Gamificacion.puntos += n;
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.sumarEstrella = function() {
+        Gamificacion.estrellas++;
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.desbloquearLogro = function(id, titulo, icono) {
+        if (!Gamificacion.logros.find(function(l) { return l.id === id; })) {
+            Gamificacion.logros.push({ id: id, titulo: titulo, icono: icono });
+            Gamificacion.actualizarHUD();
+        }
+    };
+
+    Gamificacion.pronunciar = function(texto, velocidad) {
+        velocidad = velocidad || 0.9;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            var utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = 'es-CO';
+            utterance.rate = velocidad;
+            utterance.pitch = 1.1;
+            // Try to use a female voice
+            var voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                var spanishVoice = voices.find(function(v) { return v.lang.indexOf('es') === 0 && v.name.indexOf('Female') !== -1; });
+                if (!spanishVoice) spanishVoice = voices.find(function(v) { return v.lang.indexOf('es') === 0; });
+                if (spanishVoice) utterance.voice = spanishVoice;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
+    Gamificacion.lanzarConfeti = function(count) {
+        count = count || 50;
+        var colors = ['#E8782A','#F4C542','#D94040','#3A7CC3','#4CAF50','#8E44AD','#FF6B6B','#48DBFB','#FFD700','#26A69A'];
+        for (var i = 0; i < count; i++) {
+            setTimeout((function(idx) { return function() {
+                var confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (2.5 + Math.random() * 3) + 's';
+                confetti.style.animationDelay = Math.random() * 0.6 + 's';
+                confetti.style.width = (7 + Math.random() * 12) + 'px';
+                confetti.style.height = (7 + Math.random() * 12) + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                document.body.appendChild(confetti);
+                setTimeout(function() { confetti.remove(); }, 4000);
+            }; })(i), i * 40);
+        }
+    };
+
+    Gamificacion.actualizarHUD = function() {
+        var starsEl = document.getElementById('hud-stars');
+        var pointsEl = document.getElementById('hud-points');
+        if (starsEl) starsEl.textContent = Gamificacion.estrellas;
+        if (pointsEl) pointsEl.textContent = Gamificacion.puntos;
+    };
+
+    Gamificacion.calcularPorcentaje = function(completados, total) {
+        return total > 0 ? Math.round((completados / total) * 100) : 0;
+    };
+
+    Gamificacion._flashCoin = function() {
+        var coin = document.createElement('div');
+        coin.className = 'coin-popup';
+        coin.textContent = '+10 💎';
+        coin.style.left = '50%';
+        coin.style.top = '40%';
+        document.body.appendChild(coin);
+        setTimeout(function() { coin.remove(); }, 1000);
+    };
+}
+
+// ============================================================
+// PROGRESO (self-contained, overridden if ../comun/progreso.js loads)
+// ============================================================
+var Progreso = window.Progreso || {};
+
+if (!Progreso._inited) {
+    Progreso._inited = true;
+
+    Progreso.guardar = function(moduloId, datos) {
+        try {
+            var key = 'educonect_' + moduloId;
+            var existing = JSON.parse(localStorage.getItem(key) || '{}');
+            for (var k in datos) { if (datos.hasOwnProperty(k)) existing[k] = datos[k]; }
+            localStorage.setItem(key, JSON.stringify(existing));
+        } catch(e) { /* storage unavailable */ }
+    };
+
+    Progreso.cargar = function(moduloId) {
+        try {
+            return JSON.parse(localStorage.getItem('educonect_' + moduloId) || '{}');
+        } catch(e) { return {}; }
+    };
+}
+
+// ============================================================
+// SCREEN NAVIGATION
+// ============================================================
+var currentScreen = 'screen-welcome';
+
+function goToScreen(screenId) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+        screens[i].classList.remove('active');
+    }
+    var target = document.getElementById(screenId);
+    if (target) {
+        target.classList.add('active');
+        currentScreen = screenId;
+        updateProgress();
+        // Initialize games when their screens load
+        if (screenId === 'screen-game1') initGame1();
+        if (screenId === 'screen-game2') initGame2();
+        if (screenId === 'screen-final') showFinalScreen();
+    }
+}
+
+function updateProgress() {
+    var screens = ['screen-welcome', 'screen-lesson', 'screen-game1', 'screen-game2', 'screen-final'];
+    var idx = screens.indexOf(currentScreen);
+    var pct = idx >= 0 ? Math.round(((idx + 1) / screens.length) * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+
+    // Update dots
+    var dotsContainer = document.getElementById('progress-dots');
+    dotsContainer.innerHTML = '';
+    for (var i = 0; i < screens.length; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'progress-dot';
+        if (i < idx) dot.classList.add('done');
+        if (i === idx) dot.classList.add('active');
+        dotsContainer.appendChild(dot);
+    }
+}
+
+// ============================================================
+// GAME 1: DRAG & DROP - ¿Vivo o no vivo?
+// ============================================================
+var game1Items = [
+    { id: 'chivo', name: '🐐 Chivo (Mürü)', category: 'vivo', emoji: '🐐' },
+    { id: 'iguana', name: '🦎 Iguana (Wale\'erü)', category: 'vivo', emoji: '🦎' },
+    { id: 'cactus', name: '🌵 Cardón (Yotojoro)', category: 'vivo', emoji: '🌵' },
+    { id: 'flamenco', name: '🦩 Flamenco (Wüchü)', category: 'vivo', emoji: '🦩' },
+    { id: 'arena', name: '🏜️ Arena', category: 'novivo', emoji: '🏜️' },
+    { id: 'piedra', name: '🪨 Piedra', category: 'novivo', emoji: '🪨' },
+    { id: 'sol', name: '☀️ Sol', category: 'novivo', emoji: '☀️' },
+    { id: 'agua', name: '💧 Agua', category: 'novivo', emoji: '💧' }
+];
+
+var game1Placed = 0;
+var game1Correct = 0;
+var game1Total = 8;
+
+function shuffleArray(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
+    }
+}
+
+function initGame1() {
+    game1Placed = 0;
+    game1Correct = 0;
+    var source = document.getElementById('drag-source');
+    source.innerHTML = '';
+
+    // Clear target columns
+    document.getElementById('col-vivo').innerHTML = '<h3>🐾 SER VIVO</h3>';
+    document.getElementById('col-novivo').innerHTML = '<h3>🪨 NO VIVO</h3>';
+
+    // Shuffle items
+    var items = game1Items.slice();
+    shuffleArray(items);
+
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var el = document.createElement('div');
+        el.className = 'drag-item';
+        el.draggable = true;
+        el.dataset.id = item.id;
+        el.dataset.category = item.category;
+        el.id = 'drag-' + item.id;
+        el.innerHTML = '<span class="item-icon">' + item.emoji + '</span>' + item.name;
+
+        // Drag events
+        el.addEventListener('dragstart', handleDragStart);
+        el.addEventListener('dragend', handleDragEnd);
+
+        // Touch events for mobile
+        el.addEventListener('touchstart', handleTouchStart, { passive: false });
+        el.addEventListener('touchmove', handleTouchMove, { passive: false });
+        el.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+        source.appendChild(el);
+    }
+
+    document.getElementById('game1-placed').textContent = '0';
+    document.getElementById('game1-total').textContent = items.length;
+    document.getElementById('game1-correct').textContent = '0';
+    document.getElementById('game1-feedback').textContent = '';
+    document.getElementById('game1-continue').style.display = 'none';
+    game1Total = items.length;
+}
+
+var draggedItem = null;
+var touchDraggedItem = null;
+var touchClone = null;
+var touchStartX = 0;
+var touchStartY = 0;
+var touchOffsetX = 0;
+var touchOffsetY = 0;
+
+function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.id);
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    draggedItem = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('highlight');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('highlight');
+    this.classList.remove('wrong-highlight');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('highlight');
+    var itemId = e.dataTransfer.getData('text/plain');
+    var columnCategory = this.dataset.category;
+    placeItem(itemId, columnCategory, this);
+}
+
+// Touch support
+function handleTouchStart(e) {
+    e.preventDefault();
+    if (!e.touches || e.touches.length === 0) return;
+    touchDraggedItem = this;
+    this.classList.add('dragging');
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    var rect = this.getBoundingClientRect();
+    touchOffsetX = touchStartX - rect.left;
+    touchOffsetY = touchStartY - rect.top;
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!touchDraggedItem || !e.touches || e.touches.length === 0) return;
+
+    var touch = e.touches[0];
+    var targetColumn = getColumnUnderPoint(touch.clientX, touch.clientY);
+
+    // Remove highlight from all columns
+    var columns = document.querySelectorAll('.drag-column');
+    for (var i = 0; i < columns.length; i++) {
+        columns[i].classList.remove('highlight');
+    }
+    if (targetColumn) {
+        targetColumn.classList.add('highlight');
+    }
+
+    // Move the item visually
+    if (!touchClone) {
+        touchClone = touchDraggedItem.cloneNode(true);
+        touchClone.style.position = 'fixed';
+        touchClone.style.zIndex = '9997';
+        touchClone.style.opacity = '0.85';
+        touchClone.style.pointerEvents = 'none';
+        touchClone.style.width = touchDraggedItem.offsetWidth + 'px';
+        document.body.appendChild(touchClone);
+    }
+    touchClone.style.left = (touch.clientX - touchOffsetX) + 'px';
+    touchClone.style.top = (touch.clientY - touchOffsetY) + 'px';
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
+    var columns = document.querySelectorAll('.drag-column');
+    for (var i = 0; i < columns.length; i++) {
+        columns[i].classList.remove('highlight');
+    }
+
+    if (touchClone) {
+        touchClone.remove();
+        touchClone = null;
+    }
+
+    if (!touchDraggedItem) return;
+
+    var touch = e.changedTouches[0];
+    var targetColumn = getColumnUnderPoint(touch.clientX, touch.clientY);
+
+    touchDraggedItem.classList.remove('dragging');
+
+    if (targetColumn) {
+        placeItem(touchDraggedItem.dataset.id, targetColumn.dataset.category, targetColumn);
+    }
+
+    touchDraggedItem = null;
+}
+
+function getColumnUnderPoint(x, y) {
+    var el = document.elementFromPoint(x, y);
+    while (el) {
+        if (el.classList && el.classList.contains('drag-column')) return el;
+        el = el.parentElement;
+    }
+    return null;
+}
+
+function placeItem(itemId, targetCategory, columnEl) {
+    var itemEl = document.getElementById('drag-' + itemId);
+    if (!itemEl || itemEl.classList.contains('placed')) return;
+
+    var correctCategory = itemEl.dataset.category;
+    var isCorrect = (targetCategory === correctCategory);
+
+    if (isCorrect) {
+        itemEl.classList.add('placed', 'correct-reveal');
+        game1Correct++;
+        Gamificacion.registrarAcierto();
+        Gamificacion.pronunciar('¡Correcto!');
+        document.getElementById('game1-feedback').innerHTML =
+            '<span style="color:#4CAF50;">✅ ¡Muy bien! ' + itemEl.textContent.trim() + ' es ' +
+            (targetCategory === 'vivo' ? 'un ser vivo' : 'no vivo') + '</span>';
+    } else {
+        // Wrong column - shake animation and return item to source
+        columnEl.classList.add('wrong-highlight');
+        setTimeout(function() { columnEl.classList.remove('wrong-highlight'); }, 500);
+        document.getElementById('game1-feedback').innerHTML =
+            '<span style="color:#D94040;">❌ ¡Intenta de nuevo! ' + itemEl.textContent.trim() + ' NO es ' +
+            (targetCategory === 'vivo' ? 'un ser vivo' : 'no vivo') + '</span>';
+        Gamificacion.registrarError();
+        Gamificacion.pronunciar('Intenta de nuevo');
+        return; // Don't count as placed
+    }
+
+    // Add to column visually
+    var placedEl = document.createElement('div');
+    placedEl.className = 'placed-item';
+    placedEl.innerHTML = itemEl.innerHTML;
+    placedEl.style.borderLeft = '3px solid var(--wayuu-green)';
+    columnEl.appendChild(placedEl);
+
+    // Remove from source
+    itemEl.style.display = 'none';
+
+    game1Placed++;
+    document.getElementById('game1-placed').textContent = game1Placed;
+    document.getElementById('game1-correct').textContent = game1Correct;
+
+    // Check if all placed
+    if (game1Placed >= game1Total) {
+        document.getElementById('game1-feedback').innerHTML =
+            '<span style="color:#4CAF50;">🎉 ¡Clasificaste todo! ' + game1Correct + ' de ' + game1Total + ' correctos</span>';
+        document.getElementById('game1-continue').style.display = 'inline-block';
+
+        var pct = Gamificacion.calcularPorcentaje(game1Correct, game1Total);
+        if (pct >= 75) {
+            Gamificacion.sumarEstrella();
+            Gamificacion.pronunciar('¡Excelente! Clasificaste todos los seres vivos correctamente.');
+        }
+    }
+}
+
+function resetGame1() {
+    initGame1();
+}
+
+// ============================================================
+// GAME 2: ENCUENTRA EL INTRUSO
+// ============================================================
+var intruderRounds = [
+    {
+        items: [
+            { name: '🐐 Chivo', isLiving: true },
+            { name: '🦎 Iguana', isLiving: true },
+            { name: '🪨 Piedra', isLiving: false },
+            { name: '🦩 Flamenco', isLiving: true }
+        ],
+        intruderIdx: 2,
+        explanation: 'La piedra NO es un ser vivo. No nace, no crece, no se alimenta.'
+    },
+    {
+        items: [
+            { name: '🌵 Cardón', isLiving: true },
+            { name: '💧 Agua', isLiving: false },
+            { name: '🐐 Chivo', isLiving: true },
+            { name: '🦎 Iguana', isLiving: true }
+        ],
+        intruderIdx: 1,
+        explanation: 'El agua NO es un ser vivo, aunque los seres vivos la necesitan.'
+    },
+    {
+        items: [
+            { name: '☀️ Sol', isLiving: false },
+            { name: '🦩 Flamenco', isLiving: true },
+            { name: '🌵 Cardón', isLiving: true },
+            { name: '🐖 Cerdo (Kookoche\'e)', isLiving: true }
+        ],
+        intruderIdx: 0,
+        explanation: 'El sol NO es un ser vivo. Da luz y calor pero no nace ni crece.'
+    },
+    {
+        items: [
+            { name: '🦎 Iguana', isLiving: true },
+            { name: '🐐 Chivo', isLiving: true },
+            { name: '🦩 Flamenco', isLiving: true },
+            { name: '🏜️ Arena', isLiving: false }
+        ],
+        intruderIdx: 3,
+        explanation: 'La arena del desierto NO es un ser vivo. Es parte de la tierra.'
+    },
+    {
+        items: [
+            { name: '🐖 Cerdo', isLiving: true },
+            { name: '🌵 Cardón', isLiving: true },
+            { name: '🪨 Roca', isLiving: false },
+            { name: '🐐 Cabra (Ka\'ula)', isLiving: true }
+        ],
+        intruderIdx: 2,
+        explanation: 'La roca NO es un ser vivo. Es un objeto inerte de la naturaleza.'
+    }
+];
+
+var intruderCurrentRound = 0;
+var intruderScore = 0;
+var intruderAnswered = false;
+
+function initGame2() {
+    intruderCurrentRound = 0;
+    intruderScore = 0;
+    intruderAnswered = false;
+    document.getElementById('intruder-score').textContent = '0';
+    document.getElementById('game2-continue').style.display = 'none';
+    shuffleArray(intruderRounds);
+    renderIntruderRound();
+}
+
+function renderIntruderRound() {
+    if (intruderCurrentRound >= intruderRounds.length) {
+        document.getElementById('game2-continue').style.display = 'inline-block';
+        document.getElementById('intruder-feedback').innerHTML =
+            '<span style="color:#4CAF50;">🎉 ¡Juego completado! ' + intruderScore + ' de ' + intruderRounds.length + ' aciertos</span>';
+        document.getElementById('intruder-grid').innerHTML = '';
+        Gamificacion.sumarEstrella();
+        Gamificacion.pronunciar('¡Juego completado! Encontraste todos los intrusos.');
+        return;
+    }
+
+    intruderAnswered = false;
+    var round = intruderRounds[intruderCurrentRound];
+
+    document.getElementById('intruder-round').textContent = intruderCurrentRound + 1;
+    document.getElementById('intruder-score').textContent = intruderScore;
+    document.getElementById('intruder-feedback').innerHTML =
+        '<span style="color:#888;">Toca el que NO es un ser vivo</span>';
+
+    var grid = document.getElementById('intruder-grid');
+    grid.innerHTML = '';
+
+    for (var i = 0; i < round.items.length; i++) {
+        var item = round.items[i];
+        var card = document.createElement('div');
+        card.className = 'intruder-card';
+        card.dataset.index = i;
+        card.innerHTML = '<div class="card-icon" style="font-size:3em;">' + item.name.split(' ')[0] + '</div>' +
+                         '<div class="card-name">' + item.name + '</div>';
+
+        card.addEventListener('click', (function(idx, cardEl) {
+            return function() { checkIntruderAnswer(idx, cardEl); };
+        })(i, card));
+
+        grid.appendChild(card);
+    }
+}
+
+function checkIntruderAnswer(idx, cardEl) {
+    if (intruderAnswered) return;
+    intruderAnswered = true;
+
+    var round = intruderRounds[intruderCurrentRound];
+    var isIntruder = (idx === round.intruderIdx);
+
+    // Highlight all cards
+    var cards = document.querySelectorAll('#intruder-grid .intruder-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].style.pointerEvents = 'none';
+        if (parseInt(cards[i].dataset.index) === round.intruderIdx) {
+            cards[i].classList.add('found-intruder');
+        }
+    }
+
+    if (isIntruder) {
+        intruderScore++;
+        document.getElementById('intruder-score').textContent = intruderScore;
+        document.getElementById('intruder-feedback').innerHTML =
+            '<span style="color:#4CAF50;">✅ ¡Correcto! ' + round.explanation + '</span>';
+        Gamificacion.registrarAcierto();
+        Gamificacion.pronunciar('¡Correcto! ' + round.explanation);
+    } else {
+        cardEl.classList.add('wrong-pick');
+        document.getElementById('intruder-feedback').innerHTML =
+            '<span style="color:#D94040;">❌ ¡Ese sí es un ser vivo! ' + round.explanation + '</span>';
+        Gamificacion.registrarError();
+        Gamificacion.pronunciar('No. ' + round.explanation);
+    }
+
+    // Auto-advance after delay
+    setTimeout(function() {
+        intruderCurrentRound++;
+        renderIntruderRound();
+    }, 2000);
+}
+
+function resetGame2() {
+    initGame2();
+}
+
+// ============================================================
+// FINAL SCREEN
+// ============================================================
+function showFinalScreen() {
+    var totalCorrect = game1Correct + intruderScore;
+    var totalQuestions = game1Total + intruderRounds.length;
+    var percentage = Gamificacion.calcularPorcentaje(totalCorrect, totalQuestions);
+
+    // Stars (1-3)
+    var starCount = 0;
+    if (percentage >= 40) starCount = 1;
+    if (percentage >= 70) starCount = 2;
+    if (percentage >= 85) starCount = 3;
+
+    // Ensure we have at least the stars earned
+    while (Gamificacion.estrellas < starCount) {
+        Gamificacion.sumarEstrella();
+    }
+
+    var starsContainer = document.getElementById('final-stars');
+    starsContainer.innerHTML = '';
+    for (var i = 0; i < 3; i++) {
+        var span = document.createElement('span');
+        span.className = 'star';
+        span.textContent = i < starCount ? '⭐' : '☆';
+        span.style.animationDelay = (i * 0.2) + 's';
+        starsContainer.appendChild(span);
+    }
+
+    // Achievement card
+    var card = document.getElementById('achievement-card');
+    var msg = '';
+    if (percentage >= 85) {
+        msg = '🌟 ¡Increíble! Eres un verdadero sabio del desierto. El chamán wayuu te nombra <strong>"Guardián de los Seres Vivos"</strong>.';
+        Gamificacion.desbloquearLogro('cien301_guardian', 'Guardián de los Seres Vivos', '🌟');
+    } else if (percentage >= 70) {
+        msg = '👍 ¡Muy buen trabajo! Conoces bien a los seres vivos del desierto guajiro.';
+        Gamificacion.desbloquearLogro('cien301_explorador', 'Explorador del Desierto', '🏜️');
+    } else if (percentage >= 40) {
+        msg = '🙂 ¡Buen esfuerzo! Sigue explorando el desierto para aprender más.';
+    } else {
+        msg = '💪 ¡No te rindas! Vuelve a intentarlo y aprenderás más sobre los seres vivos.';
+    }
+
+    card.innerHTML = '' +
+        '<p class="ach-item">🎯 <strong>Juego 1 - Clasificación:</strong> ' + game1Correct + '/' + game1Total + ' aciertos</p>' +
+        '<p class="ach-item">🔍 <strong>Juego 2 - El intruso:</strong> ' + intruderScore + '/' + intruderRounds.length + ' aciertos</p>' +
+        '<p class="ach-item">🏆 <strong>Total:</strong> ' + totalCorrect + '/' + totalQuestions + ' (' + percentage + '%)</p>' +
+        '<p class="ach-item">⭐ <strong>Estrellas ganadas:</strong> ' + Gamificacion.estrellas + '</p>' +
+        '<p style="margin-top:8px;font-weight:700;color:var(--wayuu-orange);text-align:center;">' + msg + '</p>' +
+        '<p class="wayuu-blessing">"Que Juyá (la lluvia) bendiga tu camino de aprendizaje"<br>— El chamán wayuu</p>';
+
+    // Save progress
+    Progreso.guardar('cien301', {
+        puntos: Gamificacion.puntos,
+        estrellas: Gamificacion.estrellas,
+        porcentaje: percentage,
+        game1Correct: game1Correct,
+        game1Total: game1Total,
+        intruderScore: intruderScore,
+        intruderTotal: intruderRounds.length,
+        logros: Gamificacion.logros,
+        completado: percentage >= 40
+    });
+
+    Gamificacion.actualizarHUD();
+
+    // Confetti for high scores
+    if (percentage >= 70) {
+        Gamificacion.lanzarConfeti(60);
+    } else if (percentage >= 40) {
+        Gamificacion.lanzarConfeti(30);
+    }
+
+    // TTS celebration
+    setTimeout(function() {
+        if (percentage >= 85) {
+            Gamificacion.pronunciar('¡Increíble! Eres el guardián de los seres vivos del desierto. El chamán wayuu está muy orgulloso.');
+        } else if (percentage >= 70) {
+            Gamificacion.pronunciar('¡Muy bien! Conoces los seres vivos del desierto guajiro.');
+        } else {
+            Gamificacion.pronunciar('¡Buen trabajo! Sigue aprendiendo sobre los seres vivos.');
+        }
+    }, 500);
+}
+
+function restartModule() {
+    game1Placed = 0;
+    game1Correct = 0;
+    game1Total = 8;
+    intruderCurrentRound = 0;
+    intruderScore = 0;
+    intruderAnswered = false;
+    Gamificacion.puntos = 0;
+    Gamificacion.estrellas = 0;
+    Gamificacion.logros = [];
+    Gamificacion.actualizarHUD();
+    document.getElementById('game1-feedback').textContent = '';
+    document.getElementById('game1-continue').style.display = 'none';
+    document.getElementById('intruder-feedback').textContent = '';
+    document.getElementById('game2-continue').style.display = 'none';
+    document.getElementById('intruder-grid').innerHTML = '';
+    goToScreen('screen-welcome');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+
+    // Load saved progress
+    var saved = Progreso.cargar('cien301');
+    if (saved.puntos) {
+        Gamificacion.puntos = saved.puntos;
+        Gamificacion.estrellas = saved.estrellas || 0;
+        Gamificacion.logros = saved.logros || [];
+        Gamificacion.actualizarHUD();
+    }
+
+    // Preload speech synthesis voices
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = function() {
+            window.speechSynthesis.getVoices();
+        };
+    }
+});
+</script>
+
+</body>
+</html>

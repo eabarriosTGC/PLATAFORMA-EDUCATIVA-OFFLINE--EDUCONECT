@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>CIEN-305: Ecosistemas La Guajira | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --azul: #4A90D9;
+ --morado: #9B59B6;
+ --arena-oscura: #C9A96E;
+ --manglar: #2E7D32;
+ --mar: #0288D1;
+ --niebla: #B0BEC5;
+ --jaguey: #26A69A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+
+.container{max-width:850px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-azul{
+ background:var(--azul);
+ color:white;
+ box-shadow:0 4px 12px rgba(74,144,217,0.4);
+}
+.btn-morado{
+ background:var(--morado);
+ color:white;
+ box-shadow:0 4px 12px rgba(155,89,182,0.4);
+}
+
+/* TTS */
+.tts-btn{
+ background:var(--azul);
+ color:white;
+ border:none;
+ border-radius:50%;
+ width:40px;
+ height:40px;
+ font-size:1.2rem;
+ cursor:pointer;
+ transition:all 0.2s;
+ box-shadow:0 2px 8px rgba(74,144,217,0.3);
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+}
+.tts-btn:hover{transform:scale(1.1)}
+.tts-btn.hablando{
+ background:var(--atardecer);
+ animation:brillar 0.8s ease-in-out infinite;
+}
+
+/* Toast */
+.toast{
+ position:fixed;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:12px 30px;
+ border-radius:25px;
+ font-weight:bold;
+ font-size:1rem;
+ z-index:1000;
+ animation:slideDown 0.4s ease-out;
+ box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* ============ PANTALLA 1: BIENVENIDA ============ */
+.bienvenida-wrap{
+ text-align:center;
+ padding:20px;
+}
+.bienvenida-wrap .icono-grande{
+ font-size:5rem;
+ animation:brillar 2s ease-in-out infinite;
+ margin-bottom:15px;
+}
+.bienvenida-wrap .frase{
+ font-size:1.3rem;
+ font-weight:bold;
+ color:var(--tierra);
+ margin:12px 0;
+ line-height:1.5;
+}
+.mapa-svg-wrap{
+ max-width:400px;
+ margin:20px auto;
+}
+.mapa-svg-wrap svg{
+ width:100%;
+ height:auto;
+}
+.ecos-preview{
+ display:flex;
+ justify-content:center;
+ gap:8px;
+ flex-wrap:wrap;
+ margin:20px 0;
+ font-size:2.5rem;
+}
+.eco-badge{
+ display:inline-block;
+ background:var(--blanco);
+ border:2px solid var(--arena);
+ border-radius:12px;
+ padding:8px 14px;
+ font-size:0.85rem;
+ font-weight:bold;
+ margin:3px;
+}
+
+/* ============ PANTALLA 2: LECCIÓN ============ */
+.eco-card{
+ background:linear-gradient(135deg,#FFFDF7,#F0F8E8);
+ border:2px solid var(--arena);
+ border-radius:16px;
+ padding:18px;
+ margin:14px 0;
+ transition:all 0.3s;
+}
+.eco-card:hover{
+ border-color:var(--cardon);
+ box-shadow:var(--sombra);
+}
+.eco-header{
+ display:flex;
+ align-items:center;
+ gap:15px;
+ margin-bottom:12px;
+ flex-wrap:wrap;
+}
+.eco-svg-wrap{
+ width:110px;
+ height:110px;
+ flex-shrink:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+.eco-svg-wrap svg{
+ width:100%;
+ height:100%;
+}
+.eco-info{flex:1;min-width:200px}
+.eco-info h3{
+ font-size:1.2rem;
+ color:var(--cardon);
+ margin-bottom:4px;
+}
+.eco-info .nombre-wayuu{
+ font-size:1rem;
+ color:var(--atardecer);
+ font-style:italic;
+ font-weight:bold;
+ margin-bottom:6px;
+}
+.eco-detalles{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+ margin-top:10px;
+}
+@media(max-width:500px){.eco-detalles{grid-template-columns:1fr}}
+.eco-detalle{
+ background:var(--blanco);
+ border-radius:12px;
+ padding:10px 12px;
+ border:1px solid #e0d5c5;
+ font-size:0.9rem;
+}
+.eco-detalle .detalle-label{
+ font-weight:bold;
+ color:var(--tierra);
+ font-size:0.8rem;
+ text-transform:uppercase;
+ letter-spacing:0.5px;
+}
+.eco-detalle .detalle-valor{
+ color:var(--texto);
+ margin-top:3px;
+}
+.eco-tts{
+ margin-top:8px;
+ display:flex;
+ gap:8px;
+ align-items:center;
+}
+.eco-texto{
+ color:#6B5B4F;
+ font-size:0.95rem;
+ line-height:1.6;
+ margin-top:8px;
+}
+
+/* ============ PANTALLA 3: CADENAS ALIMENTICIAS ============ */
+.cadenas-area{
+ text-align:center;
+}
+.cadenas-info{
+ font-size:1rem;
+ color:var(--tierra);
+ margin-bottom:15px;
+ background:var(--arena);
+ padding:10px 16px;
+ border-radius:12px;
+ display:inline-block;
+}
+.cadena-selector{
+ display:flex;
+ justify-content:center;
+ gap:10px;
+ margin:16px 0;
+ flex-wrap:wrap;
+}
+.cadena-tab{
+ padding:10px 20px;
+ border:3px solid #e0d5c5;
+ border-radius:25px;
+ background:var(--blanco);
+ cursor:pointer;
+ font-weight:bold;
+ font-size:0.95rem;
+ transition:all 0.3s;
+}
+.cadena-tab:hover{border-color:var(--wayuu-oro);background:#FFF8E1}
+.cadena-tab.activa{
+ border-color:var(--atardecer);
+ background:var(--atardecer);
+ color:white;
+}
+.cadena-tab.completada{
+ border-color:var(--verde);
+ background:var(--verde);
+ color:white;
+}
+.cadena-contenedor{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:12px;
+ flex-wrap:wrap;
+ margin:20px 0;
+ min-height:120px;
+}
+.cadena-eslabon{
+ width:120px;
+ height:120px;
+ border:3px dashed var(--arena-oscura);
+ border-radius:16px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ background:var(--blanco);
+ transition:all 0.3s;
+ cursor:pointer;
+}
+.cadena-eslabon:hover{background:#FFF8E1;border-color:var(--wayuu-oro)}
+.cadena-eslabon.ocupado{
+ border-style:solid;
+ border-color:var(--cardon);
+ background:linear-gradient(135deg,#E8F5E9,#FFFDF7);
+}
+.cadena-eslabon.correcto{border-color:var(--verde);box-shadow:0 0 12px rgba(76,175,80,0.4)}
+.cadena-eslabon.incorrecto{border-color:var(--rojo);box-shadow:0 0 12px rgba(214,64,69,0.4)}
+.cadena-eslabon .eslabon-emoji{font-size:2.5rem;margin-bottom:4px}
+.cadena-eslabon .eslabon-nombre{font-size:0.8rem;font-weight:bold;color:var(--tierra)}
+.cadena-eslabon .eslabon-rol{font-size:0.7rem;color:var(--atardecer)}
+.cadena-flecha{font-size:2rem;color:var(--atardecer);font-weight:bold}
+.cadena-labels{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:12px;
+ margin-top:20px;
+}
+.cadena-label{
+ padding:12px 22px;
+ background:var(--blanco);
+ border:3px solid var(--arena-oscura);
+ border-radius:15px;
+ font-size:1.1rem;
+ font-weight:bold;
+ cursor:grab;
+ user-select:none;
+ transition:all 0.3s;
+ box-shadow:0 3px 10px rgba(0,0,0,0.1);
+ color:var(--tierra);
+ touch-action:none;
+}
+.cadena-label:hover{
+ background:var(--wayuu-oro);
+ color:white;
+ border-color:var(--wayuu-oro);
+ transform:scale(1.05);
+}
+.cadena-label:active{cursor:grabbing}
+.cadena-label.usado{
+ opacity:0.3;
+ pointer-events:none;
+ background:#ccc;
+ border-color:#bbb;
+}
+.cadena-label.arrastrando{
+ opacity:0.6;
+ transform:scale(1.1);
+ box-shadow:0 8px 25px rgba(0,0,0,0.2);
+}
+.cadena-feedback{
+ text-align:center;
+ min-height:30px;
+ margin-top:10px;
+ font-weight:bold;
+ font-size:1rem;
+}
+
+/* ============ PANTALLA 4: CLASIFICACIÓN ============ */
+.clasif-area{text-align:center}
+.clasif-info{
+ font-size:1rem;
+ color:var(--tierra);
+ margin-bottom:10px;
+ background:var(--arena);
+ padding:10px 16px;
+ border-radius:12px;
+ display:inline-block;
+}
+.clasif-columnas{
+ display:flex;
+ gap:8px;
+ margin:16px 0;
+ overflow-x:auto;
+ padding-bottom:8px;
+}
+.clasif-col{
+ flex:1;
+ min-width:140px;
+ border:3px dashed var(--arena-oscura);
+ border-radius:16px;
+ padding:10px 8px;
+ background:var(--blanco);
+ transition:all 0.3s;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:6px;
+}
+.clasif-col:hover{
+ border-color:var(--wayuu-oro);
+ background:#FFF8E1;
+}
+.clasif-col.llena{
+ border-style:solid;
+ border-color:var(--cardon);
+ background:#f0f8e8;
+}
+.clasif-col .col-titulo{
+ font-weight:bold;
+ font-size:0.8rem;
+ color:var(--tierra);
+ text-align:center;
+ margin-bottom:4px;
+}
+.clasif-col .col-emoji{font-size:2rem}
+.clasif-col .col-contador{
+ font-size:0.7rem;
+ color:var(--atardecer);
+}
+.clasif-col .col-items{
+ display:flex;
+ flex-wrap:wrap;
+ gap:5px;
+ justify-content:center;
+ min-height:40px;
+}
+.tarjeta-animal{
+ display:inline-flex;
+ align-items:center;
+ gap:4px;
+ padding:6px 10px;
+ background:var(--blanco);
+ border:2px solid var(--arena);
+ border-radius:10px;
+ font-size:0.8rem;
+ font-weight:bold;
+ cursor:grab;
+ user-select:none;
+ transition:all 0.3s;
+ touch-action:none;
+}
+.tarjeta-animal:hover{
+ border-color:var(--wayuu-oro);
+ transform:scale(1.05);
+}
+.tarjeta-animal:active{cursor:grabbing}
+.tarjeta-animal.usada{
+ opacity:0.3;
+ pointer-events:none;
+ background:#ccc;
+}
+.tarjeta-animal.correcta{
+ background:#E8F5E9;
+ border-color:var(--verde);
+}
+.tarjeta-animal.incorrecta{
+ background:#FFEBEE;
+ border-color:var(--rojo);
+}
+.tarjeta-animal.arrastrando{
+ opacity:0.6;
+ transform:scale(1.1);
+ box-shadow:0 8px 25px rgba(0,0,0,0.2);
+}
+.clasif-bandeja{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:10px;
+ margin:16px 0;
+ min-height:50px;
+ padding:12px;
+ background:var(--arena);
+ border-radius:16px;
+ border:2px dashed var(--arena-oscura);
+}
+.clasif-bandeja .bandeja-titulo{
+ width:100%;
+ font-weight:bold;
+ font-size:0.8rem;
+ color:var(--tierra);
+ margin-bottom:4px;
+}
+.clasif-feedback{
+ text-align:center;
+ min-height:30px;
+ margin-top:10px;
+ font-weight:bold;
+ font-size:1rem;
+}
+
+/* ============ PANTALLA 5: FINAL ============ */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+}
+.resultados-finales .estrella{
+ font-size:5rem;
+ animation:brillar 1.5s ease-in-out infinite;
+}
+.resultados-finales .puntaje{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ margin:10px 0;
+}
+.resultados-finales .mensaje{
+ font-size:1.2rem;
+ color:var(--tierra);
+ margin:10px 0;
+ line-height:1.5;
+}
+.resultados-finales .resumen-ecos{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:15px;
+ margin:20px 0;
+}
+.resumen-eco{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:15px;
+ text-align:center;
+ min-width:120px;
+ border:2px solid var(--arena);
+ box-shadow:var(--sombra);
+}
+.resumen-eco .re-emoji{font-size:2.5rem}
+.resumen-eco .re-nombre{font-weight:bold;color:var(--cardon);margin-top:5px}
+.resumen-eco .re-dato{font-size:0.85rem;color:var(--tierra);margin-top:3px}
+
+/* Responsive */
+@media(max-width:600px){
+ .eco-svg-wrap{width:80px;height:80px}
+ .cadena-eslabon{width:90px;height:90px}
+ .cadena-eslabon .eslabon-emoji{font-size:1.8rem}
+ .clasif-columnas{flex-wrap:wrap}
+ .clasif-col{min-width:100px}
+ .resultados-finales .puntaje{font-size:2rem}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>🏜️ Ecosistemas de La Guajira</h1>
+ <span class="grado">5° Grado · Ciencias Naturales</span>
+ <div class="desierto-deco">🏜️🌵🐐🌊🦩🏔️💧</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- PANTALLA 1: BIENVENIDA                        -->
+<!-- ============================================= -->
+<section class="card activo" id="pantalla1">
+ <h2><span class="icono">🏜️</span> Bienvenida</h2>
+ <div class="bienvenida-wrap">
+  <div class="icono-grande">🌎</div>
+  <p class="frase">¡Explora los 5 ecosistemas de La Guajira!</p>
+  <p style="color:#8B7355;margin:8px 0">
+   La Guajira no es solo desierto. Aquí conviven cinco ecosistemas llenos de vida: el desierto con sus cardones, el bosque seco tropical, los manglares en la costa, la Serranía de Macuira con su bosque nublado, y los jagüeyes que guardan el agua dulce. Cada uno es único y especial.
+  </p>
+
+  <!-- MAPA SVG DE LA PENÍNSULA -->
+  <div class="mapa-svg-wrap">
+   <svg viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+     <radialGradient id="solGrad"><stop offset="0%" stop-color="#FFD700"/><stop offset="100%" stop-color="#FF8C00"/></radialGradient>
+    </defs>
+    <!-- Mar Caribe -->
+    <rect x="0" y="0" width="400" height="340" fill="#87CEEB" opacity="0.3"/>
+    <!-- Península -->
+    <path d="M60,40 Q80,30 120,35 Q160,25 200,30 Q240,20 280,25 Q320,15 350,20 L360,30 Q365,40 355,50 Q340,60 330,70 Q310,90 300,110 Q280,130 270,150 Q260,170 250,190 Q240,210 220,230 Q200,250 180,260 Q160,275 140,280 Q120,290 100,285 Q80,280 65,260 Q50,240 45,210 Q40,180 35,150 Q30,120 32,90 Q35,65 45,50 Z" fill="#E8B86D" stroke="#C9A96E" stroke-width="2"/>
+    <!-- Desierto (centro-norte) -->
+    <circle cx="170" cy="120" r="35" fill="#F5DEB3" opacity="0.6" stroke="#E8B86D" stroke-width="1"/>
+    <text x="170" y="115" text-anchor="middle" font-size="11" fill="#8B5E3C" font-weight="bold">🏜️ Desierto</text>
+    <!-- Bosque seco (centro) -->
+    <circle cx="140" cy="160" r="28" fill="#6B8E23" opacity="0.4" stroke="#556B2F" stroke-width="1"/>
+    <text x="140" y="157" text-anchor="middle" font-size="10" fill="#3D2B1F" font-weight="bold">🌳 Bosque</text>
+    <text x="140" y="170" text-anchor="middle" font-size="8" fill="#3D2B1F">Seco</text>
+    <!-- Manglar (costa este) -->
+    <circle cx="305" cy="100" r="25" fill="#2E7D32" opacity="0.5" stroke="#1B5E20" stroke-width="1"/>
+    <text x="305" y="97" text-anchor="middle" font-size="10" fill="#FFF" font-weight="bold">🌊 Manglar</text>
+    <!-- Serranía Macuira (noreste) -->
+    <circle cx="290" cy="55" r="25" fill="#7B9E5A" opacity="0.5" stroke="#5D7A3A" stroke-width="1"/>
+    <text x="290" y="52" text-anchor="middle" font-size="10" fill="#3D2B1F" font-weight="bold">☁️ Macuira</text>
+    <!-- Jagüey (varios puntos) -->
+    <circle cx="190" cy="200" r="6" fill="#26A69A" stroke="#00897B" stroke-width="1"/>
+    <circle cx="160" cy="185" r="5" fill="#26A69A" stroke="#00897B" stroke-width="1"/>
+    <circle cx="220" cy="195" r="5" fill="#26A69A" stroke="#00897B" stroke-width="1"/>
+    <text x="190" y="215" text-anchor="middle" font-size="10" fill="#00897B" font-weight="bold">💧 Jagüeyes</text>
+    <!-- Mar de etiquetas -->
+    <text x="10" y="300" font-size="9" fill="#0288D1" font-weight="bold">Mar Caribe</text>
+    <!-- Línea costera decorativa -->
+    <path d="M350,20 Q360,30 355,50 Q340,60 330,70 Q310,90 300,110 Q280,130 270,150" fill="none" stroke="#0288D1" stroke-width="1.5" stroke-dasharray="4,4"/>
+   </svg>
+  </div>
+
+  <div class="ecos-preview">🏜️🌳🌊☁️💧</div>
+  <div>
+   <span class="eco-badge">🏜️ Desierto</span>
+   <span class="eco-badge">🌳 Bosque Seco</span>
+   <span class="eco-badge">🌊 Manglar</span>
+   <span class="eco-badge">☁️ Macuira</span>
+   <span class="eco-badge">💧 Jagüey</span>
+  </div>
+  <p style="color:var(--tierra);font-size:0.9rem;margin-top:12px">
+   <strong>5 ecosistemas</strong> · Cadenas alimenticias · Clasificación de especies
+  </p>
+  <button class="btn btn-primario" id="btnIniciar" style="margin-top:15px;font-size:1.1rem;padding:12px 30px">
+   🚀 ¡Empecemos la aventura!
+  </button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 2: LECCIÓN - 5 ECOSISTEMAS           -->
+<!-- ============================================= -->
+<section class="card" id="pantalla2" style="display:none">
+ <h2><span class="icono">📚</span> 2. Los 5 Ecosistemas Guajiros <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:12px">
+  Un ecosistema es un lugar donde los seres vivos (plantas, animales, personas) y el ambiente (agua, suelo, clima) viven juntos y se relacionan. La Guajira tiene 5 ecosistemas muy diferentes. ¡Vamos a conocerlos! Desliza hacia abajo para verlos todos.
+ </p>
+
+ <!-- Ecosistema 1: Desierto -->
+ <div class="eco-card" id="ecoDesierto">
+  <div class="eco-header">
+   <div class="eco-svg-wrap">
+    <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+     <rect x="0" y="70" width="110" height="40" fill="#E8B86D"/>
+     <rect x="0" y="72" width="110" height="3" fill="#D4A843"/>
+     <rect x="30" y="35" width="20" height="40" rx="8" fill="#5B8C5A"/>
+     <rect x="28" y="28" width="24" height="10" rx="4" fill="#4A7A49"/>
+     <rect x="25" y="20" width="6" height="30" rx="3" fill="#5B8C5A"/>
+     <rect x="39" y="15" width="6" height="35" rx="3" fill="#5B8C5A"/>
+     <rect x="50" y="25" width="6" height="28" rx="3" fill="#5B8C5A"/>
+     <circle cx="35" cy="12" r="6" fill="#FFD700"/>
+     <circle cx="35" cy="12" r="3" fill="#FFA500"/>
+     <!-- Chivo -->
+     <ellipse cx="75" cy="68" rx="10" ry="7" fill="#8B5E3C"/>
+     <circle cx="70" cy="62" r="6" fill="#A0704A"/>
+     <circle cx="67" cy="60" r="1.5" fill="#3D2B1F"/>
+     <line x1="63" y1="56" x2="58" y2="50" stroke="#5B8C5A" stroke-width="2"/>
+     <line x1="66" y1="55" x2="64" y2="48" stroke="#5B8C5A" stroke-width="2"/>
+     <line x1="80" y1="67" x2="90" y2="69" stroke="#8B5E3C" stroke-width="2.5"/>
+     <line x1="80" y1="63" x2="92" y2="65" stroke="#8B5E3C" stroke-width="2.5"/>
+     <circle cx="35" cy="80" r="3" fill="#C9A96E"/>
+     <circle cx="60" cy="82" r="2" fill="#C9A96E"/>
+    </svg>
+   </div>
+   <div class="eco-info">
+    <h3>🏜️ 1. Desierto Guajiro</h3>
+    <div class="nombre-wayuu">Wüinpümüin (tierra seca, en wayuunaiki)</div>
+   </div>
+  </div>
+  <div class="eco-detalles">
+   <div class="eco-detalle">
+    <div class="detalle-label">🌡️ Clima</div>
+    <div class="detalle-valor">Muy caluroso (hasta 40°C) y casi no llueve. Menos de 500 mm de lluvia al año.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌵 Plantas</div>
+    <div class="detalle-valor">Cardones (yotojoro), tunas, cactus. Guardan agua en sus tallos.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🐐 Animales</div>
+    <div class="detalle-valor">Chivos (kaa'ula), iguanas, conejos, serpientes, zorros, aves.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🧶 Uso Wayuu</div>
+    <div class="detalle-valor">El cardón seco (yotojoro) sirve para construir las paredes de las viviendas.</div>
+   </div>
+  </div>
+  <p class="eco-texto">
+   El desierto guajiro es un ecosistema de extrema sequedad. Los seres vivos que aquí habitan tienen adaptaciones especiales: los cardones almacenan agua en sus tallos y sus hojas se transformaron en espinas. Los chivos pueden comer plantas secas y caminar largas distancias sin agua. Los wayuu conocen cada fuente de agua y cada planta que puede salvarlos.
+  </p>
+  <div class="eco-tts"><button class="tts-btn" onclick="hablar('Desierto Guajiro: ecosistema de extrema sequedad con cardones, chivos e iguanas.')">🔊</button><span style="font-size:0.8rem;color:var(--azul)">Escuchar</span></div>
+ </div>
+
+ <!-- Ecosistema 2: Bosque Seco Tropical -->
+ <div class="eco-card" id="ecoBosque">
+  <div class="eco-header">
+   <div class="eco-svg-wrap">
+    <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+     <rect x="0" y="68" width="110" height="42" fill="#C9A96E"/>
+     <rect x="10" y="20" width="18" height="50" rx="5" fill="#8B5E3C"/>
+     <circle cx="19" cy="18" r="22" fill="#6B8E23"/>
+     <circle cx="12" cy="24" r="16" fill="#7BA428"/>
+     <rect x="45" y="35" width="14" height="35" rx="4" fill="#8B5E3C"/>
+     <circle cx="52" cy="32" r="18" fill="#556B2F"/>
+     <circle cx="47" cy="36" r="13" fill="#6B8E23"/>
+     <rect x="75" y="25" width="16" height="45" rx="5" fill="#8B5E3C"/>
+     <circle cx="83" cy="22" r="20" fill="#6B8E23"/>
+     <circle cx="78" cy="28" r="14" fill="#7BA428"/>
+     <!-- Vainas del dividivi -->
+     <ellipse cx="60" cy="82" rx="6" ry="2" fill="#A0522D"/>
+     <ellipse cx="85" cy="78" rx="5" ry="2" fill="#A0522D"/>
+     <!-- Sol -->
+     <circle cx="95" cy="10" r="8" fill="#FFD700"/>
+    </svg>
+   </div>
+   <div class="eco-info">
+    <h3>🌳 2. Bosque Seco Tropical</h3>
+    <div class="nombre-wayuu">Wuna'apü (monte, en wayuunaiki)</div>
+   </div>
+  </div>
+  <div class="eco-detalles">
+   <div class="eco-detalle">
+    <div class="detalle-label">🌡️ Clima</div>
+    <div class="detalle-valor">Cálido con dos estaciones: lluvias cortas y sequía larga. 500-1000 mm de lluvia.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌳 Plantas</div>
+    <div class="detalle-valor">Trupillo (aipia), dividivi (kou'ula), guayacán, ceibas. Árboles que botan hojas en sequía.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🦎 Animales</div>
+    <div class="detalle-valor">Iguanas (wale'erü), venados, zorros, conejos, aves como el cardenal guajiro.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🍽️ Uso Wayuu</div>
+    <div class="detalle-valor">El trupillo da vainas dulces para harina. El dividivi sirve para curtir cueros.</div>
+   </div>
+  </div>
+  <p class="eco-texto">
+   El bosque seco tropical es un ecosistema donde los árboles pierden sus hojas durante la temporada de sequía para ahorrar agua. Cuando llegan las lluvias, todo reverdece. Aquí viven las iguanas, que los wayuu llaman wale'erü. El trupillo o algarrobo (aipia) produce vainas dulces que se muelen para hacer harina nutritiva.
+  </p>
+  <div class="eco-tts"><button class="tts-btn" onclick="hablar('Bosque seco tropical: árboles que botan hojas en sequía, con trupillo, dividivi e iguanas.')">🔊</button><span style="font-size:0.8rem;color:var(--azul)">Escuchar</span></div>
+ </div>
+
+ <!-- Ecosistema 3: Manglar -->
+ <div class="eco-card" id="ecoManglar">
+  <div class="eco-header">
+   <div class="eco-svg-wrap">
+    <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+     <rect x="0" y="50" width="110" height="60" fill="#0288D1"/>
+     <rect x="0" y="50" width="110" height="15" fill="#26A69A" opacity="0.5"/>
+     <rect x="15" y="25" width="10" height="40" rx="4" fill="#2E7D32"/>
+     <circle cx="20" cy="22" r="14" fill="#388E3C"/>
+     <rect x="38" y="20" width="10" height="45" rx="4" fill="#1B5E20"/>
+     <circle cx="43" cy="17" r="16" fill="#388E3C"/>
+     <rect x="62" y="28" width="10" height="37" rx="4" fill="#2E7D32"/>
+     <circle cx="67" cy="25" r="13" fill="#43A047"/>
+     <rect x="82" y="18" width="10" height="47" rx="4" fill="#1B5E20"/>
+     <circle cx="87" cy="15" r="15" fill="#388E3C"/>
+     <!-- Raíces aéreas -->
+     <line x1="20" y1="55" x2="10" y2="75" stroke="#5D4037" stroke-width="2"/>
+     <line x1="20" y1="55" x2="28" y2="78" stroke="#5D4037" stroke-width="2"/>
+     <line x1="43" y1="55" x2="35" y2="80" stroke="#5D4037" stroke-width="2"/>
+     <line x1="87" y1="55" x2="95" y2="78" stroke="#5D4037" stroke-width="2"/>
+     <!-- Flamenco -->
+     <ellipse cx="55" cy="88" rx="8" ry="5" fill="#FF69B4"/>
+     <circle cx="50" cy="83" r="4" fill="#FFB6C1"/>
+     <circle cx="48" cy="81" r="1" fill="#3D2B1F"/>
+     <line x1="54" y1="83" x2="62" y2="79" stroke="#FF69B4" stroke-width="2"/>
+     <line x1="52" y1="91" x2="50" y2="98" stroke="#FF69B4" stroke-width="2"/>
+     <line x1="56" y1="91" x2="58" y2="98" stroke="#FF69B4" stroke-width="2"/>
+    </svg>
+   </div>
+   <div class="eco-info">
+    <h3>🌊 3. Manglar</h3>
+    <div class="nombre-wayuu">Palaawa'a (cerca del mar, en wayuunaiki)</div>
+   </div>
+  </div>
+  <div class="eco-detalles">
+   <div class="eco-detalle">
+    <div class="detalle-label">🌡️ Clima</div>
+    <div class="detalle-valor">Cálido y húmedo, con mezcla de agua dulce y salada. Zona costera.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌿 Plantas</div>
+    <div class="detalle-valor">Mangle rojo, mangle blanco, mangle negro. Tienen raíces aéreas que respiran fuera del agua.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🦩 Animales</div>
+    <div class="detalle-valor">Flamencos (wüchü), peces, cangrejos, camarones, aves migratorias.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🐟 Uso Wayuu</div>
+    <div class="detalle-valor">Los manglares son criaderos de peces y camarones. Zona de pesca tradicional.</div>
+   </div>
+  </div>
+  <p class="eco-texto">
+   Los manglares crecen donde el río se encuentra con el mar. Sus árboles tienen raíces especiales que salen del agua para poder respirar. Son la guardería de muchos peces y camarones. Aquí viven los hermosos flamencos rosados (wüchü en wayuunaiki), que se alimentan de pequeños crustáceos que les dan su color rosado.
+  </p>
+  <div class="eco-tts"><button class="tts-btn" onclick="hablar('Manglar: ecosistema costero con mangles de raíces aéreas, flamencos rosados y peces.')">🔊</button><span style="font-size:0.8rem;color:var(--azul)">Escuchar</span></div>
+ </div>
+
+ <!-- Ecosistema 4: Serranía de Macuira -->
+ <div class="eco-card" id="ecoMacuira">
+  <div class="eco-header">
+   <div class="eco-svg-wrap">
+    <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+     <polygon points="0,75 25,30 55,75" fill="#7B9E5A"/>
+     <polygon points="15,75 40,20 75,75" fill="#6B8E23"/>
+     <polygon points="35,75 55,15 90,75" fill="#5D7A3A"/>
+     <polygon points="60,75 75,25 110,75" fill="#7B9E5A"/>
+     <!-- Nubes/Niebla -->
+     <ellipse cx="25" cy="40" rx="18" ry="8" fill="white" opacity="0.7"/>
+     <ellipse cx="55" cy="30" rx="20" ry="9" fill="white" opacity="0.6"/>
+     <ellipse cx="80" cy="38" rx="15" ry="7" fill="white" opacity="0.7"/>
+     <!-- Helecho -->
+     <path d="M42,72 Q38,60 42,48" stroke="#4CAF50" stroke-width="2" fill="none"/>
+     <path d="M42,55 Q35,50 30,52" stroke="#43A047" stroke-width="1.5" fill="none"/>
+     <path d="M42,53 Q48,48 52,50" stroke="#43A047" stroke-width="1.5" fill="none"/>
+     <!-- Rana -->
+     <ellipse cx="70" cy="72" rx="7" ry="5" fill="#66BB6A"/>
+     <circle cx="66" cy="69" r="3" fill="#81C784"/>
+     <circle cx="64" cy="67" r="1.5" fill="#3D2B1F"/>
+     <line x1="68" y1="75" x2="64" y2="80" stroke="#66BB6A" stroke-width="2"/>
+     <line x1="72" y1="75" x2="76" y2="80" stroke="#66BB6A" stroke-width="2"/>
+    </svg>
+   </div>
+   <div class="eco-info">
+    <h3>☁️ 4. Serranía de Macuira</h3>
+    <div class="nombre-wayuu">Makuira (montaña sagrada wayuu)</div>
+   </div>
+  </div>
+  <div class="eco-detalles">
+   <div class="eco-detalle">
+    <div class="detalle-label">🌡️ Clima</div>
+    <div class="detalle-valor">Fresco y húmedo todo el año. La niebla del mar se convierte en agua al chocar con la montaña. ¡Un bosque nublado en medio del desierto!</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌿 Plantas</div>
+    <div class="detalle-valor">Helechos gigantes, orquídeas, musgos, bromelias. Plantas que necesitan mucha humedad.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🐸 Animales</div>
+    <div class="detalle-valor">Ranas, aves coloridas, mariposas, insectos. Especies únicas que solo viven aquí.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🏔️ Cultura</div>
+    <div class="detalle-valor">Macuira es un lugar sagrado para los wayuu. Sus arroyos nacen de la niebla.</div>
+   </div>
+  </div>
+  <p class="eco-texto">
+   La Serranía de Macuira es una maravilla: ¡un bosque nublado en medio del desierto! La niebla que viene del mar Caribe choca contra las montañas y se convierte en agua, creando un ecosistema fresco y húmedo lleno de helechos, ranas y orquídeas. Para los wayuu, Macuira es sagrada porque de sus arroyos baja el agua que da vida a las comunidades.
+  </p>
+  <div class="eco-tts"><button class="tts-btn" onclick="hablar('Serranía de Macuira: bosque nublado en medio del desierto con helechos, ranas y agua de niebla.')">🔊</button><span style="font-size:0.8rem;color:var(--azul)">Escuchar</span></div>
+ </div>
+
+ <!-- Ecosistema 5: Jagüey -->
+ <div class="eco-card" id="ecoJaguey">
+  <div class="eco-header">
+   <div class="eco-svg-wrap">
+    <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+     <rect x="0" y="55" width="110" height="55" fill="#C9A96E"/>
+     <ellipse cx="55" cy="72" rx="45" ry="22" fill="#26A69A"/>
+     <ellipse cx="55" cy="70" rx="42" ry="19" fill="#4DB6AC"/>
+     <ellipse cx="55" cy="68" rx="38" ry="16" fill="#80CBC4"/>
+     <text x="55" y="72" text-anchor="middle" font-size="20">💧</text>
+     <!-- Árboles alrededor -->
+     <rect x="8" y="40" width="8" height="25" rx="3" fill="#5D4037"/>
+     <circle cx="12" cy="36" r="12" fill="#43A047"/>
+     <rect x="92" y="38" width="8" height="27" rx="3" fill="#5D4037"/>
+     <circle cx="96" cy="34" r="13" fill="#4CAF50"/>
+     <!-- Chivo bebiendo -->
+     <ellipse cx="35" cy="65" rx="8" ry="6" fill="#8B5E3C"/>
+     <circle cx="30" cy="60" r="5" fill="#A0704A"/>
+     <circle cx="28" cy="58" r="1.5" fill="#3D2B1F"/>
+     <line x1="28" y1="54" x2="24" y2="48" stroke="#5B8C5A" stroke-width="2"/>
+     <line x1="31" y1="53" x2="30" y2="47" stroke="#5B8C5A" stroke-width="2"/>
+    </svg>
+   </div>
+   <div class="eco-info">
+    <h3>💧 5. Jagüey</h3>
+    <div class="nombre-wayuu">Jagüey (palabra taína adaptada, pozo de agua)</div>
+   </div>
+  </div>
+  <div class="eco-detalles">
+   <div class="eco-detalle">
+    <div class="detalle-label">💧 Función</div>
+    <div class="detalle-valor">Reservorio artificial de agua dulce que recoge la lluvia. Es fuente de vida en el desierto.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌿 Plantas</div>
+    <div class="detalle-valor">Juncos, eneas, gramíneas. Plantas que crecen en las orillas húmedas.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🐐 Animales</div>
+    <div class="detalle-valor">Chivos, aves, insectos acuáticos, ranas. Todos vienen a beber agua.</div>
+   </div>
+   <div class="eco-detalle">
+    <div class="detalle-label">🌧️ Juyá</div>
+    <div class="detalle-valor">Los wayuu le rezan a Juyá (la lluvia) para que llene los jagüeyes. El agua es sagrada.</div>
+   </div>
+  </div>
+  <p class="eco-texto">
+   El jagüey no es un ecosistema natural como los otros, sino que fue creado por las comunidades wayuu para almacenar el agua de lluvia. En la cultura wayuu, Juyá es el espíritu de la lluvia, y le agradecen cada vez que llena los jagüeyes. Alrededor del jagüey se forma un pequeño ecosistema: vienen los chivos a beber, crecen plantas en las orillas, y las aves encuentran un lugar para refrescarse. El jagüey es fuente de vida en medio del desierto.
+  </p>
+  <div class="eco-tts"><button class="tts-btn" onclick="hablar('Jagüey: reservorio de agua dulce creado por los wayuu, fuente de vida abastecida por la lluvia de Juyá.')">🔊</button><span style="font-size:0.8rem;color:var(--azul)">Escuchar</span></div>
+ </div>
+
+ <p style="color:var(--tierra);text-align:center;margin:15px 0;font-weight:bold;font-size:0.9rem">
+  🌍 Los 5 ecosistemas están conectados. El agua que nace en Macuira baja a los jagüeyes. Los flamencos del manglar vuelan hasta los jagüeyes. Los chivos del desierto pastan también en el bosque seco. ¡Todo es un solo territorio wayuu!
+ </p>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-secundario" id="btnRepasarEcos" style="margin-right:8px">🔁 Repasar</button>
+  <button class="btn btn-exito" id="btnLeccionOk" style="display:none">
+   ✓ ¡Listo! Vamos a los juegos →
+  </button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 3: JUEGO 1 - CADENAS ALIMENTICIAS    -->
+<!-- ============================================= -->
+<section class="card" id="pantalla3" style="display:none">
+ <h2><span class="icono">🔗</span> 3. Cadenas Alimenticias <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+
+ <div class="cadenas-area">
+  <div class="cadenas-info">
+   🎯 Arrastra los seres vivos a la cadena alimenticia correcta. Cada cadena tiene 3 eslabones: productor → consumidor primario → consumidor secundario.
+  </div>
+
+  <!-- Selector de cadena -->
+  <div class="cadena-selector">
+   <button class="cadena-tab activa" id="tabCadena0" data-cadena="0">🏜️ Cardón → Chivo → Humano</button>
+   <button class="cadena-tab" id="tabCadena1" data-cadena="1">🌊 Algas → Pez → Flamenco</button>
+   <button class="cadena-tab" id="tabCadena2" data-cadena="2">🍃 Hojas → Insecto → Iguana</button>
+  </div>
+
+  <!-- Contenedor de la cadena actual -->
+  <div class="cadena-contenedor" id="cadenaContenedor">
+   <div class="cadena-eslabon" id="eslabon0-0">
+    <div class="eslabon-emoji">❓</div>
+    <div class="eslabon-nombre">Productor</div>
+    <div class="eslabon-rol">Nivel 1</div>
+   </div>
+   <div class="cadena-flecha">→</div>
+   <div class="cadena-eslabon" id="eslabon0-1">
+    <div class="eslabon-emoji">❓</div>
+    <div class="eslabon-nombre">Consumidor 1°</div>
+    <div class="eslabon-rol">Nivel 2</div>
+   </div>
+   <div class="cadena-flecha">→</div>
+   <div class="cadena-eslabon" id="eslabon0-2">
+    <div class="eslabon-emoji">❓</div>
+    <div class="eslabon-nombre">Consumidor 2°</div>
+    <div class="eslabon-rol">Nivel 3</div>
+   </div>
+  </div>
+
+  <div class="cadena-feedback" id="cadenaFeedback"></div>
+
+  <!-- Labels arrastrables -->
+  <div class="cadena-labels" id="cadenaLabels">
+   <!-- Dinámicos -->
+  </div>
+
+  <div style="margin-top:15px">
+   <button class="btn btn-secundario" id="btnReiniciarCadenas">🔄 Reiniciar cadena</button>
+   <button class="btn btn-exito" id="btnCadenasOk" style="display:none">
+    ✓ ¡Cadenas completas! Vamos a clasificar →
+   </button>
+  </div>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 4: JUEGO 2 - CLASIFICACIÓN           -->
+<!-- ============================================= -->
+<section class="card" id="pantalla4" style="display:none">
+ <h2><span class="icono">🗂️</span> 4. ¿A qué ecosistema pertenece? <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+
+ <div class="clasif-area">
+  <div class="clasif-info">
+   🎯 Arrastra cada animal o planta a la columna del ecosistema donde vive. ¡12 especies para clasificar!
+  </div>
+
+  <!-- 5 columnas de ecosistemas -->
+  <div class="clasif-columnas" id="clasifColumnas">
+   <div class="clasif-col" data-eco="desierto">
+    <div class="col-emoji">🏜️</div>
+    <div class="col-titulo">Desierto</div>
+    <div class="col-contador" id="cntDesierto">0/3</div>
+    <div class="col-items" id="itemsDesierto"></div>
+   </div>
+   <div class="clasif-col" data-eco="bosque">
+    <div class="col-emoji">🌳</div>
+    <div class="col-titulo">Bosque Seco</div>
+    <div class="col-contador" id="cntBosque">0/2</div>
+    <div class="col-items" id="itemsBosque"></div>
+   </div>
+   <div class="clasif-col" data-eco="manglar">
+    <div class="col-emoji">🌊</div>
+    <div class="col-titulo">Manglar</div>
+    <div class="col-contador" id="cntManglar">0/2</div>
+    <div class="col-items" id="itemsManglar"></div>
+   </div>
+   <div class="clasif-col" data-eco="macuira">
+    <div class="col-emoji">☁️</div>
+    <div class="col-titulo">Macuira</div>
+    <div class="col-contador" id="cntMacuira">0/3</div>
+    <div class="col-items" id="itemsMacuira"></div>
+   </div>
+   <div class="clasif-col" data-eco="jaguey">
+    <div class="col-emoji">💧</div>
+    <div class="col-titulo">Jagüey</div>
+    <div class="col-contador" id="cntJaguey">0/2</div>
+    <div class="col-items" id="itemsJaguey"></div>
+   </div>
+  </div>
+
+  <!-- Bandeja de tarjetas -->
+  <div class="clasif-bandeja" id="clasifBandeja">
+   <div class="bandeja-titulo">📦 Tarjetas por clasificar:</div>
+  </div>
+
+  <div class="clasif-feedback" id="clasifFeedback"></div>
+
+  <div style="margin-top:15px">
+   <button class="btn btn-secundario" id="btnReiniciarClasif">🔄 Reiniciar</button>
+   <button class="btn btn-exito" id="btnClasifOk" style="display:none">
+    ✓ ¡Clasificación completa! Ver resultados →
+   </button>
+  </div>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 5: FINAL                             -->
+<!-- ============================================= -->
+<section class="card" id="pantalla5" style="display:none">
+ <h2><span class="icono">🏆</span> Resultados</h2>
+ <div class="resultados-finales">
+  <div class="estrella" id="estrellaFinal">🏆</div>
+  <div class="puntaje" id="puntajeFinal">100%</div>
+  <p class="mensaje" id="mensajeFinal">
+   ¡Excelente! Eres un guardián de los ecosistemas guajiros. Conoces el desierto, el bosque seco, el manglar, la Serranía de Macuira y los jagüeyes. Sabes cómo se conectan las cadenas alimenticias y qué seres vivos pertenecen a cada ecosistema.
+  </p>
+
+  <div class="resumen-ecos">
+   <div class="resumen-eco"><div class="re-emoji">🏜️</div><div class="re-nombre">Desierto</div><div class="re-dato">Cardones y chivos</div></div>
+   <div class="resumen-eco"><div class="re-emoji">🌳</div><div class="re-nombre">Bosque Seco</div><div class="re-dato">Trupillo e iguanas</div></div>
+   <div class="resumen-eco"><div class="re-emoji">🌊</div><div class="re-nombre">Manglar</div><div class="re-dato">Mangles y flamencos</div></div>
+   <div class="resumen-eco"><div class="re-emoji">☁️</div><div class="re-nombre">Macuira</div><div class="re-dato">Niebla y ranas</div></div>
+   <div class="resumen-eco"><div class="re-emoji">💧</div><div class="re-nombre">Jagüey</div><div class="re-dato">Agua de Juyá</div></div>
+  </div>
+
+  <p style="color:var(--tierra);font-size:0.9rem;text-align:center;max-width:500px;margin:10px auto;line-height:1.6">
+   🌍 <strong>¿Sabías qué?</strong> Los ecosistemas de La Guajira están en peligro por el cambio climático. Las sequías son más largas, los jagüeyes se secan y los manglares pierden terreno. Pero tú, conociendo y respetando estos ecosistemas, puedes ayudar a protegerlos. ¡Como enseña la cultura wayuu: cuidar el territorio es cuidar la vida!
+  </p>
+
+  <div style="margin-top:15px">
+   <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+   <a href="/modulos/" class="btn btn-secundario" style="text-decoration:none">← Volver a módulos</a>
+  </div>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+ 'use strict';
+
+ const $ = (sel) => document.querySelector(sel);
+
+ // ============ STATE ============
+ const state = {
+  pantallaActual: 1,
+  leccionCompleta: false,
+  // Cadenas
+  cadenaActual: 0,
+  cadenasTotal: 3,
+  cadenasCompletas: 0,
+  cadenasResultados: [false, false, false],
+  cadenasCompleto: false,
+  // Clasificación
+  clasifColocadas: 0,
+  clasifTotal: 12,
+  clasifCorrectas: 0,
+  clasifCompleto: false,
+ };
+
+ // Datos de las 3 cadenas alimenticias
+ const cadenasData = [
+  { // 0: Desierto
+   nombre: '🏜️ Cardón → Chivo → Humano',
+   ecosistema: 'Desierto',
+   eslabones: [
+    { id: 'cardon', emoji: '🌵', nombre: 'Cardón', rol: 'Productor' },
+    { id: 'chivo', emoji: '🐐', nombre: 'Chivo', rol: 'Consumidor 1°' },
+    { id: 'humano', emoji: '🧑', nombre: 'Humano', rol: 'Consumidor 2°' },
+   ]
+  },
+  { // 1: Manglar
+   nombre: '🌊 Algas → Pez → Flamenco',
+   ecosistema: 'Manglar',
+   eslabones: [
+    { id: 'algas', emoji: '🟢', nombre: 'Algas', rol: 'Productor' },
+    { id: 'pez', emoji: '🐟', nombre: 'Pez', rol: 'Consumidor 1°' },
+    { id: 'flamenco', emoji: '🦩', nombre: 'Flamenco', rol: 'Consumidor 2°' },
+   ]
+  },
+  { // 2: Bosque Seco
+   nombre: '🍃 Hojas → Insecto → Iguana',
+   ecosistema: 'Bosque Seco',
+   eslabones: [
+    { id: 'hojas', emoji: '🍃', nombre: 'Hojas', rol: 'Productor' },
+    { id: 'insecto', emoji: '🐛', nombre: 'Insecto', rol: 'Consumidor 1°' },
+    { id: 'iguana', emoji: '🦎', nombre: 'Iguana', rol: 'Consumidor 2°' },
+   ]
+  }
+ ];
+
+ // ============ TTS ============
+ function hablar(texto){
+  if('speechSynthesis' in window){
+   window.speechSynthesis.cancel();
+   const utterance = new SpeechSynthesisUtterance(texto);
+   utterance.lang = 'es-ES';
+   utterance.rate = 0.9;
+   utterance.pitch = 1.05;
+   window.speechSynthesis.speak(utterance);
+  }
+ }
+
+ // ============ PROGRESS ============
+ function actualizarProgreso(){
+  let completadas = 0;
+  const total = 3;
+  if(state.leccionCompleta) completadas++;
+  if(state.cadenasCompleto) completadas++;
+  if(state.clasifCompleto) completadas++;
+  const pct = Math.round((completadas / total) * 100);
+  $('#progresoFill').style.width = pct + '%';
+  $('#progresoPct').textContent = pct + '%';
+ }
+
+ // ============ TOAST ============
+ function mostrarToast(mensaje, tipo){
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = mensaje;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+   toast.style.opacity = '0';
+   toast.style.transition = 'opacity 0.3s';
+   setTimeout(() => toast.remove(), 300);
+  }, 2500);
+ }
+
+ // ============ NAVIGATION ============
+ function irAPantalla(num){
+  for(let i = 1; i <= 5; i++){
+   const el = $('#pantalla' + i);
+   if(el) el.style.display = 'none';
+   if(el) el.classList.remove('activo');
+  }
+  const target = $('#pantalla' + num);
+  if(target){
+   target.style.display = 'block';
+   target.classList.add('activo');
+   target.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  state.pantallaActual = num;
+ }
+
+ // ============ PANTALLA 1 → 2 ============
+ $('#btnIniciar').addEventListener('click', () => {
+  irAPantalla(2);
+  mostrarToast('🏜️ Conoce los 5 ecosistemas guajiros', 'info');
+ });
+
+ // ============ PANTALLA 2: LECCIÓN ============
+ let ecosVistos = new Set();
+ const observerOptions = { threshold: 0.3 };
+
+ const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+   if(entry.isIntersecting){
+    const id = entry.target.id;
+    if(id && id.startsWith('eco')){
+     ecosVistos.add(id);
+     if(ecosVistos.size >= 5 && !state.leccionCompleta){
+      state.leccionCompleta = true;
+      $('#check2').style.display = 'inline-block';
+      $('#pantalla2').classList.add('completado');
+      $('#btnLeccionOk').style.display = 'inline-block';
+      actualizarProgreso();
+      mostrarToast('📚 ¡Conoces los 5 ecosistemas!', 'exito');
+     }
+    }
+   }
+  });
+ }, observerOptions);
+
+ ['ecoDesierto','ecoBosque','ecoManglar','ecoMacuira','ecoJaguey'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) observer.observe(el);
+ });
+
+ $('#btnRepasarEcos').addEventListener('click', () => {
+  $('#ecoDesierto').scrollIntoView({behavior:'smooth'});
+  ecosVistos = new Set();
+  mostrarToast('🔁 Repasando los ecosistemas...', 'info');
+ });
+
+ $('#btnLeccionOk').addEventListener('click', () => {
+  irAPantalla(3);
+  inicializarCadenas();
+  mostrarToast('🔗 Construye las cadenas alimenticias', 'info');
+ });
+
+ // ============ PANTALLA 3: CADENAS ============
+
+ // Estado por cadena: qué eslabones están colocados y si es correcto
+ let cadenaEstados = [
+  [null, null, null], // [eslabon0, eslabon1, eslabon2] -> 'id' o null
+  [null, null, null],
+  [null, null, null]
+ ];
+
+ function inicializarCadenas(){
+  state.cadenaActual = 0;
+  state.cadenasCompletas = 0;
+  state.cadenasResultados = [false, false, false];
+  state.cadenasCompleto = false;
+  cadenaEstados = [[null,null,null],[null,null,null],[null,null,null]];
+  $('#check3').style.display = 'none';
+  $('#pantalla3').classList.remove('completado');
+  $('#btnCadenasOk').style.display = 'none';
+  renderCadenaActual();
+ }
+
+ function renderCadenaActual(){
+  const cad = cadenasData[state.cadenaActual];
+  const eslabonesUsados = cadenaEstados[state.cadenaActual];
+
+  // Actualizar tabs
+  for(let i = 0; i < 3; i++){
+   const tab = $('#tabCadena' + i);
+   if(tab){
+    tab.classList.remove('activa');
+    if(i === state.cadenaActual) tab.classList.add('activa');
+    if(state.cadenasResultados[i]) tab.classList.add('completada');
+   }
+  }
+
+  // Renderizar eslabones
+  let html = '';
+  for(let j = 0; j < 3; j++){
+   const ocupado = eslabonesUsados[j] !== null;
+   let emoji, nombre, rol;
+   if(ocupado){
+    const item = cad.eslabones.find(e => e.id === eslabonesUsados[j]);
+    emoji = item ? item.emoji : '❓';
+    nombre = item ? item.nombre : '???';
+    rol = item ? item.rol : '???';
+   } else {
+    emoji = '❓';
+    nombre = j===0 ? 'Productor' : (j===1 ? 'Consumidor 1°' : 'Consumidor 2°');
+    rol = 'Nivel ' + (j+1);
+   }
+   const ocupadoClass = ocupado ? ' ocupado' : '';
+   html += '<div class="cadena-eslabon' + ocupadoClass + '" id="eslabon' + state.cadenaActual + '-' + j + '">';
+   html += '<div class="eslabon-emoji">' + emoji + '</div>';
+   html += '<div class="eslabon-nombre">' + nombre + '</div>';
+   html += '<div class="eslabon-rol">' + rol + '</div>';
+   html += '</div>';
+   if(j < 2) html += '<div class="cadena-flecha">→</div>';
+  }
+  $('#cadenaContenedor').innerHTML = html;
+
+  // Bind drop to eslabones
+  document.querySelectorAll('#cadenaContenedor .cadena-eslabon').forEach(eslabon => {
+   eslabon.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+   });
+   eslabon.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const parteId = e.dataTransfer.getData('text/plain');
+    const slotIdx = parseInt(eslabon.id.split('-')[2]);
+    if(parteId && !cadenaEstados[state.cadenaActual][slotIdx]){
+     colocarEnCadena(parteId, slotIdx);
+    }
+   });
+  });
+
+  // Renderizar labels arrastrables
+  renderLabels();
+  $('#cadenaFeedback').textContent = '';
+ }
+
+ function renderLabels(){
+  const cad = cadenasData[state.cadenaActual];
+  const usados = cadenaEstados[state.cadenaActual];
+  let html = '';
+  cad.eslabones.forEach((item, idx) => {
+   if(usados.includes(item.id)){
+    html += '<div class="cadena-label usado" data-id="' + item.id + '">' + item.emoji + ' ' + item.nombre + '</div>';
+   } else {
+    html += '<div class="cadena-label" draggable="true" data-id="' + item.id + '">' + item.emoji + ' ' + item.nombre + '</div>';
+   }
+  });
+  $('#cadenaLabels').innerHTML = html;
+
+  // Bind drag events
+  document.querySelectorAll('#cadenaLabels .cadena-label:not(.usado)').forEach(label => {
+   label.addEventListener('dragstart', (e) => {
+    label.classList.add('arrastrando');
+    e.dataTransfer.setData('text/plain', label.dataset.id);
+    e.dataTransfer.effectAllowed = 'move';
+   });
+   label.addEventListener('dragend', () => {
+    label.classList.remove('arrastrando');
+   });
+   // Touch
+   label.addEventListener('touchstart', function(e){
+    this.classList.add('arrastrando');
+    this._touchData = { id: this.dataset.id, label: this };
+   }, {passive: false});
+   label.addEventListener('touchmove', function(e){
+    e.preventDefault();
+   }, {passive: false});
+   label.addEventListener('touchend', function(e){
+    this.classList.remove('arrastrando');
+    if(!this._touchData) return;
+    const touch = e.changedTouches[0];
+    const elemDebajo = document.elementFromPoint(touch.clientX, touch.clientY);
+    if(elemDebajo){
+     const eslabon = elemDebajo.closest('.cadena-eslabon');
+     if(eslabon && !eslabon.classList.contains('ocupado')){
+      const slotIdx = parseInt(eslabon.id.split('-')[2]);
+      colocarEnCadena(this._touchData.id, slotIdx);
+     }
+    }
+    this._touchData = null;
+   });
+  });
+ }
+
+ function colocarEnCadena(itemId, slotIdx){
+  const cad = cadenasData[state.cadenaActual];
+  // Check if correct: slotIdx must match the eslabon index
+  const correcto = cad.eslabones[slotIdx].id === itemId;
+
+  cadenaEstados[state.cadenaActual][slotIdx] = itemId;
+
+  // Verificar si la cadena está completa
+  const todosLlenos = cadenaEstados[state.cadenaActual].every(s => s !== null);
+
+  // Verificar si todos están en la posición correcta
+  let todosCorrectos = true;
+  for(let j = 0; j < 3; j++){
+   if(cadenaEstados[state.cadenaActual][j] !== cad.eslabones[j].id){
+    todosCorrectos = false;
+    break;
+   }
+  }
+
+  renderCadenaActual();
+
+  if(todosLlenos){
+   if(todosCorrectos){
+    if(!state.cadenasResultados[state.cadenaActual]){
+     state.cadenasResultados[state.cadenaActual] = true;
+     state.cadenasCompletas++;
+    }
+    $('#cadenaFeedback').textContent = '✅ ¡Cadena correcta! ' + cad.nombre;
+    $('#cadenaFeedback').style.color = 'var(--verde)';
+    // Marcar eslabones como correctos
+    for(let j = 0; j < 3; j++){
+     const el = $('#eslabon' + state.cadenaActual + '-' + j);
+     if(el){ el.classList.add('correcto'); el.classList.remove('incorrecto'); }
+    }
+    mostrarToast('🔗 ¡Cadena alimenticia ' + (state.cadenaActual+1) + ' completada!', 'exito');
+
+    if(state.cadenasCompletas >= 3){
+     state.cadenasCompleto = true;
+     $('#check3').style.display = 'inline-block';
+     $('#pantalla3').classList.add('completado');
+     $('#btnCadenasOk').style.display = 'inline-block';
+     actualizarProgreso();
+    }
+   } else {
+    $('#cadenaFeedback').textContent = '❌ Algo no está bien. Revisa el orden: Productor → Consumidor 1° → Consumidor 2°';
+    $('#cadenaFeedback').style.color = 'var(--rojo)';
+    for(let j = 0; j < 3; j++){
+     const el = $('#eslabon' + state.cadenaActual + '-' + j);
+     if(el && cadenaEstados[state.cadenaActual][j] !== cad.eslabones[j].id){
+      el.classList.add('incorrecto');
+     }
+    }
+   }
+  }
+ }
+
+ // Cambiar de cadena
+ for(let i = 0; i < 3; i++){
+  const tab = $('#tabCadena' + i);
+  if(tab){
+   tab.addEventListener('click', () => {
+    state.cadenaActual = i;
+    renderCadenaActual();
+   });
+  }
+ }
+
+ $('#btnReiniciarCadenas').addEventListener('click', () => {
+  cadenaEstados[state.cadenaActual] = [null, null, null];
+  if(state.cadenasResultados[state.cadenaActual]){
+   state.cadenasCompletas--;
+   state.cadenasResultados[state.cadenaActual] = false;
+   state.cadenasCompleto = false;
+   $('#check3').style.display = 'none';
+   $('#pantalla3').classList.remove('completado');
+   $('#btnCadenasOk').style.display = 'none';
+   actualizarProgreso();
+  }
+  renderCadenaActual();
+  mostrarToast('🔄 Cadena reiniciada', 'info');
+ });
+
+ $('#btnCadenasOk').addEventListener('click', () => {
+  irAPantalla(4);
+  inicializarClasif();
+  mostrarToast('🗂️ Clasifica 12 especies en los 5 ecosistemas', 'info');
+ });
+
+ // ============ PANTALLA 4: CLASIFICACIÓN ============
+ const clasifTarjetas = [
+  { id: 'cardon2', nombre: 'Cardón', emoji: '🌵', eco: 'desierto' },
+  { id: 'chivo2', nombre: 'Chivo', emoji: '🐐', eco: 'desierto' },
+  { id: 'serpiente', nombre: 'Serpiente cascabel', emoji: '🐍', eco: 'desierto' },
+  { id: 'trupillo', nombre: 'Trupillo', emoji: '🌳', eco: 'bosque' },
+  { id: 'iguana2', nombre: 'Iguana', emoji: '🦎', eco: 'bosque' },
+  { id: 'mangle', nombre: 'Mangle rojo', emoji: '🌿', eco: 'manglar' },
+  { id: 'flamenco2', nombre: 'Flamenco', emoji: '🦩', eco: 'manglar' },
+  { id: 'helecho', nombre: 'Helecho', emoji: '🌿', eco: 'macuira' },
+  { id: 'rana', nombre: 'Rana', emoji: '🐸', eco: 'macuira' },
+  { id: 'orquidea', nombre: 'Orquídea', emoji: '🌸', eco: 'macuira' },
+  { id: 'junco', nombre: 'Junco', emoji: '🌾', eco: 'jaguey' },
+  { id: 'ave_playera', nombre: 'Ave playera', emoji: '🐦', eco: 'jaguey' },
+ ];
+
+ const ecoIds = ['desierto','bosque','manglar','macuira','jaguey'];
+ const ecoCntTargets = { desierto: 3, bosque: 2, manglar: 2, macuira: 3, jaguey: 2 };
+ let clasifColocadas = {};
+
+ function inicializarClasif(){
+  state.clasifColocadas = 0;
+  state.clasifCorrectas = 0;
+  state.clasifCompleto = false;
+  clasifColocadas = {};
+  ecoIds.forEach(e => { clasifColocadas[e] = []; });
+  $('#check4').style.display = 'none';
+  $('#pantalla4').classList.remove('completado');
+  $('#btnClasifOk').style.display = 'none';
+  $('#clasifFeedback').textContent = '';
+
+  // Limpiar columnas
+  ecoIds.forEach(e => {
+   $('#items' + e.charAt(0).toUpperCase() + e.slice(1)).innerHTML = '';
+   $('#cnt' + e.charAt(0).toUpperCase() + e.slice(1)).textContent = '0/' + ecoCntTargets[e];
+  });
+
+  // Renderizar tarjetas en la bandeja
+  renderBandeja();
+ }
+
+ function renderBandeja(){
+  let html = '<div class="bandeja-titulo">📦 Tarjetas por clasificar (' + (clasifTarjetas.length - state.clasifColocadas) + ' restantes):</div>';
+  clasifTarjetas.forEach(t => {
+   const yaColocada = Object.values(clasifColocadas).flat().includes(t.id);
+   if(!yaColocada){
+    html += '<div class="tarjeta-animal" draggable="true" data-id="' + t.id + '" data-eco="' + t.eco + '">' + t.emoji + ' ' + t.nombre + '</div>';
+   }
+  });
+  if(state.clasifColocadas >= clasifTarjetas.length){
+   html += '<span style="font-size:0.9rem;color:var(--verde)">✅ ¡Todas clasificadas!</span>';
+  }
+  $('#clasifBandeja').innerHTML = html;
+
+  // Bind drag y touch
+  document.querySelectorAll('#clasifBandeja .tarjeta-animal').forEach(tarj => {
+   tarj.addEventListener('dragstart', (e) => {
+    tarj.classList.add('arrastrando');
+    e.dataTransfer.setData('text/plain', tarj.dataset.id);
+    e.dataTransfer.effectAllowed = 'move';
+   });
+   tarj.addEventListener('dragend', () => { tarj.classList.remove('arrastrando'); });
+   tarj.addEventListener('touchstart', function(e){
+    this.classList.add('arrastrando');
+    this._touchData = { id: this.dataset.id, eco: this.dataset.eco, tarj: this };
+   }, {passive: false});
+   tarj.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive: false});
+   tarj.addEventListener('touchend', function(e){
+    this.classList.remove('arrastrando');
+    if(!this._touchData) return;
+    const touch = e.changedTouches[0];
+    const elemDebajo = document.elementFromPoint(touch.clientX, touch.clientY);
+    if(elemDebajo){
+     const col = elemDebajo.closest('.clasif-col');
+     if(col){
+      colocarTarjeta(this._touchData.id, col.dataset.eco);
+     }
+    }
+    this._touchData = null;
+   });
+  });
+
+  // Bind drop en columnas
+  document.querySelectorAll('.clasif-col').forEach(col => {
+   col.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+   col.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const tarjId = e.dataTransfer.getData('text/plain');
+    if(tarjId) colocarTarjeta(tarjId, col.dataset.eco);
+   });
+  });
+ }
+
+ function colocarTarjeta(tarjId, ecoDestino){
+  const tarj = clasifTarjetas.find(t => t.id === tarjId);
+  if(!tarj) return;
+
+  // Validar que la columna no esté llena
+  if(clasifColocadas[ecoDestino].length >= ecoCntTargets[ecoDestino]){
+   mostrarToast('⚠️ Esta columna ya está llena', 'error');
+   return;
+  }
+
+  // Validar que no esté ya colocada en otra columna
+  const yaColocada = Object.entries(clasifColocadas).find(([eco, ids]) => ids.includes(tarjId));
+  if(yaColocada) return;
+
+  const correcto = tarj.eco === ecoDestino;
+  clasifColocadas[ecoDestino].push(tarjId);
+  state.clasifColocadas++;
+
+  if(correcto) state.clasifCorrectas++;
+
+  // Actualizar UI de la columna
+  const ecoCap = ecoDestino.charAt(0).toUpperCase() + ecoDestino.slice(1);
+  const itemsEl = $('#items' + ecoCap);
+  if(itemsEl){
+   const badge = document.createElement('span');
+   badge.className = 'tarjeta-animal usada ' + (correcto ? 'correcta' : 'incorrecta');
+   badge.textContent = tarj.emoji + ' ' + tarj.nombre;
+   itemsEl.appendChild(badge);
+  }
+
+  const cntEl = $('#cnt' + ecoCap);
+  if(cntEl) cntEl.textContent = clasifColocadas[ecoDestino].length + '/' + ecoCntTargets[ecoDestino];
+
+  // Feedback
+  if(correcto){
+   $('#clasifFeedback').textContent = '✅ ¡Correcto! ' + tarj.nombre + ' pertenece al ecosistema de ' + ecoDestino + '.';
+   $('#clasifFeedback').style.color = 'var(--verde)';
+   mostrarToast('✅ ' + tarj.nombre + ' → ' + ecoDestino, 'exito');
+  } else {
+   $('#clasifFeedback').textContent = '❌ ' + tarj.nombre + ' NO pertenece a ' + ecoDestino + '. Pertenece a ' + tarj.eco + '.';
+   $('#clasifFeedback').style.color = 'var(--rojo)';
+   mostrarToast('❌ ¡Ups! ' + tarj.nombre + ' no es de ' + ecoDestino, 'error');
+   setTimeout(() => {
+    // Quitar de columna incorrecta después de 1.5s
+    clasifColocadas[ecoDestino] = clasifColocadas[ecoDestino].filter(id => id !== tarjId);
+    state.clasifColocadas--;
+    if(!correcto) state.clasifCorrectas--;
+    if(itemsEl) itemsEl.removeChild(itemsEl.lastChild);
+    if(cntEl) cntEl.textContent = clasifColocadas[ecoDestino].length + '/' + ecoCntTargets[ecoDestino];
+    renderBandeja();
+   }, 1500);
+  }
+
+  renderBandeja();
+
+  // Verificar completitud
+  if(state.clasifColocadas >= clasifTarjetas.length && state.clasifCorrectas === clasifTarjetas.length){
+   state.clasifCompleto = true;
+   $('#check4').style.display = 'inline-block';
+   $('#pantalla4').classList.add('completado');
+   $('#btnClasifOk').style.display = 'inline-block';
+   $('#clasifFeedback').textContent = '🎉 ¡Perfecto! Clasificaste las 12 especies correctamente.';
+   $('#clasifFeedback').style.color = 'var(--verde)';
+   actualizarProgreso();
+   mostrarToast('🗂️ ¡Clasificación completada!', 'exito');
+  }
+ }
+
+ $('#btnReiniciarClasif').addEventListener('click', () => {
+  inicializarClasif();
+  mostrarToast('🔄 Clasificación reiniciada', 'info');
+ });
+
+ $('#btnClasifOk').addEventListener('click', () => {
+  irAPantalla(5);
+  mostrarResultados();
+ });
+
+ // ============ PANTALLA 5: RESULTADOS ============
+ function mostrarResultados(){
+  const totalItems = 3;
+  let completadas = 0;
+  if(state.leccionCompleta) completadas++;
+  if(state.cadenasCompleto) completadas++;
+  if(state.clasifCompleto) completadas++;
+  const pct = Math.round((completadas / totalItems) * 100);
+
+  const cadenasPct = Math.round((state.cadenasCompletas / 3) * 100);
+  const clasifPct = Math.round((state.clasifCorrectas / 12) * 100);
+
+  const totalScore = Math.round((state.cadenasCompletas * 33 + Math.round(clasifPct * 0.67)));
+  $('#puntajeFinal').textContent = totalScore + '% (' + state.clasifCorrectas + '/12 especies correctas)';
+
+  let mensaje = '';
+  let estrellaEmoji = '';
+  if(totalScore >= 90){
+   estrellaEmoji = '🏆';
+   mensaje = '¡Eres un guardián de los ecosistemas guajiros! Conoces los 5 ecosistemas, entiendes cómo fluye la energía en las cadenas alimenticias y sabes qué especies pertenecen a cada lugar. Como enseña la cultura wayuu: quien conoce su territorio, lo protege. ¡Juyá (la lluvia) y Mma (la tierra) te lo agradecen!';
+  } else if(totalScore >= 70){
+   estrellaEmoji = '🌟';
+   mensaje = '¡Muy bien! Has aprendido mucho sobre los ecosistemas de La Guajira. Los wayuu enseñan que cada ser vivo tiene su lugar en el territorio. Sigue explorando para convertirte en un verdadero guardián.';
+  } else if(totalScore >= 50){
+   estrellaEmoji = '👍';
+   mensaje = '¡Buen trabajo! Conoces varios ecosistemas. Repite el módulo para recordar todas las cadenas alimenticias y dónde vive cada especie. El territorio wayuu es grande y diverso.';
+  } else {
+   estrellaEmoji = '🌱';
+   mensaje = 'Vas comenzando tu viaje por los ecosistemas guajiros. ¡No te rindas! Cada vez que explores, aprenderás más sobre el desierto, el bosque, el manglar, Macuira y los jagüeyes.';
+  }
+
+  $('#estrellaFinal').textContent = estrellaEmoji;
+  $('#mensajeFinal').textContent = mensaje;
+
+  // Confetti
+  const emojis = ['🏜️','🌳','🌊','☁️','💧','🌵','🐐','🦩','🐸','🦎','🐟','🐛','🟢','🍃','✨','🌟','🌿','🏔️','💧','🧑'];
+  for(let i = 0; i < 30; i++){
+   setTimeout(() => {
+    const e = document.createElement('span');
+    e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+    e.style.left = Math.random() * 90 + '%';
+    e.style.top = '-50px';
+    document.body.appendChild(e);
+    setTimeout(() => e.remove(), 2600);
+   }, i * 100);
+  }
+
+  if(!document.getElementById('animCaer')){
+   const style = document.createElement('style');
+   style.id = 'animCaer';
+   style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+   document.head.appendChild(style);
+  }
+
+  actualizarProgreso();
+ }
+
+ // ============ INIT ============
+ actualizarProgreso();
+
+})();
+</script>
+
+</body>
+</html>

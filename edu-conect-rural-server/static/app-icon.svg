@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a2c17"/>
+      <stop offset="100%" style="stop-color:#6b3f2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+  <!-- Book -->
+  <g transform="translate(120,160)">
+    <rect x="0" y="0" width="200" height="240" rx="12" fill="#fdf8f0" stroke="#c45a3c" stroke-width="6"/>
+    <rect x="20" y="20" width="160" height="6" rx="3" fill="#c45a3c"/>
+    <rect x="20" y="40" width="140" height="6" rx="3" fill="#c45a3c" opacity="0.6"/>
+    <rect x="20" y="60" width="150" height="6" rx="3" fill="#c45a3c" opacity="0.4"/>
+    <rect x="20" y="80" width="120" height="6" rx="3" fill="#c45a3c" opacity="0.3"/>
+    <rect x="20" y="110" width="130" height="6" rx="3" fill="#c45a3c" opacity="0.5"/>
+    <rect x="20" y="130" width="100" height="6" rx="3" fill="#c45a3c" opacity="0.3"/>
+    <rect x="20" y="160" width="140" height="6" rx="3" fill="#c45a3c" opacity="0.4"/>
+    <rect x="20" y="180" width="110" height="6" rx="3" fill="#c45a3c" opacity="0.3"/>
+    <rect x="20" y="200" width="90" height="6" rx="3" fill="#c45a3c" opacity="0.2"/>
+  </g>
+  <!-- WiFi waves -->
+  <g transform="translate(340,320)" fill="none" stroke="#5a7a62" stroke-width="8" stroke-linecap="round">
+    <path d="M0,-60 Q40,-100 80,-60" opacity="0.25"/>
+    <path d="M-15,-40 Q25,-80 65,-40" opacity="0.5"/>
+    <path d="M-30,-20 Q10,-60 50,-20" opacity="0.75"/>
+    <circle cx="20" cy="5" r="12" fill="#5a7a62" stroke="none"/>
+  </g>
+  <!-- "E" letter -->
+  <text x="380" y="470" font-family="Arial,sans-serif" font-size="40" font-weight="bold" fill="#fdf8f0" text-anchor="middle">E</text>
+</svg>

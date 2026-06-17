@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LENG-101: Las Vocales - Conciencia Fonológica</title>
+    <style>
+        :root {
+            --wayuu-orange: #E8782A;
+            --wayuu-yellow: #F4C542;
+            --wayuu-red: #D94040;
+            --wayuu-blue: #3A7CC3;
+            --wayuu-green: #4CAF50;
+            --wayuu-purple: #8E44AD;
+            --wayuu-sand: #F5E6D3;
+            --wayuu-brown: #5D3A1A;
+            --bg-warm: #FFF8F0;
+            --card-bg: #FFFFFF;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-warm);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(244,197,66,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(232,120,42,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(58,124,195,0.08) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            min-height: 90vh;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            background: linear-gradient(135deg, var(--wayuu-orange), var(--wayuu-red));
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-light);
+            min-height: 55px;
+        }
+        .top-bar .module-code {
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .top-bar .grade-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .top-bar .progress-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .top-bar .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            transition: all 0.3s;
+        }
+        .top-bar .progress-dot.active {
+            background: white;
+            box-shadow: 0 0 8px rgba(255,255,255,0.6);
+            transform: scale(1.2);
+        }
+        .top-bar .progress-dot.done {
+            background: rgba(255,255,255,0.7);
+        }
+
+        /* --- SCREENS --- */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 20px 24px 30px;
+            overflow-y: auto;
+            animation: fadeSlideIn 0.45s ease-out;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+            0%   { transform: scale(0.3); opacity: 0; }
+            50%  { transform: scale(1.08); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.08); }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25%      { transform: rotate(-3deg); }
+            75%      { transform: rotate(3deg); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50%      { transform: translateY(-8px); }
+        }
+        @keyframes confetti-fall {
+            0%   { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50%      { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+
+        /* --- WELCOME SCREEN --- */
+        .welcome-header {
+            text-align: center;
+            padding-top: 20px;
+        }
+        .welcome-header .sun-icon {
+            font-size: 60px;
+            animation: pulse 2s infinite;
+            display: inline-block;
+        }
+        .welcome-header h1 {
+            font-size: 2em;
+            color: var(--wayuu-orange);
+            margin: 8px 0 4px;
+            line-height: 1.2;
+        }
+        .welcome-header .subtitle {
+            font-size: 1.1em;
+            color: var(--wayuu-brown);
+            opacity: 0.8;
+        }
+        .wayuu-decoration {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .wayuu-decoration span {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            transform: rotate(45deg);
+        }
+        .welcome-info {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 16px 0;
+            border-left: 4px solid var(--wayuu-orange);
+        }
+        .welcome-info p {
+            font-size: 1.05em;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        .welcome-info .emoji-bullet {
+            margin-right: 6px;
+        }
+        .btn-start-container {
+            text-align: center;
+            margin-top: auto;
+            padding: 20px 0 10px;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-block;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.25em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            min-width: 180px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--wayuu-orange), var(--wayuu-red));
+            color: white;
+            box-shadow: 0 6px 20px rgba(232,120,42,0.4);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(232,120,42,0.5);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--wayuu-blue), #2E5FA1);
+            color: white;
+            box-shadow: 0 6px 20px rgba(58,124,195,0.35);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--wayuu-green), #388E3C);
+            color: white;
+            box-shadow: 0 6px 20px rgba(76,175,80,0.35);
+        }
+        .btn-small {
+            padding: 10px 24px;
+            font-size: 1em;
+            min-width: auto;
+        }
+        .btn-vowel {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            font-size: 2em;
+            font-weight: 800;
+            padding: 0;
+            min-width: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-vowel:active {
+            transform: scale(0.85);
+        }
+
+        /* --- LESSON SCREEN --- */
+        .lesson-title {
+            text-align: center;
+            font-size: 1.5em;
+            color: var(--wayuu-brown);
+            margin-bottom: 16px;
+        }
+        .vowel-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .vowel-card {
+            background: white;
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .vowel-card:hover {
+            box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+        }
+        .vowel-card.playing {
+            border-color: var(--wayuu-yellow);
+            animation: pulse 0.6s ease-in-out;
+            background: #FFFDE7;
+        }
+        .vowel-card .vowel-letter {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+        .vowel-letter-a { background: var(--wayuu-orange); }
+        .vowel-letter-e { background: var(--wayuu-green); }
+        .vowel-letter-i { background: var(--wayuu-blue); }
+        .vowel-letter-o { background: var(--wayuu-red); }
+        .vowel-letter-u { background: var(--wayuu-purple); }
+
+        .vowel-card .vowel-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .vowel-card .vowel-wayuu {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .vowel-card .vowel-meaning {
+            font-size: 0.95em;
+            color: #666;
+        }
+        .vowel-card .vowel-emoji {
+            font-size: 2.5em;
+            flex-shrink: 0;
+        }
+        .vowel-card .btn-play {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: var(--wayuu-sand);
+            font-size: 1.3em;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .vowel-card .btn-play:active {
+            background: var(--wayuu-yellow);
+            transform: scale(0.9);
+        }
+
+        /* --- GAME SCREENS --- */
+        .game-title {
+            text-align: center;
+            font-size: 1.4em;
+            color: var(--wayuu-brown);
+            margin-bottom: 6px;
+        }
+        .game-subtitle {
+            text-align: center;
+            font-size: 1em;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        .game-score {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--wayuu-orange);
+            margin-bottom: 10px;
+        }
+        .game-card {
+            background: var(--wayuu-sand);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .game-card .game-emoji {
+            font-size: 5em;
+            display: block;
+            animation: float 2.5s ease-in-out infinite;
+        }
+        .game-card .game-word {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--wayuu-brown);
+            margin: 8px 0;
+            letter-spacing: 4px;
+        }
+        .game-card .game-hint {
+            font-size: 1em;
+            color: #777;
+            font-style: italic;
+        }
+        .vowel-options {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .vowel-option-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 2em;
+            font-weight: 800;
+            border: 3px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+        }
+        .vowel-option-btn:active {
+            transform: scale(0.85);
+        }
+        .vowel-option-btn.correct {
+            background: var(--wayuu-green);
+            color: white;
+            border-color: var(--wayuu-green);
+            animation: bounceIn 0.5s;
+        }
+        .vowel-option-btn.wrong {
+            background: var(--wayuu-red);
+            color: white;
+            border-color: var(--wayuu-red);
+            animation: wiggle 0.4s;
+        }
+        .feedback-msg {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 700;
+            min-height: 2em;
+            margin-top: 8px;
+        }
+
+        /* --- GAME 2: FILL IN --- */
+        .fill-word {
+            font-size: 2.2em;
+            font-weight: 800;
+            letter-spacing: 6px;
+            margin: 12px 0;
+        }
+        .fill-word .missing {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border-bottom: 4px dashed var(--wayuu-orange);
+            margin: 0 2px;
+            vertical-align: middle;
+            line-height: 50px;
+            color: var(--wayuu-orange);
+            transition: all 0.3s;
+        }
+        .fill-word .missing.filled {
+            border-bottom-color: var(--wayuu-green);
+            color: var(--wayuu-green);
+            animation: bounceIn 0.4s;
+        }
+
+        /* --- FINAL SCREEN --- */
+        .final-screen {
+            text-align: center;
+        }
+        .final-stars {
+            font-size: 3em;
+            margin: 10px 0;
+        }
+        .final-stars .star {
+            display: inline-block;
+            animation: bounceIn 0.6s backwards;
+        }
+        .final-stars .star:nth-child(1) { animation-delay: 0.1s; }
+        .final-stars .star:nth-child(2) { animation-delay: 0.3s; }
+        .final-stars .star:nth-child(3) { animation-delay: 0.5s; }
+        .achievement-card {
+            background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 12px 0;
+            border: 2px solid var(--wayuu-yellow);
+            text-align: left;
+        }
+        .achievement-card .ach-item {
+            padding: 6px 0;
+            font-size: 1.05em;
+        }
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            animation: confetti-fall 3s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 480px) {
+            .app-container {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            .screen {
+                padding: 16px 14px 20px;
+            }
+            .btn {
+                padding: 14px 28px;
+                font-size: 1.1em;
+                min-width: 140px;
+            }
+            .btn-vowel {
+                width: 56px;
+                height: 56px;
+                font-size: 1.6em;
+            }
+            .vowel-option-btn {
+                width: 54px;
+                height: 54px;
+                font-size: 1.6em;
+            }
+            .vowel-card {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .vowel-card .vowel-letter {
+                width: 48px;
+                height: 48px;
+                font-size: 1.6em;
+            }
+            .game-card .game-emoji {
+                font-size: 3.5em;
+            }
+            .game-card .game-word {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <span class="module-code">LENG-101</span>
+        <div class="progress-dots" id="progressDots">
+            <span class="progress-dot active" data-step="0"></span>
+            <span class="progress-dot" data-step="1"></span>
+            <span class="progress-dot" data-step="2"></span>
+            <span class="progress-dot" data-step="3"></span>
+            <span class="progress-dot" data-step="4"></span>
+        </div>
+        <span class="grade-badge">1° Grado</span>
+    </div>
+
+    <!-- SCREEN 0: WELCOME -->
+    <div class="screen active" id="screenWelcome">
+        <div class="welcome-header">
+            <span class="sun-icon">☀️</span>
+            <h1>¡Las Vocales!</h1>
+            <div class="subtitle">Conciencia Fonológica • Wayuunaiki</div>
+        </div>
+        <div class="wayuu-decoration">
+            <span style="background:#E8782A;"></span>
+            <span style="background:#F4C542;"></span>
+            <span style="background:#D94040;"></span>
+            <span style="background:#3A7CC3;"></span>
+            <span style="background:#4CAF50;"></span>
+            <span style="background:#8E44AD;"></span>
+            <span style="background:#E8782A;"></span>
+            <span style="background:#F4C542;"></span>
+        </div>
+        <div class="welcome-info">
+            <p><span class="emoji-bullet">📖</span> Hoy aprenderás las <strong>5 vocales</strong> con palabras del pueblo <strong>Wayuu</strong>.</p>
+            <p><span class="emoji-bullet">🎧</span> Escucha cómo suena cada vocal en <strong>wayuunaiki</strong>.</p>
+            <p><span class="emoji-bullet">🎮</span> Juega y demuestra lo que aprendiste.</p>
+            <p style="text-align:center;margin-top:8px;"><em>¡Anashaatasü! (¡Es bonito!)</em></p>
+        </div>
+        <div class="btn-start-container">
+            <button class="btn btn-primary" onclick="goToScreen('lesson')">
+                🚀 ¡Comenzar!
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREEN 1: LESSON -->
+    <div class="screen" id="screenLesson">
+        <h2 class="lesson-title">🎓 Aprendamos las vocales</h2>
+        <p style="text-align:center;color:#888;margin-bottom:14px;">Toca cada tarjeta para escuchar</p>
+        <div class="vowel-cards" id="vowelCards">
+            <!-- Generated by JS -->
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+            <button class="btn btn-secondary" onclick="goToScreen('game1')">
+                ▶️ Jugar: Elige la vocal
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: GAME 1 - Choose initial vowel -->
+    <div class="screen" id="screenGame1">
+        <h2 class="game-title">🎯 Juego 1: ¿Con qué vocal empieza?</h2>
+        <p class="game-subtitle">Mira la palabra y elige la vocal inicial</p>
+        <div class="game-score">⭐ Aciertos: <span id="game1Score">0</span> / <span id="game1Total">0</span></div>
+        <div class="game-card" id="game1Card">
+            <span class="game-emoji" id="game1Emoji">🐕</span>
+            <div class="game-word" id="game1Word">_nüü</div>
+            <div class="game-hint" id="game1Hint">(perro)</div>
+        </div>
+        <div class="vowel-options" id="game1Options">
+            <!-- Generated by JS -->
+        </div>
+        <div class="feedback-msg" id="game1Feedback"></div>
+        <div style="text-align:center;margin-top:14px;">
+            <button class="btn btn-primary btn-small" id="game1Next" style="display:none;" onclick="nextGame1Question()">
+                ▶️ Siguiente
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: GAME 2 - Complete the word -->
+    <div class="screen" id="screenGame2">
+        <h2 class="game-title">✏️ Juego 2: Completa la palabra</h2>
+        <p class="game-subtitle">Elige la vocal que falta en la palabra wayuu</p>
+        <div class="game-score">⭐ Aciertos: <span id="game2Score">0</span> / <span id="game2Total">0</span></div>
+        <div class="game-card" id="game2Card">
+            <span class="game-emoji" id="game2Emoji">⭐</span>
+            <div class="fill-word" id="game2Word">
+                <span>_</span><span class="missing" id="game2Missing">?</span><span>_</span>
+            </div>
+            <div class="game-hint" id="game2Hint"></div>
+        </div>
+        <div class="vowel-options" id="game2Options">
+            <!-- Generated by JS -->
+        </div>
+        <div class="feedback-msg" id="game2Feedback"></div>
+        <div style="text-align:center;margin-top:14px;">
+            <button class="btn btn-success btn-small" id="game2Next" style="display:none;" onclick="nextGame2Question()">
+                ▶️ Siguiente
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: FINAL -->
+    <div class="screen final-screen" id="screenFinal">
+        <h2 style="font-size:1.8em;color:var(--wayuu-orange);">🎉 ¡Felicitaciones!</h2>
+        <div class="final-stars" id="finalStars">
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+            <span class="star">⭐</span>
+        </div>
+        <p style="font-size:1.2em;color:var(--text-dark);margin:8px 0;">Completaste <strong>LENG-101</strong></p>
+        <div class="achievement-card" id="achievementCard">
+            <!-- Filled by JS -->
+        </div>
+        <p style="margin-top:10px;color:#777;font-style:italic;">Anashaatasü pünülia • ¡Hermoso aprendizaje!</p>
+        <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="restartModule()">
+                🔄 Volver a empezar
+            </button>
+            <button class="btn btn-secondary" onclick="goToScreen('lesson')">
+                📖 Repasar lección
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const vowels = [
+    {
+        letter: 'A', colorClass: 'vowel-letter-a',
+        wayuu: 'Anüü', meaning: 'perro', emoji: '🐕',
+        soundText: 'a'
+    },
+    {
+        letter: 'E', colorClass: 'vowel-letter-e',
+        wayuu: 'Eki', meaning: 'cabeza', emoji: '🧠',
+        soundText: 'e'
+    },
+    {
+        letter: 'I', colorClass: 'vowel-letter-i',
+        wayuu: 'Iiwa', meaning: 'estrella', emoji: '⭐',
+        soundText: 'i'
+    },
+    {
+        letter: 'O', colorClass: 'vowel-letter-o',
+        wayuu: "O'u", meaning: 'ojo', emoji: '👁️',
+        soundText: 'o'
+    },
+    {
+        letter: 'U', colorClass: 'vowel-letter-u',
+        wayuu: 'Utta', meaning: 'sueño', emoji: '😴',
+        soundText: 'u'
+    }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+
+let game1Questions = [];
+let game1Index = 0;
+let game1Correct = 0;
+let game1Answered = false;
+
+let game2Questions = [];
+let game2Index = 0;
+let game2Correct = 0;
+let game2Answered = false;
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+const screenIds = ['screenWelcome', 'screenLesson', 'screenGame1', 'screenGame2', 'screenFinal'];
+const screenStepMap = {
+    screenWelcome: 0,
+    screenLesson: 1,
+    screenGame1: 2,
+    screenGame2: 3,
+    screenFinal: 4
+};
+
+function goToScreen(screenName) {
+    const targetId = screenName.startsWith('screen') ? screenName : 'screen' + screenName.charAt(0).toUpperCase() + screenName.slice(1);
+
+    screenIds.forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    const target = document.getElementById(targetId);
+    if (target) {
+        target.classList.add('active');
+        target.scrollTop = 0;
+        updateProgress(targetId);
+
+        // Initialize screens on first visit
+        if (targetId === 'screenLesson' && !document.getElementById('vowelCards').hasChildNodes()) {
+            buildLessonCards();
+        }
+        if (targetId === 'screenGame1' && game1Questions.length === 0) {
+            initGame1();
+        }
+        if (targetId === 'screenGame2' && game2Questions.length === 0) {
+            initGame2();
+        }
+        if (targetId === 'screenFinal') {
+            showFinalScreen();
+        }
+    }
+}
+
+function updateProgress(screenId) {
+    const step = screenStepMap[screenId] ?? 0;
+    const dots = document.querySelectorAll('#progressDots .progress-dot');
+    dots.forEach((dot, i) => {
+        dot.classList.remove('active', 'done');
+        if (i < step) dot.classList.add('done');
+        if (i === step) dot.classList.add('active');
+    });
+}
+
+// ============================================================
+// SCREEN 1: LESSON - Build vowel cards
+// ============================================================
+
+function buildLessonCards() {
+    const container = document.getElementById('vowelCards');
+    container.innerHTML = '';
+
+    vowels.forEach((v, idx) => {
+        const card = document.createElement('div');
+        card.className = 'vowel-card';
+        card.innerHTML = `
+            <div class="vowel-letter ${v.colorClass}">${v.letter}</div>
+            <div class="vowel-info">
+                <div class="vowel-wayuu">${v.wayuu}</div>
+                <div class="vowel-meaning">${v.meaning} ${v.emoji}</div>
+            </div>
+            <button class="btn-play" onclick="playVowelSound(event, '${v.letter}', ${idx})" title="Escuchar sonido">🔊</button>
+        `;
+
+        // Tap whole card to play
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-play')) return; // avoid double-fire
+            playVowelSound(e, v.letter, idx);
+        });
+
+        container.appendChild(card);
+    });
+}
+
+function playVowelSound(event, letter, idx) {
+    if (event) event.stopPropagation();
+
+    const card = document.querySelectorAll('.vowel-card')[idx];
+    if (card) {
+        card.classList.add('playing');
+        setTimeout(() => card.classList.remove('playing'), 600);
+    }
+
+    // Use Web Speech API for sound
+    speakText(letter.toLowerCase());
+}
+
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-CO';
+        utterance.rate = 0.7;
+        utterance.pitch = 1.2;
+        utterance.volume = 0.9;
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+// ============================================================
+// SCREEN 2: GAME 1 - Choose initial vowel
+// ============================================================
+
+function initGame1() {
+    // Create all questions (one per vowel)
+    game1Questions = vowels.map(v => ({
+        vowel: v.letter,
+        word: v.wayuu,
+        meaning: v.meaning,
+        emoji: v.emoji,
+        displayWord: '_' + v.wayuu.slice(1)
+    }));
+
+    // Shuffle
+    shuffleArray(game1Questions);
+    game1Index = 0;
+    game1Correct = 0;
+    game1Answered = false;
+    document.getElementById('game1Score').textContent = '0';
+    document.getElementById('game1Total').textContent = '0';
+    document.getElementById('game1Feedback').textContent = '';
+    document.getElementById('game1Next').style.display = 'none';
+
+    renderGame1Question();
+}
+
+function renderGame1Question() {
+    if (game1Index >= game1Questions.length) {
+        // All done, go to game 2
+        goToScreen('game2');
+        return;
+    }
+
+    game1Answered = false;
+    const q = game1Questions[game1Index];
+
+    document.getElementById('game1Emoji').textContent = q.emoji;
+    document.getElementById('game1Word').textContent = q.displayWord;
+    document.getElementById('game1Hint').textContent = '(' + q.meaning + ')';
+    document.getElementById('game1Score').textContent = game1Correct;
+    document.getElementById('game1Total').textContent = game1Index;
+    document.getElementById('game1Feedback').textContent = '';
+    document.getElementById('game1Next').style.display = 'none';
+
+    // Build vowel options (shuffled)
+    const optionsContainer = document.getElementById('game1Options');
+    optionsContainer.innerHTML = '';
+
+    const allVowels = ['A', 'E', 'I', 'O', 'U'];
+    shuffleArray(allVowels);
+
+    allVowels.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'vowel-option-btn';
+        btn.textContent = v;
+        btn.addEventListener('click', () => checkGame1Answer(v, btn));
+        optionsContainer.appendChild(btn);
+    });
+}
+
+function checkGame1Answer(vowel, btnElement) {
+    if (game1Answered) return;
+    game1Answered = true;
+
+    const q = game1Questions[game1Index];
+    const isCorrect = (vowel === q.vowel);
+
+    // Disable all buttons
+    const allBtns = document.querySelectorAll('#game1Options .vowel-option-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    // Mark correct/wrong
+    if (isCorrect) {
+        btnElement.classList.add('correct');
+        game1Correct++;
+        document.getElementById('game1Feedback').innerHTML =
+            '<span style="color:#4CAF50;">✅ ¡Correcto! ' + q.wayuu + ' empieza con <strong>' + q.vowel + '</strong></span>';
+        document.getElementById('game1Score').textContent = game1Correct;
+        document.getElementById('game1Total').textContent = game1Index + 1;
+        speakText('¡Muy bien! ' + q.vowel);
+    } else {
+        btnElement.classList.add('wrong');
+        // Highlight correct answer
+        allBtns.forEach(b => {
+            if (b.textContent === q.vowel) b.classList.add('correct');
+        });
+        document.getElementById('game1Feedback').innerHTML =
+            '<span style="color:#D94040;">❌ ' + q.wayuu + ' empieza con <strong>' + q.vowel + '</strong></span>';
+        document.getElementById('game1Total').textContent = game1Index + 1;
+        speakText(q.vowel);
+    }
+
+    document.getElementById('game1Next').style.display = 'inline-block';
+}
+
+function nextGame1Question() {
+    game1Index++;
+    renderGame1Question();
+}
+
+// ============================================================
+// SCREEN 3: GAME 2 - Complete the word
+// ============================================================
+
+function initGame2() {
+    // Create all questions
+    game2Questions = vowels.map(v => ({
+        vowel: v.letter,
+        word: v.wayuu,
+        meaning: v.meaning,
+        emoji: v.emoji,
+        // Remove the first letter and lowercase rest for display
+        wordStem: v.wayuu.slice(1)
+    }));
+
+    shuffleArray(game2Questions);
+    game2Index = 0;
+    game2Correct = 0;
+    game2Answered = false;
+    document.getElementById('game2Score').textContent = '0';
+    document.getElementById('game2Total').textContent = '0';
+    document.getElementById('game2Feedback').textContent = '';
+    document.getElementById('game2Next').style.display = 'none';
+
+    renderGame2Question();
+}
+
+function renderGame2Question() {
+    if (game2Index >= game2Questions.length) {
+        // All done, go to final
+        goToScreen('final');
+        return;
+    }
+
+    game2Answered = false;
+    const q = game2Questions[game2Index];
+
+    document.getElementById('game2Emoji').textContent = q.emoji;
+    document.getElementById('game2Hint').textContent = '(' + q.meaning + ')';
+    document.getElementById('game2Score').textContent = game2Correct;
+    document.getElementById('game2Total').textContent = game2Index;
+    document.getElementById('game2Feedback').textContent = '';
+    document.getElementById('game2Next').style.display = 'none';
+
+    // Build word with missing vowel
+    const missingEl = document.getElementById('game2Missing');
+    missingEl.textContent = '?';
+    missingEl.classList.remove('filled');
+
+    // Show the word with blank for the first letter
+    const wordContainer = document.getElementById('game2Word');
+    wordContainer.innerHTML = '<span class="missing" id="game2Missing">?</span>' + q.wordStem;
+
+    // Build vowel options
+    const optionsContainer = document.getElementById('game2Options');
+    optionsContainer.innerHTML = '';
+
+    const allVowels = ['A', 'E', 'I', 'O', 'U'];
+    shuffleArray(allVowels);
+
+    allVowels.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'vowel-option-btn';
+        btn.textContent = v;
+        btn.addEventListener('click', () => checkGame2Answer(v, btn));
+        optionsContainer.appendChild(btn);
+    });
+}
+
+function checkGame2Answer(vowel, btnElement) {
+    if (game2Answered) return;
+    game2Answered = true;
+
+    const q = game2Questions[game2Index];
+    const isCorrect = (vowel === q.vowel);
+
+    const allBtns = document.querySelectorAll('#game2Options .vowel-option-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    const missingEl = document.getElementById('game2Missing');
+
+    if (isCorrect) {
+        btnElement.classList.add('correct');
+        missingEl.textContent = q.vowel;
+        missingEl.classList.add('filled');
+        game2Correct++;
+        document.getElementById('game2Feedback').innerHTML =
+            '<span style="color:#4CAF50;">✅ ¡Perfecto! ' + q.word + ' (' + q.meaning + ')</span>';
+        document.getElementById('game2Score').textContent = game2Correct;
+        document.getElementById('game2Total').textContent = game2Index + 1;
+        speakText('¡Excelente! ' + q.word);
+    } else {
+        btnElement.classList.add('wrong');
+        allBtns.forEach(b => {
+            if (b.textContent === q.vowel) b.classList.add('correct');
+        });
+        missingEl.textContent = q.vowel;
+        missingEl.classList.add('filled');
+        document.getElementById('game2Feedback').innerHTML =
+            '<span style="color:#D94040;">❌ La vocal es <strong>' + q.vowel + '</strong>: ' + q.word + '</span>';
+        document.getElementById('game2Total').textContent = game2Index + 1;
+        speakText(q.vowel + '. ' + q.word);
+    }
+
+    document.getElementById('game2Next').style.display = 'inline-block';
+}
+
+function nextGame2Question() {
+    game2Index++;
+    renderGame2Question();
+}
+
+// ============================================================
+// SCREEN 4: FINAL
+// ============================================================
+
+function showFinalScreen() {
+    const total1 = game1Questions.length;
+    const total2 = game2Questions.length;
+    const totalCorrect = game1Correct + game2Correct;
+    const totalQuestions = total1 + total2;
+    const percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+    // Stars rating
+    let starCount = 0;
+    if (percentage >= 50) starCount = 1;
+    if (percentage >= 75) starCount = 2;
+    if (percentage >= 90) starCount = 3;
+
+    const starsContainer = document.getElementById('finalStars');
+    starsContainer.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const span = document.createElement('span');
+        span.className = 'star';
+        span.textContent = i < starCount ? '⭐' : '☆';
+        starsContainer.appendChild(span);
+    }
+
+    // Achievement card
+    const achCard = document.getElementById('achievementCard');
+    achCard.innerHTML = `
+        <p class="ach-item">📖 <strong>Vocales aprendidas:</strong> ${total1} de 5</p>
+        <p class="ach-item">🎯 <strong>Juego 1 - Vocal inicial:</strong> ${game1Correct}/${total1} aciertos</p>
+        <p class="ach-item">✏️ <strong>Juego 2 - Completar palabra:</strong> ${game2Correct}/${total2} aciertos</p>
+        <p class="ach-item">🏆 <strong>Total:</strong> ${totalCorrect}/${totalQuestions} (${percentage}%)</p>
+        <p style="margin-top:8px;font-weight:700;color:var(--wayuu-orange);text-align:center;">
+            ${percentage >= 90 ? '🌟 ¡Excelente trabajo! ¡Eres un campeón wayuu!' :
+              percentage >= 75 ? '👍 ¡Muy bien! ¡Sigue practicando!' :
+              percentage >= 50 ? '🙂 ¡Buen esfuerzo! ¡Repasa las vocales!' :
+              '💪 ¡Sigue intentándolo! ¡Tú puedes!'}
+        </p>
+    `;
+
+    // Confetti for high scores
+    if (percentage >= 75) {
+        launchConfetti();
+    }
+}
+
+function launchConfetti() {
+    const colors = ['#E8782A','#F4C542','#D94040','#3A7CC3','#4CAF50','#8E44AD','#FF6B6B','#48DBFB'];
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            confetti.style.width = (8 + Math.random() * 10) + 'px';
+            confetti.style.height = (8 + Math.random() * 10) + 'px';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3500);
+        }, i * 40);
+    }
+}
+
+function restartModule() {
+    game1Questions = [];
+    game2Questions = [];
+    game1Index = 0;
+    game1Correct = 0;
+    game2Index = 0;
+    game2Correct = 0;
+    goToScreen('welcome');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateProgress('screenWelcome');
+    // Pre-build lesson so it's ready
+    buildLessonCards();
+});
+</script>
+
+<script src="../comun/volver.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+-- Seed 002: Admin por defecto
+-- La contraseña se genera en runtime (ver hash en db.rs create_admin_default)
+-- Este seed solo inserta si no existe ningún admin aún.
+-- El hash se genera con bcrypt en el primer arranque.

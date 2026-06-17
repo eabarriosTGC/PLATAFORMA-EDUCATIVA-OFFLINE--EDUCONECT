@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATE-201: Conteo Wayuu 0-99 | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --azul: #4A90D9;
+ --morado: #9B59B6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+
+.container{max-width:850px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+.btn-azul{
+ background:var(--azul);
+ color:white;
+ box-shadow:0 4px 12px rgba(74,144,217,0.4);
+}
+.btn-morado{
+ background:var(--morado);
+ color:white;
+ box-shadow:0 4px 12px rgba(155,89,182,0.4);
+}
+
+/* ============ SECTION 1: CONTEO CHIVOS ============ */
+.chivo-counter-wrap{
+ text-align:center;
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+}
+.chivo-display{
+ font-size:4.5rem;
+ margin:10px 0;
+ filter:drop-shadow(3px 3px 3px rgba(0,0,0,0.15));
+ transition:transform 0.3s;
+ cursor:pointer;
+ user-select:none;
+ animation:rebotar 0.5s;
+}
+@keyframes rebotar{0%,100%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(0.95)}}
+.numero-grande{
+ font-size:3.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+}
+.numero-wayuu{
+ font-size:1.5rem;
+ color:var(--tierra);
+ margin-top:5px;
+ font-style:italic;
+}
+.chivo-grid{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:6px;
+ max-width:400px;
+ margin:10px auto;
+}
+.chivito{
+ font-size:1.4rem;
+ animation:aparecer 0.4s ease-out;
+}
+@keyframes aparecer{from{opacity:0;transform:scale(0) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.chivo-nav{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:12px;
+ margin-top:15px;
+ flex-wrap:wrap;
+}
+.chivo-nav .num-actual{
+ font-size:1.2rem;
+ font-weight:bold;
+ color:var(--tierra);
+ min-width:60px;
+ text-align:center;
+}
+
+/* ============ SECTION 2: DECENAS Y UNIDADES ============ */
+.place-value-area{
+ background:linear-gradient(135deg,#F0F8FF,#E8F5E9);
+ border:2px dashed var(--cardon);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.pv-selector{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:15px;
+ margin:15px 0;
+ flex-wrap:wrap;
+}
+.pv-num-display{
+ font-size:4rem;
+ font-weight:bold;
+ color:var(--morado);
+ text-shadow:2px 2px 0 #ddd;
+ min-width:100px;
+}
+.pv-columns{
+ display:flex;
+ justify-content:center;
+ gap:40px;
+ margin:15px 0;
+ flex-wrap:wrap;
+}
+.pv-col{
+ text-align:center;
+ min-width:120px;
+}
+.pv-col-label{
+ font-weight:bold;
+ font-size:1.1rem;
+ color:var(--tierra);
+ margin-bottom:8px;
+ background:var(--arena);
+ padding:5px 15px;
+ border-radius:10px;
+ display:inline-block;
+}
+.pv-fichas{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:4px;
+ min-height:60px;
+ padding:10px;
+ background:#fff;
+ border-radius:12px;
+ border:2px solid #e0d5c5;
+}
+.ficha-decena{
+ width:40px;
+ height:40px;
+ background:linear-gradient(135deg,var(--azul),#6BB5FF);
+ border-radius:8px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:1rem;
+ color:white;
+ font-weight:bold;
+ box-shadow:0 2px 6px rgba(0,0,0,0.2);
+ animation:aparecer 0.3s ease-out;
+}
+.ficha-unidad{
+ width:32px;
+ height:32px;
+ background:linear-gradient(135deg,var(--atardecer),#F0A58A);
+ border-radius:50%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:0.8rem;
+ color:white;
+ font-weight:bold;
+ box-shadow:0 2px 6px rgba(0,0,0,0.2);
+ animation:aparecer 0.3s ease-out;
+}
+.pv-texto{
+ font-size:1rem;
+ color:var(--tierra);
+ margin-top:8px;
+ font-weight:bold;
+}
+
+/* ============ SECTION 3: ANTECESOR/SUCESOR ============ */
+.as-area{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:20px;
+ margin:15px 0;
+ flex-wrap:wrap;
+}
+.as-card{
+ background:#fff;
+ border:2px solid #e0d5c5;
+ border-radius:16px;
+ padding:20px;
+ text-align:center;
+ min-width:120px;
+ transition:all 0.3s;
+}
+.as-card:hover{
+ border-color:var(--wayuu-oro);
+ box-shadow:var(--sombra);
+}
+.as-card .as-label{
+ font-size:0.85rem;
+ color:var(--tierra);
+ font-weight:bold;
+ margin-bottom:5px;
+ text-transform:uppercase;
+ letter-spacing:1px;
+}
+.as-card .as-num{
+ font-size:3rem;
+ font-weight:bold;
+ color:var(--morado);
+}
+.as-card.centro .as-num{color:var(--atardecer)}
+.as-card.centro{
+ border-color:var(--wayuu-oro);
+ background:#FFF8E1;
+}
+.as-card .as-chivo{
+ font-size:2rem;
+ margin-top:5px;
+}
+.as-input{
+ width:80px;
+ height:50px;
+ font-size:2rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ background:#FFFDF7;
+ font-weight:bold;
+ color:var(--texto);
+ outline:none;
+ transition:border-color 0.3s;
+}
+.as-input:focus{border-color:var(--atardecer);border-style:solid}
+.as-input.correcto{border-color:var(--verde);background:#E8F5E9}
+.as-input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.as-feedback{
+ text-align:center;
+ font-size:1rem;
+ min-height:25px;
+ margin-top:5px;
+}
+.as-new-btn{
+ margin-top:10px;
+}
+
+/* ============ SECTION 4: JUEGOS ============ */
+.juego-area{
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+}
+.secuencia-display{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:10px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.secuencia-slot{
+ width:70px;
+ height:70px;
+ border-radius:15px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:2rem;
+ font-weight:bold;
+ transition:all 0.3s;
+}
+.secuencia-slot.fijo{
+ background:var(--arena);
+ color:var(--texto);
+ border:2px solid #d5c5a5;
+}
+.secuencia-slot.hueco{
+ background:#FFF8E1;
+ border:3px dashed var(--wayuu-oro);
+}
+.secuencia-slot.hueco.correcto{
+ background:#E8F5E9;
+ border-color:var(--verde);
+ border-style:solid;
+}
+.secuencia-slot.hueco.incorrecto{
+ background:#FFEBEE;
+ border-color:var(--rojo);
+ border-style:solid;
+}
+.secuencia-input{
+ width:100%;
+ height:100%;
+ border:none;
+ background:transparent;
+ font-size:2rem;
+ text-align:center;
+ font-weight:bold;
+ color:var(--texto);
+ outline:none;
+}
+.opciones-grid{
+ display:flex;
+ justify-content:center;
+ gap:10px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.opcion-token{
+ padding:12px 20px;
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:15px;
+ font-size:1.5rem;
+ font-weight:bold;
+ cursor:pointer;
+ transition:all 0.2s;
+ min-width:60px;
+ text-align:center;
+ user-select:none;
+}
+.opcion-token:hover{
+ background:var(--wayuu-oro);
+ color:white;
+ border-color:var(--wayuu-oro);
+ transform:scale(1.08);
+}
+.opcion-token.usado{
+ opacity:0.3;
+ pointer-events:none;
+ background:#ccc;
+ border-color:#bbb;
+}
+.opcion-token.seleccionado{
+ background:var(--atardecer);
+ color:white;
+ border-color:var(--atardecer);
+}
+
+/* Juego 2: Trueque */
+.trueque-area{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:15px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.trueque-mochila{
+ text-align:center;
+ min-width:100px;
+}
+.trueque-mochila .mochila-icono{font-size:3rem}
+.trueque-mochila .mochila-label{font-weight:bold;color:var(--tierra)}
+.trueque-mochila .mochila-cantidad{
+ font-size:2rem;
+ font-weight:bold;
+ color:var(--atardecer);
+}
+.trueque-operador{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--tierra);
+}
+.trueque-input{
+ width:80px;
+ height:50px;
+ font-size:2rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+}
+.trueque-input.correcto{border-color:var(--verde);background:#E8F5E9}
+.trueque-input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+
+/* Resultados */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+}
+.resultados-finales .estrella{
+ font-size:5rem;
+ animation:brillar 1.5s ease-in-out infinite;
+}
+.resultados-finales .puntaje{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ margin:10px 0;
+}
+.resultados-finales .mensaje{
+ font-size:1.2rem;
+ color:var(--tierra);
+ margin:10px 0;
+}
+
+/* Feedback toast */
+.toast{
+ position:fixed;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:12px 30px;
+ border-radius:25px;
+ font-weight:bold;
+ font-size:1rem;
+ z-index:1000;
+ animation:slideDown 0.4s ease-out;
+ box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* TTS button */
+.tts-btn{
+ background:var(--azul);
+ color:white;
+ border:none;
+ border-radius:50%;
+ width:40px;
+ height:40px;
+ font-size:1.2rem;
+ cursor:pointer;
+ transition:all 0.2s;
+ box-shadow:0 2px 8px rgba(74,144,217,0.3);
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+}
+.tts-btn:hover{transform:scale(1.1)}
+.tts-btn.hablando{
+ background:var(--atardecer);
+ animation:brillar 0.8s ease-in-out infinite;
+}
+
+/* Responsive */
+@media(max-width:600px){
+ .chivo-grid{max-width:300px}
+ .chivito{font-size:1.1rem}
+ .secuencia-slot{width:55px;height:55px;font-size:1.5rem}
+ .numero-grande{font-size:2.5rem}
+ .numero-wayuu{font-size:1.2rem}
+ .pv-columns{gap:15px}
+ .as-card{min-width:90px;padding:12px}
+ .as-card .as-num{font-size:2rem}
+ .as-input{width:60px;height:40px;font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>🐐 Conteo Wayuu: Números 0-99</h1>
+ <span class="grado">1° Grado · Matemáticas</span>
+ <div class="desierto-deco">🌵🐐🌵👜🌵🧶🌵</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- SECTION 1: CONTAR CHIVOS 0-20               -->
+<!-- ============================================= -->
+<section class="card activo" id="seccion1">
+ <h2><span class="icono">🐐</span> 1. Contemos Chivos del 0 al 20 <span class="etiqueta-check" id="check1" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  En la ranchería wayuu, los chivos son muy importantes. ¡Vamos a contarlos! Usa las flechas o haz clic en el chivo para avanzar.
+ </p>
+
+ <div class="chivo-counter-wrap">
+  <div class="chivo-display" id="chivoDisplay" title="Haz clic para avanzar">🐐</div>
+  <div class="numero-grande" id="numeroEspanol">0</div>
+  <div class="numero-wayuu" id="numeroWayuu">nnojotsü (cero)</div>
+  <div class="chivo-grid" id="chivoGrid"></div>
+  <div class="chivo-nav">
+   <button class="btn btn-secundario" id="btnMenosChivo" disabled>◀ Anterior</button>
+   <span class="num-actual" id="numActualLabel">0 / 20</span>
+   <button class="btn btn-primario" id="btnMasChivo">Siguiente ▶</button>
+   <button class="tts-btn" id="ttsEspanol" title="Escuchar en español">🇪🇸</button>
+   <button class="tts-btn" id="ttsWayuu" title="Escuchar en wayuunaiki">🗣️</button>
+  </div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-secundario" id="btnSaltarA20">Ir al 20 ⏩</button>
+  <button class="btn btn-exito" id="btnSeccion1Ok" style="display:none">✓ ¡Listo! Siguiente actividad →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 2: DECENAS Y UNIDADES               -->
+<!-- ============================================= -->
+<section class="card" id="seccion2" style="display:none">
+ <h2><span class="icono">🧮</span> 2. Decenas y Unidades con Fichas <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Cada <strong>mochila</strong> 👜 tiene <strong>10 chivos</strong> (una decena). Los chivos sueltos son las <strong>unidades</strong>. ¡Así contamos en el trueque!
+ </p>
+
+ <div class="place-value-area">
+  <div class="pv-selector">
+   <button class="btn btn-secundario" id="btnPvMenos">◀</button>
+   <span class="pv-num-display" id="pvNumDisplay">23</span>
+   <button class="btn btn-primario" id="btnPvMas">▶</button>
+   <button class="btn btn-azul" id="btnPvAleatorio">🎲 Al azar</button>
+  </div>
+
+  <div class="pv-columns">
+   <div class="pv-col">
+    <div class="pv-col-label">👜 Decenas</div>
+    <div class="pv-fichas" id="pvDecenas"></div>
+    <div class="pv-texto" id="pvDecenasTexto">2 decenas</div>
+   </div>
+   <div class="pv-col">
+    <div class="pv-col-label">🐐 Unidades</div>
+    <div class="pv-fichas" id="pvUnidades"></div>
+    <div class="pv-texto" id="pvUnidadesTexto">3 unidades</div>
+   </div>
+  </div>
+
+  <p style="color:var(--tierra);margin-top:10px">
+   <span id="pvDescomp">23 = 20 + 3 = 2 decenas y 3 unidades</span>
+  </p>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion2Ok">✓ ¡Entendido! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 3: ANTECESOR Y SUCESOR              -->
+<!-- ============================================= -->
+<section class="card" id="seccion3" style="display:none">
+ <h2><span class="icono">🔢</span> 3. Antecesor y Sucesor <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  El <strong>antecesor</strong> es el número que va <em>antes</em> (uno menos). El <strong>sucesor</strong> es el número que va <em>después</em> (uno más). ¡Como los chivos en fila para beber agua en el jagüey!
+ </p>
+
+ <div class="as-area" id="asArea">
+  <div class="as-card">
+   <div class="as-label">⬅ Antecesor</div>
+   <input type="number" class="as-input" id="asAntecesor" placeholder="?" min="0" max="99">
+   <div class="as-chivo">🐐</div>
+  </div>
+  <div class="as-card centro">
+   <div class="as-label">🎯 Número</div>
+   <div class="as-num" id="asNumero">37</div>
+   <div class="as-chivo">🐐🐐</div>
+  </div>
+  <div class="as-card">
+   <div class="as-label">Sucesor ➡</div>
+   <input type="number" class="as-input" id="asSucesor" placeholder="?" min="0" max="99">
+   <div class="as-chivo">🐐</div>
+  </div>
+ </div>
+
+ <div class="as-feedback" id="asFeedback"></div>
+
+ <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+  <button class="btn btn-secundario" id="btnAsNuevo">🎲 Nuevo número</button>
+  <button class="btn btn-primario" id="btnAsVerificar">✓ Verificar</button>
+  <button class="btn btn-exito" id="btnSeccion3Ok" style="display:none">✓ ¡Siguiente! →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECTION 4: JUEGOS                           -->
+<!-- ============================================= -->
+<section class="card" id="seccion4" style="display:none">
+ <h2><span class="icono">🎮</span> 4. Juegos de Secuencias <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+
+ <!-- JUEGO 1: COMPLETAR SECUENCIA -->
+ <div class="juego-area" id="juego1Area">
+  <h3 style="color:var(--tierra);text-align:center">🎯 Juego 1: Completa la Secuencia</h3>
+  <p style="text-align:center;color:#8B7355;margin-bottom:10px">
+   Los chivos van en fila al jagüey. Escribe el número que falta en la secuencia.
+  </p>
+
+  <div class="secuencia-display" id="secuenciaDisplay1">
+   <!-- Filled by JS -->
+  </div>
+
+  <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnJuego1Nuevo">🎲 Nueva secuencia</button>
+   <button class="btn btn-primario" id="btnJuego1Verificar">✓ Verificar</button>
+  </div>
+  <div class="as-feedback" id="juego1Feedback"></div>
+ </div>
+
+ <!-- JUEGO 2: TRUEQUE DE MOCHILAS -->
+ <div class="juego-area" id="juego2Area" style="margin-top:15px">
+  <h3 style="color:var(--tierra);text-align:center">👜 Juego 2: Trueque de Mochilas</h3>
+  <p style="text-align:center;color:#8B7355;margin-bottom:10px">
+   En el trueque wayuu, intercambiamos mochilas. Cada mochila vale <strong>10</strong> (una decena). Calcula cuántos chivos hay en total o cuánto falta.
+  </p>
+
+  <div class="trueque-area" id="truequeArea">
+   <!-- Filled by JS -->
+  </div>
+
+  <div style="text-align:center;margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnJuego2Nuevo">🎲 Nuevo trueque</button>
+   <button class="btn btn-primario" id="btnJuego2Verificar">✓ Verificar</button>
+  </div>
+  <div class="as-feedback" id="juego2Feedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:15px">
+  <button class="btn btn-exito" id="btnJuegosOk" style="display:none">✓ ¡Terminar módulo! 🎉</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- RESULTADOS FINALES                           -->
+<!-- ============================================= -->
+<section class="card" id="seccionResultados" style="display:none">
+ <div class="resultados-finales" id="resultadosContent">
+  <div class="estrella">🌟</div>
+  <h2>¡Módulo Completado!</h2>
+  <div class="puntaje" id="puntajeFinal"></div>
+  <div class="mensaje" id="mensajeFinal"></div>
+  <p style="color:var(--tierra);margin:15px 0">
+   Has aprendido a contar del 0 al 99, las decenas y unidades, el antecesor y sucesor. ¡Como un verdadero pastor wayuu contando su rebaño! 🐐🌵
+  </p>
+  <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ WAYUUNAIKI NUMBERS ============
+const wayuuNumeros = {
+ 0:'nnojotsü (cero)',
+ 1:'wanee',
+ 2:'piama',
+ 3:'apünüin',
+ 4:'pienchi',
+ 5:'jarai',
+ 6:'aipirua',
+ 7:'akaratshi',
+ 8:'mekiisat',
+ 9:'mekietsat',
+ 10:'poloo',
+ 11:'poloo wanee',
+ 12:'poloo piama',
+ 13:'poloo apünüin',
+ 14:'poloo pienchi',
+ 15:'poloo jarai',
+ 16:'poloo aipirua',
+ 17:'poloo akaratshi',
+ 18:'poloo mekiisat',
+ 19:'poloo mekietsat',
+ 20:'piama shikii'
+};
+
+// ============ STATE ============
+const state = {
+ chivoActual: 0,
+ seccion1Completa: false,
+ seccion2Completa: false,
+ seccion3Completa: false,
+ asAciertos: 0,
+ asMeta: 4,
+ juego1Completo: false,
+ juego2Completo: false,
+ juego1Aciertos: 0,
+ juego2Aciertos: 0,
+ juegoMeta: 3
+};
+
+// ============ DOM HELPERS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ TOAST ============
+function mostrarToast(msg, tipo){
+ const t = document.createElement('div');
+ t.className = 'toast ' + tipo;
+ t.textContent = msg;
+ document.body.appendChild(t);
+ setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; }, 2000);
+ setTimeout(() => t.remove(), 2500);
+}
+
+// ============ TTS ============
+function hablar(texto, lang){
+ return new Promise((resolve, reject) => {
+  if(!window.speechSynthesis){
+   mostrarToast('Tu navegador no soporta lectura en voz alta', 'error');
+   reject(new Error('No TTS'));
+   return;
+  }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(texto);
+  utter.lang = lang;
+  utter.rate = 0.85;
+  utter.pitch = 1.1;
+  utter.onend = resolve;
+  utter.onerror = reject;
+  window.speechSynthesis.speak(utter);
+ });
+}
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.seccion1Completa) completadas++;
+ if(state.seccion2Completa) completadas++;
+ if(state.seccion3Completa) completadas++;
+ if(state.juego1Completo && state.juego2Completo) completadas++;
+ const pct = Math.round((completadas / 4) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECTION 1: CONTAR CHIVOS ============
+function actualizarChivos(){
+ const n = state.chivoActual;
+ $('#numeroEspanol').textContent = n;
+ $('#numeroWayuu').textContent = wayuuNumeros[n] || (n + ' (sin traducción)');
+ $('#numActualLabel').textContent = n + ' / 20';
+
+ // Update chivo grid
+ const grid = $('#chivoGrid');
+ grid.innerHTML = '';
+ for(let i = 0; i < n; i++){
+  const ch = document.createElement('span');
+  ch.className = 'chivito';
+  ch.textContent = '🐐';
+  grid.appendChild(ch);
+ }
+
+ // Update chivo display emoji
+ const display = $('#chivoDisplay');
+ if(n === 0){
+  display.textContent = '🌵';
+ } else if(n <= 5){
+  display.textContent = '🐐';
+ } else if(n <= 10){
+  display.textContent = '🐐🐐';
+ } else if(n <= 15){
+  display.textContent = '🐐🐐🐐';
+ } else {
+  display.textContent = '🐐🐐🐐🐐';
+ }
+
+ // Button states
+ $('#btnMenosChivo').disabled = (n === 0);
+ if(n >= 20){
+  $('#btnMasChivo').style.display = 'none';
+  if(!state.seccion1Completa){
+   $('#btnSeccion1Ok').style.display = 'inline-block';
+  }
+ } else {
+  $('#btnMasChivo').style.display = 'inline-block';
+ }
+
+ // Re-animate chivo display
+ display.style.animation = 'none';
+ display.offsetHeight;
+ display.style.animation = 'rebotar 0.5s';
+}
+
+function cambiarChivo(delta){
+ state.chivoActual = Math.max(0, Math.min(20, state.chivoActual + delta));
+ actualizarChivos();
+}
+
+$('#btnMasChivo').addEventListener('click', () => cambiarChivo(1));
+$('#btnMenosChivo').addEventListener('click', () => cambiarChivo(-1));
+$('#chivoDisplay').addEventListener('click', () => {
+ if(state.chivoActual < 20) cambiarChivo(1);
+});
+$('#btnSaltarA20').addEventListener('click', () => {
+ state.chivoActual = 20;
+ actualizarChivos();
+});
+
+// TTS buttons
+$('#ttsEspanol').addEventListener('click', async function(){
+ const n = state.chivoActual;
+ const txt = n === 0 ? 'cero' : String(n);
+ this.classList.add('hablando');
+ await hablar(txt, 'es-ES');
+ this.classList.remove('hablando');
+});
+
+$('#ttsWayuu').addEventListener('click', async function(){
+ const n = state.chivoActual;
+ const txt = wayuuNumeros[n] || String(n);
+ this.classList.add('hablando');
+ await hablar(txt, 'es-ES');
+ this.classList.remove('hablando');
+});
+
+$('#btnSeccion1Ok').addEventListener('click', () => {
+ state.seccion1Completa = true;
+ $('#seccion1').classList.remove('activo');
+ $('#seccion1').classList.add('completado');
+ $('#check1').style.display = 'inline-block';
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 1 completada!', 'exito');
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+ if(e.key === 'ArrowRight' && state.chivoActual < 20 && !state.seccion1Completa){
+  e.preventDefault();
+  cambiarChivo(1);
+ }
+ if(e.key === 'ArrowLeft' && state.chivoActual > 0 && !state.seccion1Completa){
+  e.preventDefault();
+  cambiarChivo(-1);
+ }
+});
+
+// Initialize
+actualizarChivos();
+
+// ============ SECTION 2: DECENAS Y UNIDADES ============
+let pvNumero = 23;
+
+function actualizarPlaceValue(){
+ const n = pvNumero;
+ const decenas = Math.floor(n / 10);
+ const unidades = n % 10;
+
+ $('#pvNumDisplay').textContent = n;
+
+ // Decenas fichas
+ const decDiv = $('#pvDecenas');
+ decDiv.innerHTML = '';
+ for(let i = 0; i < decenas; i++){
+  const f = document.createElement('span');
+  f.className = 'ficha-decena';
+  f.textContent = '👜';
+  decDiv.appendChild(f);
+ }
+ $('#pvDecenasTexto').textContent = decenas + ' decena' + (decenas !== 1 ? 's' : '') + ' = ' + (decenas * 10);
+
+ // Unidades fichas
+ const uniDiv = $('#pvUnidades');
+ uniDiv.innerHTML = '';
+ for(let i = 0; i < unidades; i++){
+  const f = document.createElement('span');
+  f.className = 'ficha-unidad';
+  f.textContent = '🐐';
+  uniDiv.appendChild(f);
+ }
+ $('#pvUnidadesTexto').textContent = unidades + ' unidad' + (unidades !== 1 ? 'es' : '');
+
+ // Descomposicion
+ $('#pvDescomp').textContent = n + ' = ' + (decenas * 10) + ' + ' + unidades + ' = ' + decenas + ' decena' + (decenas !== 1 ? 's' : '') + ' y ' + unidades + ' unidad' + (unidades !== 1 ? 'es' : '');
+}
+
+$('#btnPvMas').addEventListener('click', () => {
+ if(pvNumero < 99){ pvNumero++; actualizarPlaceValue(); }
+});
+$('#btnPvMenos').addEventListener('click', () => {
+ if(pvNumero > 0){ pvNumero--; actualizarPlaceValue(); }
+});
+$('#btnPvAleatorio').addEventListener('click', () => {
+ pvNumero = Math.floor(Math.random() * 100);
+ actualizarPlaceValue();
+});
+
+$('#btnSeccion2Ok').addEventListener('click', () => {
+ state.seccion2Completa = true;
+ $('#seccion2').classList.remove('activo');
+ $('#seccion2').classList.add('completado');
+ $('#check2').style.display = 'inline-block';
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 2 completada!', 'exito');
+});
+
+actualizarPlaceValue();
+
+// ============ SECTION 3: ANTECESOR/SUCESOR ============
+let asNumero = 37;
+
+function generarAsNumero(){
+ asNumero = Math.floor(Math.random() * 98) + 1; // 1-98 to have both predecessor and successor
+ $('#asNumero').textContent = asNumero;
+ $('#asAntecesor').value = '';
+ $('#asAntecesor').className = 'as-input';
+ $('#asSucesor').value = '';
+ $('#asSucesor').className = 'as-input';
+ $('#asFeedback').textContent = '';
+}
+
+$('#btnAsNuevo').addEventListener('click', generarAsNumero);
+
+$('#btnAsVerificar').addEventListener('click', () => {
+ const antecesorVal = parseInt($('#asAntecesor').value);
+ const sucesorVal = parseInt($('#asSucesor').value);
+ let antecesorOk = false;
+ let sucesorOk = false;
+
+ if(!isNaN(antecesorVal) && antecesorVal === asNumero - 1){
+  antecesorOk = true;
+  $('#asAntecesor').classList.add('correcto');
+  $('#asAntecesor').classList.remove('incorrecto');
+ } else {
+  $('#asAntecesor').classList.add('incorrecto');
+  $('#asAntecesor').classList.remove('correcto');
+ }
+
+ if(!isNaN(sucesorVal) && sucesorVal === asNumero + 1){
+  sucesorOk = true;
+  $('#asSucesor').classList.add('correcto');
+  $('#asSucesor').classList.remove('incorrecto');
+ } else {
+  $('#asSucesor').classList.add('incorrecto');
+  $('#asSucesor').classList.remove('correcto');
+ }
+
+ if(antecesorOk && sucesorOk){
+  $('#asFeedback').textContent = '✅ ¡Muy bien! El antecesor de ' + asNumero + ' es ' + (asNumero-1) + ' y el sucesor es ' + (asNumero+1) + '.';
+  $('#asFeedback').style.color = 'var(--verde)';
+  state.asAciertos++;
+  if(state.asAciertos >= state.asMeta && !state.seccion3Completa){
+   state.seccion3Completa = true;
+   $('#btnSeccion3Ok').style.display = 'inline-block';
+   $('#check3').style.display = 'inline-block';
+   $('#seccion3').classList.add('completado');
+   actualizarProgreso();
+  }
+  setTimeout(generarAsNumero, 1500);
+ } else {
+  let msg = '❌ Revisa: ';
+  if(!antecesorOk) msg += 'El antecesor debe ser ' + (asNumero-1) + '. ';
+  if(!sucesorOk) msg += 'El sucesor debe ser ' + (asNumero+1) + '. ';
+  $('#asFeedback').textContent = msg;
+  $('#asFeedback').style.color = 'var(--rojo)';
+ }
+});
+
+$('#btnSeccion3Ok').addEventListener('click', () => {
+ $('#seccion3').classList.remove('activo');
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+ mostrarToast('✅ ¡Sección 3 completada!', 'exito');
+ iniciarJuegos();
+});
+
+generarAsNumero();
+
+// ============ SECTION 4: JUEGOS ============
+// Juego 1: Completar secuencia
+let juego1Data = { slots: [], huecoIdx: 0, respuesta: 0 };
+
+function generarSecuencia1(){
+ const inicio = Math.floor(Math.random() * 80);
+ const paso = [1, 2, 5, 10][Math.floor(Math.random() * 4)];
+ const largo = 5;
+ const seq = [];
+ for(let i = 0; i < largo; i++) seq.push(inicio + i * paso);
+ const huecoIdx = 1 + Math.floor(Math.random() * (largo - 2)); // not first or last
+
+ juego1Data = {
+  slots: seq,
+  huecoIdx: huecoIdx,
+  respuesta: seq[huecoIdx]
+ };
+
+ const display = $('#secuenciaDisplay1');
+ display.innerHTML = '';
+ seq.forEach((val, idx) => {
+  const slot = document.createElement('div');
+  slot.className = 'secuencia-slot';
+  if(idx === huecoIdx){
+   slot.classList.add('hueco');
+   const inp = document.createElement('input');
+   inp.type = 'number';
+   inp.className = 'secuencia-input';
+   inp.id = 'juego1Input';
+   inp.placeholder = '?';
+   inp.min = 0;
+   inp.max = 99;
+   slot.appendChild(inp);
+  } else {
+   slot.classList.add('fijo');
+   slot.textContent = val;
+  }
+  display.appendChild(slot);
+ });
+
+ $('#juego1Feedback').textContent = '';
+ // Remove old classes from slots
+ $$('#secuenciaDisplay1 .hueco').forEach(s => {
+  s.classList.remove('correcto', 'incorrecto');
+ });
+}
+
+$('#btnJuego1Nuevo').addEventListener('click', generarSecuencia1);
+
+$('#btnJuego1Verificar').addEventListener('click', () => {
+ const inp = $('#juego1Input');
+ if(!inp) return;
+ const val = parseInt(inp.value);
+ if(isNaN(val)){
+  $('#juego1Feedback').textContent = '❌ Escribe un número en el espacio vacío.';
+  $('#juego1Feedback').style.color = 'var(--rojo)';
+  return;
+ }
+ if(val === juego1Data.respuesta){
+  $('#juego1Feedback').textContent = '✅ ¡Correcto! La secuencia está completa.';
+  $('#juego1Feedback').style.color = 'var(--verde)';
+  const huecoSlot = $('#secuenciaDisplay1 .hueco');
+  if(huecoSlot) huecoSlot.classList.add('correcto');
+  inp.disabled = true;
+  state.juego1Aciertos++;
+  if(state.juego1Aciertos >= state.juegoMeta){
+   state.juego1Completo = true;
+   verificarJuegosCompletos();
+  }
+  setTimeout(generarSecuencia1, 1500);
+ } else {
+  $('#juego1Feedback').textContent = '❌ Incorrecto. El número que falta es ' + juego1Data.respuesta + '. Intenta de nuevo.';
+  $('#juego1Feedback').style.color = 'var(--rojo)';
+  const huecoSlot = $('#secuenciaDisplay1 .hueco');
+  if(huecoSlot) huecoSlot.classList.add('incorrecto');
+ }
+});
+
+// Juego 2: Trueque de mochilas
+let juego2Data = { mochilas: 0, chivosSueltos: 0, total: 0, tipo: 'suma', pregunta: '' };
+
+function generarTrueque(){
+ const tipos = ['suma', 'resta', 'completar'];
+ const tipo = tipos[Math.floor(Math.random() * 3)];
+ let mochilas, chivosSueltos, total, pregunta;
+
+ if(tipo === 'suma'){
+  mochilas = Math.floor(Math.random() * 8) + 1;
+  chivosSueltos = Math.floor(Math.random() * 10);
+  total = mochilas * 10 + chivosSueltos;
+  pregunta = '¿Cuántos chivos hay en total?';
+ } else if(tipo === 'resta'){
+  total = Math.floor(Math.random() * 90) + 10;
+  mochilas = Math.floor(total / 10);
+  chivosSueltos = total % 10;
+  const regalar = Math.floor(Math.random() * mochilas) + 1;
+  const nuevoTotal = total - regalar * 10;
+  pregunta = 'Si regalamos ' + regalar + ' mochila' + (regalar !== 1 ? 's' : '') + ', ¿cuántos chivos quedan?';
+  juego2Data = { mochilas, chivosSueltos, total, tipo, pregunta, respuesta: nuevoTotal, regalar };
+ } else {
+  // completar
+  mochilas = Math.floor(Math.random() * 8) + 1;
+  chivosSueltos = Math.floor(Math.random() * 10);
+  total = mochilas * 10 + chivosSueltos;
+  const objetivo = total + Math.floor(Math.random() * 30) + 10;
+  pregunta = 'Tenemos ' + total + ' chivos. ¿Cuántos faltan para llegar a ' + objetivo + '?';
+  juego2Data = { mochilas, chivosSueltos, total, tipo, pregunta, respuesta: objetivo - total, objetivo };
+  renderTrueque();
+  return;
+ }
+
+ juego2Data = { mochilas, chivosSueltos, total, tipo, pregunta, respuesta: total };
+ renderTrueque();
+}
+
+function renderTrueque(){
+ const d = juego2Data;
+ const area = $('#truequeArea');
+
+ let html = '';
+ if(d.tipo === 'suma'){
+  html += '<div class="trueque-mochila"><div class="mochila-icono">👜</div><div class="mochila-label">Mochilas</div><div class="mochila-cantidad">' + d.mochilas + '</div><div style="font-size:0.8rem;color:#8B7355">= ' + (d.mochilas * 10) + ' chivos</div></div>';
+  html += '<div class="trueque-operador">+</div>';
+  html += '<div class="trueque-mochila"><div class="mochila-icono">🐐</div><div class="mochila-label">Sueltos</div><div class="mochila-cantidad">' + d.chivosSueltos + '</div></div>';
+  html += '<div class="trueque-operador">=</div>';
+  html += '<input type="number" class="trueque-input" id="truequeInput" placeholder="?" min="0" max="99">';
+ } else if(d.tipo === 'resta'){
+  html += '<div class="trueque-mochila"><div class="mochila-icono">🐐</div><div class="mochila-label">Tenemos</div><div class="mochila-cantidad">' + d.total + ' chivos</div><div style="font-size:0.8rem;color:#8B7355">(' + d.mochilas + ' 👜 + ' + d.chivosSueltos + ' 🐐)</div></div>';
+  html += '<div class="trueque-operador">−</div>';
+  html += '<div class="trueque-mochila"><div class="mochila-icono">👜</div><div class="mochila-label">Regalamos</div><div class="mochila-cantidad">' + d.regalar + ' mochila' + (d.regalar !== 1 ? 's' : '') + '</div></div>';
+  html += '<div class="trueque-operador">=</div>';
+  html += '<input type="number" class="trueque-input" id="truequeInput" placeholder="?" min="0" max="99">';
+ } else {
+  // completar
+  html += '<div class="trueque-mochila"><div class="mochila-icono">🐐</div><div class="mochila-label">Tenemos</div><div class="mochila-cantidad">' + d.total + ' chivos</div></div>';
+  html += '<div class="trueque-operador">+ ?</div>';
+  html += '<div class="trueque-operador">=</div>';
+  html += '<div class="trueque-mochila"><div class="mochila-icono">🎯</div><div class="mochila-label">Meta</div><div class="mochila-cantidad">' + d.objetivo + '</div></div>';
+  html += '<div style="text-align:center;width:100%;margin-top:10px">';
+  html += '<span style="font-weight:bold">¿Cuántos chivos faltan? </span>';
+  html += '<input type="number" class="trueque-input" id="truequeInput" placeholder="?" min="0" max="99">';
+  html += '</div>';
+ }
+
+ area.innerHTML = html;
+ $('#juego2Feedback').textContent = '';
+
+ // Add pregunta
+ const preguntaEl = document.createElement('div');
+ preguntaEl.style.cssText = 'text-align:center;font-weight:bold;color:var(--tierra);margin-top:10px;width:100%';
+ preguntaEl.textContent = d.pregunta;
+ area.appendChild(preguntaEl);
+}
+
+$('#btnJuego2Nuevo').addEventListener('click', generarTrueque);
+
+$('#btnJuego2Verificar').addEventListener('click', () => {
+ const inp = $('#truequeInput');
+ if(!inp) return;
+ const val = parseInt(inp.value);
+ if(isNaN(val)){
+  $('#juego2Feedback').textContent = '❌ Escribe un número.';
+  $('#juego2Feedback').style.color = 'var(--rojo)';
+  return;
+ }
+ if(val === juego2Data.respuesta){
+  $('#juego2Feedback').textContent = '✅ ¡Correcto! La respuesta es ' + juego2Data.respuesta + '.';
+  $('#juego2Feedback').style.color = 'var(--verde)';
+  inp.classList.add('correcto');
+  inp.disabled = true;
+  state.juego2Aciertos++;
+  if(state.juego2Aciertos >= state.juegoMeta){
+   state.juego2Completo = true;
+   verificarJuegosCompletos();
+  }
+  setTimeout(generarTrueque, 1800);
+ } else {
+  $('#juego2Feedback').textContent = '❌ Incorrecto. La respuesta es ' + juego2Data.respuesta + '. ¡Intenta de nuevo!';
+  $('#juego2Feedback').style.color = 'var(--rojo)';
+  inp.classList.add('incorrecto');
+ }
+});
+
+function verificarJuegosCompletos(){
+ if(state.juego1Completo && state.juego2Completo){
+  $('#check4').style.display = 'inline-block';
+  $('#seccion4').classList.add('completado');
+  $('#btnJuegosOk').style.display = 'inline-block';
+  actualizarProgreso();
+  mostrarToast('🎉 ¡Todos los juegos completados!', 'exito');
+ }
+}
+
+function iniciarJuegos(){
+ generarSecuencia1();
+ generarTrueque();
+}
+
+$('#btnJuegosOk').addEventListener('click', () => {
+ mostrarResultados();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccion4').classList.remove('activo');
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ const totalSecciones = 4;
+ const completadas = (state.seccion1Completa ? 1 : 0) + (state.seccion2Completa ? 1 : 0) + (state.seccion3Completa ? 1 : 0) + ((state.juego1Completo && state.juego2Completo) ? 1 : 0);
+ const pct = Math.round((completadas / totalSecciones) * 100);
+
+ $('#puntajeFinal').textContent = pct + '% Completado';
+
+ let mensaje = '';
+ if(pct >= 100){
+  mensaje = '🏆 ¡Excelente! Eres un maestro del conteo wayuu. Conoces los números del 0 al 99, las decenas y unidades, el antecesor y sucesor. ¡Como un verdadero pastor guajiro!';
+ } else if(pct >= 75){
+  mensaje = '🌟 ¡Muy bien! Has aprendido mucho sobre los números wayuu. Sigue practicando.';
+ } else if(pct >= 50){
+  mensaje = '👍 ¡Buen trabajo! Has avanzado en el conteo. Repite el módulo para mejorar.';
+ } else {
+  mensaje = '🌱 Vas comenzando. ¡No te rindas! Vuelve a intentarlo para dominar los números.';
+ }
+ $('#mensajeFinal').textContent = mensaje;
+
+ // Confetti-like effect
+ const emojis = ['🌟','🐐','👜','🌵','🎉','💫','✨'];
+ for(let i = 0; i < 20; i++){
+  setTimeout(() => {
+   const e = document.createElement('span');
+   e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+   e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2s ease-out forwards;';
+   e.style.left = Math.random() * 90 + '%';
+   e.style.top = '-50px';
+   document.body.appendChild(e);
+   setTimeout(() => e.remove(), 2100);
+  }, i * 100);
+ }
+
+ // Add caer animation if not exists
+ if(!document.getElementById('animCaer')){
+  const style = document.createElement('style');
+  style.id = 'animCaer';
+  style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+  document.head.appendChild(style);
+ }
+
+ actualizarProgreso();
+}
+
+// Initial progress
+actualizarProgreso();
+
+})();
+</script>
+
+<script src="../comun/volver.js"></script>
+</body>
+</html>

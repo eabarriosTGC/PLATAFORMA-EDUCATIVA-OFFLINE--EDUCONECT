@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>MUS-401: Fiesta del Tambor | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;color:#eee}
+.container{max-width:550px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:20px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:#f39c12;text-shadow:0 0 20px rgba(243,156,18,0.3)}
+
+.instruccion{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:14px 18px;text-align:center;font-size:0.95rem;line-height:1.6;margin-bottom:16px;backdrop-filter:blur(4px)}
+
+.progreso-wrap{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:15px;padding:10px 18px;margin:10px 0 18px;display:flex;align-items:center;gap:12px;backdrop-filter:blur(4px)}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap;color:#f39c12}
+.progreso-bar{flex:1;height:14px;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden}
+.progreso-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#f39c12,#e74c3c);transition:width 0.5s;width:0%}
+.progreso-pct{font-weight:bold;color:#f39c12;font-size:0.9rem;min-width:36px}
+
+.ritmo-container{text-align:center;margin-top:10px}
+
+.energia-wrap{background:rgba(255,255,255,0.08);border-radius:14px;padding:14px 18px;margin-bottom:16px;backdrop-filter:blur(4px)}
+.energia-label{display:flex;justify-content:space-between;font-size:0.85rem;color:#ccc;margin-bottom:6px}
+.energia-bar{width:100%;height:16px;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)}
+.energia-fill{width:0%;height:100%;background:linear-gradient(90deg,#fdcb6e,#e17055,#e74c3c);transition:width 0.1s;border-radius:10px}
+
+.mensaje-ritmo{font-size:1.1rem;min-height:2.5rem;margin:10px 0;font-weight:bold;color:#f39c12}
+
+.tambores{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:10px 0}
+.tambor{height:130px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;cursor:pointer;transition:all 0.08s;touch-action:manipulation;user-select:none;box-shadow:0 8px 0 rgba(0,0,0,0.3),0 6px 16px rgba(0,0,0,0.2);position:relative}
+.tambor:active{transform:translateY(8px);box-shadow:0 0 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.2)}
+.tambor .etiqueta{position:absolute;bottom:12px;font-size:0.7rem;opacity:0.7}
+.tambor1{background:linear-gradient(145deg,#d63031,#a93226);color:white}
+.tambor2{background:linear-gradient(145deg,#0984e3,#076cc0);color:white}
+.tambor3{background:linear-gradient(145deg,#00b894,#009874);color:white}
+.tambor4{background:linear-gradient(145deg,#6c5ce7,#5a4bd1);color:white}
+
+.golpe-animacion{animation:golpe 0.15s ease-out}
+@keyframes golpe{0%{transform:scale(1)}50%{transform:scale(0.92)}100%{transform:scale(1)}}
+
+.resultado{display:none;text-align:center;padding:20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:#f39c12}
+
+@media(max-width:400px){
+  .tambor{height:100px;font-size:2.8rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn" style="background:rgba(255,255,255,0.1);color:#eee">← Volver</a>
+
+  <div class="header">
+    <h1>🎵 Fiesta del Tambor</h1>
+    <div class="sub" style="color:#ccc">Música y Ritmo · Toca los tambores</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🥁 Toca los tambores para crear tu ritmo. Mientras más toques, más energía rítmica acumulas. ¡Llega al 100%!
+  </div>
+
+  <div class="ritmo-container">
+    <div class="energia-wrap">
+      <div class="energia-label">
+        <span>🔋 Energía rítmica</span>
+        <span id="energiaPct">0%</span>
+      </div>
+      <div class="energia-bar">
+        <div class="energia-fill" id="energiaFill"></div>
+      </div>
+    </div>
+
+    <div class="mensaje-ritmo" id="mensajeRitmo">🎶 ¡Toca para empezar!</div>
+
+    <div class="tambores">
+      <div class="tambor tambor1" data-sonido="0" onmousedown="tocar(0)" ontouchstart="tocar(0)">🪘</div>
+      <div class="tambor tambor2" data-sonido="1" onmousedown="tocar(1)" ontouchstart="tocar(1)">👏</div>
+      <div class="tambor tambor3" data-sonido="2" onmousedown="tocar(2)" ontouchstart="tocar(2)">🔔</div>
+      <div class="tambor tambor4" data-sonido="3" onmousedown="tocar(3)" ontouchstart="tocar(3)">🥁</div>
+    </div>
+
+    <div style="margin-top:12px;color:#888;font-size:0.8rem">🎧 Usa audífonos para mejor experiencia</div>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🎵</div>
+    <h2>¡Energía al Máximo!</h2>
+    <p style="font-size:1.1rem">Tienes el ritmo en las venas. ¡Sigue creando música!</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:#2ed573">¡Maestro del Ritmo!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var energia = 0;
+var progresoVal = 0;
+var audioCtx = null;
+var completo = false;
+
+var sonidos = [
+  {freq:150, type:'sine', label:'Bombo'},     // grave
+  {freq:400, type:'triangle', label:'Tambor'},  // medio
+  {freq:800, type:'triangle', label:'Campana'}, // agudo
+  {freq:200, type:'sawtooth', label:'Caja'}     // percusivo
+];
+
+function initAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function reproducirTono(freq, type){
+  initAudio();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+
+  var osc = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.25);
+}
+
+function tocar(idx){
+  if(completo) return;
+
+  var info = sonidos[idx];
+  reproducirTono(info.freq, info.type);
+
+  var tambor = document.querySelectorAll('.tambor')[idx];
+  tambor.classList.remove('golpe-animacion');
+  void tambor.offsetWidth;
+  tambor.classList.add('golpe-animacion');
+
+  if(energia < 100){
+    energia = Math.min(100, energia + 4);
+    document.getElementById('energiaFill').style.width = energia + '%';
+    document.getElementById('energiaPct').textContent = energia + '%';
+
+    if(energia >= 80) document.getElementById('mensajeRitmo').textContent = '🔥 ¡Fuego! Sigue así!';
+    else if(energia >= 50) document.getElementById('mensajeRitmo').textContent = '🎵 ¡Buen ritmo!';
+    else document.getElementById('mensajeRitmo').textContent = '🥁 ¡Toca más!';
+
+    if(energia >= 100 && !completo){
+      completo = true;
+      progresoVal = 100;
+      document.getElementById('progresoFill').style.width = '100%';
+      document.getElementById('progresoPct').textContent = '100%';
+      document.getElementById('mensajeRitmo').textContent = '🏆 ¡Energía al MÁXIMO! 🥳';
+      guardarProgreso();
+      guardarDiario();
+      document.getElementById('resultado').classList.add('visible');
+      hablar('¡Felicidades! Has llegado al máximo de energía rítmica. Eres un maestro de la percusión.');
+    }
+  }
+}
+
+var intervaloDrenaje = setInterval(function(){
+  if(!completo && energia > 0){
+    energia = Math.max(0, energia - 0.8);
+    document.getElementById('energiaFill').style.width = energia + '%';
+    document.getElementById('energiaPct').textContent = Math.round(energia) + '%';
+    if(energia < 30) document.getElementById('mensajeRitmo').textContent = '⏳ ¡No pares, sigue tocando!';
+  }
+}, 200);
+
+function guardarProgreso(){
+  try { localStorage.setItem('mus401_progreso', 100); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('mus-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Fiesta del Tambor', '🎵');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+})();
+</script>
+</body>
+</html>

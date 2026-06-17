@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DEP-401: Olimpiadas Activas | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E3F2FD,#BBDEFB,#90CAF9);min-height:100vh}
+.container{max-width:550px;margin:0 auto;padding:15px;position:relative;z-index:1}
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--azul);text-align:center;font-size:1rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.reto-box{background:white;border-radius:20px;padding:30px 20px;box-shadow:var(--sombra);border:2px solid var(--arena-oscura);text-align:center;margin-top:8px}
+.reto-box .reto-icono{font-size:5rem;margin-bottom:10px;animation:flotar 2s ease-in-out infinite}
+.reto-box h2{font-size:1.2rem;color:var(--texto);line-height:1.5;margin-bottom:16px;min-height:3rem}
+.timer{font-size:4rem;font-weight:800;color:var(--rojo);margin:16px 0;font-family:monospace;letter-spacing:4px}
+.timer.tick{animation:pulse 1s ease-in-out infinite}
+.btn-reto{padding:16px 36px;font-size:1.3rem;font-weight:bold;color:white;border:none;border-radius:14px;cursor:pointer;transition:all 0.2s;font-family:inherit;min-width:200px}
+.btn-reto:hover{transform:translateY(-3px)}
+.btn-reto:active{transform:scale(0.95)}
+.btn-reto.iniciar{background:var(--azul);box-shadow:0 4px 12px rgba(74,144,217,0.4)}
+.btn-reto.ejecutando{background:var(--wayuu-oro);color:var(--tierra);box-shadow:0 4px 12px rgba(212,168,67,0.4)}
+.btn-reto.completar{background:var(--verde);box-shadow:0 4px 12px rgba(76,175,80,0.4)}
+.btn-reto:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
+
+.contador-retos{color:#999;font-size:0.85rem;margin-bottom:8px;text-align:center}
+
+.resultado{display:none;text-align:center;padding:30px 20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+@media(max-width:400px){
+  .timer{font-size:3rem}
+  .btn-reto{font-size:1.1rem;padding:14px 24px;min-width:160px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🏃 Olimpiadas Activas</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Deporte · Ejercítate mientras aprendes</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🏋️ ¡Levántate! Haz el reto físico, vuelve y marca cuando termines. El cronómetro cuenta el tiempo.
+  </div>
+
+  <div id="mainContent"></div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🏆</div>
+    <h2>¡Atleta Estrella!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Un cuerpo activo mantiene una mente fuerte. ¡Sigue moviéndote!</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Atleta Guajiro!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var retoActual = 0;
+var progresoVal = 0;
+var intervalo = null;
+var segundos = 0;
+var activo = false;
+
+var retos = [
+  {icono:'🐸', texto:'Haz 10 saltos de rana (tocando el suelo con las manos)', meta:15},
+  {icono:'🦩', texto:'Equilibrio de flamenco: párate en un solo pie sin caerte', meta:10},
+  {icono:'🏃', texto:'Corre en tu puesto levantando las rodillas', meta:15}
+];
+
+function init(){
+  cargarReto();
+  actualizarProgreso();
+}
+
+function cargarReto(){
+  if(retoActual >= retos.length){
+    mostrarFinal();
+    return;
+  }
+  var r = retos[retoActual];
+  var html = '<div class="contador-retos">Reto ' + (retoActual + 1) + ' / ' + retos.length + '</div>';
+  html += '<div class="reto-box">';
+  html += '<div class="reto-icono">' + r.icono + '</div>';
+  html += '<h2>' + r.texto + '</h2>';
+  html += '<div class="timer" id="timerDisplay">00:' + (r.meta < 10 ? '0' + r.meta : r.meta) + '</div>';
+  html += '<button class="btn-reto iniciar" id="btnReto" onclick="iniciar()">▶️ Empezar reto</button>';
+  html += '</div>';
+  document.getElementById('mainContent').innerHTML = html;
+  segundos = r.meta;
+  activo = false;
+}
+
+function iniciar(){
+  if(activo) return;
+  activo = true;
+  var btn = document.getElementById('btnReto');
+  btn.textContent = '⏳ ¡Haz el ejercicio!';
+  btn.className = 'btn-reto ejecutando';
+  btn.disabled = true;
+  document.getElementById('timerDisplay').classList.add('tick');
+  hablar('¡A moverte! ' + retos[retoActual].texto);
+
+  intervalo = setInterval(function(){
+    segundos--;
+    var display = document.getElementById('timerDisplay');
+    display.textContent = '00:' + (segundos < 10 ? '0' + segundos : segundos);
+
+    if(segundos <= 0){
+      clearInterval(intervalo);
+      document.getElementById('timerDisplay').classList.remove('tick');
+      btn.textContent = '✅ ¡Lo logré!';
+      btn.className = 'btn-reto completar';
+      btn.disabled = false;
+      btn.onclick = completar;
+      hablar('¡Tiempo! Toca el botón verde si completaste el reto.');
+    }
+  }, 1000);
+}
+
+function completar(){
+  progresoVal = Math.min(100, Math.round(((retoActual + 1) / retos.length) * 100));
+  actualizarProgreso();
+  guardarProgreso();
+  hablar('¡Excelente! Has completado el reto.');
+  retoActual++;
+  if(retoActual >= retos.length){
+    guardarDiario();
+    setTimeout(mostrarFinal, 500);
+  }
+  setTimeout(cargarReto, 800);
+}
+
+function mostrarFinal(){
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('resultado').classList.add('visible');
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progresoVal + '%';
+  document.getElementById('progresoPct').textContent = progresoVal + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('dep401_progreso', progresoVal); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('dep-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Olimpiadas Activas', '🏃');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

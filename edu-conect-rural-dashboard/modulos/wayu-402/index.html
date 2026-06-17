@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WAYU-402: Cosmovisión Wayuu | EduConect Rural</title>
+  <style>
+    :root {
+      --arena: #F4E1C1;
+      --desierto: #E8B86D;
+      --cardon: #5B8C5A;
+      --cielo: #87CEEB;
+      --atardecer: #E07A5F;
+      --tierra: #8B5E3C;
+      --wayuu-oro: #D4A843;
+      --texto: #3D2B1F;
+      --blanco: #FFFDF7;
+      --sombra: 0 4px 20px rgba(0,0,0,0.12);
+      --rojo: #D64045;
+      --verde: #4CAF50;
+      --azul: #4A90D9;
+      --morado: #9B59B6;
+      --naranja: #F4A236;
+      --tejido-rojo: #C73A3A;
+      --tejido-turquesa: #3AA8C7;
+      --tejido-naranja: #E8A340;
+      --radius: 20px;
+      --transition: 0.3s ease;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI','Comic Sans MS','Noto Sans',system-ui,sans-serif;
+      background:linear-gradient(180deg, #F4E1C1 0%, #E8B86D 25%, #D4A843 50%, #E8B86D 75%, #F4E1C1 100%);
+      min-height:100vh;
+      color:var(--texto);
+      overflow-x:hidden;
+      position:relative;
+    }
+    body::before{
+      content:'';
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(212,168,67,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 85% 60%, rgba(199,58,58,0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(58,168,199,0.12) 0%, transparent 45%),
+        radial-gradient(circle at 25% 90%, rgba(232,163,64,0.1) 0%, transparent 35%),
+        radial-gradient(circle at 70% 15%, rgba(91,140,90,0.1) 0%, transparent 40%);
+      pointer-events:none;z-index:0;
+    }
+    .container{max-width:880px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+    /* ===== HEADER ===== */
+    .header{
+      text-align:center;
+      padding:20px 15px 10px;
+      position:relative;
+    }
+    .header .sol{
+      font-size:3.5rem;
+      animation:girarSol 20s linear infinite;
+      display:inline-block;
+    }
+    @keyframes girarSol{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .header h1{
+      font-size:2rem;
+      color:var(--texto);
+      margin:5px 0;
+      text-shadow:1px 1px 0 rgba(255,255,255,0.6);
+    }
+    .header .grado{
+      display:inline-block;
+      background:var(--wayuu-oro);
+      color:var(--blanco);
+      padding:4px 18px;
+      border-radius:20px;
+      font-size:0.95rem;
+      font-weight:bold;
+      margin-top:4px;
+    }
+    .header .desierto-deco{
+      font-size:1.3rem;
+      letter-spacing:6px;
+      margin-top:6px;
+      opacity:0.7;
+    }
+
+    /* ===== HUD ===== */
+    .hud-wrap{
+      background:var(--blanco);
+      border-radius:var(--radius);
+      padding:10px 18px;
+      margin:8px 0 16px;
+      box-shadow:var(--sombra);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      border:2px solid var(--arena);
+    }
+    .hud-estrellas{font-size:1.3rem;font-weight:bold;display:flex;align-items:center;gap:4px}
+    .hud-puntos{font-weight:bold;color:var(--wayuu-oro);font-size:1rem}
+    .hud-divider{width:2px;height:24px;background:var(--arena);border-radius:2px}
+    .progreso-wrap{flex:1;min-width:120px;display:flex;align-items:center;gap:8px}
+    .progreso-label{font-weight:bold;font-size:0.8rem;white-space:nowrap;color:var(--tierra)}
+    .progreso-bar{flex:1;height:14px;background:#e0d5c5;border-radius:10px;overflow:hidden}
+    .progreso-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));transition:width 0.5s ease;width:0%}
+    .progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.85rem;min-width:40px;text-align:right}
+
+    /* ===== CARDS ===== */
+    .card{
+      background:var(--blanco);
+      border-radius:var(--radius);
+      padding:24px 20px;
+      margin-bottom:18px;
+      box-shadow:var(--sombra);
+      border:2px solid var(--arena);
+      transition:transform 0.2s, opacity 0.3s;
+      position:relative;
+      overflow:hidden;
+      display:none;
+    }
+    .card.activo{display:block}
+    .card::before{
+      content:'';
+      position:absolute;top:0;left:0;
+      width:5px;height:100%;
+      border-radius:5px 0 0 5px;
+      background:var(--atardecer);
+    }
+    .card.completado::before{background:var(--verde)}
+    .card.completado{opacity:0.88}
+    .card h2{
+      font-size:1.5rem;
+      color:var(--texto);
+      margin-bottom:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .card h2 .icono-titulo{font-size:2rem}
+    .etiqueta-check{
+      font-size:0.8rem;
+      background:var(--verde);
+      color:white;
+      padding:2px 12px;
+      border-radius:14px;
+      font-weight:bold;
+    }
+
+    /* ===== BOTONES ===== */
+    .btn{
+      display:inline-block;
+      padding:12px 28px;
+      border-radius:30px;
+      font-size:1rem;
+      font-weight:bold;
+      cursor:pointer;
+      border:none;
+      transition:transform 0.2s,box-shadow 0.2s;
+      text-decoration:none;
+      font-family:inherit;
+      box-shadow:0 3px 12px rgba(0,0,0,0.12);
+      touch-action:manipulation;
+    }
+    .btn:hover{transform:scale(1.05)}
+    .btn:active{transform:scale(0.96)}
+    .btn-primario{background:var(--atardecer);color:white}
+    .btn-exito{background:var(--verde);color:white}
+    .btn-azul{background:var(--azul);color:white}
+    .btn-dorado{background:var(--wayuu-oro);color:var(--texto)}
+    .btn-morado{background:var(--morado);color:white}
+    .btn-tierra{background:var(--tierra);color:white}
+    .btn-outline{
+      background:transparent;
+      border:2px solid var(--atardecer);
+      color:var(--atardecer);
+      box-shadow:none;
+    }
+    .btn-sm{padding:8px 18px;font-size:0.85rem}
+
+    /* ===== TTS ===== */
+    .btn-tts{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:20px;
+      font-size:0.85rem;
+      font-weight:bold;
+      cursor:pointer;
+      border:none;
+      background:var(--azul);
+      color:white;
+      transition:transform 0.2s,background 0.2s;
+      font-family:inherit;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      touch-action:manipulation;
+    }
+    .btn-tts:hover{background:#3a7bc8;transform:scale(1.05)}
+    .btn-tts:active{transform:scale(0.94)}
+    .btn-tts.speaking{background:var(--naranja);animation:pulse 0.6s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,162,54,0.5)}50%{box-shadow:0 0 0 10px rgba(244,162,54,0)}}
+
+    /* ===== INFO BOX ===== */
+    .info-box{
+      background:linear-gradient(135deg,#fff8e1,var(--blanco));
+      border-left:5px solid var(--wayuu-oro);
+      padding:14px 18px;
+      border-radius:0 14px 14px 0;
+      margin:10px 0;
+      font-size:0.95rem;
+    }
+
+    /* ===== SLIDES DE LECCIÓN ===== */
+    .slide-nav{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      margin:8px 0;
+      flex-wrap:wrap;
+    }
+    .slide-dot{
+      width:14px;height:14px;
+      border-radius:50%;
+      background:var(--arena);
+      border:2px solid var(--desierto);
+      cursor:pointer;
+      transition:all 0.3s;
+    }
+    .slide-dot.activo{background:var(--atardecer);border-color:var(--atardecer);transform:scale(1.3)}
+    .slide-dot.completado{background:var(--verde);border-color:var(--verde)}
+    .slide-counter{
+      font-weight:bold;
+      color:var(--tierra);
+      font-size:0.9rem;
+      margin:0 8px;
+    }
+    .slide-content{
+      display:none;
+      animation:fadeIn 0.4s ease;
+    }
+    .slide-content.activo{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .slide-concepto{
+      background:linear-gradient(135deg,#FFFDF7,#F0F8E8);
+      border-radius:16px;
+      padding:20px;
+      margin:12px 0;
+      border:2px solid var(--arena);
+      text-align:center;
+    }
+    .slide-concepto .concepto-titulo{
+      font-size:1.6rem;
+      font-weight:bold;
+      color:var(--atardecer);
+      margin-bottom:6px;
+    }
+    .slide-concepto .concepto-sub{
+      font-size:1rem;
+      color:var(--tierra);
+      font-style:italic;
+      margin-bottom:10px;
+    }
+    .slide-concepto .concepto-texto{
+      font-size:1.05rem;
+      line-height:1.7;
+      color:var(--texto);
+      text-align:left;
+      max-width:650px;
+      margin:0 auto;
+    }
+    .slide-svg{
+      max-width:320px;
+      margin:15px auto;
+    }
+    .slide-svg svg{width:100%;height:auto}
+
+    /* ===== DRAG & DROP CLANES ===== */
+    .clanes-info{
+      text-align:center;
+      margin:10px 0;
+      font-size:0.95rem;
+      color:var(--tierra);
+    }
+    .clanes-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+      gap:12px;
+      margin:14px 0;
+    }
+    .clan-slot{
+      background:linear-gradient(135deg,#FFFDF7,#F5F0E6);
+      border:3px dashed var(--arena-oscura);
+      border-radius:16px;
+      padding:14px;
+      text-align:center;
+      min-height:100px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      transition:all 0.3s;
+      position:relative;
+    }
+    .clan-slot.hover{border-color:var(--wayuu-oro);background:#FFF8E1;box-shadow:0 0 15px rgba(212,168,67,0.3)}
+    .clan-slot.correcto{border-style:solid;border-color:var(--verde);background:#e8f5e9}
+    .clan-slot.incorrecto{border-color:var(--rojo);animation:shake 0.4s}
+    .clan-slot .clan-nombre{
+      font-weight:bold;
+      font-size:1.1rem;
+      color:var(--atardecer);
+    }
+    .clan-slot .clan-animal{
+      font-size:2rem;
+      margin:4px 0;
+    }
+    .clan-slot .clan-animal-placeholder{
+      font-size:2rem;
+      opacity:0.5;
+    }
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .animales-band{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:10px;
+      margin:16px 0;
+    }
+    .animal-drag{
+      padding:12px 20px;
+      background:var(--blanco);
+      border:3px solid var(--arena-oscura);
+      border-radius:15px;
+      cursor:grab;
+      font-weight:bold;
+      font-size:1rem;
+      user-select:none;
+      transition:all 0.2s;
+      box-shadow:0 3px 10px rgba(0,0,0,0.08);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      touch-action:none;
+    }
+    .animal-drag:hover{background:var(--wayuu-oro);color:white;border-color:var(--wayuu-oro);transform:scale(1.05)}
+    .animal-drag:active{cursor:grabbing}
+    .animal-drag.usado{opacity:0.3;pointer-events:none;background:#ccc;border-color:#bbb;color:#888}
+    .animal-drag.arrastrando{opacity:0.6;transform:scale(1.12);box-shadow:0 8px 25px rgba(0,0,0,0.2);z-index:10}
+
+    /* ===== PALABRERO (decisiones) ===== */
+    .palabrero-card{
+      background:linear-gradient(135deg,#FFFDF7,#F5F0E6);
+      border-radius:16px;
+      padding:18px;
+      margin:12px 0;
+      border:2px solid var(--arena);
+      text-align:center;
+    }
+    .palabrero-historia{
+      font-size:1.05rem;
+      line-height:1.6;
+      margin-bottom:14px;
+      background:var(--arena);
+      padding:14px 18px;
+      border-radius:14px;
+      font-style:italic;
+      color:var(--texto);
+    }
+    .palabrero-historia .emoji-historia{font-size:2.5rem;display:block;margin-bottom:8px}
+    .palabrero-opciones{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-width:550px;
+      margin:0 auto;
+    }
+    .palabrero-opcion{
+      padding:14px 18px;
+      border-radius:14px;
+      border:3px solid var(--arena);
+      background:var(--blanco);
+      cursor:pointer;
+      font-size:1rem;
+      font-weight:bold;
+      transition:all 0.2s;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-family:inherit;
+      touch-action:manipulation;
+    }
+    .palabrero-opcion:hover{background:#FFF8E1;border-color:var(--wayuu-oro);transform:scale(1.02)}
+    .palabrero-opcion.correcta{background:var(--verde);color:white;border-color:var(--verde);animation:popAnswer 0.4s}
+    .palabrero-opcion.incorrecta{background:var(--rojo);color:white;border-color:var(--rojo);animation:shake 0.4s}
+    .palabrero-opcion:disabled{cursor:default;opacity:0.7}
+    @keyframes popAnswer{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+    .palabrero-resultado{
+      margin-top:14px;
+      padding:14px;
+      border-radius:14px;
+      font-weight:bold;
+      text-align:center;
+      display:none;
+      font-size:1rem;
+    }
+    .palabrero-resultado.visible{display:block}
+    .palabrero-resultado.bueno{background:#e8f5e9;color:#2E7D32;border:2px solid var(--verde)}
+    .palabrero-resultado.malo{background:#FFEBEE;color:#C62828;border:2px solid var(--rojo)}
+
+    /* ===== DIPLOMA ===== */
+    .diploma{
+      background:linear-gradient(135deg,#FFFDF7,#FFF8E1,#FFFDF7);
+      border:6px double var(--wayuu-oro);
+      border-radius:var(--radius);
+      padding:30px 25px;
+      text-align:center;
+      position:relative;
+      box-shadow:0 10px 40px rgba(0,0,0,0.15);
+    }
+    .diploma::before{
+      content:'';
+      position:absolute;
+      top:10px;left:10px;right:10px;bottom:10px;
+      border:2px solid rgba(212,168,67,0.3);
+      border-radius:14px;
+      pointer-events:none;
+    }
+    .diploma .sello{font-size:5rem;display:block;margin:10px 0}
+    .diploma h2{font-size:2rem;color:var(--wayuu-oro);margin:8px 0}
+    .diploma .nombre-diploma{
+      font-size:1.4rem;
+      color:var(--texto);
+      font-style:italic;
+      margin:10px 0;
+      padding:6px 0;
+      border-top:1px dashed var(--desierto);
+      border-bottom:1px dashed var(--desierto);
+    }
+    .diploma .firma{
+      margin-top:20px;
+      font-size:0.85rem;
+      color:var(--tierra);
+    }
+    .diploma .estrellas-diploma{
+      font-size:2rem;
+      letter-spacing:6px;
+      margin:10px 0;
+    }
+
+    /* ===== TOAST ===== */
+    .toast{
+      position:fixed;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:12px 30px;
+      border-radius:25px;
+      font-weight:bold;
+      z-index:1000;
+      animation:slideDown 0.4s ease-out;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2);
+      pointer-events:none;
+    }
+    .toast.exito{background:var(--verde);color:white}
+    .toast.error{background:var(--rojo);color:white}
+    .toast.info{background:var(--azul);color:white}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+    /* ===== CONFETTI ===== */
+    @keyframes caer{
+      0%{transform:translateY(-60px) rotate(0deg);opacity:1}
+      90%{opacity:1}
+      100%{transform:translateY(105vh) rotate(720deg);opacity:0}
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:600px){
+      .header h1{font-size:1.5rem}
+      .card{padding:16px 12px}
+      .card h2{font-size:1.2rem}
+      .clanes-grid{grid-template-columns:1fr 1fr}
+      .slide-concepto{padding:14px}
+    }
+    @media(max-width:420px){
+      .clanes-grid{grid-template-columns:1fr}
+    }
+
+    /* ===== ARENA OSCURA VAR (for dashed borders) ===== */
+    :root{--arena-oscura:#C9A96E}
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="sol">☀️</div>
+    <h1>🌍 Cosmovisión Wayuu</h1>
+    <span class="grado">Grados 4°-5° · Etnoeducación Wayuu</span>
+    <div class="desierto-deco">🌵🐐🦎🌵🏜️⭐🌵</div>
+  </div>
+
+  <!-- ===== HUD ===== -->
+  <div class="hud-wrap">
+    <div class="hud-estrellas">⭐ <span id="hudEstrellas">0</span>/5</div>
+    <div class="hud-divider"></div>
+    <div class="hud-puntos">🪙 <span id="hudPuntos">0</span> pts</div>
+    <div class="hud-divider"></div>
+    <div class="progreso-wrap">
+      <span class="progreso-label">📊 Progreso</span>
+      <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+      <span class="progreso-pct" id="progresoPct">0%</span>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 1: BIENVENIDA -->
+  <!-- ================================================================ -->
+  <section class="card activo" id="wayu402-seccion1">
+    <h2><span class="icono-titulo">🌅</span> ¡Bienvenido a la Cosmovisión Wayuu!
+      <span class="etiqueta-check" id="wayu402-check1" style="display:none">✓ Completado</span>
+    </h2>
+    <div style="text-align:center;margin:10px 0">
+      <p style="font-size:1.15rem;line-height:1.6;margin-bottom:12px">
+        Descubre cómo el pueblo <strong>wayuu</strong> entiende el mundo: la tierra que 
+        los sostiene, la lluvia que da vida, el creador que los formó, los clanes que 
+        los unen y el sabio palabrero que resuelve los conflictos con palabras de sabiduría.
+      </p>
+    </div>
+
+    <!-- SVG escena desierto guajiro -->
+    <div style="max-width:500px;margin:15px auto;text-align:center">
+      <svg viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cielo -->
+        <defs>
+          <linearGradient id="cieloGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#87CEEB"/>
+            <stop offset="60%" stop-color="#FFDAB9"/>
+            <stop offset="100%" stop-color="#F4A460"/>
+          </linearGradient>
+        </defs>
+        <rect width="500" height="200" fill="url(#cieloGrad)"/>
+        <!-- Sol -->
+        <circle cx="420" cy="60" r="35" fill="#FFD700" opacity="0.9"/>
+        <circle cx="420" cy="60" r="42" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5"/>
+        <circle cx="420" cy="60" r="52" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.3"/>
+        <!-- Arena / Desierto -->
+        <ellipse cx="250" cy="270" rx="280" ry="90" fill="#E8B86D"/>
+        <rect y="200" width="500" height="80" fill="#E8B86D"/>
+        <!-- Dunas -->
+        <path d="M0,200 Q80,160 160,195 Q240,230 320,185 Q400,145 500,190 L500,280 L0,280Z" fill="#D4A843" opacity="0.7"/>
+        <!-- Cactus / Cardón -->
+        <rect x="80" y="130" width="12" height="70" rx="6" fill="#5B8C5A"/>
+        <path d="M80,160 Q60,160 60,145 L60,135" stroke="#5B8C5A" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M92,170 Q112,170 112,152 L112,142" stroke="#5B8C5A" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <circle cx="86" cy="133" r="5" fill="#E07A5F"/>
+        <circle cx="109" cy="142" r="5" fill="#E07A5F"/>
+        <!-- Cardón grande -->
+        <rect x="360" y="110" width="16" height="90" rx="8" fill="#4A7A49"/>
+        <path d="M360,150 Q330,150 328,130" stroke="#4A7A49" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path d="M376,160 Q400,160 402,138" stroke="#4A7A49" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <path d="M360,170 Q335,175 330,158" stroke="#4A7A49" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M376,175 Q412,175 415,155" stroke="#4A7A49" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <!-- Chivo -->
+        <ellipse cx="200" cy="175" rx="22" ry="15" fill="#D2B48C"/>
+        <circle cx="185" cy="160" r="10" fill="#D2B48C"/>
+        <ellipse cx="180" cy="157" rx="3" ry="4" fill="#3D2B1F"/>
+        <path d="M185,152 Q188,145 192,148" stroke="#8B5E3C" stroke-width="2" fill="none"/>
+        <rect x="218" y="173" width="18" height="4" rx="2" fill="#D2B48C"/>
+        <rect x="218" y="180" width="18" height="4" rx="2" fill="#D2B48C"/>
+        <!-- Mochila wayuu colgada del cardón -->
+        <circle cx="368" cy="120" r="12" fill="#C73A3A"/>
+        <line x1="368" y1="108" x2="368" y2="100" stroke="#8B5E3C" stroke-width="2"/>
+        <!-- Jagüey (pozo de agua) -->
+        <ellipse cx="440" cy="230" rx="30" ry="12" fill="#26A69A" opacity="0.7"/>
+        <ellipse cx="440" cy="228" rx="24" ry="8" fill="#4DB6AC" opacity="0.5"/>
+        <!-- Estrellas (se ven de día sutilmente en la cosmovisión) -->
+        <circle cx="50" cy="25" r="2" fill="white" opacity="0.6"/>
+        <circle cx="130" cy="40" r="1.5" fill="white" opacity="0.5"/>
+        <circle cx="300" cy="30" r="2" fill="white" opacity="0.6"/>
+        <circle cx="460" cy="20" r="1.5" fill="white" opacity="0.5"/>
+        <!-- Nubes -->
+        <ellipse cx="150" cy="70" rx="40" ry="15" fill="white" opacity="0.7"/>
+        <ellipse cx="180" cy="65" rx="30" ry="12" fill="white" opacity="0.8"/>
+        <ellipse cx="310" cy="85" rx="35" ry="12" fill="white" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <div class="info-box">
+      <strong>🕊️ ¿Sabías que...?</strong><br>
+      La cosmovisión wayuu está viva. No es solo una historia antigua: cada día, las 
+      comunidades wayuu viven según estas creencias. Mma (la Tierra) no es solo tierra: 
+      es una madre que cuida y alimenta. Juyá (la lluvia) es una fuerza sagrada. Y los 
+      sueños (lapü) son mensajes que guían a las personas.
+    </div>
+
+    <p style="font-size:1rem;line-height:1.5;margin:10px 0">
+      En este módulo explorarás:
+    </p>
+    <ul style="font-size:1rem;line-height:2;padding-left:20px;margin:8px 0">
+      <li>🌍 <strong>Mma</strong> — La Madre Tierra wayuu</li>
+      <li>🌧️ <strong>Juyá</strong> — La fuerza vital de la lluvia</li>
+      <li>✨ <strong>Maleiwa</strong> — El creador del pueblo wayuu</li>
+      <li>🦅 <strong>Eiruku</strong> — El sistema de clanes matrilineales</li>
+      <li>🕊️ <strong>Pütchipü'üi</strong> — El palabrero, sabio mediador</li>
+      <li>🎮 <strong>Dos juegos</strong> — Los clanes y el camino del palabrero</li>
+    </ul>
+
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primario" onclick="wayu402_irASeccion('wayu402-seccion2')">
+        🚀 ¡Descubrir la cosmovisión wayuu! →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 2: LECCIÓN — 5 CONCEPTOS FUNDAMENTALES -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu402-seccion2">
+    <h2><span class="icono-titulo">📖</span> Lección: Los 5 pilares de la cosmovisión wayuu
+      <span class="etiqueta-check" id="wayu402-check2" style="display:none">✓ Completado</span>
+    </h2>
+
+    <!-- Navegación de slides -->
+    <div class="slide-nav">
+      <button class="btn btn-sm btn-outline" onclick="wayu402_slideAnterior()">◀</button>
+      <span class="slide-dot activo" id="wayu402-dot0" onclick="wayu402_irASlide(0)"></span>
+      <span class="slide-dot" id="wayu402-dot1" onclick="wayu402_irASlide(1)"></span>
+      <span class="slide-dot" id="wayu402-dot2" onclick="wayu402_irASlide(2)"></span>
+      <span class="slide-dot" id="wayu402-dot3" onclick="wayu402_irASlide(3)"></span>
+      <span class="slide-dot" id="wayu402-dot4" onclick="wayu402_irASlide(4)"></span>
+      <button class="btn btn-sm btn-outline" onclick="wayu402_slideSiguiente()">▶</button>
+      <span class="slide-counter"><span id="wayu402-slideNum">1</span> / 5</span>
+    </div>
+
+    <!-- SLIDE 1: Mma (Tierra) -->
+    <div class="slide-content activo" id="wayu402-slide0">
+      <div class="slide-concepto">
+        <div class="concepto-titulo">🌍 Mma — La Madre Tierra</div>
+        <div class="concepto-sub">"Mma es la madre que da vida a todo"</div>
+        <div class="slide-svg">
+          <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="tierraGrad" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#8B5E3C"/>
+                <stop offset="100%" stop-color="#3D2B1F"/>
+              </radialGradient>
+            </defs>
+            <!-- Tierra -->
+            <ellipse cx="150" cy="100" rx="120" ry="50" fill="url(#tierraGrad)"/>
+            <!-- Brotes -->
+            <path d="M120,95 Q125,70 130,95" stroke="#4CAF50" stroke-width="3" fill="none"/>
+            <path d="M145,90 Q150,62 155,90" stroke="#66BB6A" stroke-width="3" fill="none"/>
+            <path d="M170,93 Q175,68 180,93" stroke="#4CAF50" stroke-width="3" fill="none"/>
+            <!-- Plantas -->
+            <circle cx="125" cy="85" r="8" fill="#81C784"/>
+            <circle cx="150" cy="80" r="10" fill="#66BB6A"/>
+            <circle cx="175" cy="84" r="8" fill="#81C784"/>
+            <!-- Raíces -->
+            <path d="M145,105 Q140,125 148,140" stroke="#6D4C41" stroke-width="2" fill="none"/>
+            <path d="M155,105 Q160,125 152,140" stroke="#6D4C41" stroke-width="2" fill="none"/>
+            <!-- Corazón en la tierra -->
+            <text x="150" y="120" text-anchor="middle" font-size="20">❤️</text>
+            <!-- Sol arriba -->
+            <circle cx="250" cy="30" r="18" fill="#FFD700" opacity="0.8"/>
+            <line x1="250" y1="8" x2="250" y2="4" stroke="#FFD700" stroke-width="2"/>
+            <line x1="265" y1="18" x2="270" y2="14" stroke="#FFD700" stroke-width="2"/>
+            <line x1="268" y1="38" x2="272" y2="42" stroke="#FFD700" stroke-width="2"/>
+            <line x1="235" y1="18" x2="230" y2="14" stroke="#FFD700" stroke-width="2"/>
+            <line x1="232" y1="38" x2="228" y2="42" stroke="#FFD700" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="concepto-texto">
+          <p>Para el pueblo wayuu, <strong>Mma</strong> es mucho más que tierra. Es una 
+          <strong>madre viva</strong> que alimenta, protege y da hogar a todos los seres. 
+          Cada ranchería, cada jagüey, cada cardón está conectado con Mma.</p>
+          <p style="margin-top:8px">Los wayuu tienen un <strong>profundo respeto por el territorio</strong>. 
+          No se puede dañar la tierra sin razón, porque Mma siente. Cuando un wayuu muere, 
+          es enterrado en la tierra de sus ancestros, porque vuelve al vientre de Mma.</p>
+          <p style="margin-top:8px"><em>"Mma es nuestra madre. De ella nacemos y a ella volvemos."</em></p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:6px">
+        <button class="btn-tts" onclick="wayu402_hablarSlide(0)">🔊 Escuchar lección</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Juyá (Lluvia) -->
+    <div class="slide-content" id="wayu402-slide1">
+      <div class="slide-concepto">
+        <div class="concepto-titulo">🌧️ Juyá — La Fuerza Vital</div>
+        <div class="concepto-sub">"Sin Juyá, Mma se seca y la vida se apaga"</div>
+        <div class="slide-svg">
+          <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Nube -->
+            <ellipse cx="150" cy="35" rx="55" ry="22" fill="#78909C"/>
+            <ellipse cx="130" cy="30" rx="40" ry="18" fill="#90A4AE"/>
+            <ellipse cx="170" cy="32" rx="35" ry="16" fill="#90A4AE"/>
+            <!-- Rayo -->
+            <path d="M155,52 L145,52 L150,52 L142,65 L150,65 L145,78 L158,60 L150,60 L155,52Z" fill="#FFD700"/>
+            <!-- Gotas de lluvia -->
+            <line x1="120" y1="55" x2="118" y2="70" stroke="#4FC3F7" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="140" y1="58" x2="138" y2="75" stroke="#4FC3F7" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="160" y1="56" x2="158" y2="72" stroke="#4FC3F7" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="180" y1="57" x2="178" y2="73" stroke="#4FC3F7" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Jagüey (pozo) abajo -->
+            <ellipse cx="150" cy="120" rx="38" ry="14" fill="#26A69A"/>
+            <ellipse cx="150" cy="117" rx="30" ry="10" fill="#4DB6AC"/>
+            <ellipse cx="150" cy="114" rx="22" ry="6" fill="#80CBC4" opacity="0.6"/>
+            <!-- Ondas en el agua -->
+            <ellipse cx="150" cy="115" rx="10" ry="3" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+            <!-- Tierra / arena -->
+            <path d="M0,130 Q75,110 150,130 Q225,150 300,130 L300,160 L0,160Z" fill="#E8B86D"/>
+            <!-- Chivo bebiendo -->
+            <ellipse cx="240" cy="118" rx="12" ry="8" fill="#D2B48C"/>
+            <circle cx="233" cy="110" r="6" fill="#D2B48C"/>
+            <circle cx="231" cy="108" r="1.5" fill="#3D2B1F"/>
+          </svg>
+        </div>
+        <div class="concepto-texto">
+          <p><strong>Juyá</strong> es la lluvia, una fuerza sagrada y vital. En la árida 
+          Guajira, donde el agua es escasa, Juyá es <strong>esperada con devoción</strong>. 
+          Los wayuu le cantan y le rezan para que llegue.</p>
+          <p style="margin-top:8px">Gracias a Juyá se llenan los <strong>jagüeyes</strong> 
+          (pozos de agua), beben los chivos, crecen las plantas y la vida florece en el 
+          desierto. Juyá es parte del <strong>ciclo sagrado del agua</strong> que conecta 
+          el cielo, la tierra y los seres vivos.</p>
+          <p style="margin-top:8px"><em>"Cuando Juyá llega, Mma sonríe y el desierto canta."</em></p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:6px">
+        <button class="btn-tts" onclick="wayu402_hablarSlide(1)">🔊 Escuchar lección</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Maleiwa (Creador) -->
+    <div class="slide-content" id="wayu402-slide2">
+      <div class="slide-concepto">
+        <div class="concepto-titulo">✨ Maleiwa — El Creador</div>
+        <div class="concepto-sub">"Maleiwa formó al wayuu y le dio su lugar en el mundo"</div>
+        <div class="slide-svg">
+          <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="luzGrad" cx="50%" cy="30%">
+                <stop offset="0%" stop-color="#FFF9C4"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <!-- Luz divina -->
+            <circle cx="150" cy="45" r="55" fill="url(#luzGrad)"/>
+            <!-- Rayos -->
+            <line x1="150" y1="0" x2="150" y2="10" stroke="#FFD700" stroke-width="2"/>
+            <line x1="180" y1="10" x2="190" y2="5" stroke="#FFD700" stroke-width="2"/>
+            <line x1="120" y1="10" x2="110" y2="5" stroke="#FFD700" stroke-width="2"/>
+            <line x1="195" y1="30" x2="210" y2="25" stroke="#FFD700" stroke-width="1.5"/>
+            <line x1="105" y1="30" x2="90" y2="25" stroke="#FFD700" stroke-width="1.5"/>
+            <!-- Estrella central (Maleiwa) -->
+            <polygon points="150,18 154,32 168,32 157,41 161,55 150,47 139,55 143,41 132,32 146,32" fill="#FFD700"/>
+            <!-- Figuras wayuu (pequeñas siluetas) -->
+            <circle cx="110" cy="95" r="10" fill="#D4A843"/>
+            <rect x="105" y="105" width="10" height="25" rx="4" fill="#D4A843"/>
+            <circle cx="190" cy="95" r="10" fill="#D4A843"/>
+            <rect x="185" y="105" width="10" height="25" rx="4" fill="#D4A843"/>
+            <circle cx="150" cy="90" r="8" fill="#E8A340"/>
+            <rect x="146" y="98" width="8" height="20" rx="3" fill="#E8A340"/>
+            <!-- Tierra -->
+            <path d="M0,115 Q75,100 150,115 Q225,130 300,115 L300,160 L0,160Z" fill="#E8B86D" opacity="0.6"/>
+            <!-- Manos elevadas -->
+            <line x1="100" y1="85" x2="95" y2="72" stroke="#D4A843" stroke-width="2.5"/>
+            <line x1="200" y1="85" x2="205" y2="72" stroke="#D4A843" stroke-width="2.5"/>
+            <!-- Estrellas pequeñas -->
+            <circle cx="40" cy="25" r="2" fill="#FFD700" opacity="0.6"/>
+            <circle cx="260" cy="20" r="2.5" fill="#FFD700" opacity="0.8"/>
+            <circle cx="80" cy="40" r="1.5" fill="#FFD700" opacity="0.5"/>
+            <circle cx="220" cy="50" r="2" fill="#FFD700" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="concepto-texto">
+          <p><strong>Maleiwa</strong> es el ser supremo en la cosmovisión wayuu. Según la 
+          tradición, Maleiwa creó al pueblo wayuu, a los animales, a las plantas y a todo 
+          lo que existe. Es un creador bondadoso que enseñó a los wayuu cómo vivir.</p>
+          <p style="margin-top:8px">Maleiwa no está lejos: <strong>habita en el cosmos</strong> 
+          y se comunica con los wayuu a través de <strong>los sueños (lapü)</strong>. 
+          Los sueños son mensajes sagrados que guían las decisiones importantes: cuándo 
+          viajar, cuándo sembrar, cómo resolver un problema.</p>
+          <p style="margin-top:8px"><em>"Maleiwa nos creó y nos dejó sus enseñanzas. Los sueños son su voz."</em></p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:6px">
+        <button class="btn-tts" onclick="wayu402_hablarSlide(2)">🔊 Escuchar lección</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Eiruku (Clan) -->
+    <div class="slide-content" id="wayu402-slide3">
+      <div class="slide-concepto">
+        <div class="concepto-titulo">🦅 Eiruku — El Clan Matrilineal</div>
+        <div class="concepto-sub">"Tu clan viene de tu madre, como ha sido siempre"</div>
+        <div class="slide-svg">
+          <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Árbol genealógico matrilineal -->
+            <!-- Raíz: figura femenina central -->
+            <circle cx="150" cy="115" r="12" fill="#C73A3A"/>
+            <text x="150" y="120" text-anchor="middle" fill="white" font-size="12" font-weight="bold">♀</text>
+            <!-- Líneas hacia arriba -->
+            <line x1="150" y1="103" x2="150" y2="88" stroke="#8B5E3C" stroke-width="2"/>
+            <line x1="120" y1="103" x2="150" y2="88" stroke="#8B5E3C" stroke-width="1.5"/>
+            <line x1="180" y1="103" x2="150" y2="88" stroke="#8B5E3C" stroke-width="1.5"/>
+            <!-- Segunda generación -->
+            <circle cx="110" cy="75" r="9" fill="#E07A5F"/>
+            <text x="110" y="79" text-anchor="middle" fill="white" font-size="9">♀</text>
+            <circle cx="150" cy="72" r="9" fill="#E07A5F"/>
+            <text x="150" y="76" text-anchor="middle" fill="white" font-size="9">♀</text>
+            <circle cx="190" cy="75" r="9" fill="#D4A843"/>
+            <text x="190" y="79" text-anchor="middle" fill="white" font-size="9">♂</text>
+            <!-- Conexiones 2da gen -->
+            <line x1="110" y1="66" x2="110" y2="52" stroke="#8B5E3C" stroke-width="1.5"/>
+            <line x1="150" y1="63" x2="150" y2="48" stroke="#8B5E3C" stroke-width="1.5"/>
+            <!-- Tercera generación -->
+            <circle cx="95" cy="42" r="7" fill="#F4A236"/>
+            <circle cx="125" cy="42" r="7" fill="#F4A236"/>
+            <circle cx="140" cy="38" r="7" fill="#F4A236"/>
+            <circle cx="160" cy="38" r="7" fill="#F4A236"/>
+            <!-- Animales totémicos alrededor -->
+            <text x="220" y="50" font-size="22">🦊</text>
+            <text x="50" y="30" font-size="22">🐍</text>
+            <text x="230" y="105" font-size="22">🦅</text>
+            <text x="40" y="85" font-size="22">🐢</text>
+            <!-- Etiqueta -->
+            <text x="150" y="155" text-anchor="middle" fill="#8B5E3C" font-size="11" font-weight="bold">Línea materna →</text>
+          </svg>
+        </div>
+        <div class="concepto-texto">
+          <p>La sociedad wayuu se organiza en <strong>clanes (eiruku)</strong>. Lo especial 
+          es que el clan se hereda por <strong>línea materna</strong>: tú perteneces al clan 
+          de tu madre, no al de tu padre. La mamá y la abuela materna son las figuras 
+          centrales de la familia.</p>
+          <p style="margin-top:8px">Cada clan tiene un <strong>animal totémico</strong> que 
+          lo representa y protege. Por ejemplo: el clan Uliyuu tiene al zorro, el clan 
+          Uliana al tigre, el clan Epinayuu al águila. Estos animales son sagrados y los 
+          miembros del clan los respetan profundamente.</p>
+          <p style="margin-top:8px"><em>"Eiruku es tu identidad. Saber tu clan es saber quién eres."</em></p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:6px">
+        <button class="btn-tts" onclick="wayu402_hablarSlide(3)">🔊 Escuchar lección</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Pütchipü'üi (Palabrero) -->
+    <div class="slide-content" id="wayu402-slide4">
+      <div class="slide-concepto">
+        <div class="concepto-titulo">🕊️ Pütchipü'üi — El Palabrero</div>
+        <div class="concepto-sub">"La palabra sana lo que la violencia destruye"</div>
+        <div class="slide-svg">
+          <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Círculo de diálogo -->
+            <circle cx="150" cy="75" r="45" fill="none" stroke="#D4A843" stroke-width="2" stroke-dasharray="6,3"/>
+            <!-- Palabrero en el centro -->
+            <circle cx="150" cy="60" r="12" fill="#C73A3A"/>
+            <rect x="144" y="72" width="12" height="25" rx="3" fill="#C73A3A"/>
+            <!-- Bastón de mando -->
+            <rect x="156" y="38" width="3" height="35" rx="2" fill="#8B5E3C"/>
+            <circle cx="169" cy="52" r="6" fill="#D4A843" opacity="0.7"/>
+            <!-- Figuras alrededor -->
+            <circle cx="100" cy="70" r="8" fill="#3AA8C7"/>
+            <rect x="96" y="78" width="8" height="18" rx="2" fill="#3AA8C7"/>
+            <circle cx="200" cy="70" r="8" fill="#E8A340"/>
+            <rect x="196" y="78" width="8" height="18" rx="2" fill="#E8A340"/>
+            <circle cx="130" cy="115" r="8" fill="#9B59B6"/>
+            <rect x="126" y="123" width="8" height="18" rx="2" fill="#9B59B6"/>
+            <circle cx="170" cy="115" r="8" fill="#4CAF50"/>
+            <rect x="166" y="123" width="8" height="18" rx="2" fill="#4CAF50"/>
+            <!-- Líneas de diálogo -->
+            <line x1="108" y1="70" x2="138" y2="62" stroke="#D4A843" stroke-width="1.5" opacity="0.5"/>
+            <line x1="192" y1="70" x2="162" y2="62" stroke="#D4A843" stroke-width="1.5" opacity="0.5"/>
+            <line x1="136" y1="108" x2="148" y2="82" stroke="#D4A843" stroke-width="1.5" opacity="0.5"/>
+            <line x1="164" y1="108" x2="152" y2="82" stroke="#D4A843" stroke-width="1.5" opacity="0.5"/>
+            <!-- Palabras flotantes -->
+            <text x="85" y="45" font-size="9" fill="#8B5E3C" opacity="0.7">paz</text>
+            <text x="215" y="45" font-size="9" fill="#8B5E3C" opacity="0.7">sabiduría</text>
+            <text x="65" y="100" font-size="9" fill="#8B5E3C" opacity="0.7">justicia</text>
+            <text x="225" y="100" font-size="9" fill="#8B5E3C" opacity="0.7">palabra</text>
+            <!-- Tierra -->
+            <line x1="0" y1="145" x2="300" y2="145" stroke="#E8B86D" stroke-width="3"/>
+          </svg>
+        </div>
+        <div class="concepto-texto">
+          <p>El <strong>Pütchipü'üi</strong> (palabrero) es una de las figuras más 
+          respetadas de la cultura wayuu. Es un <strong>sabio mediador</strong> que 
+          resuelve conflictos entre familias y clanes usando solo la palabra. No es un 
+          juez: es un consejero que busca la paz y la reconciliación.</p>
+          <p style="margin-top:8px">El palabrero conoce las <strong>leyes ancestrales</strong>, 
+          la historia de cada clan y el arte de hablar con sabiduría. Lleva un bastón 
+          (waraarat) como símbolo de su autoridad moral. Cuando dos familias tienen un 
+          problema, acuden al Pütchipü'üi para encontrar una solución justa mediante el 
+          <strong>diálogo y la compensación</strong>, no con violencia.</p>
+          <p style="margin-top:8px"><em>"El Pütchipü'üi no impone: escucha, comprende y une con palabras."</em></p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:6px">
+        <button class="btn-tts" onclick="wayu402_hablarSlide(4)">🔊 Escuchar lección</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-exito" id="wayu402-btn2Ok" style="display:none" onclick="wayu402_irASeccion('wayu402-seccion3')">
+        ✓ ¡Aprendí los 5 pilares! Siguiente →
+      </button>
+      <button class="btn btn-outline" id="wayu402-btn2Practicar" onclick="wayu402_completarSeccion(2)">
+        ✓ Marcar como completado
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 3: JUEGO 1 — LOS CLANES WAYUU (Drag & Drop) -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu402-seccion3">
+    <h2><span class="icono-titulo">🎯</span> Juego 1: Los Clanes Wayuu
+      <span class="etiqueta-check" id="wayu402-check3" style="display:none">✓ Completado</span>
+    </h2>
+    <div class="clanes-info">
+      <p>Arrastra cada <strong>animal totémico</strong> hasta el <strong>clan wayuu</strong> que le corresponde. 
+      ¡Cada clan tiene su animal protector!</p>
+      <p style="font-size:0.85rem;color:var(--tierra);margin-top:4px">
+        Pista: El clan Uliyuu es "el clan del zorro". El clan Uliana es "el clan del tigre".
+      </p>
+      <p style="margin-top:6px;font-weight:bold;color:var(--atardecer)">
+        Aciertos: <span id="wayu402-aciertosClanes">0</span> / 6
+      </p>
+    </div>
+
+    <!-- Slots de clanes -->
+    <div class="clanes-grid" id="wayu402-clanesGrid">
+      <div class="clan-slot" data-clan="Uliyuu" id="wayu402-slot-Uliyuu">
+        <div class="clan-nombre">Uliyuu</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+      <div class="clan-slot" data-clan="Uliana" id="wayu402-slot-Uliana">
+        <div class="clan-nombre">Uliana</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+      <div class="clan-slot" data-clan="Epinayuu" id="wayu402-slot-Epinayuu">
+        <div class="clan-nombre">Epinayuu</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+      <div class="clan-slot" data-clan="Sijuana" id="wayu402-slot-Sijuana">
+        <div class="clan-nombre">Sijuana</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+      <div class="clan-slot" data-clan="Pushaina" id="wayu402-slot-Pushaina">
+        <div class="clan-nombre">Pushaina</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+      <div class="clan-slot" data-clan="Jusayuu" id="wayu402-slot-Jusayuu">
+        <div class="clan-nombre">Jusayuu</div>
+        <div class="clan-animal-placeholder">❓</div>
+        <div style="font-size:0.75rem;color:var(--tierra)">Arrastra el animal aquí</div>
+      </div>
+    </div>
+
+    <!-- Animales arrastrables -->
+    <div class="animales-band" id="wayu402-animalesBand">
+      <div class="animal-drag" draggable="true" data-animal="Zorro" id="wayu402-animal-Zorro">
+        <span style="font-size:1.5rem">🦊</span> Zorro
+      </div>
+      <div class="animal-drag" draggable="true" data-animal="Tigre" id="wayu402-animal-Tigre">
+        <span style="font-size:1.5rem">🐅</span> Tigre
+      </div>
+      <div class="animal-drag" draggable="true" data-animal="Águila" id="wayu402-animal-Águila">
+        <span style="font-size:1.5rem">🦅</span> Águila
+      </div>
+      <div class="animal-drag" draggable="true" data-animal="Arroyo" id="wayu402-animal-Arroyo">
+        <span style="font-size:1.5rem">💧</span> Arroyo
+      </div>
+      <div class="animal-drag" draggable="true" data-animal="Culebra" id="wayu402-animal-Culebra">
+        <span style="font-size:1.5rem">🐍</span> Culebra
+      </div>
+      <div class="animal-drag" draggable="true" data-animal="Tórtola" id="wayu402-animal-Tórtola">
+        <span style="font-size:1.5rem">🕊️</span> Tórtola
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-azul btn-sm" onclick="wayu402_reiniciarClanes()">🔄 Reiniciar juego</button>
+      <button class="btn btn-exito" id="wayu402-btn3Ok" style="display:none" onclick="wayu402_irASeccion('wayu402-seccion4')">
+        ✓ ¡Todos los clanes correctos! Siguiente →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 4: JUEGO 2 — EL CAMINO DEL PALABRERO -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu402-seccion4">
+    <h2><span class="icono-titulo">🕊️</span> Juego 2: El Camino del Palabrero
+      <span class="etiqueta-check" id="wayu402-check4" style="display:none">✓ Completado</span>
+    </h2>
+    <p style="text-align:center;margin-bottom:8px;color:var(--tierra);font-size:0.95rem">
+      Eres un <strong>Pütchipü'üi</strong> (palabrero). Tres familias necesitan tu sabiduría. 
+      Lee cada historia y elige la mejor solución con tus palabras.
+    </p>
+    <p style="text-align:center;margin-bottom:12px">
+      Conflictos resueltos: <strong id="wayu402-conflictosResueltos">0</strong> / 3
+    </p>
+
+    <!-- Conflicto 1 -->
+    <div class="palabrero-card" id="wayu402-conflicto1">
+      <div class="palabrero-historia">
+        <span class="emoji-historia">🐐💧</span>
+        <strong>Conflicto 1: El jagüey compartido</strong><br>
+        Dos familias vecinas comparten un jagüey (pozo de agua). La familia A dice que la 
+        familia B está usando demasiada agua para sus chivos y no deja suficiente para los 
+        demás. La familia B dice que tiene más chivos y necesita más agua. Hay tensión 
+        entre las familias. ¿Qué haces como Pütchipü'üi?
+      </div>
+      <div class="palabrero-opciones" id="wayu402-opciones1"></div>
+      <div class="palabrero-resultado" id="wayu402-resultado1"></div>
+    </div>
+
+    <!-- Conflicto 2 -->
+    <div class="palabrero-card" id="wayu402-conflicto2" style="display:none">
+      <div class="palabrero-historia">
+        <span class="emoji-historia">🧶🏠</span>
+        <strong>Conflicto 2: La mochila disputada</strong><br>
+        Una joven tejedora del clan Epinayuu hizo una hermosa mochila. Otra mujer del 
+        clan Sijuana dice que el diseño de la mochila es un patrón tradicional de SU clan 
+        y que no debería usarlo. La tejedora dice que ella creó el diseño con su propia 
+        creatividad. Las familias están molestas. ¿Cómo resuelves?
+      </div>
+      <div class="palabrero-opciones" id="wayu402-opciones2"></div>
+      <div class="palabrero-resultado" id="wayu402-resultado2"></div>
+    </div>
+
+    <!-- Conflicto 3 -->
+    <div class="palabrero-card" id="wayu402-conflicto3" style="display:none">
+      <div class="palabrero-historia">
+        <span class="emoji-historia">🌵👧</span>
+        <strong>Conflicto 3: La herencia de la abuela</strong><br>
+        Una abuela (Oushü) del clan Uliyuu falleció. Sus dos hijas discuten sobre quién 
+        debe heredar las tierras de la ranchería. La hija mayor dice que por tradición le 
+        corresponde a ella. La hija menor dice que ella cuidó a la abuela en sus últimos 
+        años. La comunidad está dividida. ¿Qué decisión propones?
+      </div>
+      <div class="palabrero-opciones" id="wayu402-opciones3"></div>
+      <div class="palabrero-resultado" id="wayu402-resultado3"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-azul btn-sm" onclick="wayu402_reiniciarPalabrero()">🔄 Reiniciar juego</button>
+      <button class="btn btn-exito" id="wayu402-btn4Ok" style="display:none" onclick="wayu402_irASeccion('wayu402-seccion5')">
+        ✓ ¡Todos los conflictos resueltos! Ver diploma →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 5: DIPLOMA FINAL -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu402-seccion5">
+    <div class="diploma">
+      <div class="sello">📜</div>
+      <h2>¡Has completado la Cosmovisión Wayuu!</h2>
+      <p style="font-size:1.1rem;color:var(--tierra);margin:8px 0">
+        Por comprender los pilares de la sabiduría ancestral wayuu, te otorgamos el título de:
+      </p>
+      <div class="nombre-diploma">
+        🌍 Guardián de la Cosmovisión Wayuu
+      </div>
+      <div class="estrellas-diploma" id="wayu402-estrellasDiploma">⭐⭐⭐⭐⭐</div>
+      <p style="font-size:1rem;color:var(--texto);margin:10px 0">
+        ¡Felicidades! Ahora comprendes a <strong>Mma</strong>, la Madre Tierra; a 
+        <strong>Juyá</strong>, la lluvia que da vida; a <strong>Maleiwa</strong>, el 
+        creador; el sistema de <strong>clanes matrilineales</strong>; y la sabiduría 
+        del <strong>Pütchipü'üi</strong>, el palabrero. Has honrado una cultura milenaria 
+        del pueblo wayuu.
+      </p>
+      <p style="font-size:0.9rem;color:var(--tierra);font-style:italic;margin:8px 0">
+        "Conocer la cosmovisión wayuu es aprender a respetar la naturaleza, la palabra y la comunidad."
+      </p>
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn btn-primario" onclick="wayu402_lanzarConfeti()">🎉 ¡Celebrar!</button>
+        <button class="btn btn-dorado" onclick="wayu402_irASeccion('wayu402-seccion1')">🔄 Volver al inicio</button>
+      </div>
+      <div class="firma">
+        🌵 EduConect Rural · Módulo WAYU-402 · Etnoeducación Wayuu
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================================
+// WAYU-402: Cosmovisión Wayuu — JavaScript inline
+// =====================================================================
+(function(){
+  'use strict';
+
+  // ===== ESTADO GLOBAL =====
+  var state = {
+    puntos: 0,
+    estrellas: 0,
+    secciones: [true, false, false, false, false], // 5 secciones
+    slideActual: 0,
+    slidesVisitados: [false, false, false, false, false],
+    // Juego 1: Clanes
+    clanesCorrectos: {},
+    clanesAciertos: 0,
+    // Juego 2: Palabrero
+    conflictoActual: 1,
+    conflictosResueltos: 0,
+    conflictosResueltosIds: [false, false, false]
+  };
+
+  // Respuestas correctas clanes
+  var clanesRespuestas = {
+    'Uliyuu': 'Zorro',
+    'Uliana': 'Tigre',
+    'Epinayuu': 'Águila',
+    'Sijuana': 'Arroyo',
+    'Pushaina': 'Culebra',
+    'Jusayuu': 'Tórtola'
+  };
+
+  // Preguntas del palabrero
+  var preguntasPalabrero = [
+    {
+      id: 1,
+      opciones: [
+        {texto: 'Decirle a la familia B que se vaya a otro jagüey y no vuelva.', correcta: false, explicacion: '❌ Expulsar a una familia no resuelve el problema. El Pütchipü\'üi busca unir, no dividir.'},
+        {texto: 'Establecer turnos y cantidades justas de agua para todos, según las necesidades de cada familia.', correcta: true, explicacion: '✅ ¡Correcto! El palabrero busca acuerdos justos que beneficien a toda la comunidad, respetando las necesidades de cada quien.'},
+        {texto: 'Decirles que resuelvan solos el problema, porque tú no te metes en asuntos de agua.', correcta: false, explicacion: '❌ Un Pütchipü\'üi justamente existe para ayudar a resolver cuando las familias solas no pueden.'}
+      ]
+    },
+    {
+      id: 2,
+      opciones: [
+        {texto: 'Prohibir a la tejedora que siga usando ese diseño y obligarla a pedir perdón.', correcta: false, explicacion: '❌ Castigar sin escuchar no es el camino. La creatividad también es valiosa en la cultura wayuu.'},
+        {texto: 'Reconocer el valor del diseño tradicional del clan Sijuana y proponer que la tejedora añada un detalle único que muestre que es una creación inspirada, no una copia.', correcta: true, explicacion: '✅ ¡Sabia decisión! Honras la tradición del clan y al mismo tiempo valoras la creatividad. El equilibrio es la clave.'},
+        {texto: 'Decirle a la mujer del clan Sijuana que los diseños no son de nadie y que cualquiera puede usarlos.', correcta: false, explicacion: '❌ Los diseños tradicionales sí tienen significado y pertenencia. Ignorarlo es faltar al respeto a la historia del clan.'}
+      ]
+    },
+    {
+      id: 3,
+      opciones: [
+        {texto: 'Dividir las tierras exactamente en dos partes iguales para que no haya discusión.', correcta: false, explicacion: '❌ Dividir sin diálogo puede crear nuevos conflictos. La tradición wayuu valora la conversación y el consenso.'},
+        {texto: 'Decir que la hija mayor tiene razón y debe heredar todo, sin escuchar a la menor.', correcta: false, explicacion: '❌ Un palabrero escucha a todas las partes. Imponer sin diálogo no es justicia.'},
+        {texto: 'Reunir a las dos hermanas, escuchar a ambas, y proponer que compartan las tierras y honren juntas la memoria de su madre, como ella hubiera querido.', correcta: true, explicacion: '✅ ¡Excelente! El Pütchipü\'üi une, escucha a todos y busca una solución que mantenga la armonía familiar y comunitaria.'}
+      ]
+    }
+  ];
+
+  // ===== HELPERS =====
+  function $_(sel){return document.querySelector(sel);}
+  function $$_(sel){return document.querySelectorAll(sel);}
+
+  // ===== PROGRESO =====
+  function wayu402_actualizarProgreso(){
+    var completadas = 0;
+    for(var i=0;i<state.secciones.length;i++){
+      if(state.secciones[i]) completadas++;
+    }
+    var total = state.secciones.length;
+    var pct = Math.round((completadas / total) * 100);
+    $_('#progresoFill').style.width = pct + '%';
+    $_('#progresoPct').textContent = pct + '%';
+    $_('#hudPuntos').textContent = state.puntos + ' pts';
+    $_('#hudEstrellas').textContent = state.estrellas + '/5';
+
+    try{
+      localStorage.setItem('wayu402_progreso', JSON.stringify({
+        secciones: state.secciones,
+        puntos: state.puntos,
+        estrellas: state.estrellas
+      }));
+    }catch(e){}
+  }
+
+  // ===== TTS =====
+  function wayu402_hablar(texto, velocidad){
+    if(!('speechSynthesis' in window)){
+      wayu402_mostrarToast('Tu navegador no soporta voz.', 'error');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = velocidad || 0.8;
+    utterance.pitch = 1.05;
+    utterance.volume = 1;
+
+    var voices = window.speechSynthesis.getVoices();
+    if(voices.length === 0){
+      window.speechSynthesis.onvoiceschanged = function(){
+        voices = window.speechSynthesis.getVoices();
+        var voz = voices.find(function(v){return v.lang.indexOf('es')===0 && v.name.indexOf('Female')>=0;}) ||
+                  voices.find(function(v){return v.lang.indexOf('es')===0;});
+        if(voz) utterance.voice = voz;
+        window.speechSynthesis.speak(utterance);
+      };
+    } else {
+      var voz = voices.find(function(v){return v.lang.indexOf('es')===0 && v.name.indexOf('Female')>=0;}) ||
+                voices.find(function(v){return v.lang.indexOf('es')===0;});
+      if(voz) utterance.voice = voz;
+    }
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function wayu402_hablarSlide(indice){
+    var textos = [
+      'Mma. La Madre Tierra. Para el pueblo wayuu, Mma es mucho más que tierra. Es una madre viva que alimenta, protege y da hogar a todos los seres. Los wayuu tienen un profundo respeto por el territorio. No se puede dañar la tierra sin razón, porque Mma siente.',
+      'Juyá. La lluvia. Una fuerza sagrada y vital. En la árida Guajira, donde el agua es escasa, Juyá es esperada con devoción. Los wayuu le cantan y le rezan para que llegue. Gracias a Juyá se llenan los jagüeyes.',
+      'Maleiwa. El creador. Maleiwa es el ser supremo. Creó al pueblo wayuu, a los animales y a las plantas. Se comunica a través de los sueños. Los sueños son mensajes sagrados que guían las decisiones.',
+      'Eiruku. El clan. La sociedad wayuu se organiza en clanes que se heredan por línea materna. Cada clan tiene un animal totémico que lo representa y protege.',
+      'Pütchipü. El palabrero. Un sabio mediador que resuelve conflictos usando solo la palabra. No es un juez: es un consejero que busca la paz y la reconciliación entre las familias.'
+    ];
+    wayu402_hablar(textos[indice]);
+  }
+
+  // ===== TOAST =====
+  function wayu402_mostrarToast(msg, tipo){
+    var t = document.createElement('div');
+    t.className = 'toast ' + (tipo || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function(){t.remove();}, 300);
+    }, 2500);
+  }
+
+  // ===== CONFETTI =====
+  function wayu402_lanzarConfeti(){
+    var emojis = ['🌵','🐐','⭐','🌟','🌍','🌧️','🦅','🕊️','💧','🎉','🌅','🦊'];
+    for(var i=0;i<35;i++){
+      setTimeout(function(){
+        var e = document.createElement('span');
+        e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        e.style.cssText = 'position:fixed;font-size:2.2rem;pointer-events:none;z-index:999;animation:caer 3s ease-out forwards;';
+        e.style.left = Math.random()*90 + '%';
+        e.style.top = '-60px';
+        e.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+        document.body.appendChild(e);
+        setTimeout(function(){e.remove();}, 3100);
+      }, i*80);
+    }
+  }
+
+  // ===== NAVEGACIÓN ENTRE SECCIONES =====
+  function wayu402_irASeccion(id){
+    $$_('.card').forEach(function(c){
+      c.style.display = 'none';
+      c.classList.remove('activo');
+    });
+    var target = $_(document.getElementById(id) ? '#'+id : id);
+    if(target){
+      target.style.display = 'block';
+      target.classList.add('activo');
+      target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    if(id === 'wayu402-seccion2'){
+      wayu402_irASlide(0);
+    }
+    if(id === 'wayu402-seccion3'){
+      wayu402_iniciarClanes();
+    }
+    if(id === 'wayu402-seccion4'){
+      wayu402_iniciarPalabrero();
+    }
+    if(id === 'wayu402-seccion5'){
+      var estrellasGanadas = state.estrellas;
+      var estrellasStr = '';
+      for(var s=0;s<5;s++){
+        estrellasStr += s<estrellasGanadas ? '⭐' : '☆';
+      }
+      $_('#wayu402-estrellasDiploma').textContent = estrellasStr;
+    }
+  }
+
+  function wayu402_completarSeccion(num){
+    if(num >= 1 && num <= state.secciones.length){
+      state.secciones[num-1] = true;
+    }
+    if(!state.estrellas || state.estrellas < num) state.estrellas = num;
+    state.puntos += 100;
+    wayu402_actualizarProgreso();
+
+    var checkId = '#wayu402-check' + num;
+    var checkEl = $_(checkId);
+    if(checkEl) checkEl.style.display = 'inline-block';
+
+    var cardId = '#wayu402-seccion' + num;
+    var cardEl = $_(cardId);
+    if(cardEl) cardEl.classList.add('completado');
+
+    // Mostrar botón "Siguiente" si existe
+    var btnOkId = '#wayu402-btn' + num + 'Ok';
+    var btnPracId = '#wayu402-btn' + num + 'Practicar';
+    var btnOk = $_(btnOkId);
+    var btnPrac = $_(btnPracId);
+    if(btnOk) btnOk.style.display = 'inline-block';
+    if(btnPrac) btnPrac.style.display = 'none';
+
+    wayu402_mostrarToast('✓ Sección ' + num + ' completada. ¡+' + 100 + ' puntos!', 'exito');
+  }
+
+  // ===== SLIDES DE LECCIÓN =====
+  function wayu402_irASlide(indice){
+    state.slideActual = indice;
+    state.slidesVisitados[indice] = true;
+
+    // Ocultar todos los slides
+    for(var i=0;i<5;i++){
+      var slide = $_('#wayu402-slide' + i);
+      if(slide) slide.classList.remove('activo');
+      var dot = $_('#wayu402-dot' + i);
+      if(dot){
+        dot.classList.remove('activo');
+        if(state.slidesVisitados[i]) dot.classList.add('completado');
+      }
+    }
+
+    // Mostrar slide actual
+    var slideAct = $_('#wayu402-slide' + indice);
+    if(slideAct) slideAct.classList.add('activo');
+    var dotAct = $_('#wayu402-dot' + indice);
+    if(dotAct){
+      dotAct.classList.add('activo');
+      dotAct.classList.remove('completado');
+    }
+
+    $_('#wayu402-slideNum').textContent = indice + 1;
+
+    // Si visitó todos los slides, mostrar botón de completado
+    var todosVisitados = true;
+    for(var j=0;j<5;j++){
+      if(!state.slidesVisitados[j]) todosVisitados = false;
+    }
+    if(todosVisitados && !state.secciones[1]){
+      // Auto-marcar completada la sección 2
+      // pero no forzar, solo mostrar botón
+    }
+  }
+
+  function wayu402_slideSiguiente(){
+    if(state.slideActual < 4) wayu402_irASlide(state.slideActual + 1);
+  }
+
+  function wayu402_slideAnterior(){
+    if(state.slideActual > 0) wayu402_irASlide(state.slideActual - 1);
+  }
+
+  // ===== JUEGO 1: CLANES (DRAG & DROP) =====
+  function wayu402_iniciarClanes(){
+    state.clanesCorrectos = {};
+    state.clanesAciertos = 0;
+    $_('#wayu402-aciertosClanes').textContent = '0';
+
+    // Resetear slots
+    $$_('.clan-slot').forEach(function(slot){
+      slot.classList.remove('correcto','incorrecto','hover');
+      var placeholder = slot.querySelector('.clan-animal-placeholder');
+      if(placeholder) placeholder.textContent = '❓';
+      var info = slot.querySelector('div:last-child');
+      if(info && info.style) info.style.display = '';
+    });
+
+    // Resetear animales
+    $$_('.animal-drag').forEach(function(animal){
+      animal.classList.remove('usado','arrastrando');
+      animal.setAttribute('draggable','true');
+    });
+
+    $_('#wayu402-btn3Ok').style.display = 'none';
+
+    // Configurar drag & drop
+    wayu402_configurarDragDrop();
+  }
+
+  function wayu402_reiniciarClanes(){
+    wayu402_iniciarClanes();
+    wayu402_mostrarToast('🔄 Juego de clanes reiniciado', 'info');
+  }
+
+  function wayu402_configurarDragDrop(){
+    var animales = $$_('.animal-drag');
+    var slots = $$_('.clan-slot');
+
+    // Touch events para móviles
+    var animalArrastrando = null;
+    var offsetX = 0, offsetY = 0;
+
+    animales.forEach(function(animal){
+      // Desktop: HTML5 drag
+      animal.addEventListener('dragstart', function(e){
+        if(this.classList.contains('usado')){ e.preventDefault(); return; }
+        this.classList.add('arrastrando');
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-animal'));
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      animal.addEventListener('dragend', function(e){
+        this.classList.remove('arrastrando');
+      });
+
+      // Touch: mobile drag
+      animal.addEventListener('touchstart', function(e){
+        if(this.classList.contains('usado')) return;
+        animalArrastrando = this;
+        this.classList.add('arrastrando');
+        var touch = e.touches[0];
+        var rect = this.getBoundingClientRect();
+        offsetX = touch.clientX - rect.left;
+        offsetY = touch.clientY - rect.top;
+      }, {passive: false});
+
+      animal.addEventListener('touchmove', function(e){
+        if(!animalArrastrando || animalArrastrando !== this) return;
+        e.preventDefault();
+        var touch = e.touches[0];
+        this.style.position = 'fixed';
+        this.style.left = (touch.clientX - offsetX) + 'px';
+        this.style.top = (touch.clientY - offsetY) + 'px';
+        this.style.zIndex = '100';
+      }, {passive: false});
+
+      animal.addEventListener('touchend', function(e){
+        if(!animalArrastrando || animalArrastrando !== this) return;
+        this.classList.remove('arrastrando');
+        this.style.position = '';
+        this.style.left = '';
+        this.style.top = '';
+        this.style.zIndex = '';
+
+        // Detectar sobre qué slot se soltó
+        var touch = e.changedTouches[0];
+        var elemDebajo = document.elementFromPoint(touch.clientX, touch.clientY);
+        var slot = elemDebajo ? elemDebajo.closest('.clan-slot') : null;
+        if(slot){
+          wayu402_soltarEnSlot(animalArrastrando, slot);
+        }
+        animalArrastrando = null;
+      });
+    });
+
+    // Eventos de los slots
+    slots.forEach(function(slot){
+      slot.addEventListener('dragover', function(e){
+        e.preventDefault();
+        this.classList.add('hover');
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      slot.addEventListener('dragleave', function(e){
+        this.classList.remove('hover');
+      });
+
+      slot.addEventListener('drop', function(e){
+        e.preventDefault();
+        this.classList.remove('hover');
+        var animalData = e.dataTransfer.getData('text/plain');
+        var animal = $_('#wayu402-animal-' + animalData);
+        if(animal){
+          wayu402_soltarEnSlot(animal, this);
+        }
+      });
+    });
+  }
+
+  function wayu402_soltarEnSlot(animalEl, slotEl){
+    if(animalEl.classList.contains('usado')) return;
+
+    var clan = slotEl.getAttribute('data-clan');
+    var animal = animalEl.getAttribute('data-animal');
+
+    // Si el slot ya tiene algo, quitar lo anterior
+    var existente = slotEl.querySelector('.clan-animal-colocado');
+    if(existente){
+      var animalPrev = existente.getAttribute('data-animal-colocado');
+      var animalPrevEl = $_('#wayu402-animal-' + animalPrev);
+      if(animalPrevEl){
+        animalPrevEl.classList.remove('usado');
+        animalPrevEl.setAttribute('draggable','true');
+      }
+      delete state.clanesCorrectos[clan];
+      state.clanesAciertos = Math.max(0, state.clanesAciertos - 1);
+      $_('#wayu402-aciertosClanes').textContent = state.clanesAciertos;
+      existente.remove();
+      var ph = slotEl.querySelector('.clan-animal-placeholder');
+      if(ph) ph.style.display = '';
+      var info = slotEl.querySelector('div:last-child');
+      if(info && info.style && !info.classList.contains('clan-animal-colocado')) info.style.display = '';
+    }
+
+    // Verificar si es correcto
+    var esCorrecto = (clanesRespuestas[clan] === animal);
+
+    if(esCorrecto){
+      slotEl.classList.add('correcto');
+      slotEl.classList.remove('incorrecto');
+      state.clanesCorrectos[clan] = animal;
+      state.clanesAciertos++;
+      wayu402_mostrarToast('✅ ¡' + animal + ' es el tótem del clan ' + clan + '!', 'exito');
+      state.puntos += 30;
+    } else {
+      slotEl.classList.add('incorrecto');
+      slotEl.classList.remove('correcto');
+      wayu402_mostrarToast('❌ ' + animal + ' no es el tótem del clan ' + clan + '. Intenta de nuevo.', 'error');
+      // Devolver el animal tras 1 segundo
+      setTimeout(function(){
+        slotEl.classList.remove('incorrecto');
+        var colocado = slotEl.querySelector('.clan-animal-colocado');
+        if(colocado) colocado.remove();
+        var ph2 = slotEl.querySelector('.clan-animal-placeholder');
+        if(ph2) ph2.style.display = '';
+        var info2 = slotEl.querySelector('div:last-child');
+        if(info2 && info2.style && !info2.classList.contains('clan-animal-colocado')) info2.style.display = '';
+        animalEl.classList.remove('usado');
+        animalEl.setAttribute('draggable','true');
+      }, 1000);
+      return;
+    }
+
+    // Colocar animal en el slot
+    var placeholder = slotEl.querySelector('.clan-animal-placeholder');
+    if(placeholder) placeholder.style.display = 'none';
+    var infoSlot = slotEl.querySelector('div:last-child');
+    if(infoSlot && !infoSlot.classList.contains('clan-animal-colocado')) infoSlot.style.display = 'none';
+
+    var colocado = document.createElement('div');
+    colocado.className = 'clan-animal-colocado';
+    colocado.setAttribute('data-animal-colocado', animal);
+    colocado.style.cssText = 'font-size:2rem;margin:4px 0';
+    colocado.textContent = animalEl.querySelector('span').textContent + ' ' + animal;
+    slotEl.appendChild(colocado);
+
+    animalEl.classList.add('usado');
+    animalEl.setAttribute('draggable','false');
+
+    $_('#wayu402-aciertosClanes').textContent = state.clanesAciertos;
+    wayu402_actualizarProgreso();
+
+    // Verificar si todos están correctos
+    if(state.clanesAciertos >= 6){
+      wayu402_completarSeccion(3);
+    }
+  }
+
+  // ===== JUEGO 2: PALABRERO =====
+  function wayu402_iniciarPalabrero(){
+    state.conflictoActual = 1;
+    state.conflictosResueltos = 0;
+    state.conflictosResueltosIds = [false, false, false];
+    $_('#wayu402-conflictosResueltos').textContent = '0';
+    $_('#wayu402-btn4Ok').style.display = 'none';
+
+    // Mostrar solo conflicto 1
+    $_('#wayu402-conflicto1').style.display = '';
+    $_('#wayu402-conflicto2').style.display = 'none';
+    $_('#wayu402-conflicto3').style.display = 'none';
+
+    // Limpiar resultados anteriores
+    for(var i=1;i<=3;i++){
+      var res = $_('#wayu402-resultado'+i);
+      if(res){ res.className = 'palabrero-resultado'; res.innerHTML = ''; }
+    }
+
+    wayu402_cargarOpciones(1);
+  }
+
+  function wayu402_reiniciarPalabrero(){
+    wayu402_iniciarPalabrero();
+    wayu402_mostrarToast('🔄 Juego del palabrero reiniciado', 'info');
+  }
+
+  function wayu402_cargarOpciones(numConflicto){
+    var contenedor = $_('#wayu402-opciones' + numConflicto);
+    if(!contenedor) return;
+    contenedor.innerHTML = '';
+
+    var datos = preguntasPalabrero[numConflicto - 1];
+    datos.opciones.forEach(function(opcion, idx){
+      var btn = document.createElement('button');
+      btn.className = 'palabrero-opcion';
+      btn.textContent = (idx + 1) + '. ' + opcion.texto;
+      btn.onclick = function(){
+        wayu402_responderPalabrero(numConflicto, idx);
+      };
+      contenedor.appendChild(btn);
+    });
+  }
+
+  function wayu402_responderPalabrero(numConflicto, idxOpcion){
+    // Evitar doble respuesta
+    if(state.conflictosResueltosIds[numConflicto-1]) return;
+
+    var datos = preguntasPalabrero[numConflicto - 1];
+    var opcion = datos.opciones[idxOpcion];
+    var esCorrecta = opcion.correcta;
+
+    // Marcar todas las opciones
+    var opcionesBtns = $$_('#wayu402-opciones' + numConflicto + ' .palabrero-opcion');
+    opcionesBtns.forEach(function(btn, i){
+      btn.disabled = true;
+      if(i === idxOpcion && esCorrecta) btn.classList.add('correcta');
+      else if(i === idxOpcion && !esCorrecta) btn.classList.add('incorrecta');
+    });
+
+    // Mostrar resultado
+    var resultadoDiv = $_('#wayu402-resultado' + numConflicto);
+    if(!resultadoDiv) return;
+
+    if(esCorrecta){
+      resultadoDiv.className = 'palabrero-resultado visible bueno';
+      resultadoDiv.innerHTML = '<strong>🕊️ ¡Sabia decisión, Pütchip\'ü\'i!</strong><br>' + opcion.explicacion;
+      state.conflictosResueltos++;
+      state.conflictosResueltosIds[numConflicto-1] = true;
+      state.puntos += 50;
+      wayu402_mostrarToast('✅ ¡Conflicto ' + numConflicto + ' resuelto con sabiduría!', 'exito');
+      
+      // Avanzar al siguiente conflicto después de 2 segundos
+      setTimeout(function(){
+        if(numConflicto < 3){
+          $_('#wayu402-conflicto' + numConflicto).style.display = 'none';
+          state.conflictoActual = numConflicto + 1;
+          $_('#wayu402-conflicto' + state.conflictoActual).style.display = '';
+          wayu402_cargarOpciones(state.conflictoActual);
+        }
+        $_('#wayu402-conflictosResueltos').textContent = state.conflictosResueltos;
+        wayu402_actualizarProgreso();
+
+        if(state.conflictosResueltos >= 3){
+          wayu402_completarSeccion(4);
+        }
+      }, 2000);
+    } else {
+      resultadoDiv.className = 'palabrero-resultado visible malo';
+      resultadoDiv.innerHTML = '<strong>🤔 Esa no es la mejor decisión...</strong><br>' + opcion.explicacion + '<br><em>Intenta de nuevo.</em>';
+      
+      // Reactivar opciones después de 2 segundos
+      setTimeout(function(){
+        resultadoDiv.className = 'palabrero-resultado';
+        resultadoDiv.innerHTML = '';
+        opcionesBtns.forEach(function(btn){
+          btn.disabled = false;
+          btn.classList.remove('correcta','incorrecta');
+        });
+      }, 2500);
+    }
+  }
+
+  // ===== INICIALIZACIÓN =====
+  function wayu402_iniciar(){
+    // Cargar progreso guardado
+    try{
+      var guardado = JSON.parse(localStorage.getItem('wayu402_progreso'));
+      if(guardado){
+        if(guardado.secciones) state.secciones = guardado.secciones;
+        if(guardado.puntos) state.puntos = guardado.puntos;
+        if(guardado.estrellas) state.estrellas = guardado.estrellas;
+      }
+    }catch(e){}
+
+    wayu402_actualizarProgreso();
+
+    // Restaurar etiquetas de completado
+    for(var i=1;i<=state.secciones.length;i++){
+      if(state.secciones[i-1]){
+        var checkEl = $_('#wayu402-check' + i);
+        if(checkEl) checkEl.style.display = 'inline-block';
+        var cardEl = $_('#wayu402-seccion' + i);
+        if(cardEl) cardEl.classList.add('completado');
+      }
+    }
+  }
+
+  // Arrancar
+  wayu402_iniciar();
+
+  // Exponer funciones globales
+  window.wayu402_irASeccion = wayu402_irASeccion;
+  window.wayu402_completarSeccion = wayu402_completarSeccion;
+  window.wayu402_hablarSlide = wayu402_hablarSlide;
+  window.wayu402_irASlide = wayu402_irASlide;
+  window.wayu402_slideSiguiente = wayu402_slideSiguiente;
+  window.wayu402_slideAnterior = wayu402_slideAnterior;
+  window.wayu402_lanzarConfeti = wayu402_lanzarConfeti;
+  window.wayu402_reiniciarClanes = wayu402_reiniciarClanes;
+  window.wayu402_reiniciarPalabrero = wayu402_reiniciarPalabrero;
+
+})();
+</script>
+</body>
+</html>

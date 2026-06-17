@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Territorio: La Guajira</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --wayuu-red:#C0392B;
+  --wayuu-yellow:#F1C40F;
+  --wayuu-green:#27AE60;
+  --wayuu-blue:#2E86C1;
+  --wayuu-black:#1a1a2e;
+  --wayuu-white:#FEF9E7;
+  --wayuu-orange:#E67E22;
+  --wayuu-purple:#8E44AD;
+  --bg-gradient:linear-gradient(135deg,#FEF9E7 0%,#FDEBD0 50%,#FAD7A0 100%);
+  --card-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.08);
+  --radius:18px;
+}
+html,body{height:100%;overflow-x:hidden}
+body{
+  font-family:system-ui,-apple-system,sans-serif;
+  background:var(--bg-gradient);
+  color:var(--wayuu-black);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:8px;
+}
+.container{
+  max-width:1100px;
+  width:100%;
+  padding:10px;
+}
+header{
+  text-align:center;
+  margin-bottom:12px;
+  position:relative;
+}
+header h1{
+  font-size:clamp(1.4rem,4vw,2.2rem);
+  color:var(--wayuu-red);
+  text-shadow:2px 2px 0 var(--wayuu-yellow);
+  letter-spacing:1px;
+}
+header p{
+  font-size:clamp(0.8rem,2vw,1rem);
+  color:var(--wayuu-blue);
+  margin-top:2px;
+}
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(6px);
+  border-radius:var(--radius);
+  padding:10px 16px;
+  margin-bottom:10px;
+  box-shadow:var(--card-shadow);
+}
+.score-area{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.score-area span{
+  font-weight:700;
+  font-size:clamp(0.85rem,2vw,1rem);
+}
+.level-info{
+  background:var(--wayuu-yellow);
+  color:var(--wayuu-black);
+  border-radius:100px;
+  padding:4px 14px;
+  font-weight:700;
+  font-size:clamp(0.8rem,1.8vw,0.95rem);
+}
+.stars{color:var(--wayuu-yellow);font-size:1.2rem;letter-spacing:2px}
+.progress-wrap{
+  flex:1;
+  min-width:120px;
+  background:#eee;
+  border-radius:100px;
+  height:14px;
+  overflow:hidden;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--wayuu-green),var(--wayuu-blue));
+  border-radius:100px;
+  transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.timer{font-weight:700;font-size:1rem;color:var(--wayuu-red);min-width:50px;text-align:center}
+.timer-btn,.sound-btn,.reset-btn{
+  background:var(--wayuu-blue);
+  color:#fff;
+  border:none;
+  border-radius:100px;
+  padding:6px 14px;
+  font-weight:600;
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:all 0.2s;
+  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+}
+.sound-btn{background:var(--wayuu-orange)}
+.reset-btn{background:var(--wayuu-red)}
+.timer-btn:hover,.sound-btn:hover,.reset-btn:hover{transform:scale(1.05);filter:brightness(1.1)}
+.timer-btn:active,.sound-btn:active,.reset-btn:active{transform:scale(0.95)}
+.map-stage{
+  position:relative;
+  background:#fff;
+  border-radius:var(--radius);
+  box-shadow:var(--card-shadow);
+  overflow:hidden;
+  border:4px solid var(--wayuu-yellow);
+  margin-bottom:10px;
+}
+.map-stage svg{display:block;width:100%;height:auto}
+.hint-box{
+  background:white;
+  border-radius:var(--radius);
+  padding:14px 18px;
+  box-shadow:var(--card-shadow);
+  margin-bottom:10px;
+  border-left:6px solid var(--wayuu-orange);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  min-height:60px;
+}
+.hint-box .hint-text{
+  flex:1;
+  font-size:clamp(0.95rem,2.5vw,1.15rem);
+  font-weight:600;
+  color:var(--wayuu-black);
+  line-height:1.4;
+}
+.hint-box .hint-num{
+  background:var(--wayuu-purple);
+  color:#fff;
+  border-radius:100px;
+  padding:2px 12px;
+  font-size:0.8rem;
+  font-weight:600;
+}
+.feedback{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  font-size:clamp(3rem,10vw,6rem);
+  pointer-events:none;
+  z-index:20;
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;
+  opacity:0;
+}
+.feedback.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+.feedback.correct{content:"&#11088;"}
+.feedback.wrong{content:"&#10060;"}
+.location-dot{cursor:pointer;transition:r 0.2s,opacity 0.2s}
+.location-dot:hover{opacity:0.8}
+.location-dot.found{opacity:0.3;cursor:default}
+.location-dot.pulse{animation:pulse 0.6s ease}
+@keyframes pulse{
+  0%{r:var(--r)}
+  50%{r:calc(var(--r) + 6)}
+  100%{r:var(--r)}
+}
+.location-label{pointer-events:none;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.5)}
+.confetti-canvas{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:30;
+}
+.victory-overlay{
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:40;
+  border-radius:var(--radius);
+}
+.victory-overlay.show{display:flex}
+.victory-card{
+  background:white;
+  border-radius:var(--radius);
+  padding:30px 40px;
+  text-align:center;
+  max-width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  animation:bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes bounceIn{
+  0%{transform:scale(0);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+.victory-card h2{font-size:2rem;color:var(--wayuu-red);margin-bottom:6px}
+.victory-card p{font-size:1.1rem;color:var(--wayuu-black);margin-bottom:4px}
+.victory-card .big-star{font-size:3rem}
+.compass{pointer-events:none}
+.floor{fill:#FEF9E7}
+.map-outline{fill:#E8D5B7;stroke:#C0392B;stroke-width:2;stroke-linejoin:round}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:600px){
+  .top-bar{flex-direction:column;align-items:stretch}
+  .score-area{justify-content:center}
+  .hint-box{flex-direction:column;text-align:center}
+  .btn-group{justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>🏜️ Mi Territorio: La Guajira</h1>
+  <p>Wayuu kai · Tierra del sol, viento y agua</p>
+</header>
+
+<div class="top-bar">
+  <div class="score-area">
+    <span>⭐ <span id="score">0</span></span>
+    <span class="level-info" id="levelDisplay">Nivel 1</span>
+    <span class="stars" id="starsDisplay"></span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="timer" id="timerDisplay">--</div>
+  <div class="btn-group">
+    <button class="timer-btn" id="timerToggle">⏱️ Timer</button>
+    <button class="reset-btn" id="resetBtn">🔄 Reiniciar</button>
+  </div>
+</div>
+
+<div class="map-stage" id="mapStage">
+  <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" id="mapSvg">
+    <rect class="floor" width="500" height="500" rx="12"/>
+    <polygon class="map-outline" points="120,60 340,30 420,100 450,180 480,260 440,350 380,420 280,460 180,450 100,380 60,300 50,200 70,120"/>
+
+    <text x="250" y="260" text-anchor="middle" fill="#D4C5A9" font-size="80" font-weight="900" opacity="0.25" style="pointer-events:none">La Guajira</text>
+
+    <g id="serrania">
+      <ellipse cx="340" cy="90" rx="50" ry="22" fill="#A8D5BA" opacity="0.5"/>
+      <ellipse cx="340" cy="90" rx="50" ry="22" fill="none" stroke="#7BBF9A" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="340" y="88" text-anchor="middle" fill="#2D6A4F" font-size="9" font-weight="600">Serranía de Macuira</text>
+    </g>
+
+    <g id="desierto">
+      <ellipse cx="180" cy="380" rx="70" ry="30" fill="#FAD7A0" opacity="0.5"/>
+      <ellipse cx="180" cy="380" rx="70" ry="30" fill="none" stroke="#E67E22" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="180" y="383" text-anchor="middle" fill="#A04000" font-size="9" font-weight="600">Desierto</text>
+    </g>
+
+    <g id="parque">
+      <ellipse cx="360" cy="120" rx="40" ry="18" fill="#A9DFBF" opacity="0.4"/>
+      <ellipse cx="360" cy="120" rx="40" ry="18" fill="none" stroke="#1E8449" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="360" y="118" text-anchor="middle" fill="#1E8449" font-size="8" font-weight="600">P.N. Macuira</text>
+    </g>
+
+    <g class="compass">
+      <circle cx="38" cy="38" r="20" fill="rgba(255,255,255,0.85)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+      <polygon points="38,12 34,30 38,26 42,30" fill="#C0392B"/>
+      <polygon points="38,64 34,46 38,50 42,46" fill="#666"/>
+      <text x="38" y="15" text-anchor="middle" fill="#C0392B" font-size="9" font-weight="700">N</text>
+      <text x="38" y="68" text-anchor="middle" fill="#666" font-size="8" font-weight="600">S</text>
+      <text x="64" y="42" text-anchor="middle" fill="#666" font-size="8" font-weight="600">E</text>
+      <text x="12" y="42" text-anchor="middle" fill="#666" font-size="8" font-weight="600">O</text>
+      <circle cx="38" cy="38" r="15" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="0.5"/>
+    </g>
+  </svg>
+
+  <div class="feedback" id="feedback"></div>
+  <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+  <div class="victory-overlay" id="victoryOverlay">
+    <div class="victory-card">
+      <div class="big-star">🏆</div>
+      <h2>¡Wayuu achajawa!</h2>
+      <p id="victoryMsg">Completaste todos los lugares</p>
+      <p style="margin-top:10px;font-size:0.9rem;color:#666">Achajawa = bien hecho en wayuunaiki</p>
+      <button class="reset-btn" style="margin-top:12px;padding:10px 30px;font-size:1.1rem" onclick="resetGame()">🔄 Jugar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<div class="hint-box">
+  <span class="hint-num" id="hintNum">1/5</span>
+  <span class="hint-text" id="hintText">Haz clic en "Reiniciar" para empezar</span>
+  <button class="sound-btn" id="soundBtn">🔊 Leer pista</button>
+</div>
+</div>
+
+<script>
+const LOCATIONS = [
+  {id:"riohacha",name:"Riohacha",cx:210,cy:250,color:"#C0392B",hint:"Capital de La Guajira, donde el río se encuentra con el mar",r:12},
+  {id:"uribia",name:"Uribia",cx:260,cy:170,color:"#2E86C1",hint:"Capital indígena de Colombia, corazón del pueblo wayuu",r:11},
+  {id:"maicao",name:"Maicao",cx:280,cy:210,color:"#27AE60",hint:"Ciudad fronteriza llena de colores y comercio",r:11},
+  {id:"cabo",name:"Cabo de la Vela",cx:340,cy:60,color:"#F1C40F",hint:"Lugar sagrado para los wayuu, donde el sol nace cada día",r:11},
+  {id:"portete",name:"Bahía Portete",cx:330,cy:150,color:"#E67E22",hint:"Bahía con aguas tranquilas donde anidan flamencos rosados",r:10},
+  {id:"macuira",name:"Serranía de Macuira",cx:340,cy:88,color:"#8E44AD",hint:"Montaña verde en medio del desierto, un oasis único",r:9},
+  {id:"parque",name:"Parque Macuira",cx:360,cy:120,color:"#1ABC9C",hint:"Bosque nublado en medio del desierto guajiro",r:9},
+  {id:"desierto",name:"Desierto",cx:180,cy:380,color:"#E67E22",hint:"Inmenso arenal donde el viento nunca deja de soplar",r:10},
+  {id:"rancheria",name:"Ranchería Wayuu",cx:150,cy:210,color:"#C0392B",hint:"Comunidad donde las familias wayuu viven en armonía",r:10},
+  {id:"jaguey",name:"Jagüey (Pozo)",cx:120,cy:300,color:"#2E86C1",hint:"Pozo de agua donde los wayuu guardan el preciado líquido",r:9},
+  {id:"jagueygrande",name:"Jagüey Grande",cx:160,cy:150,color:"#3498DB",hint:"Gran pozo de agua que da vida a muchas familias",r:9},
+  {id:"escuela",name:"Escuela Rural",cx:200,cy:330,color:"#27AE60",hint:"Lugar donde los niños wayuu aprenden y juegan",r:10}
+];
+
+const LEVELS = [
+  {label:"Nivel 1 · Fácil",count:5},
+  {label:"Nivel 2 · Medio",count:8},
+  {label:"Nivel 3 · Difícil",count:12}
+];
+
+let state = {
+  level:0,
+  toFind:[],
+  found:[],
+  score:0,
+  totalFound:0,
+  hintIdx:0,
+  timer:0,
+  timerOn:false,
+  timerInterval:null,
+  playing:false,
+  wrongClicks:0
+};
+
+const svg = document.getElementById("mapSvg");
+const scoreEl = document.getElementById("score");
+const levelDisplay = document.getElementById("levelDisplay");
+const starsDisplay = document.getElementById("starsDisplay");
+const progressFill = document.getElementById("progressFill");
+const hintText = document.getElementById("hintText");
+const hintNum = document.getElementById("hintNum");
+const feedback = document.getElementById("feedback");
+const timerDisplay = document.getElementById("timerDisplay");
+const timerToggle = document.getElementById("timerToggle");
+const soundBtn = document.getElementById("soundBtn");
+const resetBtn = document.getElementById("resetBtn");
+const victoryOverlay = document.getElementById("victoryOverlay");
+const victoryMsg = document.getElementById("victoryMsg");
+const confettiCanvas = document.getElementById("confettiCanvas");
+const mapStage = document.getElementById("mapStage");
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function buildMap(){
+  const existing = svg.querySelectorAll(".location-dot,.location-label");
+  existing.forEach(e=>e.remove());
+  LOCATIONS.forEach(l=>{
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dot.setAttribute("cx",l.cx);
+    dot.setAttribute("cy",l.cy);
+    dot.setAttribute("r",l.r);
+    dot.setAttribute("fill",l.color);
+    dot.setAttribute("stroke","#fff");
+    dot.setAttribute("stroke-width","2.5");
+    dot.setAttribute("class","location-dot");
+    dot.style.setProperty("--r",l.r);
+    dot.dataset.id = l.id;
+    dot.dataset.found = "false";
+    g.appendChild(dot);
+    const lbl = document.createElementNS("http://www.w3.org/2000/svg","text");
+    lbl.setAttribute("x",l.cx);
+    lbl.setAttribute("y",l.cy + l.r + 14);
+    lbl.setAttribute("text-anchor","middle");
+    lbl.setAttribute("fill","#1a1a2e");
+    lbl.setAttribute("font-size","9");
+    lbl.setAttribute("font-weight","600");
+    lbl.setAttribute("class","location-label");
+    lbl.textContent = l.name;
+    lbl.style.display = "none";
+    g.appendChild(lbl);
+    svg.appendChild(g);
+  });
+}
+
+function getDots(){
+  return [...svg.querySelectorAll(".location-dot")];
+}
+
+function getDotById(id){
+  return svg.querySelector(`.location-dot[data-id="${id}"]`);
+}
+
+function initGame(){
+  state.level = 0;
+  state.totalFound = 0;
+  state.score = 0;
+  state.wrongClicks = 0;
+  state.playing = true;
+  stopTimer();
+  state.timer = 0;
+  state.timerOn = false;
+  timerDisplay.textContent = "--";
+  timerToggle.textContent = "⏱️ Timer";
+  victoryOverlay.classList.remove("show");
+  buildMap();
+  startLevel();
+}
+
+function startLevel(){
+  const lvl = LEVELS[state.level];
+  levelDisplay.textContent = lvl.label;
+  const pool = shuffle([...LOCATIONS]);
+  state.toFind = pool.slice(0,lvl.count);
+  state.found = [];
+  state.hintIdx = 0;
+  state.totalFound = state.found.length;
+
+  getDots().forEach(d=>{
+    const loc = LOCATIONS.find(l=>l.id===d.dataset.id);
+    d.dataset.found = "false";
+    d.classList.remove("found");
+    d.style.opacity = "1";
+    d.style.cursor = "pointer";
+    const lbl = d.parentElement.querySelector(".location-label");
+    if(lbl) lbl.style.display = "none";
+  });
+
+  updateUI();
+  if(state.toFind.length>0) showHint();
+  else showHint();
+}
+
+function showHint(){
+  if(state.hintIdx >= state.toFind.length){
+    endLevel();
+    return;
+  }
+  const loc = state.toFind[state.hintIdx];
+  hintNum.textContent = `${state.hintIdx+1}/${state.toFind.length}`;
+  hintText.textContent = `🔍 ${loc.hint}`;
+}
+
+function updateUI(){
+  scoreEl.textContent = state.score;
+  const total = LEVELS[state.level].count;
+  const done = state.found.length;
+  const pct = total>0 ? (done/total)*100 : 0;
+  progressFill.style.width = pct+"%";
+  let s = "";
+  for(let i=0;i<3;i++) s += state.score > i*30 ? "⭐" : "☆";
+  starsDisplay.textContent = s;
+}
+
+function handleClick(e){
+  if(!state.playing) return;
+  const dot = e.target.closest(".location-dot");
+  if(!dot || dot.dataset.found === "true") return;
+
+  const id = dot.dataset.id;
+  const loc = state.toFind[state.hintIdx];
+  if(!loc) return;
+
+  if(id === loc.id){
+    dot.dataset.found = "true";
+    dot.classList.add("found");
+    dot.style.opacity = "0.3";
+    state.found.push(loc);
+    state.score += 20;
+    state.totalFound++;
+    const lbl = dot.parentElement.querySelector(".location-label");
+    if(lbl) lbl.style.display = "block";
+    showFeedback(true);
+    state.hintIdx++;
+    updateUI();
+    setTimeout(()=>{
+      if(state.hintIdx >= state.toFind.length){
+        endLevel();
+      } else {
+        showHint();
+      }
+    },600);
+  } else {
+    state.wrongClicks++;
+    state.score = Math.max(0, state.score - 5);
+    updateUI();
+    showFeedback(false);
+    dot.classList.add("pulse");
+    setTimeout(()=>dot.classList.remove("pulse"),600);
+  }
+}
+
+function showFeedback(correct){
+  feedback.textContent = correct ? "⭐" : "❌";
+  feedback.className = correct ? "feedback correct show" : "feedback wrong show";
+  const color = correct ? "#27AE60" : "#C0392B";
+  feedback.style.textShadow = `0 0 30px ${color}`;
+  setTimeout(()=>feedback.classList.remove("show"),700);
+}
+
+function endLevel(){
+  if(state.level < 2){
+    state.level++;
+    startLevel();
+  } else {
+    state.playing = false;
+    stopTimer();
+    victoryOverlay.classList.add("show");
+    const stars = state.score >= 180 ? "⭐⭐⭐" : state.score >= 120 ? "⭐⭐" : "⭐";
+    victoryMsg.textContent = `Puntos: ${state.score} · ${stars}`;
+    launchConfetti();
+  }
+}
+
+function resetGame(){
+  initGame();
+}
+
+function toggleTimer(){
+  state.timerOn = !state.timerOn;
+  timerToggle.textContent = state.timerOn ? "⏹️ Detener" : "⏱️ Timer";
+  if(state.timerOn && !state.timerInterval){
+    state.timer = 0;
+    state.timerInterval = setInterval(()=>{
+      state.timer++;
+      const m = String(Math.floor(state.timer/60)).padStart(2,"0");
+      const s = String(state.timer%60).padStart(2,"0");
+      timerDisplay.textContent = `${m}:${s}`;
+    },1000);
+  } else if(!state.timerOn){
+    stopTimer();
+  }
+}
+
+function stopTimer(){
+  if(state.timerInterval){
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+}
+
+function speakHint(){
+  const text = hintText.textContent.replace(/^[^\s]+\s/,"").replace(/^🔍\s*/,"");
+  if(!text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "es-CO";
+  u.rate = 0.85;
+  u.pitch = 1.1;
+  window.speechSynthesis.speak(u);
+}
+
+function launchConfetti(){
+  const c = confettiCanvas;
+  c.width = mapStage.offsetWidth;
+  c.height = mapStage.offsetHeight;
+  const ctx = c.getContext("2d");
+  const particles = [];
+  const colors = ["#C0392B","#F1C40F","#27AE60","#2E86C1","#E67E22","#8E44AD","#1ABC9C","#F39C12"];
+  for(let i=0;i<120;i++){
+    particles.push({
+      x: Math.random()*c.width,
+      y: -10 - Math.random()*c.height*0.5,
+      w: 4+Math.random()*6,
+      h: 4+Math.random()*6,
+      vx: (Math.random()-0.5)*3,
+      vy: 1+Math.random()*3,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*360,
+      rv: (Math.random()-0.5)*6
+    });
+  }
+  let frames = 0;
+  function draw(){
+    if(frames>180){ctx.clearRect(0,0,c.width,c.height);return}
+    ctx.clearRect(0,0,c.width,c.height);
+    frames++;
+    particles.forEach(p=>{
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.04;
+      p.rot += p.rv;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+mapStage.addEventListener("click",handleClick);
+soundBtn.addEventListener("click",speakHint);
+timerToggle.addEventListener("click",toggleTimer);
+resetBtn.addEventListener("click",resetGame);
+
+document.addEventListener("DOMContentLoaded",()=>{
+  buildMap();
+  initGame();
+});
+</script>
+<script src="../../comun/volver.js"></script>
+</body>
+</html>

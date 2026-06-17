@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATE-204: Geometría Wayuu | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --azul: #4A90D9;
+ --morado: #9B59B6;
+ --naranja: #F4A261;
+ --teal: #2A9D8F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+
+.container{max-width:900px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+.btn-azul{
+ background:var(--azul);
+ color:white;
+ box-shadow:0 4px 12px rgba(74,144,217,0.4);
+}
+.btn-morado{
+ background:var(--morado);
+ color:white;
+ box-shadow:0 4px 12px rgba(155,89,182,0.4);
+}
+
+/* ============ SECCIÓN 1: FIGURAS EN MOCHILAS ============ */
+.figuras-area{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:30px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.figura-card{
+ text-align:center;
+ min-width:110px;
+ padding:18px 12px;
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border-radius:16px;
+ border:2px solid var(--arena);
+ cursor:pointer;
+ transition:all 0.3s;
+}
+.figura-card:hover{
+ border-color:var(--wayuu-oro);
+ transform:translateY(-4px);
+ box-shadow:var(--sombra);
+}
+.figura-card.seleccionada{
+ border-color:var(--atardecer);
+ background:#FFF0E8;
+ box-shadow:0 0 0 3px rgba(224,122,95,0.3);
+}
+.figura-canvas{
+ display:block;
+ margin:0 auto;
+}
+.figura-nombre{
+ font-weight:bold;
+ color:var(--tierra);
+ margin-top:8px;
+ font-size:1rem;
+}
+.figura-wayuu{
+ font-size:0.8rem;
+ color:var(--atardecer);
+ font-style:italic;
+}
+.mochila-display{
+ background:linear-gradient(135deg,#FFFDF7,#FFF3E0);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ text-align:center;
+ margin:15px 0;
+}
+.mochila-canvas-wrap{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:20px;
+ flex-wrap:wrap;
+}
+.mochila-descripcion{
+ margin-top:12px;
+ font-size:1rem;
+ color:var(--tierra);
+ min-height:60px;
+ padding:10px;
+ background:rgba(255,255,255,0.7);
+ border-radius:10px;
+}
+
+/* ============ SECCIÓN 2: ÁNGULOS EN TEJIDOS ============ */
+.angulos-area{
+ background:linear-gradient(135deg,#F0F8FF,#FFFDF7);
+ border:2px dashed var(--cardon);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.angulo-tejido{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:30px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.angulo-visual{
+ position:relative;
+ width:200px;
+ height:200px;
+}
+.angulo-info{
+ text-align:left;
+ max-width:300px;
+}
+.angulo-opciones{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ justify-content:center;
+ margin:15px 0;
+}
+.angulo-opcion{
+ padding:12px 18px;
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:15px;
+ font-weight:bold;
+ cursor:pointer;
+ transition:all 0.2s;
+ min-width:80px;
+ text-align:center;
+}
+.angulo-opcion:hover{
+ background:var(--wayuu-oro);
+ color:white;
+ border-color:var(--wayuu-oro);
+}
+.angulo-opcion.correcta{
+ background:var(--verde);
+ color:white;
+ border-color:var(--verde);
+}
+.angulo-opcion.incorrecta{
+ background:var(--rojo);
+ color:white;
+ border-color:var(--rojo);
+}
+
+/* ============ SECCIÓN 3: PERÍMETRO RANCHERÍA ============ */
+.perimetro-area{
+ background:linear-gradient(135deg,#FFFDF7,#E8F5E9);
+ border:2px dashed var(--cardon);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+}
+.rancheria-grid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:6px;
+ max-width:250px;
+ margin:10px auto;
+}
+.rancheria-celda{
+ aspect-ratio:1;
+ border-radius:6px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:1.4rem;
+}
+.rancheria-celda.enramada{background:var(--desierto)}
+.rancheria-celda.cocina{background:var(--atardecer)}
+.rancheria-celda.corral{background:var(--arena)}
+.rancheria-celda.vacia{background:transparent}
+.medicion-input{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:15px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.medicion-input input{
+ width:80px;
+ height:50px;
+ font-size:1.8rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+.medicion-input input.correcto{border-color:var(--verde);background:#E8F5E9}
+.medicion-input input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.paso-palmo-viz{
+ display:flex;
+ justify-content:center;
+ gap:20px;
+ flex-wrap:wrap;
+ margin:10px 0;
+}
+.unidad-box{
+ text-align:center;
+ min-width:100px;
+ padding:15px;
+ background:var(--blanco);
+ border-radius:12px;
+ border:1px solid #e0d5c5;
+}
+.unidad-box .unidad-icono{font-size:2.5rem}
+.unidad-box .unidad-label{font-weight:bold;color:var(--tierra);margin-top:5px}
+.unidad-box .unidad-valor{color:var(--atardecer);font-size:1.5rem;font-weight:bold}
+
+/* ============ SECCIÓN 4: KANAS - JUEGO DE DIBUJO ============ */
+.kanas-area{
+ background:linear-gradient(135deg,#FFFDF7,#F3E5F5);
+ border:2px dashed var(--morado);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.canvas-container{
+ display:flex;
+ justify-content:center;
+ gap:20px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+#kanasCanvas{
+ border:3px solid var(--tierra);
+ border-radius:12px;
+ background:var(--blanco);
+ cursor:cross-orientation;
+ box-shadow:var(--sombra);
+ touch-action:none;
+}
+.kanas-paleta{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ justify-content:center;
+ margin:10px 0;
+}
+.kanas-color{
+ width:36px;
+ height:36px;
+ border-radius:50%;
+ border:2px solid #ccc;
+ cursor:pointer;
+ transition:all 0.2s;
+}
+.kanas-color:hover{transform:scale(1.15)}
+.kanas-color.activo{border-color:var(--texto);box-shadow:0 0 0 3px var(--wayuu-oro)}
+.patron-selector{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ justify-content:center;
+ margin:10px 0;
+}
+.patron-btn{
+ padding:8px 14px;
+ background:var(--blanco);
+ border:2px solid #e0d5c5;
+ border-radius:12px;
+ cursor:pointer;
+ font-size:0.9rem;
+ font-weight:bold;
+ transition:all 0.2s;
+}
+.patron-btn:hover,.patron-btn.activo{
+ background:var(--morado);
+ color:white;
+ border-color:var(--morado);
+}
+
+/* ============ SECCIÓN 5: MEDICIÓN CON PALMOS Y PASOS ============ */
+.medicion-practica{
+ background:linear-gradient(135deg,#FFFDF7,#E3F2FD);
+ border:2px dashed var(--azul);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.objeto-medir{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:30px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.objeto-card{
+ text-align:center;
+ min-width:120px;
+ padding:20px 15px;
+ background:var(--blanco);
+ border-radius:16px;
+ border:2px solid #e0d5c5;
+ cursor:pointer;
+ transition:all 0.3s;
+}
+.objeto-card:hover{
+ border-color:var(--azul);
+ box-shadow:var(--sombra);
+}
+.objeto-card.seleccionado{
+ border-color:var(--azul);
+ background:#E3F2FD;
+}
+.objeto-card .objeto-icono{font-size:3rem}
+.objeto-card .objeto-nombre{font-weight:bold;color:var(--tierra);margin-top:6px}
+.objeto-card .objeto-pista{font-size:0.8rem;color:var(--atardecer);margin-top:4px}
+.medir-input-area{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:20px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.medir-col{
+ text-align:center;
+}
+.medir-col label{
+ display:block;
+ font-weight:bold;
+ color:var(--tierra);
+ margin-bottom:6px;
+}
+.medir-col input{
+ width:80px;
+ height:50px;
+ font-size:1.8rem;
+ text-align:center;
+ border:3px dashed var(--azul);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+}
+.medir-col input.correcto{border-color:var(--verde);background:#E8F5E9}
+.medir-col input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+
+/* ============ RESULTADOS ============ */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+}
+.resultados-finales .estrella{
+ font-size:5rem;
+ animation:brillar 1.5s ease-in-out infinite;
+}
+.resultados-finales .puntaje{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ margin:10px 0;
+}
+.resultados-finales .mensaje{
+ font-size:1.2rem;
+ color:var(--tierra);
+ margin:10px 0;
+}
+
+/* Feedback toast */
+.toast{
+ position:fixed;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:12px 30px;
+ border-radius:25px;
+ font-weight:bold;
+ font-size:1rem;
+ z-index:1000;
+ animation:slideDown 0.4s ease-out;
+ box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulso{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* Responsive */
+@media(max-width:600px){
+ .figuras-area{gap:15px}
+ .figura-card{min-width:90px;padding:12px 8px}
+ .angulo-tejido{flex-direction:column}
+ .angulo-visual{width:160px;height:160px}
+ .rancheria-grid{max-width:200px}
+ .medir-col input{width:60px;height:42px;font-size:1.4rem}
+ #kanasCanvas{width:280px;height:280px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>📐 Geometría Wayuu</h1>
+ <span class="grado">4° Grado · Matemáticas</span>
+ <div class="desierto-deco">🔷🌵📏🌵🔶🌵📐🌵</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 1: FIGURAS GEOMÉTRICAS EN MOCHILAS WAYUU -->
+<!-- ============================================= -->
+<section class="card activo" id="seccion1">
+ <h2><span class="icono">🔷</span> 1. Figuras Geométricas en Mochilas Wayuu <span class="etiqueta-check" id="check1" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Las mochilas wayuu están llenas de figuras geométricas. Cada <strong>kana</strong> (diseño) usa círculos, triángulos, rombos y cuadrados. ¡Descúbrelas!
+ </p>
+
+ <div class="figuras-area" id="figurasArea">
+  <!-- Generated by JS -->
+ </div>
+
+ <div class="mochila-display" id="mochilaDisplay">
+  <h3 style="color:var(--tierra);margin-bottom:10px">👜 Explora la mochila</h3>
+  <div class="mochila-canvas-wrap">
+   <canvas id="mochilaCanvas" width="260" height="260"></canvas>
+   <div class="mochila-descripcion" id="mochilaDesc">
+    <strong>Haz clic en una figura</strong> para verla en la mochila wayuu.
+   </div>
+  </div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion1Ok" style="display:none">✓ ¡Listo! Siguiente actividad →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 2: ÁNGULOS EN DISEÑOS DE TEJIDOS -->
+<!-- ============================================= -->
+<section class="card" id="seccion2" style="display:none">
+ <h2><span class="icono">📐</span> 2. Ángulos en Diseños de Tejidos <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Las artesanas wayuu tejen patrones con ángulos. Un <strong>ángulo recto</strong> forma una esquina perfecta (90°), uno <strong>agudo</strong> es más cerrado y uno <strong>obtuso</strong> es más abierto. ¡Identifícalos en los tejidos!
+ </p>
+
+ <div class="angulos-area" id="angulosArea">
+  <div class="angulo-tejido">
+   <div class="angulo-visual">
+    <canvas id="anguloCanvas" width="200" height="200"></canvas>
+   </div>
+   <div class="angulo-info">
+    <h3 style="color:var(--tierra);margin-bottom:8px">¿Qué tipo de ángulo ves?</h3>
+    <p style="color:#8B7355;font-size:0.9rem" id="anguloPista">Mira el diseño del tejido y elige el tipo de ángulo.</p>
+   </div>
+  </div>
+  <div class="angulo-opciones" id="anguloOpciones">
+   <div class="angulo-opcion" data-tipo="agudo">🔽 Ángulo Agudo</div>
+   <div class="angulo-opcion" data-tipo="recto">📏 Ángulo Recto</div>
+   <div class="angulo-opcion" data-tipo="obtuso">🔽 Ángulo Obtuso</div>
+  </div>
+  <div id="anguloFeedback" style="text-align:center;min-height:24px;font-weight:bold;margin-top:8px"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-secundario" id="btnAnguloNuevo">🎲 Nuevo ángulo</button>
+  <button class="btn btn-exito" id="btnSeccion2Ok" style="display:none">✓ ¡Entendido! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 3: PERÍMETRO DE UNA RANCHERÍA -->
+<!-- ============================================= -->
+<section class="card" id="seccion3" style="display:none">
+ <h2><span class="icono">🏠</span> 3. Perímetro de una Ranchería <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Una <strong>ranchería wayuu</strong> está formada por enramadas, cocinas y corrales. El <strong>perímetro</strong> es el borde de todo el terreno. ¡Vamos a medirlo con pasos y palmos!
+ </p>
+
+ <div class="perimetro-area">
+  <p style="text-align:center;font-weight:bold;color:var(--tierra)">📍 Plano de la ranchería (cada cuadro = 1 paso)</p>
+  <div class="rancheria-grid" id="rancheriaGrid">
+   <!-- Generated by JS -->
+  </div>
+  <p style="text-align:center;color:#8B7355;margin-top:8px">
+   🟨 Enramada &nbsp; 🟧 Cocina &nbsp; 🟫 Corral
+  </p>
+
+  <div class="paso-palmo-viz">
+   <div class="unidad-box">
+    <div class="unidad-icono">👣</div>
+    <div class="unidad-label">1 Paso</div>
+    <div class="unidad-valor">~ 4 palmos</div>
+   </div>
+   <div class="unidad-box">
+    <div class="unidad-icono">🖐️</div>
+    <div class="unidad-label">1 Palmo</div>
+    <div class="unidad-valor">mano abierta</div>
+   </div>
+  </div>
+
+  <div class="medicion-input">
+   <span style="font-weight:bold;color:var(--tierra);font-size:1.1rem">Perímetro total:</span>
+   <input type="number" id="perimetroInput" placeholder="?" min="0" max="100">
+   <span style="font-weight:bold;color:var(--tierra);font-size:1.1rem">pasos</span>
+   <button class="btn btn-primario" id="btnPerimetroVerificar">✓ Verificar</button>
+  </div>
+  <div id="perimetroFeedback" style="text-align:center;min-height:24px;font-weight:bold"></div>
+  <p style="text-align:center;color:#8B7355;margin-top:8px;font-size:0.9rem">
+   💡 El perímetro en palmos es: pasos × 4. ¡Pista: cuenta los bordes!
+  </p>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-secundario" id="btnPerimetroNuevo">🎲 Nueva ranchería</button>
+  <button class="btn btn-exito" id="btnSeccion3Ok" style="display:none">✓ ¡Siguiente! →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 4: KANAS - JUEGO DE DIBUJO -->
+<!-- ============================================= -->
+<section class="card" id="seccion4" style="display:none">
+ <h2><span class="icono">🎨</span> 4. Juego: Dibuja Patrones Geométricos Wayuu (Kanas) <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Los <strong>kanas</strong> son los diseños geométricos tradicionales del pueblo wayuu. Las artesanas los tejen en mochilas y chinchorros. ¡Crea tus propios kanas en el lienzo!
+ </p>
+
+ <div class="kanas-area">
+  <div class="patron-selector">
+   <button class="patron-btn activo" data-patron="libre">✏️ Dibujo libre</button>
+   <button class="patron-btn" data-patron="rombos">🔷 Rombos (Kana de la araña)</button>
+   <button class="patron-btn" data-patron="triangulos">🔺 Triángulos (Kana del ojo)</button>
+   <button class="patron-btn" data-patron="lineas">〰️ Zigzag (Kana del camino)</button>
+  </div>
+
+  <p style="color:var(--tierra);font-size:0.9rem;margin-bottom:8px">
+    <strong>Desafío:</strong> Dibuja un patrón que cubra al menos 3 figuras. ¡Las artesanas wayuu repiten patrones!
+  </p>
+
+  <div class="canvas-container">
+   <canvas id="kanasCanvas" width="400" height="400"></canvas>
+  </div>
+
+  <div class="kanas-paleta" id="kanasPaleta">
+   <div class="kanas-color activo" data-color="#E07A5F" style="background:#E07A5F" title="Atardecer"></div>
+   <div class="kanas-color" data-color="#D4A843" style="background:#D4A843" title="Oro wayuu"></div>
+   <div class="kanas-color" data-color="#5B8C5A" style="background:#5B8C5A" title="Cardón"></div>
+   <div class="kanas-color" data-color="#4A90D9" style="background:#4A90D9" title="Cielo"></div>
+   <div class="kanas-color" data-color="#9B59B6" style="background:#9B59B6" title="Morado"></div>
+   <div class="kanas-color" data-color="#D64045" style="background:#D64045" title="Rojo"></div>
+   <div class="kanas-color" data-color="#3D2B1F" style="background:#3D2B1F" title="Tierra"></div>
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+   <button class="btn btn-secundario" id="btnKanasLimpiar">🧹 Limpiar lienzo</button>
+   <button class="btn btn-azul" id="btnKanasGuia">👁️ Ver guía</button>
+   <button class="btn btn-exito" id="btnKanasOk" style="display:none">✓ ¡Terminé mi kana! 🎉</button>
+  </div>
+  <div id="kanasFeedback" style="text-align:center;min-height:24px;font-weight:bold;margin-top:8px"></div>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 5: MEDICIÓN CON PALMOS Y PASOS -->
+<!-- ============================================= -->
+<section class="card" id="seccion5" style="display:none">
+ <h2><span class="icono">📏</span> 5. Medición con Palmos y Pasos <span class="etiqueta-check" id="check5" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Antes de las cintas métricas, el pueblo wayuu usaba <strong>palmos</strong> 🖐️ (la mano abierta) y <strong>pasos</strong> 👣 para medir. ¡Mide objetos de la ranchería con estas unidades!
+ </p>
+
+ <div class="medicion-practica" id="medicionPractica">
+  <h3 style="color:var(--tierra);margin-bottom:10px">Selecciona un objeto para medir:</h3>
+  <div class="objeto-medir" id="objetoMedir">
+   <!-- Generated by JS -->
+  </div>
+
+  <div class="medir-input-area" id="medirInputs" style="display:none">
+   <div class="medir-col">
+    <label>👣 Pasos</label>
+    <input type="number" id="medirPasos" placeholder="?" min="0" max="50">
+   </div>
+   <div class="medir-col">
+    <label>🖐️ Palmos</label>
+    <input type="number" id="medirPalmos" placeholder="?" min="0" max="20">
+   </div>
+   <button class="btn btn-primario" id="btnMedirVerificar">✓ Verificar</button>
+  </div>
+  <div id="medirFeedback" style="text-align:center;min-height:24px;font-weight:bold;margin-top:8px"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-secundario" id="btnMedirNuevo" style="display:none">🎲 Otro objeto</button>
+  <button class="btn btn-exito" id="btnSeccion5Ok" style="display:none">✓ ¡Terminar módulo! 🎉</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- RESULTADOS FINALES -->
+<!-- ============================================= -->
+<section class="card" id="seccionResultados" style="display:none">
+ <div class="resultados-finales" id="resultadosContent">
+  <div class="estrella">🌟</div>
+  <h2>¡Módulo Completado!</h2>
+  <div class="puntaje" id="puntajeFinal"></div>
+  <div class="mensaje" id="mensajeFinal"></div>
+  <p style="color:var(--tierra);margin:15px 0">
+   Has explorado la geometría wayuu: figuras en mochilas, ángulos en tejidos, perímetro de la ranchería, dibujo de kanas y medición con palmos y pasos. ¡Eres un geómetra wayuu! 📐🌵👜
+  </p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+  </div>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ STATE ============
+const state = {
+ seccion1Completa: false,
+ seccion2Completa: false,
+ seccion3Completa: false,
+ seccion4Completa: false,
+ seccion5Completa: false,
+
+ // Sección 1
+ figuraSeleccionada: null,
+ figurasExploradas: new Set(),
+
+ // Sección 2
+ anguloActual: null,
+ anguloAciertos: 0,
+ anguloMeta: 5,
+
+ // Sección 3
+ perimetroRespuesta: 0,
+ perimetroAciertos: 0,
+ perimetroMeta: 3,
+
+ // Sección 4 - Kanas
+ kanasDibujado: false,
+ kanasFigurasDibujadas: 0,
+
+ // Sección 5
+ objetoActual: null,
+ medicionAciertos: 0,
+ medicionMeta: 4
+};
+
+// ============ DOM HELPERS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ TOAST ============
+function mostrarToast(msg, tipo){
+ const t = document.createElement('div');
+ t.className = 'toast ' + tipo;
+ t.textContent = msg;
+ document.body.appendChild(t);
+ setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; }, 2000);
+ setTimeout(() => t.remove(), 2500);
+}
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.seccion1Completa) completadas++;
+ if(state.seccion2Completa) completadas++;
+ if(state.seccion3Completa) completadas++;
+ if(state.seccion4Completa) completadas++;
+ if(state.seccion5Completa) completadas++;
+ const pct = Math.round((completadas / 5) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECCIÓN 1: FIGURAS GEOMÉTRICAS EN MOCHILAS ============
+const figuras = [
+ { id:'circulo', nombre:'Círculo', wayuu:'Kanaasü (redondo)', color:'#E07A5F', dibujar:function(ctx,x,y,r){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()} },
+ { id:'cuadrado', nombre:'Cuadrado', wayuu:'Paliirüa (cuadrado)', color:'#4A90D9', dibujar:function(ctx,x,y,s){ctx.fillRect(x-s,y-s,s*2,s*2)} },
+ { id:'triangulo', nombre:'Triángulo', wayuu:'Apünüin shikii (tres puntas)', color:'#5B8C5A', dibujar:function(ctx,x,y,s){ctx.beginPath();ctx.moveTo(x,y-s);ctx.lineTo(x+s,y+s*0.7);ctx.lineTo(x-s,y+s*0.7);ctx.closePath();ctx.fill()} },
+ { id:'rombo', nombre:'Rombo', wayuu:'Kana (diamante)', color:'#9B59B6', dibujar:function(ctx,x,y,s){ctx.beginPath();ctx.moveTo(x,y-s);ctx.lineTo(x+s*0.7,y);ctx.lineTo(x,y+s);ctx.lineTo(x-s*0.7,y);ctx.closePath();ctx.fill()} },
+ { id:'rectangulo', nombre:'Rectángulo', wayuu:'Piama paliirüa (dos cuadrados)', color:'#D4A843', dibujar:function(ctx,x,y,s){ctx.fillRect(x-s*1.3,y-s*0.6,s*2.6,s*1.2)} }
+];
+
+function renderFiguras(){
+ const area = $('#figurasArea');
+ area.innerHTML = '';
+ figuras.forEach((fig, i) => {
+  const card = document.createElement('div');
+  card.className = 'figura-card';
+  card.dataset.id = fig.id;
+  if(state.figuraSeleccionada === fig.id) card.classList.add('seleccionada');
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'figura-canvas';
+  canvas.width = 100;
+  canvas.height = 90;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = fig.color;
+  ctx.globalAlpha = 0.85;
+  fig.dibujar(ctx, 50, 45, 25);
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = '#3D2B1F';
+  ctx.lineWidth = 1;
+  fig.dibujar(ctx, 50, 45, 25);
+  ctx.stroke();
+
+  const nombre = document.createElement('div');
+  nombre.className = 'figura-nombre';
+  nombre.textContent = fig.nombre;
+
+  const wayuu = document.createElement('div');
+  wayuu.className = 'figura-wayuu';
+  wayuu.textContent = fig.wayuu;
+
+  card.appendChild(canvas);
+  card.appendChild(nombre);
+  card.appendChild(wayuu);
+  card.addEventListener('click', () => seleccionarFigura(fig));
+  area.appendChild(card);
+ });
+}
+
+function seleccionarFigura(fig){
+ state.figuraSeleccionada = fig.id;
+ state.figurasExploradas.add(fig.id);
+ renderFiguras();
+ dibujarMochilaConFigura(fig);
+
+ if(state.figurasExploradas.size >= 4){
+  $('#btnSeccion1Ok').style.display = 'inline-block';
+ }
+}
+
+function dibujarMochilaConFigura(fig){
+ const canvas = $('#mochilaCanvas');
+ const ctx = canvas.getContext('2d');
+ const w = canvas.width, h = canvas.height;
+ ctx.clearRect(0, 0, w, h);
+
+ // Mochila shape
+ ctx.fillStyle = '#F4E1C1';
+ ctx.strokeStyle = '#8B5E3C';
+ ctx.lineWidth = 4;
+ ctx.beginPath();
+ ctx.moveTo(80, 40);
+ ctx.quadraticCurveTo(130, 10, 180, 40);
+ ctx.lineTo(210, 180);
+ ctx.quadraticCurveTo(130, 230, 50, 180);
+ ctx.closePath();
+ ctx.fill();
+ ctx.stroke();
+
+ // Mochila strap
+ ctx.beginPath();
+ ctx.moveTo(70, 50);
+ ctx.quadraticCurveTo(30, 140, 50, 200);
+ ctx.strokeStyle = '#D4A843';
+ ctx.lineWidth = 5;
+ ctx.stroke();
+ ctx.beginPath();
+ ctx.moveTo(190, 50);
+ ctx.quadraticCurveTo(230, 140, 210, 200);
+ ctx.stroke();
+
+ // Decorative bands
+ ctx.strokeStyle = '#8B5E3C';
+ ctx.lineWidth = 2;
+ // Top band
+ ctx.beginPath();
+ ctx.moveTo(93, 50);
+ ctx.quadraticCurveTo(130, 30, 167, 50);
+ ctx.strokeStyle = '#E07A5F';
+ ctx.stroke();
+ // Middle band
+ ctx.beginPath();
+ ctx.moveTo(70, 120);
+ ctx.quadraticCurveTo(130, 100, 190, 120);
+ ctx.strokeStyle = '#D4A843';
+ ctx.lineWidth = 3;
+ ctx.stroke();
+
+ // Draw the selected figure multiple times on the mochila as a pattern
+ ctx.fillStyle = fig.color;
+ ctx.globalAlpha = 0.7;
+ const cx = 130, cy = 145;
+
+ // Draw the figure in a pattern arrangement
+ for(let row = -1; row <= 1; row++){
+  for(let col = -1; col <= 1; col++){
+   if(row === 0 && col === 0) continue;
+   const fx = cx + col * 25;
+   const fy = cy + row * 22;
+   if(fx > 70 && fx < 190 && fy > 60 && fy < 200){
+    fig.dibujar(ctx, fx, fy, 10);
+   }
+  }
+ }
+ // Center larger figure
+ ctx.globalAlpha = 0.9;
+ fig.dibujar(ctx, cx, cy, 16);
+ ctx.globalAlpha = 0.3;
+ ctx.strokeStyle = '#3D2B1F';
+ ctx.lineWidth = 1;
+ fig.dibujar(ctx, cx, cy, 16);
+ ctx.stroke();
+ ctx.globalAlpha = 1;
+
+ // Description
+ const descs = {
+  circulo: 'El <strong>círculo</strong> (Kanaasü) representa el sol y la luna. En las mochilas se teje como un punto redondo que simboliza la eternidad.',
+  cuadrado: 'El <strong>cuadrado</strong> (Paliirüa) representa la estabilidad de la ranchería. Forma la base de muchos patrones geométricos.',
+  triangulo: 'El <strong>triángulo</strong> (Apünüin shikii) simboliza las tres puntas de la península Guajira. Muy usado en los kanas.',
+  rombo: 'El <strong>rombo</strong> (Kana) es el patrón más sagrado: representa la araña tejedora Walekerü que enseñó a tejer a las mujeres wayuu.',
+  rectangulo: 'El <strong>rectángulo</strong> (Piama paliirüa) se usa para los bordes de las mochilas, como marco de los diseños centrales.'
+ };
+ $('#mochilaDesc').innerHTML = descs[fig.id] || 'Explora las figuras.';
+}
+
+function dibujarMochilaVacia(){
+ const canvas = $('#mochilaCanvas');
+ const ctx = canvas.getContext('2d');
+ const w = canvas.width, h = canvas.height;
+ ctx.clearRect(0, 0, w, h);
+
+ ctx.fillStyle = '#F4E1C1';
+ ctx.strokeStyle = '#8B5E3C';
+ ctx.lineWidth = 4;
+ ctx.beginPath();
+ ctx.moveTo(80, 40);
+ ctx.quadraticCurveTo(130, 10, 180, 40);
+ ctx.lineTo(210, 180);
+ ctx.quadraticCurveTo(130, 230, 50, 180);
+ ctx.closePath();
+ ctx.fill();
+ ctx.stroke();
+
+ ctx.beginPath();
+ ctx.moveTo(70, 50);
+ ctx.quadraticCurveTo(30, 140, 50, 200);
+ ctx.strokeStyle = '#D4A843';
+ ctx.lineWidth = 5;
+ ctx.stroke();
+ ctx.beginPath();
+ ctx.moveTo(190, 50);
+ ctx.quadraticCurveTo(230, 140, 210, 200);
+ ctx.stroke();
+
+ ctx.strokeStyle = '#8B5E3C';
+ ctx.lineWidth = 2;
+ ctx.beginPath();
+ ctx.moveTo(93, 50);
+ ctx.quadraticCurveTo(130, 30, 167, 50);
+ ctx.strokeStyle = '#E07A5F';
+ ctx.stroke();
+ ctx.beginPath();
+ ctx.moveTo(70, 120);
+ ctx.quadraticCurveTo(130, 100, 190, 120);
+ ctx.strokeStyle = '#D4A843';
+ ctx.lineWidth = 3;
+ ctx.stroke();
+
+ ctx.fillStyle = '#8B7355';
+ ctx.font = '14px "Comic Sans MS", sans-serif';
+ ctx.textAlign = 'center';
+ ctx.fillText('?', 130, 150);
+ ctx.textAlign = 'start';
+}
+
+$('#btnSeccion1Ok').addEventListener('click', () => {
+ state.seccion1Completa = true;
+ $('#seccion1').classList.remove('activo');
+ $('#seccion1').classList.add('completado');
+ $('#check1').style.display = 'inline-block';
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 1 completada!', 'exito');
+});
+
+// ============ SECCIÓN 2: ÁNGULOS ============
+const angulosTipos = ['agudo', 'recto', 'obtuso'];
+
+function generarAngulo(){
+ const tipo = angulosTipos[Math.floor(Math.random() * angulosTipos.length)];
+ state.anguloActual = tipo;
+ dibujarAngulo(tipo);
+ $('#anguloFeedback').textContent = '';
+
+ // Reset opciones
+ $$('#anguloOpciones .angulo-opcion').forEach(op => {
+  op.classList.remove('correcta','incorrecta');
+ });
+ $('#btnSeccion2Ok').style.display = 'none';
+}
+
+function dibujarAngulo(tipo){
+ const canvas = $('#anguloCanvas');
+ const ctx = canvas.getContext('2d');
+ const w = canvas.width, h = canvas.height;
+ ctx.clearRect(0, 0, w, h);
+
+ const cx = 70, cy = 140;
+ let anguloGrados;
+
+ if(tipo === 'agudo') anguloGrados = 25 + Math.random() * 40; // 25-65
+ else if(tipo === 'recto') anguloGrados = 90;
+ else anguloGrados = 100 + Math.random() * 50; // 100-150
+
+ const anguloRad = anguloGrados * Math.PI / 180;
+ const largo = 110;
+
+ // Draw background as wayuu textile pattern
+ ctx.fillStyle = '#FFFDF7';
+ ctx.fillRect(0, 0, w, h);
+
+ // Draw textile weave dots
+ ctx.fillStyle = '#E8B86D';
+ ctx.globalAlpha = 0.15;
+ for(let y = 5; y < h; y += 12){
+  for(let x = 5; x < w; x += 12){
+   ctx.beginPath();
+   ctx.arc(x + (y % 24 === 0 ? 6 : 0), y, 2, 0, Math.PI*2);
+   ctx.fill();
+  }
+ }
+ ctx.globalAlpha = 1;
+
+ // Draw the angle
+ // Horizontal line
+ ctx.strokeStyle = '#8B5E3C';
+ ctx.lineWidth = 3;
+ ctx.beginPath();
+ ctx.moveTo(cx, cy);
+ ctx.lineTo(cx + largo, cy);
+ ctx.stroke();
+
+ // Angled line
+ const ex = cx + Math.cos(anguloRad) * largo;
+ const ey = cy - Math.sin(anguloRad) * largo;
+ ctx.beginPath();
+ ctx.moveTo(cx, cy);
+ ctx.lineTo(ex, ey);
+ ctx.stroke();
+
+ // Draw arc for the angle
+ ctx.beginPath();
+ ctx.arc(cx, cy, 30, 0, -anguloRad, true);
+ ctx.strokeStyle = tipo === 'recto' ? '#D64045' : tipo === 'agudo' ? '#4CAF50' : '#4A90D9';
+ ctx.lineWidth = 3;
+ ctx.stroke();
+
+ // Small square for right angle
+ if(tipo === 'recto'){
+  ctx.fillStyle = '#D64045';
+  ctx.fillRect(cx + 20, cy - 20, 10, 10);
+  ctx.strokeStyle = '#D64045';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx + 20, cy - 20, 10, 10);
+ }
+
+ // Label
+ ctx.fillStyle = '#3D2B1F';
+ ctx.font = 'bold 14px "Segoe UI", sans-serif';
+ ctx.fillText(Math.round(anguloGrados) + '°', cx + 20, cy - 40);
+
+ // Draw weaving decorative elements
+ ctx.fillStyle = '#D4A843';
+ ctx.globalAlpha = 0.5;
+ for(let i = 0; i < 5; i++){
+  const dx = cx + 40 + i * 14;
+  ctx.beginPath();
+  ctx.arc(dx, cy + 15, 4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(dx + 7, cy - 8, 3, 0, Math.PI*2);
+  ctx.fill();
+ }
+ ctx.globalAlpha = 1;
+}
+
+$$('#anguloOpciones .angulo-opcion').forEach(op => {
+ op.addEventListener('click', () => {
+  if(!state.anguloActual) return;
+  const tipo = op.dataset.tipo;
+
+  // Reset
+  $$('#anguloOpciones .angulo-opcion').forEach(o => o.classList.remove('correcta','incorrecta'));
+
+  if(tipo === state.anguloActual){
+   op.classList.add('correcta');
+   state.anguloAciertos++;
+   $('#anguloFeedback').textContent = '✅ ¡Correcto! Es un ángulo ' + state.anguloActual + '.';
+   $('#anguloFeedback').style.color = 'var(--verde)';
+
+   if(state.anguloAciertos >= state.anguloMeta){
+    $('#btnSeccion2Ok').style.display = 'inline-block';
+   }
+   setTimeout(generarAngulo, 1500);
+  } else {
+   op.classList.add('incorrecta');
+   $('#anguloFeedback').textContent = '❌ Incorrecto. Mira bien el ángulo.';
+   $('#anguloFeedback').style.color = 'var(--rojo)';
+   setTimeout(() => {
+    op.classList.remove('incorrecta');
+    $('#anguloFeedback').textContent = '';
+   }, 1200);
+  }
+ });
+});
+
+$('#btnAnguloNuevo').addEventListener('click', () => {
+ state.anguloActual = null;
+ generarAngulo();
+});
+
+$('#btnSeccion2Ok').addEventListener('click', () => {
+ state.seccion2Completa = true;
+ $('#seccion2').classList.remove('activo');
+ $('#seccion2').classList.add('completado');
+ $('#check2').style.display = 'inline-block';
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 2 completada!', 'exito');
+});
+
+// ============ SECCIÓN 3: PERÍMETRO RANCHERÍA ============
+function generarRancheria(){
+ // Ranchería of varying sizes (3x3 to 5x5)
+ const size = 3 + Math.floor(Math.random() * 3); // 3, 4, or 5
+ const grid = $('#rancheriaGrid');
+ grid.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
+ grid.innerHTML = '';
+
+ let celdasLlenas = 0;
+ const tipos = ['enramada', 'cocina', 'corral'];
+
+ for(let r = 0; r < size; r++){
+  for(let c = 0; c < size; c++){
+   const celda = document.createElement('div');
+   celda.className = 'rancheria-celda';
+
+   // Fill the border and some interior
+   if(r === 0 || r === size - 1 || c === 0 || c === size - 1 || (r === Math.floor(size/2) && c === Math.floor(size/2))){
+    const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+    celda.classList.add(tipo);
+    celda.textContent = tipo === 'enramada' ? '🛖' : tipo === 'cocina' ? '🔥' : '🐐';
+    celdasLlenas++;
+   } else {
+    celda.classList.add('vacia');
+   }
+   grid.appendChild(celda);
+  }
+ }
+
+ // Perimeter = number of border steps
+ // Count all cells on the edges
+ const perimetro = (size * 4 - 4); // All border cells minus corners counted twice
+ state.perimetroRespuesta = perimetro;
+ $('#perimetroInput').value = '';
+ $('#perimetroInput').className = 'medicion-input input';
+ $('#perimetroFeedback').textContent = '';
+ $('#btnSeccion3Ok').style.display = 'none';
+}
+
+$('#btnPerimetroVerificar').addEventListener('click', () => {
+ const val = parseInt($('#perimetroInput').value);
+ if(isNaN(val)){
+  $('#perimetroFeedback').textContent = '❌ Escribe un número.';
+  $('#perimetroFeedback').style.color = 'var(--rojo)';
+  return;
+ }
+
+ if(val === state.perimetroRespuesta){
+  $('#perimetroInput').classList.add('correcto');
+  $('#perimetroInput').classList.remove('incorrecto');
+  state.perimetroAciertos++;
+  $('#perimetroFeedback').textContent = '✅ ¡Correcto! El perímetro es ' + state.perimetroRespuesta + ' pasos (' + (state.perimetroRespuesta * 4) + ' palmos).';
+  $('#perimetroFeedback').style.color = 'var(--verde)';
+
+  if(state.perimetroAciertos >= state.perimetroMeta){
+   $('#btnSeccion3Ok').style.display = 'inline-block';
+  } else {
+   setTimeout(generarRancheria, 2000);
+  }
+ } else {
+  $('#perimetroInput').classList.add('incorrecto');
+  $('#perimetroInput').classList.remove('correcto');
+  $('#perimetroFeedback').textContent = '❌ Incorrecto. El perímetro es ' + state.perimetroRespuesta + ' pasos. ¡Cuenta los bordes!';
+  $('#perimetroFeedback').style.color = 'var(--rojo)';
+ }
+});
+
+$('#btnPerimetroNuevo').addEventListener('click', generarRancheria);
+
+$('#btnSeccion3Ok').addEventListener('click', () => {
+ state.seccion3Completa = true;
+ $('#seccion3').classList.remove('activo');
+ $('#seccion3').classList.add('completado');
+ $('#check3').style.display = 'inline-block';
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 3 completada!', 'exito');
+});
+
+// ============ SECCIÓN 4: KANAS - JUEGO DE DIBUJO ============
+let kanasColor = '#E07A5F';
+let kanasPatron = 'libre';
+let kanasDibujando = false;
+let kanasPuntos = [];
+let kanasFigurasDibujadas = 0;
+
+function initKanas(){
+ const canvas = $('#kanasCanvas');
+ const ctx = canvas.getContext('2d');
+ ctx.fillStyle = '#FFFDF7';
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+ // Draw light grid
+ ctx.strokeStyle = '#e0d5c5';
+ ctx.lineWidth = 0.5;
+ for(let x = 0; x < canvas.width; x += 40){
+  ctx.beginPath();
+  ctx.moveTo(x, 0);
+  ctx.lineTo(x, canvas.height);
+  ctx.stroke();
+ }
+ for(let y = 0; y < canvas.height; y += 40){
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  ctx.lineTo(canvas.width, y);
+  ctx.stroke();
+ }
+
+ // Draw guide points
+ ctx.fillStyle = '#e0d5c5';
+ for(let x = 40; x < canvas.width; x += 40){
+  for(let y = 40; y < canvas.height; y += 40){
+   ctx.beginPath();
+   ctx.arc(x, y, 3, 0, Math.PI*2);
+   ctx.fill();
+  }
+ }
+
+ kanasPuntos = [];
+ kanasFigurasDibujadas = 0;
+ state.kanasDibujado = false;
+ $('#kanasFeedback').textContent = '';
+ $('#btnKanasOk').style.display = 'none';
+}
+
+function dibujarKanaEnCanvas(x, y){
+ const canvas = $('#kanasCanvas');
+ const ctx = canvas.getContext('2d');
+
+ if(kanasPatron === 'libre'){
+  ctx.fillStyle = kanasColor;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI*2);
+  ctx.fill();
+  kanasPuntos.push({x, y, color: kanasColor});
+ } else {
+  // Snap to grid
+  const gx = Math.round(x / 40) * 40;
+  const gy = Math.round(y / 40) * 40;
+  if(gx < 20 || gx > canvas.width - 20 || gy < 20 || gy > canvas.height - 20) return;
+
+  const s = 14;
+  ctx.fillStyle = kanasColor;
+  ctx.globalAlpha = 0.8;
+
+  if(kanasPatron === 'rombos'){
+   ctx.beginPath();
+   ctx.moveTo(gx, gy - s);
+   ctx.lineTo(gx + s * 0.7, gy);
+   ctx.lineTo(gx, gy + s);
+   ctx.lineTo(gx - s * 0.7, gy);
+   ctx.closePath();
+   ctx.fill();
+   ctx.strokeStyle = '#3D2B1F';
+   ctx.lineWidth = 1;
+   ctx.globalAlpha = 0.3;
+   ctx.stroke();
+  } else if(kanasPatron === 'triangulos'){
+   ctx.beginPath();
+   ctx.moveTo(gx, gy - s);
+   ctx.lineTo(gx + s, gy + s * 0.6);
+   ctx.lineTo(gx - s, gy + s * 0.6);
+   ctx.closePath();
+   ctx.fill();
+   ctx.strokeStyle = '#3D2B1F';
+   ctx.lineWidth = 1;
+   ctx.globalAlpha = 0.3;
+   ctx.stroke();
+  } else if(kanasPatron === 'lineas'){
+   ctx.beginPath();
+   for(let i = -1; i <= 1; i++){
+    ctx.moveTo(gx + i * 12, gy - s);
+    ctx.lineTo(gx - i * 12, gy + s);
+   }
+   ctx.strokeStyle = kanasColor;
+   ctx.lineWidth = 2.5;
+   ctx.globalAlpha = 0.9;
+   ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  kanasFigurasDibujadas++;
+  if(kanasFigurasDibujadas >= 3 && !state.kanasDibujado){
+   state.kanasDibujado = true;
+   $('#kanasFeedback').textContent = '🎨 ¡Has dibujado ' + kanasFigurasDibujadas + ' figuras! Sigue creando tu kana.';
+   $('#kanasFeedback').style.color = 'var(--verde)';
+   $('#btnKanasOk').style.display = 'inline-block';
+  }
+  if(kanasFigurasDibujadas >= 3){
+   $('#kanasFeedback').textContent = '🎨 ¡Tienes ' + kanasFigurasDibujadas + ' figuras en tu kana! ¡Hermoso patrón!';
+   $('#kanasFeedback').style.color = 'var(--verde)';
+  }
+ }
+}
+
+// Mouse events
+$('#kanasCanvas').addEventListener('mousedown', (e) => {
+ kanasDibujando = true;
+ const rect = e.target.getBoundingClientRect();
+ const scaleX = e.target.width / rect.width;
+ const scaleY = e.target.height / rect.height;
+ const x = (e.clientX - rect.left) * scaleX;
+ const y = (e.clientY - rect.top) * scaleY;
+ dibujarKanaEnCanvas(x, y);
+});
+
+$('#kanasCanvas').addEventListener('mousemove', (e) => {
+ if(!kanasDibujando) return;
+ const rect = e.target.getBoundingClientRect();
+ const scaleX = e.target.width / rect.width;
+ const scaleY = e.target.height / rect.height;
+ const x = (e.clientX - rect.left) * scaleX;
+ const y = (e.clientY - rect.top) * scaleY;
+ dibujarKanaEnCanvas(x, y);
+});
+
+$('#kanasCanvas').addEventListener('mouseup', () => { kanasDibujando = false; });
+$('#kanasCanvas').addEventListener('mouseleave', () => { kanasDibujando = false; });
+
+// Touch events
+$('#kanasCanvas').addEventListener('touchstart', (e) => {
+ e.preventDefault();
+ kanasDibujando = true;
+ const rect = e.target.getBoundingClientRect();
+ const scaleX = e.target.width / rect.width;
+ const scaleY = e.target.height / rect.height;
+ const x = (e.touches[0].clientX - rect.left) * scaleX;
+ const y = (e.touches[0].clientY - rect.top) * scaleY;
+ dibujarKanaEnCanvas(x, y);
+});
+
+$('#kanasCanvas').addEventListener('touchmove', (e) => {
+ e.preventDefault();
+ if(!kanasDibujando) return;
+ const rect = e.target.getBoundingClientRect();
+ const scaleX = e.target.width / rect.width;
+ const scaleY = e.target.height / rect.height;
+ const x = (e.touches[0].clientX - rect.left) * scaleX;
+ const y = (e.touches[0].clientY - rect.top) * scaleY;
+ dibujarKanaEnCanvas(x, y);
+});
+
+$('#kanasCanvas').addEventListener('touchend', () => { kanasDibujando = false; });
+
+// Color palette
+$$('.kanas-color').forEach(el => {
+ el.addEventListener('click', () => {
+  $$('.kanas-color').forEach(e => e.classList.remove('activo'));
+  el.classList.add('activo');
+  kanasColor = el.dataset.color;
+ });
+});
+
+// Pattern buttons
+$$('.patron-btn').forEach(el => {
+ el.addEventListener('click', () => {
+  $$('.patron-btn').forEach(e => e.classList.remove('activo'));
+  el.classList.add('activo');
+  kanasPatron = el.dataset.patron;
+  $('#kanasFeedback').textContent = 'Cambiaste a modo: ' + (kanasPatron === 'libre' ? 'Dibujo libre' : el.textContent.trim());
+  $('#kanasFeedback').style.color = 'var(--morado)';
+ });
+});
+
+$('#btnKanasLimpiar').addEventListener('click', () => {
+ initKanas();
+});
+
+$('#btnKanasGuia').addEventListener('click', () => {
+ const canvas = $('#kanasCanvas');
+ const ctx = canvas.getContext('2d');
+ ctx.fillStyle = 'rgba(74,144,217,0.2)';
+ ctx.globalAlpha = 0.3;
+
+ // Draw example kanas pattern
+ const s = 25;
+ for(let row = 0; row < 5; row++){
+  for(let col = 0; col < 5; col++){
+   const gx = 80 + col * 64;
+   const gy = 80 + row * 64;
+   ctx.fillStyle = row % 2 === 0 ? 'rgba(224,122,95,0.25)' : 'rgba(212,168,67,0.25)';
+   ctx.beginPath();
+   ctx.moveTo(gx, gy - s);
+   ctx.lineTo(gx + s * 0.7, gy);
+   ctx.lineTo(gx, gy + s);
+   ctx.lineTo(gx - s * 0.7, gy);
+   ctx.closePath();
+   ctx.fill();
+  }
+ }
+ ctx.globalAlpha = 1;
+
+ $('#kanasFeedback').textContent = '👁️ Guía: así se ve un patrón de rombos (kana). ¡Dibuja el tuyo encima!';
+ $('#kanasFeedback').style.color = 'var(--azul)';
+
+ // Fade the guide after 3 seconds
+ setTimeout(() => {
+  initKanas();
+  // Redraw user points
+  const ctx2 = canvas.getContext('2d');
+  kanasPuntos.forEach(p => {
+   ctx2.fillStyle = p.color;
+   ctx2.beginPath();
+   ctx2.arc(p.x, p.y, 8, 0, Math.PI*2);
+   ctx2.fill();
+  });
+ }, 3000);
+});
+
+$('#btnKanasOk').addEventListener('click', () => {
+ state.seccion4Completa = true;
+ $('#seccion4').classList.remove('activo');
+ $('#seccion4').classList.add('completado');
+ $('#check4').style.display = 'inline-block';
+ $('#seccion5').style.display = 'block';
+ $('#seccion5').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('🎨 ¡Kana creado! Sección 4 completada.', 'exito');
+});
+
+// ============ SECCIÓN 5: MEDICIÓN CON PALMOS Y PASOS ============
+const objetosMedir = [
+ { id:'enramada', nombre:'Enramada', icono:'🛖', pista:'Mide 4 pasos de largo', pasos:4, palmos:0 },
+ { id:'cocina', nombre:'Cocina', icono:'🔥', pista:'Mide 3 pasos de ancho', pasos:3, palmos:0 },
+ { id:'corral', nombre:'Corral', icono:'🐐', pista:'Mide 5 pasos por lado', pasos:5, palmos:0 },
+ { id:'mochila', nombre:'Mochila', icono:'👜', pista:'Mide 0 pasos, solo 6 palmos', pasos:0, palmos:6 },
+ { id:'chinchorro', nombre:'Chinchorro', icono:'🛏️', pista:'Mide 1 paso y 2 palmos extra', pasos:1, palmos:2 },
+ { id:'jaguey', nombre:'Jagüey', icono:'💧', pista:'Mide 2 pasos de diámetro', pasos:2, palmos:0 },
+ { id:'cercado', nombre:'Cercado', icono:'🪵', pista:'Mide 7 pasos de largo', pasos:7, palmos:0 },
+ { id:'telar', nombre:'Telar', icono:'🧶', pista:'Mide 1 paso y 1 palmo', pasos:1, palmos:1 }
+];
+
+function renderObjetosMedir(){
+ const area = $('#objetoMedir');
+ area.innerHTML = '';
+ objetosMedir.forEach(obj => {
+  const card = document.createElement('div');
+  card.className = 'objeto-card';
+  card.dataset.id = obj.id;
+
+  const icono = document.createElement('div');
+  icono.className = 'objeto-icono';
+  icono.textContent = obj.icono;
+
+  const nombre = document.createElement('div');
+  nombre.className = 'objeto-nombre';
+  nombre.textContent = obj.nombre;
+
+  const pista = document.createElement('div');
+  pista.className = 'objeto-pista';
+  pista.textContent = obj.pista;
+
+  card.appendChild(icono);
+  card.appendChild(nombre);
+  card.appendChild(pista);
+
+  card.addEventListener('click', () => seleccionarObjeto(obj, card));
+  area.appendChild(card);
+ });
+}
+
+function seleccionarObjeto(obj, card){
+ state.objetoActual = obj;
+ $$('.objeto-card').forEach(c => c.classList.remove('seleccionado'));
+ card.classList.add('seleccionado');
+ $('#medirInputs').style.display = 'flex';
+ $('#medirPasos').value = '';
+ $('#medirPasos').className = '';
+ $('#medirPalmos').value = '';
+ $('#medirPalmos').className = '';
+ $('#medirFeedback').textContent = '';
+ $('#btnMedirNuevo').style.display = 'none';
+}
+
+$('#btnMedirVerificar').addEventListener('click', () => {
+ if(!state.objetoActual) {
+  $('#medirFeedback').textContent = '❌ Selecciona un objeto primero.';
+  $('#medirFeedback').style.color = 'var(--rojo)';
+  return;
+ }
+
+ const pasosVal = parseInt($('#medirPasos').value) || 0;
+ const palmosVal = parseInt($('#medirPalmos').value) || 0;
+ const obj = state.objetoActual;
+
+ const pasosOk = pasosVal === obj.pasos;
+ const palmosOk = palmosVal === obj.palmos;
+
+ $('#medirPasos').className = pasosOk ? 'correcto' : 'incorrecto';
+ $('#medirPalmos').className = palmosOk ? 'correcto' : 'incorrecto';
+
+ if(pasosOk && palmosOk){
+  state.medicionAciertos++;
+  const totalPalmos = obj.pasos * 4 + obj.palmos;
+  $('#medirFeedback').textContent = '✅ ¡Correcto! ' + obj.nombre + ' mide ' + obj.pasos + ' paso' + (obj.pasos !== 1 ? 's':'') + (obj.palmos > 0 ? ' y ' + obj.palmos + ' palmo' + (obj.palmos !== 1 ? 's':'') : '') + ' = ' + totalPalmos + ' palmos totales.';
+  $('#medirFeedback').style.color = 'var(--verde)';
+  $('#btnMedirNuevo').style.display = 'inline-block';
+
+  if(state.medicionAciertos >= state.medicionMeta){
+   $('#btnSeccion5Ok').style.display = 'inline-block';
+  }
+ } else {
+  $('#medirFeedback').textContent = '❌ Revisa tus medidas. Pista: ' + obj.pista + '.';
+  $('#medirFeedback').style.color = 'var(--rojo)';
+ }
+});
+
+$('#btnMedirNuevo').addEventListener('click', () => {
+ state.objetoActual = null;
+ $$('.objeto-card').forEach(c => c.classList.remove('seleccionado'));
+ $('#medirInputs').style.display = 'none';
+ $('#medirFeedback').textContent = '';
+ $('#btnMedirNuevo').style.display = 'none';
+});
+
+$('#btnSeccion5Ok').addEventListener('click', () => {
+ state.seccion5Completa = true;
+ $('#seccion5').classList.remove('activo');
+ $('#seccion5').classList.add('completado');
+ $('#check5').style.display = 'inline-block';
+ mostrarResultados();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccion5').classList.remove('activo');
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ const totalSecciones = 5;
+ const completadas = (state.seccion1Completa ? 1 : 0) + (state.seccion2Completa ? 1 : 0) + (state.seccion3Completa ? 1 : 0) + (state.seccion4Completa ? 1 : 0) + (state.seccion5Completa ? 1 : 0);
+ const pct = Math.round((completadas / totalSecciones) * 100);
+
+ $('#puntajeFinal').textContent = pct + '% Completado';
+
+ let mensaje = '';
+ if(pct >= 100){
+  mensaje = '🏆 ¡Excelente! Eres un maestro de la geometría wayuu. Conoces las figuras en las mochilas, identificas ángulos en los tejidos, calculas perímetros y mides con palmos y pasos. ¡Como un verdadero geómetra guajiro!';
+ } else if(pct >= 80){
+  mensaje = '🌟 ¡Muy bien! Has aprendido mucho sobre geometría wayuu. Sigue practicando las secciones que te faltan.';
+ } else if(pct >= 60){
+  mensaje = '👍 ¡Buen trabajo! Has avanzado en geometría. Repite las secciones pendientes para completar el módulo.';
+ } else {
+  mensaje = '🌱 Vas comenzando tu camino en la geometría wayuu. ¡No te rindas! Cada kana y cada medida te acerca más.';
+ }
+ $('#mensajeFinal').textContent = mensaje;
+
+ // Confetti
+ const emojis = ['🔷','🔶','📐','👜','🌵','🛖','🎨','✨','🌟','💎'];
+ for(let i = 0; i < 25; i++){
+  setTimeout(() => {
+   const e = document.createElement('span');
+   e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+   e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+   e.style.left = Math.random() * 90 + '%';
+   e.style.top = '-50px';
+   document.body.appendChild(e);
+   setTimeout(() => e.remove(), 2600);
+  }, i * 90);
+ }
+
+ if(!document.getElementById('animCaer')){
+  const style = document.createElement('style');
+  style.id = 'animCaer';
+  style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+  document.head.appendChild(style);
+ }
+
+ actualizarProgreso();
+}
+
+// ============ INITIALIZATION ============
+function init(){
+ renderFiguras();
+ dibujarMochilaVacia();
+ generarAngulo();
+ generarRancheria();
+ initKanas();
+ renderObjetosMedir();
+ actualizarProgreso();
+}
+
+init();
+
+})();
+</script>
+
+<script src="../comun/volver.js"></script>
+</body>
+</html>

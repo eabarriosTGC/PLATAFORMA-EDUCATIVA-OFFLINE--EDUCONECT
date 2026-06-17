@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CIU-401: El Palabrero Pütchipü'ü | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#FEF9E7,#FDEBD0,#FAD7A0);min-height:100vh}
+.container{max-width:650px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--atardecer);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.escenario{background:white;border-radius:20px;padding:24px 20px;box-shadow:var(--sombra);border:2px solid var(--arena-oscura);text-align:center;animation:fadeIn 0.4s ease-out}
+
+.actores{display:flex;justify-content:space-around;align-items:center;margin:20px 0;font-size:4rem;flex-wrap:wrap;gap:10px}
+.actores .versus{font-size:2rem;color:var(--rojo);font-weight:bold}
+
+.problema-box{background:#FFF8E1;border-radius:16px;padding:16px;margin:16px 0;border:2px solid var(--wayuu-oro)}
+.problema-box h3{color:var(--tierra);font-size:1.1rem;line-height:1.5}
+
+.palabrero-zona{background:linear-gradient(135deg,#f0e6d3,#e8dcc8);border:3px dashed var(--arena-oscura);border-radius:16px;padding:20px;margin-top:16px}
+.palabrero-zona h4{color:var(--atardecer);margin-bottom:12px;font-size:1.05rem}
+.palabrero-zona h4::before{content:'🕊️ '}
+
+.opciones-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.opcion-btn{padding:14px 20px;border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;transition:all 0.3s;font-family:inherit;flex:1;min-width:200px;display:flex;align-items:center;justify-content:center;gap:8px}
+.opcion-btn:hover{transform:translateY(-3px)}
+.opcion-btn.btn-paz{background:linear-gradient(135deg,#2ecc71,#27ae60);color:white;box-shadow:0 4px 12px rgba(46,204,113,0.4)}
+.opcion-btn.btn-paz:hover{box-shadow:0 6px 20px rgba(46,204,113,0.5)}
+.opcion-btn.btn-conflicto{background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;box-shadow:0 4px 12px rgba(231,76,60,0.4)}
+.opcion-btn.btn-conflicto:hover{box-shadow:0 6px 20px rgba(231,76,60,0.5)}
+.opcion-btn:disabled{cursor:default;opacity:0.5;transform:none!important}
+
+.feedback-caso{padding:16px;border-radius:14px;margin-top:16px;display:none;animation:fadeIn 0.3s ease-out;font-weight:bold}
+.feedback-caso.visible{display:block}
+.feedback-caso.paz{background:#E8F5E9;border:2px solid var(--verde);color:#2E7D32}
+.feedback-caso.conflicto{background:#FFEBEE;border:2px solid var(--rojo);color:#C62828}
+
+.contador-caso{color:#999;font-size:0.85rem;margin-bottom:8px}
+
+.medalla-final{display:none;text-align:center;padding:30px 20px}
+.medalla-final.visible{display:block}
+.medalla-final .emoji-g{font-size:5rem}
+.medalla-final h2{color:var(--tierra);margin:10px 0}
+
+.consejos-paz{background:white;border-radius:16px;padding:16px;margin-top:16px;border:2px solid var(--wayuu-oro);text-align:left}
+.consejos-paz h4{color:var(--atardecer);margin-bottom:8px}
+.consejos-paz li{margin:6px 0;font-size:0.9rem;color:var(--texto)}
+
+@media(max-width:600px){
+  .actores{font-size:3rem}
+  .opcion-btn{min-width:100%;padding:12px 14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🕊️ El Palabrero (Pütchipü'ü)</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Ciudadanía y Derechos · Resolución de conflictos</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🕊️ En la cultura wayuu, el <strong>Pütchipü'ü</strong> (Palabrero) es la persona sabia que resuelve conflictos usando la palabra, no la violencia. Hoy, <strong>tú eres el Palabrero</strong>.
+  </div>
+
+  <div id="mainContent"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var casoActual = 0;
+var progreso = 0;
+var aciertos = 0;
+
+var casos = [
+  {
+    actores: ['👦🏽', '🚲', '🧒🏽'],
+    emoji: '🚲',
+    problema: 'Juan y Pedro están peleando porque los dos quieren usar la misma bicicleta al mismo tiempo.',
+    opcionPaz: 'Propongo turnos: 10 minutos cada uno, así los dos disfrutan.',
+    opcionConflicto: 'Les quito la bicicleta a ambos y les grito.',
+    feedbackPaz: '¡Excelente Palabrero! La equidad y los turnos traen paz a la comunidad.',
+    feedbackConflicto: 'Esa decisión genera más enojo. El Palabrero busca acuerdos, no castigos.'
+  },
+  {
+    actores: ['🐐', '🌾', '👨🏽‍🌾'],
+    emoji: '🌾',
+    problema: 'Los chivos del vecino se escaparon y se comieron la siembra de maíz de tu tío. Tu tío está furioso.',
+    opcionPaz: 'Reunir a las familias para que el vecino pague el daño y arregle su cerca.',
+    opcionConflicto: 'Ir a golpear al vecino y amenazarlo.',
+    feedbackPaz: '¡Sabiduría wayuu! La compensación del daño (pago en chivos o dinero) es la forma tradicional de hacer justicia.',
+    feedbackConflicto: 'La violencia genera más violencia. El Palabrero busca reparación, no venganza.'
+  },
+  {
+    actores: ['👧🏽', '💧', '👩🏽'],
+    emoji: '💧',
+    problema: 'Dos familias discuten por el agua del jagüey en tiempo de sequía. Ambas necesitan el agua para sus hijos y animales.',
+    opcionPaz: 'Reunir a las familias y acordar horarios: una familia usa el agua en la mañana, la otra en la tarde.',
+    opcionConflicto: 'Tomar toda el agua para tu familia sin compartir.',
+    feedbackPaz: '¡Gran Palabrero! Compartir el agua es compartir la vida. En La Guajira, la solidaridad es clave para sobrevivir.',
+    feedbackConflicto: 'El agua es de todos. Acapararla causa sufrimiento y más conflictos. Busca siempre compartir.'
+  }
+];
+
+function init(){
+  renderizarCaso();
+  actualizarProgreso();
+}
+
+function renderizarCaso(){
+  if(casoActual >= casos.length){
+    mostrarFinal();
+    return;
+  }
+  var c = casos[casoActual];
+  var html = '<div class="escenario">';
+  html += '<div class="contador-caso">Caso ' + (casoActual + 1) + ' / ' + casos.length + '</div>';
+  html += '<div class="actores">';
+  html += '<span>' + c.actores[0] + '</span>';
+  html += '<span class="versus">💥</span>';
+  html += '<span>' + c.actores[2] + '</span>';
+  html += '</div>';
+  html += '<div class="problema-box"><h3>' + c.problema + '</h3></div>';
+  html += '<div class="palabrero-zona">';
+  html += '<h4>¿Qué aconseja el Palabrero?</h4>';
+  html += '<div class="opciones-row">';
+
+  var pazIzq = Math.random() > 0.5;
+  if(pazIzq){
+    html += '<button class="opcion-btn btn-paz" onclick="resolver(true)">🕊️ ' + c.opcionPaz + '</button>';
+    html += '<button class="opcion-btn btn-conflicto" onclick="resolver(false)">⚡ ' + c.opcionConflicto + '</button>';
+  } else {
+    html += '<button class="opcion-btn btn-conflicto" onclick="resolver(false)">⚡ ' + c.opcionConflicto + '</button>';
+    html += '<button class="opcion-btn btn-paz" onclick="resolver(true)">🕊️ ' + c.opcionPaz + '</button>';
+  }
+
+  html += '</div></div></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function resolver(esPaz){
+  var btns = document.querySelectorAll('.opcion-btn');
+  btns.forEach(function(b){ b.disabled = true; });
+
+  var c = casos[casoActual];
+  var feedback = document.createElement('div');
+  feedback.className = 'feedback-caso visible ' + (esPaz ? 'paz' : 'conflicto');
+
+  if(esPaz){
+    feedback.innerHTML = '🕊️ ' + c.feedbackPaz;
+    aciertos++;
+    progreso = Math.min(100, Math.round((aciertos / casos.length) * 100));
+    guardarProgreso();
+    actualizarProgreso();
+    hablar(c.feedbackPaz);
+    casoActual++;
+    setTimeout(function(){ renderizarCaso(); if(aciertos >= casos.length) mostrarFinal(); }, 2500);
+  } else {
+    feedback.innerHTML = '⚡ ' + c.feedbackConflicto;
+    hablar(c.feedbackConflicto + ' Inténtalo de nuevo con una solución de paz.');
+  }
+
+  var escenario = document.querySelector('.escenario');
+  escenario.appendChild(feedback);
+}
+
+function mostrarFinal(){
+  var html = '<div class="medalla-final visible">';
+  html += '<div class="emoji-g">🕊️</div>';
+  html += '<h2>¡La comunidad está en paz!</h2>';
+  html += '<p style="color:var(--tierra);font-size:1.1rem">' + aciertos + ' / ' + casos.length + ' conflictos resueltos con diálogo</p>';
+
+  if(aciertos >= 2){
+    html += '<div style="margin:15px 0;font-size:3rem">🏅</div>';
+    html += '<p style="font-weight:bold;color:var(--verde)">¡Eres un verdadero Palabrero!</p>';
+    guardarDiario();
+  }
+
+  html += '<div class="consejos-paz">';
+  html += '<h4>🕊️ Recuerda del Pütchipü\'ü:</h4>';
+  html += '<ul style="padding-left:20px">';
+  html += '<li>La palabra es más fuerte que los puños</li>';
+  html += '<li>Escucha a ambas partes antes de opinar</li>';
+  html += '<li>Busca acuerdos donde todos ganen</li>';
+  html += '<li>La reparación (pago justo) restaura la armonía</li>';
+  html += '</ul>';
+  html += '</div>';
+
+  html += '<div style="margin-top:15px">';
+  html += '<button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>';
+  html += '<a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>';
+  html += '</div></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progreso + '%';
+  document.getElementById('progresoPct').textContent = progreso + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('ciu401_progreso', progreso); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('ciu-401', 'modulo_completado', { puntos: progreso, estrellas: Math.min(3, aciertos) }, 'El Palabrero Pütchipü\'ü', '🕊️');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

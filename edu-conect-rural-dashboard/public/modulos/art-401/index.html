@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ART-401: Pintando mi Territorio | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#FFF8E1,#FFE0B2,#FFCC80);min-height:100vh}
+.container{max-width:600px;margin:0 auto;padding:15px;position:relative;z-index:1}
+.header{text-align:center;padding:20px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:14px 18px;box-shadow:var(--sombra);border:2px solid var(--atardecer);text-align:center;font-size:0.95rem;margin-bottom:16px;color:var(--tierra)}
+
+.arte-container{display:flex;flex-direction:column;align-items:center;gap:12px}
+canvas{background:white;border:4px solid var(--arena-oscura);border-radius:14px;touch-action:none;cursor:crosshair;box-shadow:0 6px 20px rgba(0,0,0,0.12);max-width:100%}
+
+.paleta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:10px 16px;background:white;border-radius:16px;box-shadow:var(--sombra);border:2px solid var(--arena)}
+.color-btn{width:42px;height:42px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s}
+.color-btn:hover{transform:scale(1.1)}
+.color-btn.activo{transform:scale(1.25);border-color:var(--tierra);box-shadow:0 0 0 3px var(--wayuu-oro)}
+.color-btn .tooltip{display:none}
+.controles{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+.pincel-size{display:flex;align-items:center;gap:6px;background:white;padding:6px 12px;border-radius:12px;box-shadow:var(--sombra);font-size:0.85rem;color:var(--tierra)}
+.pincel-size input{width:80px;accent-color:var(--atardecer)}
+
+.estadisticas{display:flex;gap:16px;justify-content:center;margin:8px 0;color:#999;font-size:0.85rem}
+
+.resultado{display:none;text-align:center;padding:20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🎨 Pintando mi Territorio</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Arte y Creatividad · Dibuja libremente</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🎨 Dibuja lo que veas a tu alrededor: cardones, chivos, el sol, tu casa. Usa los colores de la naturaleza (carbón, achiote, hojas, tierra).
+  </div>
+
+  <div class="arte-container">
+    <canvas id="lienzo" width="360" height="360"></canvas>
+
+    <div class="paleta">
+      <div class="color-btn activo" style="background:#2d3436" data-color="#2d3436" title="Carbón (Negro)"></div>
+      <div class="color-btn" style="background:#d63031" data-color="#d63031" title="Achiote (Rojo)"></div>
+      <div class="color-btn" style="background:#e17055" data-color="#e17055" title="Arcilla (Naranja)"></div>
+      <div class="color-btn" style="background:#00b894" data-color="#00b894" title="Hojas (Verde)"></div>
+      <div class="color-btn" style="background:#0984e3" data-color="#0984e3" title="Cielo (Azul)"></div>
+      <div class="color-btn" style="background:#e1b12c" data-color="#e1b12c" title="Tierra (Amarillo/Ocre)"></div>
+      <div class="color-btn" style="background:#6c5ce7" data-color="#6c5ce7" title="Uva (Morado)"></div>
+      <div class="color-btn" style="background:white;border-color:#ccc" data-color="#ffffff" title="Borrador"></div>
+    </div>
+
+    <div class="pincel-size">
+      <span>🖌️</span>
+      <input type="range" id="tamanoPincel" min="2" max="20" value="5">
+      <span id="tamanoLabel">5</span>
+    </div>
+
+    <div class="estadisticas">
+      <span>✍️ <span id="trazoCount">0</span> trazos</span>
+    </div>
+
+    <div class="controles">
+      <button class="btn btn-danger" onclick="limpiarLienzo()">🗑️ Limpiar</button>
+      <button class="btn btn-exito" onclick="terminarObra()">✅ Terminar obra</button>
+    </div>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">🏆</div>
+    <h2 style="color:var(--tierra)">¡Obra de arte completada!</h2>
+    <p style="color:#666">Has expresado tu creatividad como un verdadero artista wayuu.</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Artista Local!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var canvas = document.getElementById('lienzo');
+var ctx = canvas.getContext('2d');
+var pintando = false;
+var colorActual = '#2d3436';
+var trazos = 0;
+var progresoVal = 0;
+
+var size = Math.min(window.innerWidth - 40, 400);
+canvas.width = size;
+canvas.height = size;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.lineWidth = 5;
+
+function getPos(e){
+  var rect = canvas.getBoundingClientRect();
+  if(e.touches) return {x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top};
+  return {x: e.clientX - rect.left, y: e.clientY - rect.top};
+}
+
+function startPosition(e){
+  e.preventDefault();
+  pintando = true;
+  var pos = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+function endPosition(e){
+  pintando = false;
+  ctx.beginPath();
+}
+function draw(e){
+  if(!pintando) return;
+  e.preventDefault();
+  var pos = getPos(e);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.strokeStyle = colorActual;
+  ctx.lineWidth = parseInt(document.getElementById('tamanoPincel').value);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+}
+
+canvas.addEventListener('mousedown', startPosition);
+canvas.addEventListener('mouseup', endPosition);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseleave', endPosition);
+canvas.addEventListener('touchstart', startPosition, {passive:false});
+canvas.addEventListener('touchend', endPosition);
+canvas.addEventListener('touchmove', draw, {passive:false});
+
+document.querySelectorAll('.color-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.color-btn').forEach(function(b){ b.classList.remove('activo'); });
+    this.classList.add('activo');
+    colorActual = this.dataset.color;
+  });
+});
+
+document.getElementById('tamanoPincel').addEventListener('input', function(){
+  document.getElementById('tamanoLabel').textContent = this.value;
+});
+
+// Contar trazos: cada vez que termina un trazo (mouseup/touchend)
+var trazoCount = 0;
+var lastCountTime = 0;
+canvas.addEventListener('mouseup', function(){ if(Date.now() - lastCountTime > 200){ trazoCount++; document.getElementById('trazoCount').textContent = trazoCount; lastCountTime = Date.now(); } });
+canvas.addEventListener('touchend', function(){ if(Date.now() - lastCountTime > 200){ trazoCount++; document.getElementById('trazoCount').textContent = trazoCount; lastCountTime = Date.now(); } });
+
+function limpiarLienzo(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  trazoCount = 0;
+  document.getElementById('trazoCount').textContent = '0';
+}
+
+function terminarObra(){
+  if(trazoCount < 5){
+    mostrarToast('🎨 Dibuja un poco más antes de terminar (al menos 5 trazos)', 'info');
+    return;
+  }
+  progresoVal = 100;
+  document.getElementById('progresoFill').style.width = '100%';
+  document.getElementById('progresoPct').textContent = '100%';
+  guardarProgreso();
+  document.getElementById('resultado').classList.add('visible');
+  guardarDiario();
+  mostrarToast('🏆 ¡Obra completada! Eres un artista.', 'exito');
+  hablar('¡Felicidades! Has creado una obra de arte. Sigue expresando tu creatividad.');
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('art401_progreso', 100); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('art-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Pintando mi Territorio', '🎨');
+    }
+  } catch(e){}
+}
+
+function mostrarToast(msg, tipo){
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function(){ t.remove(); }, 300); }, 3000);
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+})();
+</script>
+</body>
+</html>

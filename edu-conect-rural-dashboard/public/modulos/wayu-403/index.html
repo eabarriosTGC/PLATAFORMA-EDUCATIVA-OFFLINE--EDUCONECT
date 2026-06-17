@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAYU-403: Tejidos y Danza Yonna | EduConect Rural</title>
+<style>
+/* ===== RESET Y VARIABLES ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --wayuu-terracota:#C4703F;
+  --wayuu-arena:#F4E4C1;
+  --wayuu-azul-profundo:#1B3A5C;
+  --wayuu-rojo:#C23B3B;
+  --wayuu-verde:#3A7D44;
+  --wayuu-amarillo:#E8B730;
+  --wayuu-blanco:#FBF8F0;
+  --wayuu-negro:#1A1A1A;
+  --wayuu-morado:#6B3A7D;
+  --wayuu-naranja:#E07B39;
+}
+body{
+  font-family:'Segoe UI','Comic Sans MS',sans-serif;
+  background:linear-gradient(160deg,#F4E4C1 0%,#E8D5B7 25%,#D4A574 50%,#C4703F 100%);
+  min-height:100vh;overflow-x:hidden;color:var(--wayuu-negro);
+  background-attachment:fixed;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+#wayu403-app{max-width:900px;margin:0 auto;padding:20px;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* ===== PANTALLAS ===== */
+.pantalla{display:none;width:100%;animation:fadeIn 0.5s ease}
+.pantalla.activa{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes pulso{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes girar{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes aparecer{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+
+/* ===== TARJETAS BASE ===== */
+.tarjeta{
+  background:rgba(255,255,255,0.95);
+  border-radius:28px;padding:40px 35px;
+  box-shadow:0 15px 50px rgba(0,0,0,0.18),0 3px 8px rgba(0,0,0,0.06);
+  width:100%;text-align:center;position:relative;overflow:hidden;
+  border:3px solid rgba(196,112,63,0.2);
+}
+.tarjeta::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:6px;
+  background:linear-gradient(90deg,var(--wayuu-terracota),var(--wayuu-amarillo),var(--wayuu-rojo),var(--wayuu-verde),var(--wayuu-azul-profundo));
+}
+
+/* ===== BOTONES ===== */
+.btn{
+  display:inline-block;padding:14px 32px;border-radius:50px;
+  font-size:1.1rem;font-weight:700;text-decoration:none;cursor:pointer;
+  border:none;transition:all 0.3s ease;font-family:inherit;
+  box-shadow:0 4px 15px rgba(0,0,0,0.15);
+}
+.btn:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,0.25)}
+.btn:active{transform:translateY(0)}
+.btn-primario{background:var(--wayuu-terracota);color:white}
+.btn-primario:hover{background:#A85D2F}
+.btn-secundario{background:var(--wayuu-azul-profundo);color:white}
+.btn-secundario:hover{background:#152D4A}
+.btn-juego{background:var(--wayuu-amarillo);color:var(--wayuu-negro);font-size:1rem;padding:10px 22px}
+.btn-juego:hover{background:#D4A520}
+.btn-exito{background:var(--wayuu-verde);color:white}
+.btn-exito:hover{background:#2E6B36}
+.btn-pequeno{padding:8px 18px;font-size:0.9rem}
+
+/* ===== PANTALLA 1: BIENVENIDA ===== */
+.bienvenida-icono{font-size:5rem;animation:flotar 3s ease-in-out infinite;margin-bottom:15px}
+.bienvenida-titulo{font-size:2.2rem;color:var(--wayuu-azul-profundo);margin-bottom:8px;font-weight:800}
+.bienvenida-sub{font-size:1.15rem;color:#555;margin-bottom:12px;font-style:italic}
+.bienvenida-svg{margin:20px auto;max-width:280px}
+.bienvenida-desc{font-size:1rem;color:#666;line-height:1.6;margin-bottom:10px;max-width:600px;margin-left:auto;margin-right:auto}
+.badge-grado{display:inline-block;background:var(--wayuu-amarillo);color:var(--wayuu-negro);padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.9rem;margin:8px 0}
+
+/* ===== PANTALLA 2: LECCIÓN ===== */
+.leccion-tabs{display:flex;gap:8px;margin-bottom:25px;flex-wrap:wrap;justify-content:center}
+.leccion-tab{
+  flex:1;min-width:120px;padding:12px 8px;border-radius:16px;
+  background:rgba(255,255,255,0.7);border:2px solid transparent;
+  cursor:pointer;font-weight:700;font-size:0.95rem;
+  transition:all 0.3s;text-align:center;color:var(--wayuu-azul-profundo)
+}
+.leccion-tab:hover{background:rgba(196,112,63,0.15);border-color:var(--wayuu-terracota)}
+.leccion-tab.activo{background:var(--wayuu-terracota);color:white;border-color:var(--wayuu-terracota);box-shadow:0 4px 15px rgba(196,112,63,0.4)}
+.leccion-contenido{display:none;animation:fadeIn 0.4s ease}
+.leccion-contenido.activo{display:block}
+.leccion-contenido h3{font-size:1.5rem;color:var(--wayuu-azul-profundo);margin-bottom:15px}
+.leccion-contenido p{font-size:1.05rem;line-height:1.7;color:#444;margin-bottom:12px;text-align:left}
+.leccion-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin:20px 0}
+.leccion-card{
+  background:linear-gradient(135deg,#FFF8F0,#FFECD2);
+  border-radius:18px;padding:18px;text-align:center;
+  border:2px solid rgba(196,112,63,0.25);transition:transform 0.3s
+}
+.leccion-card:hover{transform:translateY(-4px)}
+.leccion-card .icono{font-size:2.8rem;margin-bottom:8px}
+.leccion-card h4{font-size:1.1rem;color:var(--wayuu-terracota);margin-bottom:4px}
+.leccion-card p{font-size:0.9rem;color:#555;text-align:center;line-height:1.5}
+.color-muestra{display:inline-block;width:40px;height:40px;border-radius:50%;margin:4px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.15);vertical-align:middle}
+
+/* ===== DANZA YONNA ILUSTRACIÓN SVG ===== */
+.danza-ilustracion{margin:20px auto;max-width:300px;opacity:0.9}
+
+/* ===== PANTALLA 3: JUEGO CANVAS ===== */
+.canvas-container{
+  position:relative;margin:20px auto;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 8px 35px rgba(0,0,0,0.2);
+  border:4px solid var(--wayuu-terracota);
+  background:var(--wayuu-blanco);
+  cursor:crosshair;touch-action:none;
+}
+.canvas-container canvas{display:block;width:100%;height:auto}
+.canvas-controles{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0;align-items:center}
+.color-btn{
+  width:45px;height:45px;border-radius:50%;border:3px solid transparent;
+  cursor:pointer;transition:all 0.2s;box-shadow:0 3px 10px rgba(0,0,0,0.15)
+}
+.color-btn:hover{transform:scale(1.15)}
+.color-btn.seleccionado{border-color:var(--wayuu-negro);box-shadow:0 0 0 4px rgba(0,0,0,0.2);transform:scale(1.2)}
+.color-btn[data-color="#C23B3B"]{background:#C23B3B}
+.color-btn[data-color="#1B3A5C"]{background:#1B3A5C}
+.color-btn[data-color="#E8B730"]{background:#E8B730}
+.color-btn[data-color="#3A7D44"]{background:#3A7D44}
+.grosor-control{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--wayuu-azul-profundo)}
+.grosor-control input[type=range]{width:100px}
+.canvas-info{font-size:0.9rem;color:#666;margin:8px 0;font-style:italic}
+
+/* ===== PANTALLA 4: RECONOCIENDO KANAS ===== */
+.quiz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin:20px 0}
+.quiz-card{
+  background:white;border-radius:16px;padding:15px;
+  border:3px solid #E0D0C0;cursor:pointer;transition:all 0.3s;
+  text-align:center;position:relative
+}
+.quiz-card:hover{border-color:var(--wayuu-terracota);transform:translateY(-4px);box-shadow:0 8px 25px rgba(0,0,0,0.12)}
+.quiz-card.resuelto{border-color:var(--wayuu-verde);background:#F0FFF0}
+.quiz-card svg{width:100px;height:100px;margin-bottom:8px}
+.quiz-card .patron-nombre{font-weight:700;color:var(--wayuu-azul-profundo);font-size:1rem}
+.quiz-opciones{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.quiz-opcion{
+  padding:8px 12px;border-radius:20px;border:2px solid #D0C0B0;
+  background:#FFF8F0;cursor:pointer;font-size:0.85rem;
+  transition:all 0.2s;text-align:center
+}
+.quiz-opcion:hover{background:var(--wayuu-amarillo);border-color:var(--wayuu-amarillo)}
+.quiz-opcion.correcta{background:var(--wayuu-verde);color:white;border-color:var(--wayuu-verde)}
+.quiz-opcion.incorrecta{background:var(--wayuu-rojo);color:white;border-color:var(--wayuu-rojo)}
+.quiz-puntaje{font-size:1.3rem;font-weight:700;color:var(--wayuu-azul-profundo);margin:15px 0}
+
+/* ===== PANTALLA 5: FINAL ===== */
+.final-icono{font-size:7rem;animation:aparecer 0.8s ease;margin-bottom:10px}
+.final-titulo{font-size:2rem;color:var(--wayuu-verde);font-weight:800;margin-bottom:8px}
+.final-sub{font-size:1.2rem;color:var(--wayuu-terracota);margin-bottom:15px}
+.final-estrellas{font-size:3rem;margin:15px 0;animation:pulso 1.5s ease-in-out infinite}
+.diploma{
+  background:linear-gradient(135deg,#FFF8F0,#FFECD2);
+  border:4px double var(--wayuu-amarillo);
+  border-radius:20px;padding:25px;margin:20px auto;max-width:500px;
+  position:relative
+}
+.diploma::before{
+  content:'★';position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  font-size:2rem;color:var(--wayuu-amarillo);background:white;
+  padding:0 10px;border-radius:50%
+}
+.diploma h3{color:var(--wayuu-azul-profundo);font-size:1.4rem;margin-bottom:8px}
+.diploma p{color:#555;font-size:1rem;line-height:1.5}
+
+/* ===== BARRA DE PROGRESO ===== */
+.barra-progreso{
+  position:fixed;top:0;left:0;right:0;height:5px;z-index:1000;
+  background:rgba(0,0,0,0.1)
+}
+.barra-progreso-inner{
+  height:100%;background:linear-gradient(90deg,var(--wayuu-terracota),var(--wayuu-amarillo),var(--wayuu-rojo),var(--wayuu-verde));
+  transition:width 0.5s ease
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:600px){
+  .tarjeta{padding:25px 18px}
+  .bienvenida-titulo{font-size:1.6rem}
+  .leccion-tab{min-width:80px;font-size:0.8rem;padding:10px 6px}
+  .leccion-grid{grid-template-columns:1fr 1fr}
+  .canvas-container{max-width:100%}
+  .quiz-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="barra-progreso"><div class="barra-progreso-inner" id="wayu403-progreso" style="width:0%"></div></div>
+
+<div id="wayu403-app">
+
+<!-- ============ PANTALLA 1: BIENVENIDA ============ -->
+<div class="pantalla activa" id="wayu403-p1">
+<div class="tarjeta">
+  <div class="bienvenida-icono">🧶</div>
+  <h1 class="bienvenida-titulo">El arte wayuu: donde cada hilo cuenta una historia</h1>
+  <p class="bienvenida-sub">Tejidos y Danza Yonna</p>
+
+  <!-- SVG Mochila Wayuu -->
+  <div class="bienvenida-svg">
+    <svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- Cuerpo de la mochila -->
+      <ellipse cx="120" cy="165" rx="90" ry="100" fill="#D4A574" stroke="#8B5E3C" stroke-width="3"/>
+      <!-- Borde inferior -->
+      <path d="M40 220 Q120 270 200 220" fill="none" stroke="#8B5E3C" stroke-width="3"/>
+      <!-- Franja decorativa superior -->
+      <path d="M38 130 Q120 115 202 130" fill="none" stroke="#C23B3B" stroke-width="8"/>
+      <path d="M42 145 Q120 132 198 145" fill="none" stroke="#E8B730" stroke-width="6"/>
+      <path d="M45 158 Q120 147 195 158" fill="none" stroke="#3A7D44" stroke-width="5"/>
+      <!-- Patrón kana: rombos -->
+      <polygon points="120,100 145,130 120,160 95,130" fill="none" stroke="#1B3A5C" stroke-width="2.5"/>
+      <polygon points="80,135 100,155 80,175 60,155" fill="none" stroke="#C23B3B" stroke-width="2"/>
+      <polygon points="160,135 180,155 160,175 140,155" fill="none" stroke="#C23B3B" stroke-width="2"/>
+      <!-- Patrón kana: triángulos -->
+      <polygon points="120,175 140,200 100,200" fill="none" stroke="#E8B730" stroke-width="2"/>
+      <polygon points="75,165 92,195 58,195" fill="none" stroke="#E8B730" stroke-width="2"/>
+      <polygon points="165,165 182,195 148,195" fill="none" stroke="#E8B730" stroke-width="2"/>
+      <!-- Líneas zigzag -->
+      <polyline points="55,185 75,170 95,185 115,170 135,185 155,170 175,185 195,170" fill="none" stroke="#6B3A7D" stroke-width="2"/>
+      <!-- Cordon / gasa -->
+      <path d="M80 95 Q85 60 100 50 Q115 42 120 35" fill="none" stroke="#8B5E3C" stroke-width="4" stroke-linecap="round"/>
+      <path d="M160 95 Q155 60 140 50 Q125 42 120 35" fill="none" stroke="#8B5E3C" stroke-width="4" stroke-linecap="round"/>
+      <!-- Borlas -->
+      <circle cx="120" cy="252" r="6" fill="#C23B3B"/>
+      <circle cx="100" cy="256" r="5" fill="#E8B730"/>
+      <circle cx="140" cy="256" r="5" fill="#3A7D44"/>
+      <circle cx="85" cy="248" r="4" fill="#1B3A5C"/>
+      <circle cx="155" cy="248" r="4" fill="#C4703F"/>
+      <!-- Flecos inferiores -->
+      <line x1="70" y1="235" x2="65" y2="255" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="85" y1="240" x2="82" y2="258" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="100" y1="243" x2="98" y2="260" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="120" y1="244" x2="120" y2="262" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="140" y1="243" x2="142" y2="260" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="155" y1="240" x2="158" y2="258" stroke="#8B5E3C" stroke-width="2"/>
+      <line x1="170" y1="235" x2="175" y2="255" stroke="#8B5E3C" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <p class="bienvenida-desc">
+    Los wayuu son un pueblo indígena que vive en la península de La Guajira, entre Colombia y Venezuela. Son famosos por sus hermosos tejidos llenos de colores y figuras geométricas llamadas <strong>kanas</strong>. Cada kana tiene un significado especial que cuenta historias de la naturaleza, los animales y la vida wayuu.
+  </p>
+  <p class="bienvenida-desc">
+    En este módulo aprenderás sobre las kanas, los colores sagrados, la mochila wayuu (<em>susu</em>) y la danza tradicional Yonna. ¡También podrás diseñar tus propios patrones!
+  </p>
+
+  <span class="badge-grado">🎒 Grados 3° a 5° &nbsp;|&nbsp; Edades 8-11 años</span>
+  <br><br>
+  <button class="btn btn-primario" onclick="wayu403Navegar('p2')">✨ ¡Comencemos la aventura!</button>
+</div>
+</div>
+
+<!-- ============ PANTALLA 2: LECCIÓN ============ -->
+<div class="pantalla" id="wayu403-p2">
+<div class="tarjeta">
+  <h2 style="color:var(--wayuu-azul-profundo);margin-bottom:5px">📚 Aprendiendo el arte wayuu</h2>
+  <p style="color:#777;margin-bottom:20px">Selecciona cada sección para aprender</p>
+
+  <div class="leccion-tabs">
+    <button class="leccion-tab activo" onclick="wayu403Tab('kanas')">🔷 Kanas</button>
+    <button class="leccion-tab" onclick="wayu403Tab('colores')">🎨 Colores</button>
+    <button class="leccion-tab" onclick="wayu403Tab('mochila')">👜 La Mochila</button>
+    <button class="leccion-tab" onclick="wayu403Tab('danza')">💃 Danza Yonna</button>
+  </div>
+
+  <!-- Slide: Kanas -->
+  <div class="leccion-contenido activo" id="wayu403-slide-kanas">
+    <h3>🔷 Las Kanas: Patrones que cuentan historias</h3>
+    <p>Las <strong>kanas</strong> son figuras geométricas que las tejedoras wayuu dibujan en sus mochilas, chinchorros (hamacas) y mantas. No son simples decoraciones: cada figura tiene un <strong>significado profundo</strong> conectado con la naturaleza, los animales y la vida cotidiana.</p>
+
+    <div class="leccion-grid">
+      <div class="leccion-card">
+        <div class="icono">◆</div>
+        <h4>Rombo (Puliiku)</h4>
+        <p>Representa la <strong>tortuga</strong>, símbolo de sabiduría y longevidad. Las líneas que se cruzan recuerdan el caparazón.</p>
+        <!-- SVG rombo -->
+        <svg width="60" height="60" viewBox="0 0 60 60"><polygon points="30,5 55,30 30,55 5,30" fill="none" stroke="#1B3A5C" stroke-width="2.5"/><line x1="30" y1="5" x2="30" y2="55" stroke="#C23B3B" stroke-width="1.5"/><line x1="5" y1="30" x2="55" y2="30" stroke="#C23B3B" stroke-width="1.5"/></svg>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono">⧖</div>
+        <h4>Zigzag (Kuliachon)</h4>
+        <p>Representa la <strong>serpiente</strong> o el camino de la vida. Sus ondulaciones simbolizan los altibajos del camino.</p>
+        <svg width="60" height="60" viewBox="0 0 60 60"><polyline points="10,40 20,20 30,40 40,20 50,40" fill="none" stroke="#3A7D44" stroke-width="2.5"/></svg>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono">△</div>
+        <h4>Triángulo (Jalasia)</h4>
+        <p>Simboliza las <strong>montañas</strong> de La Guajira y la conexión entre el cielo y la tierra.</p>
+        <svg width="60" height="60" viewBox="0 0 60 60"><polygon points="30,8 55,52 5,52" fill="none" stroke="#E8B730" stroke-width="2.5"/></svg>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono">🕸</div>
+        <h4>Cruz (Walia)</h4>
+        <p>Representa los <strong>cuatro puntos cardinales</strong> y el equilibrio del universo wayuu.</p>
+        <svg width="60" height="60" viewBox="0 0 60 60"><line x1="30" y1="5" x2="30" y2="55" stroke="#C4703F" stroke-width="3"/><line x1="5" y1="30" x2="55" y2="30" stroke="#C4703F" stroke-width="3"/></svg>
+      </div>
+    </div>
+
+    <p>Las tejedoras aprenden estos patrones desde niñas, observando a sus abuelas y madres. ¡Cada mochila puede tener hasta <strong>20 kanas diferentes</strong>!</p>
+  </div>
+
+  <!-- Slide: Colores -->
+  <div class="leccion-contenido" id="wayu403-slide-colores">
+    <h3>🎨 Los colores del tejido wayuu</h3>
+    <p>En la cultura wayuu, los colores no se eligen al azar. Cada uno tiene un <strong>significado especial</strong> conectado con elementos de la naturaleza y la vida espiritual.</p>
+
+    <div class="leccion-grid">
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#C23B3B"></span></div>
+        <h4>Rojo (Isho'u)</h4>
+        <p>Representa la <strong>sangre, la fuerza vital</strong> y el coraje del pueblo wayuu. También simboliza el sol al atardecer en el desierto.</p>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#1B3A5C"></span></div>
+        <h4>Azul oscuro (Jouse)</h4>
+        <p>Representa el <strong>mar Caribe</strong> y el cielo nocturno. Simboliza la profundidad, el misterio y la sabiduría ancestral.</p>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#E8B730"></span></div>
+        <h4>Amarillo (Jame'u)</h4>
+        <p>Color del <strong>sol y del oro</strong>. Representa la energía, la alegría y la abundancia. También se asocia con el maíz, alimento sagrado.</p>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#3A7D44"></span></div>
+        <h4>Verde (Jasai)</h4>
+        <p>Representa la <strong>naturaleza, los cactus</strong> y las plantas del desierto guajiro. Símbolo de vida, esperanza y resistencia.</p>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#6B3A7D"></span></div>
+        <h4>Morado (Jashichi)</h4>
+        <p>Simboliza la <strong>espiritualidad</strong> y el mundo de los sueños. Es el color de los rituales y la conexión con los antepasados.</p>
+      </div>
+
+      <div class="leccion-card">
+        <div class="icono"><span class="color-muestra" style="background:#E07B39"></span></div>
+        <h4>Naranja / Terracota</h4>
+        <p>Color de la <strong>tierra y el desierto</strong> guajiro. Representa el hogar, el territorio sagrado de los wayuu.</p>
+      </div>
+    </div>
+
+    <p>Originalmente, los tintes se obtenían de <strong>plantas, cortezas y minerales</strong> del desierto. Hoy también se usan hilos industriales, pero los colores tradicionales se mantienen vivos en cada tejido.</p>
+  </div>
+
+  <!-- Slide: La Mochila (Susu) -->
+  <div class="leccion-contenido" id="wayu403-slide-mochila">
+    <h3>👜 La Mochila Wayuu (Susu)</h3>
+    <p>La <strong>susu</strong> o mochila wayuu es mucho más que un bolso: es una <strong>obra de arte</strong> que representa la identidad, creatividad y sabiduría de la mujer wayuu.</p>
+
+    <p><strong>El proceso de tejido:</strong></p>
+    <div class="leccion-grid">
+      <div class="leccion-card">
+        <div class="icono">🧵</div>
+        <h4>1. El hilo</h4>
+        <p>Se preparan los hilos de algodón o fibras naturales, tiñéndolos con los colores tradicionales.</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">🪢</div>
+        <h4>2. El tejido</h4>
+        <p>Se usa la técnica de <strong>crochet</strong> (ganchillo). Cada puntada es un punto que forma el patrón.</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">✋</div>
+        <h4>3. La paciencia</h4>
+        <p>Una mochila puede tomar de <strong>15 a 30 días</strong> de trabajo continuo. ¡Todo a mano!</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">🎁</div>
+        <h4>4. El regalo</h4>
+        <p>Las mochilas se regalan en momentos especiales: matrimonios, nacimientos y rituales importantes.</p>
+      </div>
+    </div>
+
+    <p><strong>Partes de la mochila:</strong></p>
+    <ul style="text-align:left;line-height:1.8;margin:10px 0;padding-left:20px;color:#444">
+      <li><strong>El cuerpo:</strong> La parte principal donde van las kanas. Forma de cilindro o bolsa.</li>
+      <li><strong>La gasa (cordon):</strong> La correa tejida que se cruza en el pecho. También puede tener kanas.</li>
+      <li><strong>La borla:</strong> Los flecos decorativos en la parte inferior. Cada borla es un detalle único.</li>
+      <li><strong>La boca:</strong> La abertura superior, que a veces se cierra con un cordón tejido.</li>
+    </ul>
+    <p>Las mochilas wayuu son reconocidas <strong>en todo el mundo</strong> por su belleza. Cada una es única, como una huella digital. ¡No hay dos iguales!</p>
+  </div>
+
+  <!-- Slide: Danza Yonna -->
+  <div class="leccion-contenido" id="wayu403-slide-danza">
+    <h3>💃 La Danza Yonna: El baile tradicional wayuu</h3>
+    <p>La <strong>Yonna</strong> (o Chichamaya) es la danza tradicional más importante del pueblo wayuu. Se baila en celebraciones especiales como matrimonios, cosechas y rituales.</p>
+
+    <!-- SVG ilustración danza -->
+    <div class="danza-ilustracion">
+      <svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Tambor -->
+        <ellipse cx="70" cy="110" rx="40" ry="30" fill="#8B5E3C" stroke="#5C3A1E" stroke-width="2"/>
+        <ellipse cx="70" cy="110" rx="38" ry="28" fill="#A0704A"/>
+        <line x1="35" y1="95" x2="35" y2="88" stroke="#E8B730" stroke-width="2"/>
+        <line x1="45" y1="92" x2="46" y2="85" stroke="#C23B3B" stroke-width="2"/>
+        <line x1="55" y1="91" x2="56" y2="83" stroke="#E8B730" stroke-width="2"/>
+        <line x1="65" y1="90" x2="66" y2="82" stroke="#3A7D44" stroke-width="2"/>
+        <!-- Bailarina -->
+        <circle cx="180" cy="50" r="14" fill="#D4A574" stroke="#8B5E3C" stroke-width="1.5"/>
+        <path d="M180 64 Q160 80 165 110" fill="none" stroke="#C23B3B" stroke-width="3"/>
+        <path d="M180 64 Q200 80 195 110" fill="none" stroke="#C23B3B" stroke-width="3"/>
+        <path d="M165 110 L155 145" fill="none" stroke="#D4A574" stroke-width="3"/>
+        <path d="M195 110 L205 145" fill="none" stroke="#D4A574" stroke-width="3"/>
+        <path d="M165 85 L140 70" fill="none" stroke="#D4A574" stroke-width="2.5"/>
+        <path d="M195 85 L220 70" fill="none" stroke="#D4A574" stroke-width="2.5"/>
+        <!-- Vestido / manta -->
+        <path d="M155 75 Q180 95 205 75" fill="none" stroke="#E8B730" stroke-width="4"/>
+        <!-- Suelo -->
+        <line x1="20" y1="155" x2="260" y2="155" stroke="#C4703F" stroke-width="2"/>
+        <!-- Notas musicales -->
+        <text x="120" y="40" font-size="20">♪</text>
+        <text x="140" y="25" font-size="16">♫</text>
+        <text x="250" y="45" font-size="18">♪</text>
+      </svg>
+    </div>
+
+    <p><strong>¿Cómo se baila la Yonna?</strong></p>
+    <div class="leccion-grid">
+      <div class="leccion-card">
+        <div class="icono">🥁</div>
+        <h4>El tambor (Kashi)</h4>
+        <p>Marca el ritmo con golpes fuertes y suaves. El tamborilero guía toda la danza.</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">👣</div>
+        <h4>Los pasos</h4>
+        <p>La mujer baila arrastrando los pies en círculo, con pasos cortos y elegantes, sin levantar los talones.</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">👗</div>
+        <h4>La vestimenta</h4>
+        <p>La mujer usa una <strong>manta guajira</strong> larga y colorida. El hombre usa un <strong>guayuco</strong> y camisa blanca.</p>
+      </div>
+      <div class="leccion-card">
+        <div class="icono">🔄</div>
+        <h4>El círculo</h4>
+        <p>La mujer danza alrededor del hombre, quien retrocede. Representa el <strong>cortejo y el respeto</strong>.</p>
+      </div>
+    </div>
+
+    <p><strong>Instrumentos musicales:</strong></p>
+    <ul style="text-align:left;line-height:1.8;margin:10px 0;padding-left:20px;color:#444">
+      <li><strong>Kashi:</strong> El tambor principal, hecho de madera y cuero de chivo.</li>
+      <li><strong>Sawawa:</strong> Sonajero de totumo (calabazo seco) con semillas dentro.</li>
+      <li><strong>Flauta wayuu:</strong> Hecha de caña, produce sonidos suaves que imitan el viento del desierto.</li>
+    </ul>
+    <p>La Yonna es <strong>Patrimonio Cultural</strong> de Colombia. Bailarla es mantener viva la historia del pueblo wayuu.</p>
+  </div>
+
+  <br>
+  <button class="btn btn-secundario" onclick="wayu403Navegar('p3')">🎮 ¡A jugar! Diseña tu kana →</button>
+  <br><br>
+  <button class="btn btn-pequeno" style="background:#ddd;color:#555" onclick="wayu403Navegar('p1')">← Volver al inicio</button>
+</div>
+</div>
+
+<!-- ============ PANTALLA 3: JUEGO 1 - DISEÑA TU KANA ============ -->
+<div class="pantalla" id="wayu403-p3">
+<div class="tarjeta">
+  <h2 style="color:var(--wayuu-azul-profundo);margin-bottom:5px">🎨 Diseña tu Kana</h2>
+  <p style="color:#777;margin-bottom:10px">Dibuja patrones wayuu con simetría de 4 ejes</p>
+
+  <div class="canvas-info">✨ Dibuja en un cuadrante y tu trazo se reflejará en los 4 lados ✨</div>
+
+  <div class="canvas-controles">
+    <span style="font-weight:700;color:var(--wayuu-azul-profundo)">Color:</span>
+    <button class="color-btn seleccionado" data-color="#C23B3B" onclick="wayu403Color(this,'#C23B3B')" title="Rojo - Isho'u"></button>
+    <button class="color-btn" data-color="#1B3A5C" onclick="wayu403Color(this,'#1B3A5C')" title="Azul - Jouse"></button>
+    <button class="color-btn" data-color="#E8B730" onclick="wayu403Color(this,'#E8B730')" title="Amarillo - Jame'u"></button>
+    <button class="color-btn" data-color="#3A7D44" onclick="wayu403Color(this,'#3A7D44')" title="Verde - Jasai"></button>
+
+    <div class="grosor-control">
+      <span>Grosor:</span>
+      <input type="range" id="wayu403-grosor" min="1" max="8" value="3" oninput="wayu403Grosor()">
+      <span id="wayu403-grosor-valor">3</span>
+    </div>
+  </div>
+
+  <div class="canvas-container" id="wayu403-canvas-wrapper">
+    <canvas id="wayu403-canvas" width="500" height="500"></canvas>
+  </div>
+
+  <div class="canvas-controles">
+    <button class="btn btn-juego" onclick="wayu403LimpiarCanvas()">🧹 Limpiar</button>
+    <button class="btn btn-exito" onclick="wayu403GuardarKana()">💾 Guardar como imagen</button>
+    <button class="btn btn-juego" onclick="wayu403Deshacer()">↩ Deshacer último trazo</button>
+  </div>
+
+  <br>
+  <button class="btn btn-secundario" onclick="wayu403Navegar('p4')">🎯 Siguiente: Reconociendo Kanas →</button>
+  <br><br>
+  <button class="btn btn-pequeno" style="background:#ddd;color:#555" onclick="wayu403Navegar('p2')">← Volver a la lección</button>
+</div>
+</div>
+
+<!-- ============ PANTALLA 4: JUEGO 2 - RECONOCIENDO KANAS ============ -->
+<div class="pantalla" id="wayu403-p4">
+<div class="tarjeta">
+  <h2 style="color:var(--wayuu-azul-profundo);margin-bottom:5px">🔍 Reconociendo Kanas</h2>
+  <p style="color:#777;margin-bottom:5px">Mira el patrón y elige su significado correcto</p>
+  <div class="quiz-puntaje" id="wayu403-puntaje">Puntaje: 0 / 8</div>
+
+  <div class="quiz-grid" id="wayu403-quiz-grid">
+    <!-- Generado por JS -->
+  </div>
+
+  <br>
+  <button class="btn btn-primario" id="wayu403-btn-final" style="display:none" onclick="wayu403Navegar('p5')">🏆 ¡Ver mis resultados! →</button>
+  <br><br>
+  <button class="btn btn-pequeno" style="background:#ddd;color:#555" onclick="wayu403Navegar('p3')">← Volver al canvas</button>
+</div>
+</div>
+
+<!-- ============ PANTALLA 5: FINAL ============ -->
+<div class="pantalla" id="wayu403-p5">
+<div class="tarjeta">
+  <div class="final-icono">🌟</div>
+  <h1 class="final-titulo">¡Eres un artista wayuu!</h1>
+  <p class="final-sub">Has completado el módulo de Tejidos y Danza Yonna</p>
+
+  <div class="final-estrellas">⭐⭐⭐⭐⭐</div>
+
+  <div class="diploma">
+    <h3>🏅 Diploma de Artista Wayuu</h3>
+    <p>Por completar el módulo <strong>WAYU-403: Tejidos y Danza Yonna</strong></p>
+    <p>Ahora conoces:</p>
+    <ul style="text-align:left;line-height:2;padding-left:30px;color:#444;margin:10px 0">
+      <li>✅ El significado de las <strong>kanas</strong> (patrones geométricos)</li>
+      <li>✅ Los <strong>colores sagrados</strong> del tejido wayuu</li>
+      <li>✅ La importancia cultural de la <strong>mochila (susu)</strong></li>
+      <li>✅ La <strong>Danza Yonna</strong> y sus instrumentos musicales</li>
+      <li>✅ Cómo <strong>diseñar tus propias kanas</strong> con simetría</li>
+    </ul>
+    <p style="font-style:italic;color:var(--wayuu-terracota);margin-top:10px">
+      "Cada hilo que tejes es un pensamiento, cada color una emoción, cada kana una historia."
+    </p>
+  </div>
+
+  <p style="color:#555;margin:15px 0">
+    <span id="wayu403-puntaje-final">0/8</span> patrones reconocidos correctamente
+  </p>
+
+  <button class="btn btn-primario" onclick="wayu403Navegar('p1')">🔄 Volver a empezar</button>
+  &nbsp;
+  <button class="btn btn-secundario" onclick="wayu403Navegar('p3')">🎨 Seguir dibujando</button>
+  <br><br>
+  <a href="/modulos/" style="color:var(--wayuu-azul-profundo);text-decoration:underline">← Volver a Módulos</a>
+</div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+/* ===== NAVEGACIÓN ===== */
+function wayu403Navegar(id) {
+  document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+  const target = document.getElementById('wayu403-' + id);
+  if (target) {
+    target.classList.add('activa');
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  // Barra de progreso
+  const pantallas = {'p1':0,'p2':25,'p3':50,'p4':75,'p5':100};
+  document.getElementById('wayu403-progreso').style.width = (pantallas[id]||0) + '%';
+
+  // Inicializar canvas al entrar
+  if (id === 'p3') setTimeout(wayu403InitCanvas, 200);
+  if (id === 'p4') wayu403InitQuiz();
+  if (id === 'p5') document.getElementById('wayu403-puntaje-final').textContent = wayu403PuntajeQuiz + '/8';
+}
+
+/* ===== PANTALLA 2: TABS DE LECCIÓN ===== */
+function wayu403Tab(nombre) {
+  document.querySelectorAll('.leccion-tab').forEach(t => t.classList.remove('activo'));
+  document.querySelectorAll('.leccion-contenido').forEach(c => c.classList.remove('activo'));
+  const tabBtn = document.querySelector(`.leccion-tab[onclick*="${nombre}"]`);
+  const contenido = document.getElementById('wayu403-slide-' + nombre);
+  if (tabBtn) tabBtn.classList.add('activo');
+  if (contenido) contenido.classList.add('activo');
+}
+
+/* ===== CANVAS CON SIMETRÍA RADIAL DE 4 EJES ===== */
+let wayu403Canvas, wayu403Ctx;
+let wayu403Dibujando = false;
+let wayu403ColorActual = '#C23B3B';
+let wayu403GrosorActual = 3;
+let wayu403Historial = [];
+let wayu403MaxHistorial = 30;
+let wayu403CentroX, wayu403CentroY;
+let wayu403MitadW, wayu403MitadH;
+
+function wayu403InitCanvas() {
+  wayu403Canvas = document.getElementById('wayu403-canvas');
+  wayu403Ctx = wayu403Canvas.getContext('2d');
+  const size = Math.min(window.innerWidth - 60, 500);
+  wayu403Canvas.width = size;
+  wayu403Canvas.height = size;
+  wayu403CentroX = size / 2;
+  wayu403CentroY = size / 2;
+  wayu403MitadW = size / 2;
+  wayu403MitadH = size / 2;
+
+  // Fondo
+  wayu403Ctx.fillStyle = '#FBF8F0';
+  wayu403Ctx.fillRect(0, 0, size, size);
+
+  // Líneas guía de ejes (sutiles)
+  wayu403Ctx.strokeStyle = '#E0D0C0';
+  wayu403Ctx.lineWidth = 1;
+  wayu403Ctx.setLineDash([8, 8]);
+  // Ejes principales
+  wayu403Ctx.beginPath();
+  wayu403Ctx.moveTo(wayu403CentroX, 0);
+  wayu403Ctx.lineTo(wayu403CentroX, size);
+  wayu403Ctx.stroke();
+  wayu403Ctx.beginPath();
+  wayu403Ctx.moveTo(0, wayu403CentroY);
+  wayu403Ctx.lineTo(size, wayu403CentroY);
+  wayu403Ctx.stroke();
+  // Diagonales
+  wayu403Ctx.beginPath();
+  wayu403Ctx.moveTo(0, 0);
+  wayu403Ctx.lineTo(size, size);
+  wayu403Ctx.stroke();
+  wayu403Ctx.beginPath();
+  wayu403Ctx.moveTo(size, 0);
+  wayu403Ctx.lineTo(0, size);
+  wayu403Ctx.stroke();
+  wayu403Ctx.setLineDash([]);
+
+  // Punto central
+  wayu403Ctx.fillStyle = '#C4703F';
+  wayu403Ctx.beginPath();
+  wayu403Ctx.arc(wayu403CentroX, wayu403CentroY, 5, 0, Math.PI * 2);
+  wayu403Ctx.fill();
+
+  // Guardar estado inicial
+  wayu403GuardarEstado();
+
+  // Event listeners
+  wayu403Canvas.onmousedown = wayu403IniciarTrazo;
+  wayu403Canvas.onmousemove = wayu403DibujarTrazo;
+  wayu403Canvas.onmouseup = wayu403Canvas.onmouseleave = wayu403FinTrazo;
+  wayu403Canvas.ontouchstart = wayu403TouchIniciar;
+  wayu403Canvas.ontouchmove = wayu403TouchMover;
+  wayu403Canvas.ontouchend = wayu403FinTrazo;
+}
+
+function wayu403CoordenadasCanvas(e) {
+  const rect = wayu403Canvas.getBoundingClientRect();
+  const scaleX = wayu403Canvas.width / rect.width;
+  const scaleY = wayu403Canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function wayu403IniciarTrazo(e) {
+  wayu403Dibujando = true;
+  const {x, y} = wayu403CoordenadasCanvas(e);
+  wayu403DibujarSimetria(x, y, true);
+}
+
+function wayu403DibujarTrazo(e) {
+  if (!wayu403Dibujando) return;
+  const {x, y} = wayu403CoordenadasCanvas(e);
+  wayu403DibujarSimetria(x, y, false);
+}
+
+function wayu403TouchIniciar(e) {
+  e.preventDefault();
+  wayu403Dibujando = true;
+  const rect = wayu403Canvas.getBoundingClientRect();
+  const scaleX = wayu403Canvas.width / rect.width;
+  const scaleY = wayu403Canvas.height / rect.height;
+  const x = (e.touches[0].clientX - rect.left) * scaleX;
+  const y = (e.touches[0].clientY - rect.top) * scaleY;
+  wayu403DibujarSimetria(x, y, true);
+}
+
+function wayu403TouchMover(e) {
+  e.preventDefault();
+  if (!wayu403Dibujando) return;
+  const rect = wayu403Canvas.getBoundingClientRect();
+  const scaleX = wayu403Canvas.width / rect.width;
+  const scaleY = wayu403Canvas.height / rect.height;
+  const x = (e.touches[0].clientX - rect.left) * scaleX;
+  const y = (e.touches[0].clientY - rect.top) * scaleY;
+  wayu403DibujarSimetria(x, y, false);
+}
+
+function wayu403FinTrazo() {
+  if (wayu403Dibujando) {
+    wayu403Dibujando = false;
+    wayu403GuardarEstado();
+  }
+}
+
+/* Dibuja con simetría radial de 4 ejes (reflejo X, Y y ambos) */
+function wayu403DibujarSimetria(x, y, esInicio) {
+  const cx = wayu403CentroX;
+  const cy = wayu403CentroY;
+
+  // Coordenadas relativas al centro
+  const rx = x - cx;
+  const ry = y - cy;
+
+  // Los 4 cuadrantes: (rx,ry) (rx,-ry) (-rx,ry) (-rx,-ry)
+  const puntos = [
+    {x: cx + rx, y: cy + ry},   // Q1 (original)
+    {x: cx + rx, y: cy - ry},   // Q2 (reflejo Y)
+    {x: cx - rx, y: cy + ry},   // Q3 (reflejo X)
+    {x: cx - rx, y: cy - ry}    // Q4 (reflejo X e Y)
+  ];
+
+  wayu403Ctx.strokeStyle = wayu403ColorActual;
+  wayu403Ctx.fillStyle = wayu403ColorActual;
+  wayu403Ctx.lineWidth = wayu403GrosorActual;
+  wayu403Ctx.lineCap = 'round';
+  wayu403Ctx.lineJoin = 'round';
+
+  if (esInicio) {
+    wayu403UltimoPunto = {rx, ry};
+    // Dibujar punto en los 4 cuadrantes
+    puntos.forEach(p => {
+      wayu403Ctx.beginPath();
+      wayu403Ctx.arc(p.x, p.y, wayu403GrosorActual / 2, 0, Math.PI * 2);
+      wayu403Ctx.fill();
+    });
+  } else if (wayu403UltimoPunto) {
+    const lrx = wayu403UltimoPunto.rx;
+    const lry = wayu403UltimoPunto.ry;
+
+    // Dibujar líneas desde el último punto en los 4 cuadrantes
+    puntos.forEach(p => {
+      // El punto anterior correspondiente en el mismo cuadrante
+      let plx, ply;
+      if (p.x === cx + rx && p.y === cy + ry) { plx = cx + lrx; ply = cy + lry; }
+      else if (p.x === cx + rx && p.y === cy - ry) { plx = cx + lrx; ply = cy - lry; }
+      else if (p.x === cx - rx && p.y === cy + ry) { plx = cx - lrx; ply = cy + lry; }
+      else { plx = cx - lrx; ply = cy - lry; }
+
+      wayu403Ctx.beginPath();
+      wayu403Ctx.moveTo(plx, ply);
+      wayu403Ctx.lineTo(p.x, p.y);
+      wayu403Ctx.stroke();
+    });
+
+    wayu403UltimoPunto = {rx, ry};
+  }
+}
+let wayu403UltimoPunto = null;
+
+function wayu403GuardarEstado() {
+  const imgData = wayu403Ctx.getImageData(0, 0, wayu403Canvas.width, wayu403Canvas.height);
+  wayu403Historial.push(imgData);
+  if (wayu403Historial.length > wayu403MaxHistorial) wayu403Historial.shift();
+}
+
+function wayu403Color(btn, color) {
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('seleccionado'));
+  btn.classList.add('seleccionado');
+  wayu403ColorActual = color;
+}
+
+function wayu403Grosor() {
+  const val = document.getElementById('wayu403-grosor').value;
+  document.getElementById('wayu403-grosor-valor').textContent = val;
+  wayu403GrosorActual = parseInt(val);
+}
+
+function wayu403LimpiarCanvas() {
+  if (!wayu403Ctx) return;
+  const size = wayu403Canvas.width;
+  wayu403Ctx.fillStyle = '#FBF8F0';
+  wayu403Ctx.fillRect(0, 0, size, size);
+
+  // Redibujar guías
+  wayu403Ctx.strokeStyle = '#E0D0C0';
+  wayu403Ctx.lineWidth = 1;
+  wayu403Ctx.setLineDash([8, 8]);
+  wayu403Ctx.beginPath(); wayu403Ctx.moveTo(wayu403CentroX, 0); wayu403Ctx.lineTo(wayu403CentroX, size); wayu403Ctx.stroke();
+  wayu403Ctx.beginPath(); wayu403Ctx.moveTo(0, wayu403CentroY); wayu403Ctx.lineTo(size, wayu403CentroY); wayu403Ctx.stroke();
+  wayu403Ctx.beginPath(); wayu403Ctx.moveTo(0, 0); wayu403Ctx.lineTo(size, size); wayu403Ctx.stroke();
+  wayu403Ctx.beginPath(); wayu403Ctx.moveTo(size, 0); wayu403Ctx.lineTo(0, size); wayu403Ctx.stroke();
+  wayu403Ctx.setLineDash([]);
+  wayu403Ctx.fillStyle = '#C4703F';
+  wayu403Ctx.beginPath();
+  wayu403Ctx.arc(wayu403CentroX, wayu403CentroY, 5, 0, Math.PI * 2);
+  wayu403Ctx.fill();
+
+  wayu403Historial = [];
+  wayu403GuardarEstado();
+}
+
+function wayu403Deshacer() {
+  if (wayu403Historial.length <= 1) return;
+  wayu403Historial.pop();
+  const imgData = wayu403Historial[wayu403Historial.length - 1];
+  wayu403Ctx.putImageData(imgData, 0, 0);
+}
+
+function wayu403GuardarKana() {
+  if (!wayu403Canvas) return;
+  const link = document.createElement('a');
+  link.download = 'mi-kana-wayuu.png';
+  link.href = wayu403Canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ===== PANTALLA 4: RECONOCIENDO KANAS ===== */
+const wayu403Patrones = [
+  {
+    id: 1,
+    nombre: 'Rombo (Puliiku)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><polygon points="50,8 85,50 50,92 15,50" fill="none" stroke="#1B3A5C" stroke-width="3"/><line x1="50" y1="8" x2="50" y2="92" stroke="#C23B3B" stroke-width="1.5"/><line x1="15" y1="50" x2="85" y2="50" stroke="#C23B3B" stroke-width="1.5"/></svg>',
+    correcta: 'La tortuga, sabiduría y longevidad',
+    opciones: ['La tortuga, sabiduría y longevidad', 'El sol, energía y alegría', 'La serpiente, camino de la vida']
+  },
+  {
+    id: 2,
+    nombre: 'Zigzag (Kuliachon)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><polyline points="15,70 30,30 45,70 60,30 75,70" fill="none" stroke="#3A7D44" stroke-width="3"/></svg>',
+    correcta: 'La serpiente, el camino de la vida',
+    opciones: ['La serpiente, el camino de la vida', 'Las montañas, cielo y tierra', 'Los cuatro puntos cardinales']
+  },
+  {
+    id: 3,
+    nombre: 'Triángulo (Jalasia)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><polygon points="50,10 90,85 10,85" fill="none" stroke="#E8B730" stroke-width="3"/><polygon points="50,35 70,73 30,73" fill="none" stroke="#C4703F" stroke-width="2"/></svg>',
+    correcta: 'Las montañas de La Guajira',
+    opciones: ['El mar Caribe, profundidad', 'Las montañas de La Guajira', 'La tortuga, caparazón']
+  },
+  {
+    id: 4,
+    nombre: 'Cruz (Walia)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><line x1="50" y1="10" x2="50" y2="90" stroke="#C4703F" stroke-width="3"/><line x1="10" y1="50" x2="90" y2="50" stroke="#C4703F" stroke-width="3"/></svg>',
+    correcta: 'Los cuatro puntos cardinales',
+    opciones: ['Los cuatro puntos cardinales', 'La danza Yonna en círculo', 'El tejido de la mochila']
+  },
+  {
+    id: 5,
+    nombre: 'Ondas (Mmarei)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><path d="M10,50 Q25,30 40,50 Q55,70 70,50 Q85,30 90,40" fill="none" stroke="#1B3A5C" stroke-width="3"/><path d="M10,65 Q25,45 40,65 Q55,85 70,65 Q85,45 90,55" fill="none" stroke="#3A7D44" stroke-width="2"/></svg>',
+    correcta: 'Las olas del mar Caribe',
+    opciones: ['Las montañas del desierto', 'Las olas del mar Caribe', 'El vuelo de las aves']
+  },
+  {
+    id: 6,
+    nombre: 'Espiral (Jime)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><path d="M50,50 Q65,35 70,50 Q75,65 60,70 Q45,75 40,60 Q35,45 50,40 Q65,35 75,50" fill="none" stroke="#6B3A7D" stroke-width="2.5"/></svg>',
+    correcta: 'El caracol y el ciclo de la vida',
+    opciones: ['El caracol y el ciclo de la vida', 'El sol del desierto', 'La mochila wayuu']
+  },
+  {
+    id: 7,
+    nombre: 'Escalera (A'tpanaa)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><line x1="25" y1="20" x2="25" y2="80" stroke="#E8B730" stroke-width="3"/><line x1="75" y1="20" x2="75" y2="80" stroke="#E8B730" stroke-width="3"/><line x1="25" y1="30" x2="75" y2="30" stroke="#C23B3B" stroke-width="2"/><line x1="25" y1="45" x2="75" y2="45" stroke="#C23B3B" stroke-width="2"/><line x1="25" y1="60" x2="75" y2="60" stroke="#C23B3B" stroke-width="2"/></svg>',
+    correcta: 'La escalera, ascenso espiritual',
+    opciones: ['La escalera, ascenso espiritual', 'El cerramiento del corral', 'Las líneas del ferrocarril']
+  },
+  {
+    id: 8,
+    nombre: 'Ojo (O'uu)',
+    svg: '<svg viewBox="0 0 100 100" width="100" height="100"><ellipse cx="50" cy="50" rx="30" ry="20" fill="none" stroke="#1B3A5C" stroke-width="3"/><circle cx="50" cy="50" r="8" fill="#C23B3B"/><circle cx="50" cy="50" r="4" fill="#1B3A5C"/></svg>',
+    correcta: 'El ojo protector, vigila el sueño',
+    opciones: ['La luna llena en el desierto', 'El ojo protector, vigila el sueño', 'El tambor de la danza Yonna']
+  }
+];
+
+let wayu403PuntajeQuiz = 0;
+let wayu403Resueltos = {};
+
+function wayu403InitQuiz() {
+  wayu403PuntajeQuiz = 0;
+  wayu403Resueltos = {};
+  document.getElementById('wayu403-puntaje').textContent = 'Puntaje: 0 / 8';
+  document.getElementById('wayu403-btn-final').style.display = 'none';
+
+  const grid = document.getElementById('wayu403-quiz-grid');
+  // Mezclar patrones
+  const mezclados = [...wayu403Patrones].sort(() => Math.random() - 0.5);
+
+  grid.innerHTML = mezclados.map(p => {
+    const opcionesMezcladas = [...p.opciones].sort(() => Math.random() - 0.5);
+    return `
+    <div class="quiz-card" id="wayu403-quiz-${p.id}">
+      ${p.svg}
+      <div class="patron-nombre">${p.nombre}</div>
+      <div class="quiz-opciones">
+        ${opcionesMezcladas.map((op, i) => `
+          <button class="quiz-opcion" onclick="wayu403Responder(${p.id}, '${op.replace(/'/g, "\\'")}', this)">
+            ${op}
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function wayu403Responder(pid, respuesta, btnElem) {
+  if (wayu403Resueltos[pid]) return; // Ya respondido
+
+  const patron = wayu403Patrones.find(p => p.id === pid);
+  const esCorrecta = (respuesta === patron.correcta);
+  const card = document.getElementById('wayu403-quiz-' + pid);
+
+  if (esCorrecta) {
+    btnElem.classList.add('correcta');
+    card.classList.add('resuelto');
+    wayu403Resueltos[pid] = true;
+    wayu403PuntajeQuiz++;
+    document.getElementById('wayu403-puntaje').textContent = 'Puntaje: ' + wayu403PuntajeQuiz + ' / 8';
+
+    // Deshabilitar todas las opciones de esta tarjeta
+    card.querySelectorAll('.quiz-opcion').forEach(b => b.style.pointerEvents = 'none');
+
+    // Verificar si completó todas
+    if (wayu403PuntajeQuiz === 8) {
+      document.getElementById('wayu403-btn-final').style.display = 'inline-block';
+    }
+  } else {
+    btnElem.classList.add('incorrecta');
+    setTimeout(() => btnElem.classList.remove('incorrecta'), 800);
+  }
+}
+
+/* ===== INICIALIZACIÓN ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('wayu403-progreso').style.width = '0%';
+});
+</script>
+
+</body>
+</html>

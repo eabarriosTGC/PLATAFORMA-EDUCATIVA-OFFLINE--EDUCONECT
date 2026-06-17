@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulaciones PhET - Educonect Rural</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header h1 {
+      font-size: 2rem;
+      color: #e94560;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: #a8dadc;
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      width: 100%;
+    }
+    .sim-card {
+      background: rgba(22, 33, 62, 0.8);
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: #eee;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .sim-card:hover {
+      border-color: #e94560;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(233, 69, 96, 0.15);
+      background: rgba(22, 33, 62, 0.95);
+    }
+    .sim-icon {
+      font-size: 2.5rem;
+      margin-bottom: 4px;
+    }
+    .sim-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .sim-desc {
+      font-size: 0.85rem;
+      color: #a8dadc;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .sim-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-chemistry { background: #e94560; color: #fff; }
+    .badge-physics { background: #3498db; color: #fff; }
+    .badge-biology { background: #27ae60; color: #fff; }
+    .badge-mixed { background: #9b59b6; color: #fff; }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #a8dadc;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+    .footer a { color: #e94560; text-decoration: none; }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #2ecc71;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #2ecc71;
+      border-radius: 50%;
+    }
+    .back-link {
+      color: #a8dadc;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #e94560; }
+  </style>
+</head>
+<body>
+  <a href="../../index.html" class="back-link">← Volver al Dashboard</a>
+  
+  <div class="header">
+    <h1>Simulaciones PhET</h1>
+    <p>Simulaciones educativas interactivas offline en español</p>
+  </div>
+
+  <div class="sim-grid">
+    <a href="build-a-molecule/index.html" class="sim-card">
+      <div class="sim-icon">🧪</div>
+      <div class="sim-title">Construye una Molécula</div>
+      <div class="sim-desc">Construye moléculas a partir de átomos. Aprende sobre fórmulas moleculares y estructuras químicas.</div>
+      <div>
+        <span class="sim-badge badge-chemistry">Química</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> Disponible offline
+      </div>
+    </a>
+
+    <a href="balloons-and-static-electricity/index.html" class="sim-card">
+      <div class="sim-icon">⚡</div>
+      <div class="sim-title">Globos y Electricidad Estática</div>
+      <div class="sim-desc">Explora la electricidad estática con globos. Frota globos y observa la transferencia de cargas.</div>
+      <div>
+        <span class="sim-badge badge-physics">Física</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> Disponible offline
+      </div>
+    </a>
+
+    <a href="natural-selection/index.html" class="sim-card">
+      <div class="sim-icon">🧬</div>
+      <div class="sim-title">Selección Natural</div>
+      <div class="sim-desc">Explora cómo la selección natural afecta a las poblaciones. Experimenta con mutaciones y factores ambientales.</div>
+      <div>
+        <span class="sim-badge badge-biology">Biología</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> Disponible offline
+      </div>
+    </a>
+
+    <a href="states-of-matter/index.html" class="sim-card">
+      <div class="sim-icon">🔬</div>
+      <div class="sim-title">Estados de la Materia</div>
+      <div class="sim-desc">Observa cómo cambian los estados de la materia al variar temperatura y presión. Sólido, líquido, gas.</div>
+      <div>
+        <span class="sim-badge badge-mixed">Química/Física</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> Disponible offline
+      </div>
+    </a>
+
+    <a href="gravity-and-orbits/index.html" class="sim-card">
+      <div class="sim-icon">🌍</div>
+      <div class="sim-title">Gravedad y Órbitas</div>
+      <div class="sim-desc">Simula el movimiento planetario. Cambia masas y observa cómo afectan las órbitas gravitacionales.</div>
+      <div>
+        <span class="sim-badge badge-physics">Física</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> Disponible offline
+      </div>
+    </a>
+  </div>
+
+  <div class="footer">
+    <p>Simulaciones interactivas de <a href="https://phet.colorado.edu/es/" target="_blank">PhET™</a> - University of Colorado Boulder</p>
+    <p>Empaquetadas para uso offline en Educonect Rural</p>
+  </div>
+</body>
+</html>

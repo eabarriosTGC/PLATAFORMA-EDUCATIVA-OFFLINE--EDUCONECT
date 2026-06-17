@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formas en mi Entorno - EduConect Rural</title>
+    <link rel="stylesheet" href="../estilos-globales.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="fondo-deserto">
+        <div class="sol"></div>
+        <div class="nube nube-1"></div>
+        <div class="nube nube-2"></div>
+    </div>
+
+    <header class="header-modulo">
+        <button class="btn-volver" onclick="location.href='../index.html'">← Volver</button>
+        <h1>🔷 Formas en mi Entorno</h1>
+        <p>Encuentra círculos, triángulos y cuadrados en la ranchería</p>
+    </header>
+
+    <div class="puntaje">
+        <div class="puntaje-item estrellas">⭐ <span id="estrellas">0</span></div>
+        <div class="puntaje-item aciertos">✅ <span id="aciertos">0</span>/<span id="total">5</span></div>
+    </div>
+
+    <div class="barra-progreso">
+        <div class="barra-progreso-fill" id="barra"></div>
+    </div>
+
+    <main class="area-juego">
+        <div class="instruccion-formas" id="instruccion">
+            Encuentra todos los <strong id="forma-buscar">círculos</strong> en la imagen
+        </div>
+
+        <div class="escena-formas">
+            <svg id="svg-escena" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fondo -->
+                <rect x="0" y="0" width="600" height="400" fill="#87CEEB"/>
+                <rect x="0" y="250" width="600" height="150" fill="#E6C9A8"/>
+
+                <!-- Sol (círculo) -->
+                <circle class="objeto-forma" data-forma="circulo" cx="520" cy="60" r="35" fill="#FFD700" stroke="#FFA500" stroke-width="3"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="520" cy="60" r="45" fill="none" stroke="#FFD700" stroke-width="2" opacity="0.5"/>
+
+                <!-- Casa Wayuu (rectángulo + triángulo) -->
+                <rect x="80" y="180" width="140" height="100" fill="#D2691E" stroke="#8B4513" stroke-width="3"/>
+                <polygon class="objeto-forma" data-forma="triangulo" points="80,180 150,120 220,180" fill="#A0522D" stroke="#8B4513" stroke-width="3"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="120" y="220" width="40" height="60" fill="#8B4513" stroke="#5C3317" stroke-width="2"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="140" cy="250" r="5" fill="#FFD700"/>
+
+                <!-- Cesta Wayuu (rectángulo) -->
+                <rect class="objeto-forma" data-forma="rectangulo" x="350" y="280" width="80" height="60" rx="5" fill="#CD853F" stroke="#8B4513" stroke-width="2"/>
+                <rect x="355" y="285" width="70" height="8" fill="#C41E3A"/>
+                <rect x="355" y="295" width="70" height="8" fill="#1E6091"/>
+                <rect x="355" y="305" width="70" height="8" fill="#F4D03F"/>
+                <rect x="355" y="315" width="70" height="8" fill="#27AE60"/>
+
+                <!-- Árbol (rectángulo + círculos) -->
+                <rect class="objeto-forma" data-forma="rectangulo" x="500" y="200" width="20" height="80" fill="#8B4513"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="510" cy="180" r="35" fill="#228B22" opacity="0.9"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="490" cy="200" r="25" fill="#27AE60" opacity="0.8"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="530" cy="200" r="25" fill="#2E8B57" opacity="0.8"/>
+
+                <!-- Chinchorro (triángulo) -->
+                <polygon class="objeto-forma" data-forma="triangulo" points="280,150 320,250 240,250" fill="#E74C3C" stroke="#C0392B" stroke-width="2" opacity="0.9"/>
+                <line x1="280" y1="150" x2="280" y2="120" stroke="#8B4513" stroke-width="3"/>
+                <line x1="240" y1="250" x2="220" y2="250" stroke="#8B4513" stroke-width="2"/>
+                <line x1="320" y1="250" x2="340" y2="250" stroke="#8B4513" stroke-width="2"/>
+
+                <!-- Chivo (círculos + rectángulos) -->
+                <ellipse class="objeto-forma" data-forma="circulo" cx="180" cy="320" rx="25" ry="18" fill="#F5F5DC" stroke="#D2B48C" stroke-width="2"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="200" cy="310" r="14" fill="#F5F5DC" stroke="#D2B48C" stroke-width="2"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="165" y="335" width="6" height="15" fill="#F5F5DC"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="180" y="335" width="6" height="15" fill="#F5F5DC"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="195" y="335" width="6" height="15" fill="#F5F5DC"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="210" y="335" width="6" height="15" fill="#F5F5DC"/>
+
+                <!-- Cactus (rectángulos) -->
+                <rect class="objeto-forma" data-forma="rectangulo" x="420" y="220" width="16" height="60" fill="#2E8B57" rx="3"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="405" y="235" width="12" height="25" fill="#2E8B57" rx="3"/>
+                <rect class="objeto-forma" data-forma="rectangulo" x="439" y="240" width="12" height="20" fill="#2E8B57" rx="3"/>
+
+                <!-- Iguarayas (círculos) -->
+                <circle class="objeto-forma" data-forma="circulo" cx="320" cy="340" r="10" fill="#8B0000"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="340" cy="345" r="10" fill="#A52A2A"/>
+                <circle class="objeto-forma" data-forma="circulo" cx="330" cy="330" r="10" fill="#DC143C"/>
+            </svg>
+
+            <div class="contador-formas">
+                Encontrados: <span id="encontrados">0</span> / <span id="meta">0</span>
+            </div>
+        </div>
+
+        <div class="leyenda-formas">
+            <div class="forma-activa" id="leyenda-circulo">🔴 Círculos</div>
+            <div class="forma-inactiva" id="leyenda-triangulo">🔺 Triángulos</div>
+            <div class="forma-inactiva" id="leyenda-rectangulo">🟦 Rectángulos</div>
+        </div>
+
+        <div class="controles-conteo">
+            <button class="btn-primario" id="btn-siguiente" style="display:none;">Siguiente forma →</button>
+        </div>
+
+        <div class="mensaje-final" id="mensaje-final" style="display:none;">
+            <h2>🎉 ¡Conoces todas las formas!</h2>
+            <p>Eres un experto en geometría Wayuu</p>
+            <button class="btn-primario" onclick="location.reload()">Jugar otra vez</button>
+        </div>
+    </main>
+
+    <footer class="footer-modulo">
+        <p>EduConect Rural — Sin conexión a internet</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

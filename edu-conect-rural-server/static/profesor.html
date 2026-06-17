@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#D4322F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+<title>Panel del Profesor — EduConect Rural</title>
+<style>
+  :root {
+    --sand-50: #fdf8f0;
+    --sand-100: #f8ecd8;
+    --sand-200: #f0d9b0;
+    --sand-500: #c4956a;
+    --sand-700: #8b5e3c;
+    --sand-900: #4a2c17;
+    --terracotta: #c45a3c;
+    --terracotta-hover: #d4694a;
+    --terracotta-light: #fdf0eb;
+    --sage-600: #5a7a62;
+    --sage-700: #3d5a45;
+    --sage-50: #f2f7f3;
+    --sky-600: #4a8ba4;
+    --sky-50: #eef7fa;
+    --gold-500: #c49a2a;
+    --gold-50: #fdf8e8;
+    --white: #ffffff;
+    --gray-50: #fafafa;
+    --gray-100: #f5f5f5;
+    --gray-200: #e8e8e8;
+    --gray-300: #d0d0d0;
+    --gray-600: #666666;
+    --gray-700: #444444;
+    --gray-900: #1a1a1a;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--sand-50);
+    color: var(--gray-900);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(253, 248, 240, 0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0 16px;
+  }
+  .nav-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .nav-logo {
+    font-weight: 700; font-size: 1.05rem;
+    color: var(--sand-900); letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo .icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--terracotta), var(--sand-500));
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: #fff;
+  }
+  .nav-links { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  .nav-links a {
+    font-size: 0.813rem; font-weight: 500;
+    color: var(--gray-600); text-decoration: none;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    transition: all .15s; white-space: nowrap;
+  }
+  .nav-links a:hover { color: var(--sand-900); background: var(--sand-100); }
+  .nav-links a.active {
+    color: var(--terracotta); background: var(--terracotta-light);
+  }
+  .nav-cta {
+    background: var(--terracotta); color: #fff !important;
+  }
+  .nav-cta:hover { background: var(--terracotta-hover) !important; color: #fff !important; }
+
+  /* ---------- LAYOUT ---------- */
+  .app-container { max-width: 1200px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  .page-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 800; color: var(--sand-900);
+    letter-spacing: -0.02em; margin-bottom: 4px;
+  }
+  .page-subtitle {
+    color: var(--gray-600); font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  /* ---------- TABS ---------- */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 2px solid var(--gray-200);
+    padding-bottom: 0; overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-btn {
+    font-size: 0.85rem; font-weight: 600;
+    padding: 10px 18px; border: none; background: transparent;
+    cursor: pointer; color: var(--gray-600);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: all .15s;
+    white-space: nowrap; border-radius: 0;
+    font-family: inherit;
+  }
+  .tab-btn:hover { color: var(--gray-900); background: var(--gray-100); }
+  .tab-btn.active {
+    color: var(--terracotta);
+    border-bottom-color: var(--terracotta);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ---------- CARDS ---------- */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+  }
+  .card-title {
+    font-size: 1rem; font-weight: 700;
+    color: var(--sand-900); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ---------- STATS GRID ---------- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 20px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+    text-align: center;
+  }
+  .stat-card .number {
+    font-size: 1.8rem; font-weight: 800;
+    color: var(--terracotta);
+    letter-spacing: -0.03em; line-height: 1.2;
+  }
+  .stat-card .label {
+    font-size: 0.78rem; color: var(--gray-600);
+    margin-top: 2px;
+  }
+  .stat-card .icon-badge {
+    font-size: 1.4rem; margin-bottom: 6px;
+  }
+  .stat-card.sage .number { color: var(--sage-600); }
+  .stat-card.coffee .number { color: var(--sand-900); }
+  .stat-card.sky .number { color: var(--sky-600); }
+
+  /* ---------- TABLE ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -4px;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.85rem; min-width: 500px;
+  }
+  th, td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+  }
+  th {
+    font-weight: 600; color: var(--gray-600);
+    font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--gray-50);
+  }
+  tr:hover td { background: var(--sand-50); }
+  .clickable { cursor: pointer; }
+  .clickable:hover { background: var(--terracotta-light) !important; }
+
+  /* ---------- PROGRESS BAR ---------- */
+  .progress-bar-wrap {
+    width: 100%; height: 8px;
+    background: var(--gray-100);
+    border-radius: 9999px; overflow: hidden;
+    min-width: 80px;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 9999px;
+    background: var(--sage-600);
+    transition: width .3s ease;
+  }
+  .progress-bar-fill.low { background: var(--terracotta); }
+  .progress-bar-fill.mid { background: var(--gold-500); }
+  .progress-bar-fill.high { background: var(--sage-600); }
+
+  /* ---------- FILTER ---------- */
+  .filter-bar {
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .filter-bar label {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--gray-700);
+  }
+  .filter-bar select {
+    font-size: 0.85rem; padding: 8px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--gray-900);
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .filter-bar select:focus {
+    outline: 2px solid var(--terracotta);
+    outline-offset: 2px;
+  }
+
+  /* ---------- BUTTONS ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 600; font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all .2s; border: none; cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: var(--terracotta); color: #fff;
+    box-shadow: 0 4px 16px rgba(196,90,60,0.2);
+  }
+  .btn-primary:hover {
+    background: var(--terracotta-hover);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--white); color: var(--sand-900);
+    border: 1px solid var(--gray-200);
+  }
+  .btn-secondary:hover {
+    background: var(--gray-50); border-color: var(--gray-200);
+  }
+  .btn-export {
+    background: var(--sage-600); color: #fff;
+  }
+  .btn-export:hover {
+    background: var(--sage-700); transform: translateY(-1px);
+  }
+  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+  /* ---------- BADGE ---------- */
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 2px 10px; border-radius: 9999px;
+  }
+  .badge-terracotta { background: var(--terracotta-light); color: var(--terracotta); }
+  .badge-sage { background: var(--sage-50); color: var(--sage-600); }
+  .badge-sky { background: var(--sky-50); color: var(--sky-600); }
+  .badge-gold { background: var(--gold-50); color: var(--gold-500); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+  /* ---------- STATES ---------- */
+  .loading {
+    text-align: center; padding: 40px 20px;
+    color: var(--gray-600); font-size: 0.9rem;
+  }
+  .loading::before {
+    content: ''; display: block;
+    width: 28px; height: 28px;
+    margin: 0 auto 12px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--terracotta);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    padding: 16px 20px; background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    color: #b91c1c; font-size: 0.85rem;
+    margin: 12px 0;
+  }
+  .empty-box {
+    padding: 32px 20px; text-align: center;
+    color: var(--gray-600); font-size: 0.9rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--gray-200);
+  }
+
+  /* ---------- STUDENT DETAIL ---------- */
+  .detail-header {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap;
+    gap: 12px; margin-bottom: 16px;
+  }
+  .detail-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--sand-900); }
+  .course-progress-item {
+    display: flex; align-items: center;
+    gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .course-progress-item:last-child { border-bottom: none; }
+  .course-progress-item .course-name {
+    flex: 1; font-weight: 500; font-size: 0.9rem;
+  }
+  .course-progress-item .course-pct {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--gray-600); min-width: 45px;
+    text-align: right;
+  }
+  .course-progress-item .progress-bar-wrap {
+    flex: 1; max-width: 200px;
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer {
+    border-top: 1px solid var(--gray-200);
+    padding: 20px 16px;
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 8px;
+    max-width: 1200px; margin: 0 auto;
+    font-size: 0.78rem; color: var(--gray-600);
+  }
+  .footer a { color: var(--gray-600); text-decoration: none; margin-left: 16px; }
+  .footer a:hover { color: var(--terracotta); }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 768px) {
+    .app-container { padding: 16px 12px 40px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links a:not(.nav-cta):not(.active) { display: none; }
+    .tabs { gap: 0; }
+    .tab-btn { padding: 10px 14px; font-size: 0.8rem; }
+    table { font-size: 0.8rem; min-width: 400px; }
+    th, td { padding: 8px 10px; }
+    .detail-header { flex-direction: column; align-items: flex-start; }
+    .course-progress-item { flex-wrap: wrap; }
+    .course-progress-item .progress-bar-wrap { max-width: 100%; flex: 1 1 100%; order: 3; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-card { padding: 14px 10px; }
+    .stat-card .number { font-size: 1.4rem; }
+    .tab-btn { padding: 8px 10px; font-size: 0.75rem; }
+    .btn { font-size: 0.8rem; padding: 8px 14px; }
+    .page-title { font-size: 1.25rem; }
+  }
+
+  a:focus-visible, button:focus-visible, select:focus-visible {
+    outline: 2px solid var(--terracotta);
+    outline-offset: 2px;
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" role="navigation" aria-label="Principal">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo" style="text-decoration:none">
+      <div class="icon" aria-hidden="true">🏜️</div>
+      EduConect Rural
+    </a>
+    <div class="nav-links">
+      <a href="/">Inicio</a>
+      <a href="/diccionario/">Diccionario</a>
+      <a href="/profesor/" class="active">Profesor</a>
+      <a href="/" class="nav-cta">Dashboard →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- APP -->
+<div class="app-container" id="app">
+
+  <h1 class="page-title">📊 Panel del Profesor</h1>
+  <p class="page-subtitle">Seguimiento académico — EduConect Rural</p>
+
+  <!-- TABS -->
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="dashboard" role="tab" aria-selected="true">📈 Dashboard</button>
+    <button class="tab-btn" data-tab="estudiantes" role="tab" aria-selected="false">👥 Estudiantes</button>
+    <button class="tab-btn" data-tab="progreso" role="tab" aria-selected="false">📋 Progreso General</button>
+  </div>
+
+  <!-- ===== TAB: DASHBOARD ===== -->
+  <div class="tab-content active" id="tab-dashboard" role="tabpanel">
+    <div id="dashboard-loading" class="loading">Cargando resumen del dashboard…</div>
+    <div id="dashboard-error" class="error-box" style="display:none"></div>
+    <div id="dashboard-content" style="display:none">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div style="text-align:right; margin-top:12px">
+        <a href="/api/profesor/exportar" class="btn btn-export" download="progreso.csv">
+          ⬇ Exportar CSV Completo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: ESTUDIANTES ===== -->
+  <div class="tab-content" id="tab-estudiantes" role="tabpanel">
+    <div id="estudiantes-loading" class="loading">Cargando lista de estudiantes…</div>
+    <div id="estudiantes-error" class="error-box" style="display:none"></div>
+    <div id="estudiantes-content" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">👥 Todos los Estudiantes</div>
+        <div class="table-wrap" id="estudiantes-table"></div>
+      </div>
+      <!-- Student detail panel -->
+      <div class="card" id="student-detail" style="display:none">
+        <div class="detail-header">
+          <h3 id="detail-name">Estudiante</h3>
+          <button class="btn btn-secondary btn-sm" onclick="cerrarDetalle()">✕ Cerrar</button>
+        </div>
+        <div id="detail-loading" class="loading">Cargando progreso del estudiante…</div>
+        <div id="detail-error" class="error-box" style="display:none"></div>
+        <div id="detail-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: PROGRESO GENERAL ===== -->
+  <div class="tab-content" id="tab-progreso" role="tabpanel">
+    <div id="progreso-loading" class="loading">Cargando progreso general…</div>
+    <div id="progreso-error" class="error-box" style="display:none"></div>
+    <div id="progreso-content" style="display:none">
+      <div class="card">
+        <div class="card-title">📋 Registro de Progreso</div>
+        <div class="filter-bar">
+          <label for="filtro-estudiante">Filtrar por estudiante:</label>
+          <select id="filtro-estudiante">
+            <option value="">Todos los estudiantes</option>
+          </select>
+        </div>
+        <div class="table-wrap" id="progreso-table"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>© 2026 EduConect Rural — La Guajira, Colombia 🇨🇴</span>
+  <span>
+    <a href="/">Inicio</a>
+    <a href="/diccionario/">Diccionario</a>
+    <a href="/profesor/">Profesor</a>
+  </span>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ---------- STATE ---------- */
+  let estudiantesData = [];
+  let progresoData = [];
+  let detalleAbierto = null;  // usuario del detalle actual
+
+  /* ---------- TABS ---------- */
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = {
+    dashboard: document.getElementById('tab-dashboard'),
+    estudiantes: document.getElementById('tab-estudiantes'),
+    progreso: document.getElementById('tab-progreso'),
+  };
+
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const tab = btn.dataset.tab;
+      // Update tabs
+      tabBtns.forEach(function(b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      // Show content
+      Object.keys(tabContents).forEach(function(key) {
+        tabContents[key].classList.remove('active');
+      });
+      tabContents[tab].classList.add('active');
+      // Lazy load data
+      if (tab === 'dashboard' && !document.getElementById('stats-grid').childElementCount) {
+        cargarDashboard();
+      }
+      if (tab === 'progreso' && !document.getElementById('progreso-table').childElementCount) {
+        cargarProgresoGeneral();
+      }
+    });
+  });
+
+  /* ---------- HELPERS ---------- */
+  function mostrarLoading(prefix) {
+    var el = document.getElementById(prefix + '-loading');
+    var err = document.getElementById(prefix + '-error');
+    var cont = document.getElementById(prefix + '-content');
+    if (el) el.style.display = 'block';
+    if (err) err.style.display = 'none';
+    if (cont) cont.style.display = 'none';
+  }
+
+  function mostrarError(prefix, msg) {
+    var el = document.getElementById(prefix + '-loading');
+    var err = document.getElementById(prefix + '-error');
+    var cont = document.getElementById(prefix + '-content');
+    if (el) el.style.display = 'none';
+    if (err) { err.style.display = 'block'; err.textContent = 'Error: ' + msg; }
+    if (cont) cont.style.display = 'none';
+  }
+
+  function mostrarContenido(prefix) {
+    var el = document.getElementById(prefix + '-loading');
+    var err = document.getElementById(prefix + '-error');
+    var cont = document.getElementById(prefix + '-content');
+    if (el) el.style.display = 'none';
+    if (err) err.style.display = 'none';
+    if (cont) cont.style.display = 'block';
+  }
+
+  function fetchJSON(url, options, timeoutMs) {
+    timeoutMs = timeoutMs || 8000;
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
+    var opts = Object.assign({}, options, { signal: controller.signal });
+    return fetch(url, opts).then(function(r) {
+      clearTimeout(timer);
+      if (!r.ok) {
+        return r.text().then(function(t) {
+          throw new Error(t || 'Error HTTP ' + r.status);
+        });
+      }
+      return r.json();
+    }).catch(function(e) {
+      clearTimeout(timer);
+      if (e.name === 'AbortError') {
+        throw new Error('El servidor tardó demasiado. Reintenta en un momento.');
+      }
+      throw e;
+    });
+  }
+
+  function escapeHTML(str) {
+    if (str == null) return '—';
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(str)));
+    return div.innerHTML;
+  }
+
+  function formatearFecha(fecha) {
+    if (!fecha || fecha === '—') return '—';
+    try {
+      var d = new Date(fecha);
+      if (isNaN(d.getTime())) return String(fecha);
+      return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch(e) { return String(fecha); }
+  }
+
+  function pctClass(pct) {
+    if (pct < 33) return 'low';
+    if (pct < 66) return 'mid';
+    return 'high';
+  }
+
+  function pctDisplay(val) {
+    if (val === undefined || val === null) return '—';
+    var n = Number(val);
+    if (isNaN(n)) return '—';
+    return Math.round(n) + '%';
+  }
+
+  function renderProgressBar(pct) {
+    var p = Number(pct);
+    if (isNaN(p)) return '<span class="badge badge-gray">Sin datos</span>';
+    var cls = pctClass(p);
+    return '<div class="progress-bar-wrap"><div class="progress-bar-fill ' + cls + '" style="width:' + Math.min(p,100) + '%"></div></div>';
+  }
+
+  /* ---------- DASHBOARD ---------- */
+  function cargarDashboard() {
+    mostrarLoading('dashboard');
+    fetchJSON('/api/profesor/reporte').then(function(data) {
+      mostrarContenido('dashboard');
+      renderDashboardStats(data);
+    }).catch(function(e) {
+      mostrarError('dashboard', e.message || 'Error al cargar el dashboard');
+    });
+  }
+
+  function renderDashboardStats(data) {
+    var grid = document.getElementById('stats-grid');
+    var estudiantes = data.total_estudiantes || data.estudiantes || data.total_estudiantes_count || 0;
+    var progreso = data.progreso_promedio || data.promedio_progreso || data.porcentaje_promedio || data.promedio || 0;
+    var activos = data.cursos_activos || data.cursos_en_curso || data.cursos_iniciados || 0;
+    var completados = data.cursos_completados || data.completados || 0;
+
+    grid.innerHTML =
+      '<div class="stat-card">' +
+        '<div class="icon-badge">👥</div>' +
+        '<div class="number">' + escapeHTML(estudiantes) + '</div>' +
+        '<div class="label">Estudiantes</div>' +
+      '</div>' +
+      '<div class="stat-card sage">' +
+        '<div class="icon-badge">📈</div>' +
+        '<div class="number">' + pctDisplay(progreso) + '</div>' +
+        '<div class="label">Progreso Promedio</div>' +
+      '</div>' +
+      '<div class="stat-card sky">' +
+        '<div class="icon-badge">📚</div>' +
+        '<div class="number">' + escapeHTML(activos) + '</div>' +
+        '<div class="label">Cursos Activos</div>' +
+      '</div>' +
+      '<div class="stat-card coffee">' +
+        '<div class="icon-badge">✅</div>' +
+        '<div class="number">' + escapeHTML(completados) + '</div>' +
+        '<div class="label">Cursos Completados</div>' +
+      '</div>';
+  }
+
+  /* ---------- ESTUDIANTES ---------- */
+  function cargarEstudiantes() {
+    mostrarLoading('estudiantes');
+    fetchJSON('/api/profesor/estudiantes').then(function(data) {
+      mostrarContenido('estudiantes');
+      estudiantesData = data.estudiantes || data || [];
+      renderEstudiantesTable(estudiantesData);
+    }).catch(function(e) {
+      mostrarError('estudiantes', e.message || 'Error al cargar estudiantes');
+    });
+  }
+
+  function renderEstudiantesTable(lista) {
+    var container = document.getElementById('estudiantes-table');
+    if (!lista || lista.length === 0) {
+      container.innerHTML = '<div class="empty-box">No hay estudiantes registrados.</div>';
+      return;
+    }
+    var html = '<table><thead><tr>' +
+      '<th>Nombre</th><th>Cursos Iniciados</th><th>Promedio</th><th>Última Actividad</th>' +
+    '</tr></thead><tbody>';
+    lista.forEach(function(e) {
+      var usuario = e.usuario || e.id || e.nombre_usuario || '';
+      var nombre = e.nombre || e.nombre_completo || usuario;
+      var cursos = e.cursos_iniciados || e.cursos_activos || e.total_cursos || 0;
+      var promedio = e.promedio !== undefined ? pctDisplay(e.promedio) : (e.progreso_promedio !== undefined ? pctDisplay(e.progreso_promedio) : '—');
+      var ultAct = formatearFecha(e.ultima_actividad || e.ultimo_acceso || e.last_activity);
+      html += '<tr class="clickable" onclick="abrirDetalle(\'' + escapeHTML(usuario) + '\', \'' + escapeHTML(nombre) + '\')" tabindex="0" role="button" aria-label="Ver progreso de ' + escapeHTML(nombre) + '">' +
+        '<td><strong>' + escapeHTML(nombre) + '</strong></td>' +
+        '<td>' + escapeHTML(cursos) + '</td>' +
+        '<td>' + promedio + '</td>' +
+        '<td>' + ultAct + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  /* ---------- DETALLE ESTUDIANTE ---------- */
+  window.abrirDetalle = function(usuario, nombre) {
+    detalleAbierto = usuario;
+    document.getElementById('student-detail').style.display = 'block';
+    document.getElementById('detail-name').textContent = '👤 ' + nombre;
+    document.getElementById('detail-loading').style.display = 'block';
+    document.getElementById('detail-error').style.display = 'none';
+    document.getElementById('detail-content').innerHTML = '';
+
+    fetchJSON('/api/profesor/progreso/' + encodeURIComponent(usuario)).then(function(data) {
+      document.getElementById('detail-loading').style.display = 'none';
+      renderDetalleProgreso(data, nombre);
+    }).catch(function(e) {
+      document.getElementById('detail-loading').style.display = 'none';
+      document.getElementById('detail-error').style.display = 'block';
+      document.getElementById('detail-error').textContent = 'Error al cargar progreso: ' + e.message;
+    });
+
+    // Scroll to detail
+    document.getElementById('student-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.cerrarDetalle = function() {
+    document.getElementById('student-detail').style.display = 'none';
+    detalleAbierto = null;
+  };
+
+  function renderDetalleProgreso(data, nombre) {
+    var container = document.getElementById('detail-content');
+    var cursos = data.progreso || data.cursos || data;
+    // Handle if data is an array directly
+    if (Array.isArray(data) && !Array.isArray(cursos)) cursos = data;
+    // Handle if data is wrapped
+    if (Array.isArray(cursos)) {
+      if (cursos.length === 0) {
+        container.innerHTML = '<div class="empty-box">' + escapeHTML(nombre) + ' aún no ha iniciado ningún curso.</div>';
+        return;
+      }
+      var html = '<div style="margin-bottom:8px"><span class="badge badge-sage">' + cursos.length + ' cursos</span></div>';
+      cursos.forEach(function(c) {
+        var curso = c.curso || c.nombre_curso || c.curso_id || c.titulo || 'Curso';
+        var pct = c.porcentaje !== undefined ? Number(c.porcentaje) : (c.progreso !== undefined ? Number(c.progreso) : (c.completado ? 100 : 0));
+        var ultAct = formatearFecha(c.ultima_actividad || c.ultimo_acceso);
+        html += '<div class="course-progress-item">' +
+          '<span class="course-name">' + escapeHTML(curso) + '</span>' +
+          renderProgressBar(pct) +
+          '<span class="course-pct">' + pctDisplay(pct) + '</span>' +
+        '</div>';
+      });
+      container.innerHTML = html;
+    } else {
+      container.innerHTML = '<div class="empty-box">No hay datos de progreso detallado.</div>';
+    }
+  }
+
+  /* ---------- PROGRESO GENERAL ---------- */
+  function cargarProgresoGeneral() {
+    mostrarLoading('progreso');
+    fetchJSON('/api/profesor/progreso').then(function(data) {
+      mostrarContenido('progreso');
+      progresoData = data.progreso || data || [];
+      renderFiltroEstudiantes(progresoData);
+      renderProgresoTable(progresoData);
+    }).catch(function(e) {
+      mostrarError('progreso', e.message || 'Error al cargar progreso');
+    });
+  }
+
+  function renderFiltroEstudiantes(lista) {
+    var select = document.getElementById('filtro-estudiante');
+    var seen = {};
+    seen[''] = true;
+    select.innerHTML = '<option value="">Todos los estudiantes</option>';
+    lista.forEach(function(p) {
+      var usr = p.usuario || p.nombre_usuario || p.estudiante;
+      if (usr && !seen[usr]) {
+        seen[usr] = true;
+        var opt = document.createElement('option');
+        opt.value = usr;
+        opt.textContent = usr;
+        select.appendChild(opt);
+      }
+    });
+    select.onchange = function() {
+      var val = select.value;
+      if (!val) {
+        renderProgresoTable(progresoData);
+      } else {
+        var filtrados = progresoData.filter(function(p) {
+          return (p.usuario || p.nombre_usuario || p.estudiante) === val;
+        });
+        renderProgresoTable(filtrados);
+      }
+    };
+  }
+
+  function renderProgresoTable(lista) {
+    var container = document.getElementById('progreso-table');
+    if (!lista || lista.length === 0) {
+      container.innerHTML = '<div class="empty-box">No hay datos de progreso.</div>';
+      return;
+    }
+    var html = '<table><thead><tr>' +
+      '<th>Estudiante</th><th>Curso</th><th>Avance</th><th>Estado</th><th>Última Actividad</th>' +
+    '</tr></thead><tbody>';
+    lista.forEach(function(p) {
+      var usr = p.usuario || p.nombre_usuario || p.estudiante || '—';
+      var curso = p.curso || p.curso_id || p.nombre_curso || p.titulo || '—';
+      var pct = p.porcentaje !== undefined ? Number(p.porcentaje) : (p.progreso !== undefined ? Number(p.progreso) : (p.completado ? 100 : 0));
+      var completado = p.completado || (pct >= 100);
+      var ultAct = formatearFecha(p.ultima_actividad || p.ultimo_acceso);
+      var estado = completado
+        ? '<span class="badge badge-sage">Completado</span>'
+        : (pct > 0 ? '<span class="badge badge-sky">En curso</span>' : '<span class="badge badge-gray">Sin iniciar</span>');
+      html += '<tr>' +
+        '<td><strong>' + escapeHTML(usr) + '</strong></td>' +
+        '<td>' + escapeHTML(curso) + '</td>' +
+        '<td>' + renderProgressBar(pct) + '</td>' +
+        '<td>' + estado + '</td>' +
+        '<td>' + ultAct + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  /* ---------- INIT ---------- */
+  // Load dashboard on init
+  cargarDashboard();
+  // Pre-load estudiantes in background
+  cargarEstudiantes();
+
+})();
+</script>
+</body>
+</html>

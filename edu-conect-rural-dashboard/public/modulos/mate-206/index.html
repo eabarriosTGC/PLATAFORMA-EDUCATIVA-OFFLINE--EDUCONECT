@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MATE-206: Fracciones Wayuu | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root {
+  --mochila-color: #D4A843;
+  --mochila-color2: #C0392B;
+  --mochila-stripe1: #E74C3C;
+  --mochila-stripe2: #F39C12;
+  --mochila-stripe3: #2ECC71;
+  --mochila-stripe4: #3498DB;
+  --tortilla-color: #E8B86D;
+  --tortilla-specks: #C9A96E;
+  --manta-color: #5B8C5A;
+  --manta-accent: #D4A843;
+  --linea-color: #E07A5F;
+  --acierto: #4CAF50;
+  --error: #D64045;
+}
+
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+  position: relative;
+}
+
+.canvas-wrap canvas {
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  background: var(--blanco);
+  max-width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.actividad-desc {
+  color: #8B7355;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+/* Estrellas */
+.estrellas-wrap {
+  text-align: center;
+  margin: 10px 0 6px;
+}
+
+.estrellas-wrap .estrella {
+  font-size: 2.2rem;
+  display: inline-block;
+  transition: all 0.3s;
+}
+
+.estrellas-wrap .estrella.obtenida {
+  animation: popEstrella 0.4s ease-out;
+  filter: drop-shadow(0 0 6px rgba(255,215,0,0.7));
+}
+
+@keyframes popEstrella {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* Activity selector */
+.actividad-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.actividad-tab {
+  padding: 8px 14px;
+  border: 2px solid #e0d5c5;
+  border-radius: 20px;
+  background: var(--blanco);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+  font-family: var(--fuente);
+}
+
+.actividad-tab:hover {
+  border-color: var(--wayuu-oro);
+  background: #FFF8E1;
+}
+
+.actividad-tab.activa {
+  border-color: var(--atardecer);
+  background: var(--atardecer);
+  color: white;
+}
+
+.actividad-tab.completada {
+  border-color: var(--verde);
+  background: var(--verde);
+  color: white;
+}
+
+/* Controls row */
+.controles-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.fraccion-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--arena);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--tierra);
+}
+
+.fraccion-label .num {
+  font-size: 1.4rem;
+  color: var(--atardecer);
+}
+
+/* Match game */
+.match-area {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin: 14px 0;
+}
+
+.match-col {
+  flex: 1;
+  min-width: 130px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-card {
+  padding: 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border: 3px solid #e0d5c5;
+  background: var(--blanco);
+}
+
+.match-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.match-card.seleccionada {
+  border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(74,144,217,0.3);
+}
+
+.match-card.correcta {
+  border-color: var(--verde);
+  background: #E8F5E9;
+  cursor: default;
+}
+
+.match-card.incorrecta {
+  border-color: var(--rojo);
+  background: #FFEBEE;
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.match-canvas-inline {
+  width: 100%;
+  height: 80px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+/* Feedback area */
+.feedback-actividad {
+  text-align: center;
+  min-height: 28px;
+  font-weight: bold;
+  font-size: 1rem;
+  margin: 6px 0;
+}
+
+/* Drawing tools */
+.dibujo-tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.dibujo-btn {
+  padding: 8px 16px;
+  border: 2px solid #e0d5c5;
+  border-radius: 12px;
+  background: var(--blanco);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  font-family: var(--fuente);
+  transition: all 0.2s;
+}
+
+.dibujo-btn:hover {
+  border-color: var(--wayuu-oro);
+  background: #FFF8E1;
+}
+
+.dibujo-btn.activo {
+  border-color: var(--atardecer);
+  background: var(--atardecer);
+  color: white;
+}
+
+/* Responsive extras */
+@media (max-width: 600px) {
+  .match-col { min-width: 100px; }
+  .match-canvas-inline { height: 60px; }
+  .estrellas-wrap .estrella { font-size: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="sol">☀️</div>
+  <h1>🧶 Fracciones Wayuu</h1>
+  <span class="grado">3° Grado · Matemáticas</span>
+  <div class="deco-line">👜🌮🧶 ½ ¼ ⅓ ⅙ ⅛</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+  <span class="progreso-label">📊 Progreso</span>
+  <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+  <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- PANTALLA 1: BIENVENIDA                        -->
+<!-- ============================================= -->
+<section class="card activo" id="pantalla1">
+  <h2><span class="icono">🧶</span> ¡A Dividir!</h2>
+  <div class="bienvenida-wrap" style="text-align:center;padding:10px">
+    <div style="font-size:5rem;animation:brillar 2s ease-in-out infinite">👜</div>
+    <p class="frase" style="font-size:1.3rem;font-weight:bold;color:var(--tierra);margin:10px 0">
+      ¡Aprende fracciones con la cultura Wayuu!
+    </p>
+    <p style="color:#8B7355;margin:8px 0;line-height:1.5">
+      Los wayuu dividen sus mochilas, tortillas y mantas en partes iguales para compartir.
+      ¡Tú también aprenderás a dividir formas en partes iguales!
+      <br><br>
+      <strong>¿Qué vas a aprender?</strong><br>
+      👜 Medios y cuartos con mochilas wayuu<br>
+      🌮 Tercios, sextos y más con tortillas<br>
+      🧶 Dibujar líneas para dividir en partes iguales<br>
+      🎯 Emparejar fracciones con dibujos
+    </p>
+    <div style="font-size:2.5rem;margin:10px 0">
+      👜 🌮 🧶 ½ ¼ ⅓ ⅙ ⅛
+    </div>
+    <button class="btn btn-primario" id="btnIniciar" style="margin-top:12px;font-size:1.1rem;padding:12px 30px">
+      🚀 ¡Empecemos!
+    </button>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 2: ACTIVIDADES                       -->
+<!-- ============================================= -->
+<section class="card" id="pantalla2" style="display:none">
+  <h2><span class="icono">🎯</span> Actividades de Fracciones <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+
+  <div class="actividad-tabs" id="actividadTabs">
+    <button class="actividad-tab activa" data-act="0">👜 Mochilas</button>
+    <button class="actividad-tab" data-act="1">🌮 Tortillas</button>
+    <button class="actividad-tab" data-act="2">🧶 Mantas</button>
+    <button class="actividad-tab" data-act="3">✏️ Dibujar</button>
+    <button class="actividad-tab" data-act="4">🔢 Emparejar</button>
+  </div>
+
+  <div id="actividadContent"></div>
+
+  <div style="text-align:center;margin-top:14px">
+    <button class="btn btn-exito" id="btnActividadesOk" style="display:none">
+      ✓ ¡Ver mis resultados! 🎉
+    </button>
+  </div>
+</section>
+
+<!-- ============================================= -->
+<!-- PANTALLA 3: RESULTADOS                        -->
+<!-- ============================================= -->
+<section class="card" id="pantalla3" style="display:none">
+  <h2><span class="icono">🏆</span> Resultados</h2>
+  <div class="resultados-finales">
+    <div class="estrella" id="estrellaFinal">🏆</div>
+    <div class="puntaje" id="puntajeFinal">100%</div>
+    <p class="mensaje" id="mensajeFinal">
+      ¡Excelente! Eres un maestro de las fracciones Wayuu.
+    </p>
+    <div id="resumenActividades" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:18px 0"></div>
+    <p style="color:var(--tierra);font-size:0.9rem;margin:10px 0;line-height:1.5">
+      🧶 En la cultura wayuu, compartir es muy importante. Partir una tortilla en partes iguales o dividir una mochila en mitades significa que todos reciben lo mismo. ¡Las fracciones nos ayudan a ser justos!
+    </p>
+    <div style="margin-top:14px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+      <a href="/modulos/" class="btn btn-secundario" style="text-decoration:none">← Volver a módulos</a>
+    </div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+'use strict';
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+// ============ STATE ============
+const state = {
+  pantallaActual: 1,
+  actActual: 0,
+  actCompletadas: [false,false,false,false,false],
+  estrellas: [0,0,0,0,0],
+  maxEstrellas: [3,3,3,3,3],
+  aciertos: [0,0,0,0,0],
+  intentos: [0,0,0,0,0],
+  activCompleto: false
+};
+
+// ============ TTS ============
+function hablar(texto) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// ============ TOAST ============
+function mostrarToast(msg, tipo) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 2200);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ============ PROGRESS ============
+function actualizarProgreso() {
+  let completadas = 0;
+  state.actCompletadas.forEach(c => { if (c) completadas++; });
+  const total = state.actCompletadas.length;
+  const pct = Math.round((completadas / total) * 100);
+  $('#progresoFill').style.width = pct + '%';
+  $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ NAVIGATION ============
+function irAPantalla(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = $('#pantalla' + i);
+    if (el) { el.style.display = 'none'; el.classList.remove('activo'); }
+  }
+  const target = $('#pantalla' + n);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('activo');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  state.pantallaActual = n;
+}
+
+// ============ CANVAS HELPERS ============
+function setupCanvas(canvas, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
+
+function drawMochila(ctx, x, y, w, h) {
+  // Bag body
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.15, y + h);
+  ctx.quadraticCurveTo(x + w * 0.05, y + h * 0.6, x + w * 0.1, y + h * 0.15);
+  ctx.quadraticCurveTo(x + w * 0.15, y, x + w * 0.35, y + h * 0.05);
+  ctx.quadraticCurveTo(x + w * 0.5, y - h * 0.08, x + w * 0.65, y + h * 0.05);
+  ctx.quadraticCurveTo(x + w * 0.85, y, x + w * 0.9, y + h * 0.15);
+  ctx.quadraticCurveTo(x + w * 0.95, y + h * 0.6, x + w * 0.85, y + h);
+  ctx.closePath();
+  ctx.fillStyle = '#D4A843';
+  ctx.fill();
+  ctx.strokeStyle = '#B8942A';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Handle / strap
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.25, y + h * 0.05);
+  ctx.quadraticCurveTo(x + w * 0.3, y - h * 0.3, x + w * 0.5, y - h * 0.15);
+  ctx.strokeStyle = '#8B5E3C';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Wayuu stripes
+  const colors = ['#E74C3C','#F39C12','#2ECC71','#3498DB','#9B59B6'];
+  const stripeY = [0.3, 0.45, 0.6, 0.75, 0.88];
+  stripeY.forEach((sy, i) => {
+    ctx.beginPath();
+    const ly = y + h * sy;
+    ctx.moveTo(x + w * 0.12 + 8, ly);
+    ctx.lineTo(x + w * 0.88 - 8, ly);
+    ctx.strokeStyle = colors[i % colors.length];
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // tiny zigzag pattern
+    ctx.beginPath();
+    for (let px = x + w * 0.15; px < x + w * 0.85; px += 8) {
+      ctx[px === x + w * 0.15 ? 'moveTo' : 'lineTo'](px, ly - 2);
+      ctx.lineTo(px + 4, ly + 2);
+    }
+    ctx.strokeStyle = colors[(i + 1) % colors.length];
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawTortilla(ctx, cx, cy, r) {
+  ctx.save();
+  // Tortilla base
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  grad.addColorStop(0, '#F4D03F');
+  grad.addColorStop(0.5, '#E8B86D');
+  grad.addColorStop(1, '#C9A96E');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = '#B8942A';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Speckles
+  for (let i = 0; i < 12; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * r * 0.7;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(angle) * dist, cy + Math.sin(angle) * dist, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#A0704A';
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawManta(ctx, x, y, w, h) {
+  ctx.save();
+  // Blanket body
+  ctx.fillStyle = '#5B8C5A';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = '#3D6B35';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+
+  // Wayuu pattern - diamond border
+  ctx.strokeStyle = '#D4A843';
+  ctx.lineWidth = 2;
+  const diamondSize = 10;
+  for (let px = x; px < x + w; px += diamondSize * 2) {
+    for (let py = y; py < y + h; py += diamondSize * 2) {
+      ctx.beginPath();
+      ctx.moveTo(px + diamondSize, py);
+      ctx.lineTo(px + diamondSize * 2, py + diamondSize / 2);
+      ctx.lineTo(px + diamondSize, py + diamondSize);
+      ctx.lineTo(px, py + diamondSize / 2);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  // Horizontal stripes
+  const stripeColors = ['#E74C3C','#F39C12','#3498DB'];
+  for (let i = 0; i < 3; i++) {
+    const sy = y + h * (0.2 + i * 0.25);
+    ctx.beginPath();
+    ctx.moveTo(x + 4, sy);
+    ctx.lineTo(x + w - 4, sy);
+    ctx.strokeStyle = stripeColors[i];
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ============ ACTIVITY 0: MOCHILAS ============
+function initActMochilas() {
+  const div = document.getElementById('actividadContent');
+  let html = `
+    <div class="actividad-desc">
+      👜 Las <strong>mochilas wayuu</strong> se tejen a mano con hermosos patrones. 
+      Vamos a dividirlas en partes iguales para compartir entre la familia.
+    </div>
+    <div class="controles-row">
+      <button class="btn btn-azul" id="act0Mitad">½ Dividir en 2 (mitades)</button>
+      <button class="btn btn-morado" id="act0Cuartos">¼ Dividir en 4 (cuartos)</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas0" width="400" height="280"></canvas>
+    </div>
+    <div class="fraccion-label" id="act0Label">👜 1 mochila entera</div>
+    <div class="feedback-actividad" id="act0Feedback"></div>
+    <div class="estrellas-wrap" id="act0Estrellas"></div>
+    <div class="controles-row">
+      <button class="btn btn-secundario" id="act0Reiniciar">🔄 Reiniciar</button>
+      <button class="btn btn-exito" id="act0Ok" style="display:none">✓ ¡Bien! Siguiente →</button>
+    </div>
+  `;
+  div.innerHTML = html;
+
+  const canvas = document.getElementById('canvas0');
+  const ctx = setupCanvas(canvas, 400, 280);
+
+  let divisionState = 0; // 0=none, 1=mitades, 2=cuartos
+  let starGiven = false;
+
+  function render() {
+    ctx.clearRect(0, 0, 400, 280);
+    drawMochila(ctx, 70, 30, 260, 220);
+
+    if (divisionState === 1) {
+      // Draw vertical line for halves
+      ctx.beginPath();
+      ctx.moveTo(200, 30);
+      ctx.lineTo(200, 250);
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Labels
+      ctx.font = 'bold 18px system-ui';
+      ctx.fillStyle = '#E07A5F';
+      ctx.textAlign = 'center';
+      ctx.fillText('½', 135, 150);
+      ctx.fillText('½', 265, 150);
+    } else if (divisionState === 2) {
+      // Vertical line
+      ctx.beginPath();
+      ctx.moveTo(200, 30);
+      ctx.lineTo(200, 250);
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Horizontal line
+      ctx.beginPath();
+      ctx.moveTo(80, 140);
+      ctx.lineTo(320, 140);
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Labels
+      ctx.font = 'bold 16px system-ui';
+      ctx.fillStyle = '#E07A5F';
+      ctx.textAlign = 'center';
+      ctx.fillText('¼', 140, 95);
+      ctx.fillText('¼', 260, 95);
+      ctx.fillText('¼', 140, 195);
+      ctx.fillText('¼', 260, 195);
+    }
+
+    // Label
+    const label = $('#act0Label');
+    if (divisionState === 0) label.textContent = '👜 1 mochila entera';
+    else if (divisionState === 1) label.textContent = '👜 2 mitades = 2/2';
+    else label.textContent = '👜 4 cuartos = 4/4';
+  }
+
+  function darEstrella(n) {
+    if (starGiven) return;
+    starGiven = true;
+    const ws = $('#act0Estrellas');
+    ws.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('span');
+      s.className = 'estrella' + (i < n ? ' obtenida' : '');
+      s.textContent = '⭐';
+      if (i < n) s.style.animationDelay = (i * 0.15) + 's';
+      ws.appendChild(s);
+    }
+    state.estrellas[0] = Math.max(state.estrellas[0], n);
+    mostrarToast('⭐ ¡' + n + ' estrella' + (n > 1 ? 's' : '') + ' ganada' + (n > 1 ? 's' : '') + '!', 'exito');
+  }
+
+  function verificarCompletado() {
+    if (divisionState > 0 && !state.actCompletadas[0]) {
+      state.actCompletadas[0] = true;
+      state.aciertos[0]++;
+      const btn = $('#act0Ok');
+      btn.style.display = 'inline-block';
+      document.querySelector('[data-act="0"]').classList.add('completada');
+      actualizarProgreso();
+    }
+  }
+
+  $('#act0Mitad').addEventListener('click', () => {
+    divisionState = 1;
+    render();
+    darEstrella(2);
+    state.aciertos[0] += 2;
+    verificarCompletado();
+    $('#act0Feedback').textContent = '✅ ¡Correcto! Una mochila se divide en 2 mitades iguales.';
+    $('#act0Feedback').style.color = 'var(--verde)';
+    hablar('La mochila wayuu se divide en dos mitades. Cada mitad es un medio.');
+  });
+
+  $('#act0Cuartos').addEventListener('click', () => {
+    divisionState = 2;
+    render();
+    darEstrella(3);
+    state.aciertos[0] += 3;
+    verificarCompletado();
+    $('#act0Feedback').textContent = '✅ ¡Perfecto! La mochila se divide en 4 cuartos iguales.';
+    $('#act0Feedback').style.color = 'var(--verde)';
+    hablar('La mochila se divide en cuatro cuartos iguales. Cada cuarto es un cuarto.');
+  });
+
+  $('#act0Reiniciar').addEventListener('click', () => {
+    divisionState = 0;
+    starGiven = false;
+    $('#act0Estrellas').innerHTML = '';
+    $('#act0Feedback').textContent = '';
+    render();
+  });
+
+  render();
+  // TTS for instructions
+  setTimeout(() => hablar('Divide la mochila wayuu en mitades o en cuartos. Elige una opción.'), 500);
+}
+
+// ============ ACTIVITY 1: TORTILLAS ============
+function initActTortillas() {
+  const div = document.getElementById('actividadContent');
+  let html = `
+    <div class="actividad-desc">
+      🌮 Las <strong>tortillas</strong> (arepas) son parte importante de la comida wayuu.
+      Vamos a dividirlas en partes iguales para que todos reciban la misma cantidad.
+    </div>
+    <div class="controles-row">
+      <button class="btn btn-azul" id="act1Medios">½ Medios</button>
+      <button class="btn btn-morado" id="act1Tercios">⅓ Tercios</button>
+      <button class="btn btn-primario" id="act1Cuartos">¼ Cuartos</button>
+      <button class="btn btn-exito" id="act1Sextos">⅙ Sextos</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas1" width="400" height="280"></canvas>
+    </div>
+    <div class="fraccion-label" id="act1Label">🌮 1 tortilla entera</div>
+    <div class="feedback-actividad" id="act1Feedback"></div>
+    <div class="estrellas-wrap" id="act1Estrellas"></div>
+    <div class="controles-row">
+      <button class="btn btn-secundario" id="act1Reiniciar">🔄 Reiniciar</button>
+      <button class="btn btn-exito" id="act1Ok" style="display:none">✓ ¡Bien! Siguiente →</button>
+    </div>
+  `;
+  div.innerHTML = html;
+
+  const canvas = document.getElementById('canvas1');
+  const ctx = setupCanvas(canvas, 400, 280);
+  const cx = 200, cy = 140, r = 110;
+
+  let parts = 0;
+  let preguntasHechas = new Set();
+  let starGiven = false;
+
+  function render() {
+    ctx.clearRect(0, 0, 400, 280);
+    drawTortilla(ctx, cx, cy, r);
+
+    if (parts > 0) {
+      const angle = (Math.PI * 2) / parts;
+      for (let i = 0; i < parts; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, i * angle - Math.PI / 2, (i + 1) * angle - Math.PI / 2);
+        ctx.closePath();
+        ctx.strokeStyle = '#E07A5F';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Labels
+      ctx.font = 'bold 16px system-ui';
+      ctx.fillStyle = '#E07A5F';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const labelMap = { 2: '½', 3: '⅓', 4: '¼', 6: '⅙' };
+      const label = labelMap[parts] || '1/' + parts;
+      for (let i = 0; i < parts; i++) {
+        const a = i * angle + angle / 2 - Math.PI / 2;
+        const lx = cx + Math.cos(a) * r * 0.55;
+        const ly = cy + Math.sin(a) * r * 0.55;
+        ctx.fillText(label, lx, ly);
+      }
+    }
+
+    const label = $('#act1Label');
+    const names = { 0: '🌮 1 tortilla entera', 2: '🌮 2 medios = 2/2', 3: '🌮 3 tercios = 3/3', 4: '🌮 4 cuartos = 4/4', 6: '🌮 6 sextos = 6/6' };
+    label.textContent = names[parts] || '🌮 ' + parts + ' partes';
+  }
+
+  function elegirDivision(n) {
+    if (preguntasHechas.has(n)) return;
+    preguntasHechas.add(n);
+    parts = n;
+    render();
+
+    if (preguntasHechas.size === 4 && !state.actCompletadas[1]) {
+      state.actCompletadas[1] = true;
+      const btn = $('#act1Ok');
+      btn.style.display = 'inline-block';
+      document.querySelector('[data-act="1"]').classList.add('completada');
+      actualizarProgreso();
+    }
+
+    if (!starGiven) {
+      const stars = Math.min(preguntasHechas.size + 1, 3);
+      const ws = $('#act1Estrellas');
+      ws.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const s = document.createElement('span');
+        s.className = 'estrella' + (i < stars ? ' obtenida' : '');
+        s.textContent = '⭐';
+        if (i < stars) s.style.animationDelay = (i * 0.15) + 's';
+        ws.appendChild(s);
+      }
+      state.estrellas[1] = Math.max(state.estrellas[1], stars);
+      if (stars >= 1) {
+        mostrarToast('⭐ ¡' + stars + ' estrella' + (stars > 1 ? 's' : '') + '!', 'exito');
+      }
+      if (preguntasHechas.size >= 4) starGiven = true;
+    }
+
+    const nameMap = { 2: 'dos medios', 3: 'tres tercios', 4: 'cuatro cuartos', 6: 'seis sextos' };
+    $('#act1Feedback').textContent = '✅ ¡Bien! La tortilla se divide en ' + nameMap[n] + ' iguales.';
+    $('#act1Feedback').style.color = 'var(--verde)';
+    hablar('La tortilla se divide en ' + n + ' partes iguales. Cada parte es un ' + nameMap[n].split(' ')[1] + '.');
+  }
+
+  $('#act1Medios').addEventListener('click', () => elegirDivision(2));
+  $('#act1Tercios').addEventListener('click', () => elegirDivision(3));
+  $('#act1Cuartos').addEventListener('click', () => elegirDivision(4));
+  $('#act1Sextos').addEventListener('click', () => elegirDivision(6));
+
+  $('#act1Reiniciar').addEventListener('click', () => {
+    parts = 0;
+    starGiven = false;
+    $('#act1Estrellas').innerHTML = '';
+    $('#act1Feedback').textContent = '';
+    render();
+  });
+
+  render();
+  setTimeout(() => hablar('Divide la tortilla en diferentes partes iguales: medios, tercios, cuartos o sextos.'), 500);
+}
+
+// ============ ACTIVITY 2: MANTAS ============
+function initActMantas() {
+  const div = document.getElementById('actividadContent');
+  let html = `
+    <div class="actividad-desc">
+      🧶 Las <strong>mantas wayuu</strong> se dividen para que cada miembro de la familia tenga su parte.
+      Divide la manta en tercios y sextos.
+    </div>
+    <div class="controles-row">
+      <button class="btn btn-azul" id="act2Tercios">⅓ Dividir en 3 (tercios)</button>
+      <button class="btn btn-morado" id="act2Sextos">⅙ Dividir en 6 (sextos)</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas2" width="400" height="280"></canvas>
+    </div>
+    <div class="fraccion-label" id="act2Label">🧶 1 manta entera</div>
+    <div class="feedback-actividad" id="act2Feedback"></div>
+    <div class="estrellas-wrap" id="act2Estrellas"></div>
+    <div class="controles-row">
+      <button class="btn btn-secundario" id="act2Reiniciar">🔄 Reiniciar</button>
+      <button class="btn btn-exito" id="act2Ok" style="display:none">✓ ¡Bien! Siguiente →</button>
+    </div>
+  `;
+  div.innerHTML = html;
+
+  const canvas = document.getElementById('canvas2');
+  const ctx = setupCanvas(canvas, 400, 280);
+
+  let parts = 0;
+  let starGiven = false;
+
+  function render() {
+    ctx.clearRect(0, 0, 400, 280);
+    const mx = 50, my = 30, mw = 300, mh = 220;
+    drawManta(ctx, mx, my, mw, mh);
+
+    if (parts === 3) {
+      // Vertical lines for thirds
+      for (let i = 1; i < 3; i++) {
+        const lx = mx + (mw / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(lx, my);
+        ctx.lineTo(lx, my + mh);
+        ctx.strokeStyle = '#E07A5F';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.font = 'bold 18px system-ui';
+      ctx.fillStyle = '#E07A5F';
+      ctx.textAlign = 'center';
+      for (let i = 0; i < 3; i++) {
+        ctx.fillText('⅓', mx + (mw / 3) * i + mw / 6, my + mh / 2);
+      }
+    } else if (parts === 6) {
+      // 2 rows, 3 columns
+      for (let i = 1; i < 3; i++) {
+        const lx = mx + (mw / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(lx, my);
+        ctx.lineTo(lx, my + mh);
+        ctx.strokeStyle = '#E07A5F';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      const midY = my + mh / 2;
+      ctx.beginPath();
+      ctx.moveTo(mx, midY);
+      ctx.lineTo(mx + mw, midY);
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.font = 'bold 16px system-ui';
+      ctx.fillStyle = '#E07A5F';
+      ctx.textAlign = 'center';
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 3; col++) {
+          ctx.fillText('⅙', mx + (mw / 3) * col + mw / 6, my + mh / 4 + row * mh / 2);
+        }
+      }
+    }
+
+    const names = { 0: '🧶 1 manta entera', 3: '🧶 3 tercios = 3/3', 6: '🧶 6 sextos = 6/6' };
+    $('#act2Label').textContent = names[parts] || '';
+  }
+
+  function darEstrella(n) {
+    if (starGiven) return;
+    starGiven = true;
+    const ws = $('#act2Estrellas');
+    ws.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const s = document.createElement('span');
+      s.className = 'estrella' + (i < n ? ' obtenida' : '');
+      s.textContent = '⭐';
+      if (i < n) s.style.animationDelay = (i * 0.15) + 's';
+      ws.appendChild(s);
+    }
+    state.estrellas[2] = Math.max(state.estrellas[2], n);
+    mostrarToast('⭐ ¡' + n + ' estrella' + (n > 1 ? 's' : '') + '!', 'exito');
+  }
+
+  function verificar() {
+    if (parts > 0 && !state.actCompletadas[2]) {
+      state.actCompletadas[2] = true;
+      const btn = $('#act2Ok');
+      btn.style.display = 'inline-block';
+      document.querySelector('[data-act="2"]').classList.add('completada');
+      actualizarProgreso();
+    }
+  }
+
+  $('#act2Tercios').addEventListener('click', () => {
+    parts = 3;
+    render();
+    darEstrella(2);
+    verificar();
+    $('#act2Feedback').textContent = '✅ ¡Correcto! La manta se divide en 3 tercios iguales.';
+    $('#act2Feedback').style.color = 'var(--verde)';
+    hablar('La manta se divide en tres tercios iguales.');
+  });
+
+  $('#act2Sextos').addEventListener('click', () => {
+    parts = 6;
+    render();
+    darEstrella(3);
+    verificar();
+    $('#act2Feedback').textContent = '✅ ¡Perfecto! La manta se divide en 6 sextos iguales.';
+    $('#act2Feedback').style.color = 'var(--verde)';
+    hablar('La manta se divide en seis sextos iguales.');
+  });
+
+  $('#act2Reiniciar').addEventListener('click', () => {
+    parts = 0;
+    starGiven = false;
+    $('#act2Estrellas').innerHTML = '';
+    $('#act2Feedback').textContent = '';
+    render();
+  });
+
+  render();
+  setTimeout(() => hablar('Divide la manta wayuu en tercios o en sextos.'), 500);
+}
+
+// ============ ACTIVITY 3: DIBUJAR LÍNEAS ============
+function initActDibujar() {
+  const div = document.getElementById('actividadContent');
+  let html = `
+    <div class="actividad-desc">
+      ✏️ Ahora tú dibujas las líneas para dividir las formas en partes iguales.
+      ¡Haz clic en el canvas y dibuja líneas rectas!
+    </div>
+    <div class="controles-row">
+      <span class="fraccion-label" id="act3Problema">Divide el cuadrado en <span class="num" id="act3Target">2</span> partes iguales</span>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas3" width="400" height="300"></canvas>
+    </div>
+    <div class="dibujo-tools">
+      <button class="dibujo-btn activo" id="act3LineaV">│ Línea vertical</button>
+      <button class="dibujo-btn" id="act3LineaH">─ Línea horizontal</button>
+      <button class="dibujo-btn" id="act3LineaD">╲ Diagonal</button>
+      <button class="btn btn-secundario" id="act3Limpiar">🗑️ Limpiar</button>
+      <button class="btn btn-primario" id="act3Verificar">✓ Verificar</button>
+    </div>
+    <div class="feedback-actividad" id="act3Feedback"></div>
+    <div class="estrellas-wrap" id="act3Estrellas"></div>
+    <div class="controles-row">
+      <button class="btn btn-exito" id="act3Ok" style="display:none">✓ Siguiente actividad →</button>
+    </div>
+  `;
+  div.innerHTML = html;
+
+  const canvas = document.getElementById('canvas3');
+  const ctx = setupCanvas(canvas, 400, 300);
+
+  const shape = { x: 75, y: 30, w: 250, h: 240 };
+  let lines = [];
+  let currentTool = 'v';
+  let drawing = false;
+  let lineStart = null;
+  let levels = [
+    { parts: 2, expected: [{ type: 'v', pos: 0.5 }] },
+    { parts: 4, expected: [{ type: 'v', pos: 0.5 }, { type: 'h', pos: 0.5 }] },
+    { parts: 3, expected: [{ type: 'v', pos: 1 / 3 }, { type: 'v', pos: 2 / 3 }] },
+    { parts: 6, expected: [{ type: 'v', pos: 1 / 3 }, { type: 'v', pos: 2 / 3 }, { type: 'h', pos: 0.5 }] }
+  ];
+  let currentLevel = 0;
+  let starGiven = false;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 400 / rect.width;
+    const scaleY = 300 / rect.height;
+    if (e.touches) {
+      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, 400, 300);
+    // Draw shape (rounded rect / rectangle)
+    ctx.fillStyle = '#FFFDF7';
+    ctx.strokeStyle = '#5B8C5A';
+    ctx.lineWidth = 3;
+    const r = 8;
+    ctx.beginPath();
+    ctx.roundRect?.(shape.x, shape.y, shape.w, shape.h, r) ||
+      (ctx.rect(shape.x, shape.y, shape.w, shape.h));
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw existing lines
+    lines.forEach(l => {
+      ctx.beginPath();
+      ctx.moveTo(l.x1, l.y1);
+      ctx.lineTo(l.x2, l.y2);
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.stroke();
+    });
+
+    // Draw drag preview
+    if (drawing && lineStart) {
+      ctx.beginPath();
+      ctx.moveTo(lineStart.x, lineStart.y);
+      ctx.lineTo(lineStart.cx, lineStart.cy);
+      ctx.strokeStyle = '#E07A5F66';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+    }
+
+    // Update target label
+    const lvl = levels[currentLevel];
+    if (lvl) {
+      const partNames = { 2: '2', 3: '3', 4: '4', 6: '6' };
+      document.getElementById('act3Target').textContent = partNames[lvl.parts] || lvl.parts;
+    }
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    const pos = getPos(e);
+    lineStart = { x: pos.x, y: pos.y, cx: pos.x, cy: pos.y };
+    render();
+  }
+
+  function moveDraw(e) {
+    e.preventDefault();
+    if (!drawing || !lineStart) return;
+    const pos = getPos(e);
+    lineStart.cx = pos.x;
+    lineStart.cy = pos.y;
+    render();
+  }
+
+  function endDraw(e) {
+    e.preventDefault();
+    if (!drawing || !lineStart) return;
+    drawing = false;
+
+    const pos = e.changedTouches ? getPos({ touches: e.changedTouches }) : getPos(e);
+    let x1, y1, x2, y2;
+
+    if (currentTool === 'v') {
+      x1 = pos.x; y1 = shape.y;
+      x2 = pos.x; y2 = shape.y + shape.h;
+    } else if (currentTool === 'h') {
+      x1 = shape.x; y1 = pos.y;
+      x2 = shape.x + shape.w; y2 = pos.y;
+    } else {
+      // Diagonal from top-left to bottom-right
+      x1 = shape.x; y1 = shape.y;
+      x2 = shape.x + shape.w; y2 = shape.y + shape.h;
+      // Closest to user's drag direction: decide based on drag
+      const dx = pos.x - lineStart.x;
+      const dy = pos.y - lineStart.y;
+      if (Math.abs(dy) > Math.abs(dx)) {
+        // horizontal-ish diagonal
+        x1 = shape.x; y1 = shape.y;
+        x2 = shape.x + shape.w; y2 = shape.y + shape.h;
+      } else {
+        x1 = shape.x + shape.w; y1 = shape.y;
+        x2 = shape.x; y2 = shape.y + shape.h;
+      }
+    }
+
+    // Clamp to shape bounds
+    x1 = Math.max(shape.x, Math.min(shape.x + shape.w, x1));
+    y1 = Math.max(shape.y, Math.min(shape.y + shape.h, y1));
+    x2 = Math.max(shape.x, Math.min(shape.x + shape.w, x2));
+    y2 = Math.max(shape.y, Math.min(shape.y + shape.h, y2));
+
+    // Only add if line is within the shape
+    if (x1 > shape.x && x1 < shape.x + shape.w && x2 > shape.x && x2 < shape.x + shape.w) {
+      lines.push({ x1, y1, x2, y2 });
+    } else if (y1 > shape.y && y1 < shape.y + shape.h && y2 > shape.y && y2 < shape.y + shape.h) {
+      lines.push({ x1, y1, x2, y2 });
+    }
+
+    lineStart = null;
+    render();
+  }
+
+  function checkTool(tool) {
+    return (tool === 'v' || tool === 'h');
+  }
+
+  function verificarDivision() {
+    const lvl = levels[currentLevel];
+    if (!lvl) return;
+
+    let correctLines = 0;
+    for (const exp of lvl.expected) {
+      const found = lines.some(l => {
+        if (exp.type === 'v') {
+          const midX = (l.x1 + l.x2) / 2;
+          const expectedX = shape.x + shape.w * exp.pos;
+          return Math.abs(midX - expectedX) < 15 && Math.abs(l.y2 - l.y1) > shape.h * 0.7;
+        } else if (exp.type === 'h') {
+          const midY = (l.y1 + l.y2) / 2;
+          const expectedY = shape.y + shape.h * exp.pos;
+          return Math.abs(midY - expectedY) < 15 && Math.abs(l.x2 - l.x1) > shape.w * 0.7;
+        }
+        return false;
+      });
+      if (found) correctLines++;
+    }
+
+    const fb = $('#act3Feedback');
+    if (correctLines === lvl.expected.length) {
+      const stars = currentLevel + 1 >= 3 ? 3 : currentLevel + 2;
+      if (!starGiven) {
+        const ws = $('#act3Estrellas');
+        ws.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          const s = document.createElement('span');
+          s.className = 'estrella' + (i < stars ? ' obtenida' : '');
+          s.textContent = '⭐';
+          if (i < stars) s.style.animationDelay = (i * 0.15) + 's';
+          ws.appendChild(s);
+        }
+        state.estrellas[3] = Math.max(state.estrellas[3], stars);
+        starGiven = true;
+        mostrarToast('⭐ ¡' + stars + ' estrella' + (stars > 1 ? 's' : '') + '!', 'exito');
+      }
+
+      fb.textContent = '✅ ¡Excelente! Dividiste en ' + lvl.parts + ' partes iguales.';
+      fb.style.color = 'var(--verde)';
+      hablar('¡Muy bien! Has dividido en ' + lvl.parts + ' partes iguales.');
+
+      if (currentLevel < levels.length - 1) {
+        currentLevel++;
+        lines = [];
+        starGiven = false;
+        setTimeout(() => {
+          render();
+          fb.textContent = '🎯 Ahora divide en ' + levels[currentLevel].parts + ' partes iguales.';
+          hablar('Divide en ' + levels[currentLevel].parts + ' partes iguales.');
+        }, 1500);
+      } else {
+        state.actCompletadas[3] = true;
+        const btn = $('#act3Ok');
+        btn.style.display = 'inline-block';
+        document.querySelector('[data-act="3"]').classList.add('completada');
+        actualizarProgreso();
+        hablar('¡Completaste todos los niveles de dibujo!');
+      }
+    } else {
+      fb.textContent = '❌ Necesitas dividir en ' + lvl.parts + ' partes iguales. Las líneas deben cruzar toda la figura. ¡Intenta de nuevo!';
+      fb.style.color = 'var(--rojo)';
+    }
+  }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', moveDraw, { passive: false });
+  canvas.addEventListener('touchend', endDraw, { passive: false });
+
+  $('#act3LineaV').addEventListener('click', function () {
+    currentTool = 'v';
+    $$('.dibujo-btn').forEach(b => b.classList.remove('activo'));
+    this.classList.add('activo');
+  });
+  $('#act3LineaH').addEventListener('click', function () {
+    currentTool = 'h';
+    $$('.dibujo-btn').forEach(b => b.classList.remove('activo'));
+    this.classList.add('activo');
+  });
+  $('#act3LineaD').addEventListener('click', function () {
+    currentTool = 'd';
+    $$('.dibujo-btn').forEach(b => b.classList.remove('activo'));
+    this.classList.add('activo');
+  });
+  $('#act3Limpiar').addEventListener('click', () => {
+    lines = [];
+    render();
+    $('#act3Feedback').textContent = '';
+  });
+  $('#act3Verificar').addEventListener('click', verificarDivision);
+
+  render();
+  setTimeout(() => hablar('Dibuja líneas para dividir el cuadrado en partes iguales. Elige una herramienta y haz clic en el canvas.'), 500);
+}
+
+// ============ ACTIVITY 4: EMPAREJAR ============
+function initActEmparejar() {
+  const div = document.getElementById('actividadContent');
+  let html = `
+    <div class="actividad-desc">
+      🔢 Empareja cada fracción con su representación visual.
+      Haz clic en una tarjeta de fracción y luego en su dibujo correspondiente.
+    </div>
+    <div class="match-area" id="matchArea"></div>
+    <div class="feedback-actividad" id="act4Feedback"></div>
+    <div class="estrellas-wrap" id="act4Estrellas"></div>
+    <div class="controles-row">
+      <button class="btn btn-secundario" id="act4Reiniciar">🔄 Reiniciar</button>
+      <button class="btn btn-exito" id="act4Ok" style="display:none">✓ ¡Completado! 🎉</button>
+    </div>
+  `;
+  div.innerHTML = html;
+
+  const matchData = [
+    { label: '½', frac: '1/2', parts: 2, selected: 0 },
+    { label: '¼', frac: '1/4', parts: 4, selected: 0 },
+    { label: '⅓', frac: '1/3', parts: 3, selected: 0 },
+    { label: '⅙', frac: '1/6', parts: 6, selected: 0 }
+  ];
+
+  // Shuffle
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  let seleccionTipo = null;
+  let seleccionIdx = null;
+  let matches = 0;
+  let starGiven = false;
+  let shuffledLabels = shuffle([...matchData]);
+  let shuffledDrawings = shuffle([...matchData]);
+
+  function renderMatch() {
+    const area = document.getElementById('matchArea');
+
+    // Build mini canvas for each drawing item
+    let labelsHtml = '';
+    let drawingsHtml = '';
+
+    shuffledLabels.forEach((item, idx) => {
+      labelsHtml += `
+        <div class="match-card${item.selected === 2 ? ' correcta' : ''}${item.selected === 1 ? ' seleccionada' : ''}" 
+             data-type="label" data-idx="${idx}" data-frac="${item.frac}">
+          ${item.label}
+        </div>
+      `;
+    });
+
+    shuffledDrawings.forEach((item, idx) => {
+      drawingsHtml += `
+        <div class="match-card${item.selected === 2 ? ' correcta' : ''}${item.selected === 1 ? ' seleccionada' : ''}" 
+             data-type="drawing" data-idx="${idx}" data-frac="${item.frac}">
+          <canvas class="match-canvas-inline" id="mc-${idx}" width="140" height="70"></canvas>
+        </div>
+      `;
+    });
+
+    area.innerHTML = `
+      <div class="match-col"><div style="font-weight:bold;text-align:center;margin-bottom:6px;color:var(--tierra)">Fracciones</div>${labelsHtml}</div>
+      <div class="match-col"><div style="font-weight:bold;text-align:center;margin-bottom:6px;color:var(--tierra)">Dibujos</div>${drawingsHtml}</div>
+    `;
+
+    // Draw on each mini canvas
+    shuffledDrawings.forEach((item, idx) => {
+      const c = document.getElementById('mc-' + idx);
+      if (!c) return;
+      const ctx = setupCanvas(c, 140, 70);
+      drawMiniPie(ctx, 70, 35, 28, item.parts);
+      c.style.pointerEvents = 'none';
+    });
+
+    // Bind click events
+    $$('.match-card').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.classList.contains('correcta')) return;
+        const type = el.dataset.type;
+        const idx = parseInt(el.dataset.idx);
+        const frac = el.dataset.frac;
+        onMatchClick(type, idx, frac);
+      });
+    });
+  }
+
+  function drawMiniPie(ctx, cx, cy, r, parts) {
+    ctx.clearRect(0, 0, 140, 70);
+    // Draw pie
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    grad.addColorStop(0, '#F4D03F');
+    grad.addColorStop(1, '#E8B86D');
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#B8942A';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Division lines
+    const angle = (Math.PI * 2) / parts;
+    for (let i = 0; i < parts; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, i * angle - Math.PI / 2, (i + 1) * angle - Math.PI / 2);
+      ctx.closePath();
+      ctx.strokeStyle = '#E07A5F';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  function onMatchClick(type, idx, frac) {
+    if (seleccionTipo === null) {
+      // First selection
+      seleccionTipo = type;
+      seleccionIdx = idx;
+      // Remove all selections first
+      $$('.match-card').forEach(c => c.classList.remove('seleccionada'));
+      // Mark this
+      const arr = type === 'label' ? shuffledLabels : shuffledDrawings;
+      arr[idx].selected = 1;
+      renderMatch();
+    } else if (seleccionTipo === type) {
+      // Same type - switch selection
+      const arr = type === 'label' ? shuffledLabels : shuffledDrawings;
+      arr.forEach(a => a.selected = a.selected === 1 ? 0 : a.selected);
+      arr[idx].selected = 1;
+      seleccionIdx = idx;
+      renderMatch();
+    } else {
+      // Different type - check match
+      const labelFrac = type === 'label' ? frac : shuffledLabels[seleccionIdx].frac;
+      const drawFrac = type === 'drawing' ? frac : shuffledDrawings[seleccionIdx].frac;
+
+      const fb = $('#act4Feedback');
+      if (labelFrac === drawFrac) {
+        // Correct match
+        const labelArr = type === 'label' ? shuffledLabels : shuffledDrawings;
+        const drawArr = type === 'drawing' ? shuffledLabels : shuffledDrawings;
+        const labelIdx = type === 'label' ? idx : seleccionIdx;
+        const drawIdx = type === 'drawing' ? idx : seleccionIdx;
+
+        shuffledLabels.forEach(a => { if (a.frac === labelFrac) a.selected = 2; });
+        shuffledDrawings.forEach(a => { if (a.frac === labelFrac) a.selected = 2; });
+
+        matches++;
+        fb.textContent = '✅ ¡Correcto! ' + labelFrac + ' = ' + drawFrac;
+        fb.style.color = 'var(--verde)';
+        hablar(labelFrac + ' coincide con el dibujo.');
+
+        if (matches === matchData.length) {
+          const stars = 3;
+          if (!starGiven) {
+            const ws = $('#act4Estrellas');
+            ws.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+              const s = document.createElement('span');
+              s.className = 'estrella obtenida';
+              s.textContent = '⭐';
+              s.style.animationDelay = (i * 0.15) + 's';
+              ws.appendChild(s);
+            }
+            state.estrellas[4] = 3;
+            starGiven = true;
+            mostrarToast('⭐ ¡3 estrellas! Todas las fracciones emparejadas.', 'exito');
+          }
+
+          state.actCompletadas[4] = true;
+          document.querySelector('[data-act="4"]').classList.add('completada');
+          actualizarProgreso();
+          $('#act4Ok').style.display = 'inline-block';
+          fb.textContent = '🎉 ¡Todas las fracciones emparejadas correctamente!';
+          hablar('¡Excelente! Emparejaste todas las fracciones.');
+        }
+
+        seleccionTipo = null;
+        seleccionIdx = null;
+        setTimeout(renderMatch, 300);
+      } else {
+        fb.textContent = '❌ Incorrecto. ' + labelFrac + ' no es igual a ' + drawFrac + '. ¡Sigue intentando!';
+        fb.style.color = 'var(--rojo)';
+        // Deselect
+        shuffledLabels.forEach(a => { if (a.selected === 1) a.selected = 0; });
+        shuffledDrawings.forEach(a => { if (a.selected === 1) a.selected = 0; });
+        seleccionTipo = null;
+        seleccionIdx = null;
+        setTimeout(renderMatch, 500);
+      }
+    }
+  }
+
+  $('#act4Reiniciar').addEventListener('click', () => {
+    shuffledLabels = shuffle([...matchData]);
+    shuffledDrawings = shuffle([...matchData]);
+    seleccionTipo = null;
+    seleccionIdx = null;
+    matches = 0;
+    starGiven = false;
+    $('#act4Estrellas').innerHTML = '';
+    $('#act4Feedback').textContent = '';
+    renderMatch();
+  });
+
+  renderMatch();
+  setTimeout(() => hablar('Empareja cada fracción con su dibujo correspondiente.'), 500);
+}
+
+// ============ ACTIVITY DISPATCHER ============
+const actFuncs = [initActMochilas, initActTortillas, initActMantas, initActDibujar, initActEmparejar];
+
+function cargarActividad(idx) {
+  state.actActual = idx;
+  // Update tabs
+  $$('.actividad-tab').forEach(t => {
+    t.classList.remove('activa');
+    if (parseInt(t.dataset.act) === idx) t.classList.add('activa');
+  });
+  actFuncs[idx]();
+}
+
+// ============ PANTALLA 1 → 2 ============
+$('#btnIniciar').addEventListener('click', () => {
+  irAPantalla(2);
+  cargarActividad(0);
+  mostrarToast('🧶 ¡A dividir en partes iguales!', 'info');
+});
+
+// ============ TAB CLICKS ============
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest('.actividad-tab');
+  if (tab && $('#pantalla2').style.display !== 'none') {
+    const idx = parseInt(tab.dataset.act);
+    if (idx !== state.actActual) {
+      cargarActividad(idx);
+    }
+  }
+});
+
+// ============ ACTIVIDAD OK BUTTONS (delegated) ============
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'act0Ok' || e.target.id === 'act1Ok' || e.target.id === 'act2Ok' || e.target.id === 'act3Ok' || e.target.id === 'act4Ok') {
+    const nextIdx = state.actActual + 1;
+    if (nextIdx < actFuncs.length) {
+      cargarActividad(nextIdx);
+    } else {
+      // All done
+      if (!state.activCompleto) {
+        state.activCompleto = true;
+        $('#check2').style.display = 'inline-block';
+        $('#pantalla2').classList.add('completado');
+        actualizarProgreso();
+        setTimeout(() => {
+          $('#btnActividadesOk').style.display = 'inline-block';
+          mostrarToast('🎉 ¡Todas las actividades completadas!', 'exito');
+        }, 300);
+      }
+    }
+  }
+});
+
+$('#btnActividadesOk').addEventListener('click', () => {
+  irAPantalla(3);
+  mostrarResultados();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados() {
+  const totalStars = state.estrellas.reduce((a, b) => a + b, 0);
+  const maxStars = state.maxEstrellas.reduce((a, b) => a + b, 0);
+  const pct = Math.round((totalStars / maxStars) * 100);
+
+  $('#puntajeFinal').textContent = totalStars + ' / ' + maxStars + ' ⭐';
+
+  let mensaje = '';
+  if (pct >= 90) {
+    mensaje = '🏆 ¡Excelente! Eres un maestro de las fracciones Wayuu. Sabes dividir mochilas, tortillas y mantas en partes iguales. ¡Como un verdadero artesano!';
+    $('#estrellaFinal').textContent = '🏆';
+  } else if (pct >= 70) {
+    mensaje = '🌟 ¡Muy bien! Has aprendido mucho sobre fracciones. Sigue practicando para dominarlas.';
+    $('#estrellaFinal').textContent = '🌟';
+  } else if (pct >= 40) {
+    mensaje = '👍 ¡Buen trabajo! Estás aprendiendo a dividir en partes iguales. Repite para mejorar.';
+    $('#estrellaFinal').textContent = '👍';
+  } else {
+    mensaje = '🌱 Vas comenzando con las fracciones. ¡No te rindas! Vuelve a intentarlo.';
+    $('#estrellaFinal').textContent = '🌱';
+  }
+  $('#mensajeFinal').textContent = mensaje;
+
+  // Resumen
+  const actNames = ['👜 Mochilas', '🌮 Tortillas', '🧶 Mantas', '✏️ Dibujar', '🔢 Emparejar'];
+  const resDiv = $('#resumenActividades');
+  resDiv.innerHTML = '';
+  state.actCompletadas.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'resumen-eco';
+    d.style.cssText = 'background:var(--blanco);border-radius:15px;padding:12px;text-align:center;min-width:100px;border:2px solid var(--arena);box-shadow:var(--sombra)';
+    d.innerHTML = `
+      <div style="font-size:2rem">${actNames[i].split(' ')[0]}</div>
+      <div style="font-weight:bold;color:var(--tierra);margin-top:4px;font-size:0.85rem">${actNames[i].split(' ').slice(1).join(' ')}</div>
+      <div style="color:var(--atardecer);font-size:1.2rem;margin-top:4px">${'⭐'.repeat(state.estrellas[i])}${'☆'.repeat(state.maxEstrellas[i] - state.estrellas[i])}</div>
+    `;
+    resDiv.appendChild(d);
+  });
+
+  // Confetti
+  const emojis = ['⭐','🌟','🎉','🎊','💫','✨','🧶','👜','🌮'];
+  for (let i = 0; i < 24; i++) {
+    setTimeout(() => {
+      const e = document.createElement('span');
+      e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2s ease-out forwards;';
+      e.style.left = Math.random() * 90 + '%';
+      e.style.top = '-50px';
+      document.body.appendChild(e);
+      setTimeout(() => e.remove(), 2100);
+    }, i * 80);
+  }
+  if (!document.getElementById('animCaer')) {
+    const s = document.createElement('style');
+    s.id = 'animCaer';
+    s.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+    document.head.appendChild(s);
+  }
+
+  hablar(mensaje);
+  actualizarProgreso();
+}
+
+// ============ INIT ============
+actualizarProgreso();
+
+})();
+</script>
+
+</body>
+</html>

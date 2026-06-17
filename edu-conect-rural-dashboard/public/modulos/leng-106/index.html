@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LENG-106: Escribo mi Historia | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root {
+  --arena: #F4E1C1;
+  --desierto: #E8B86D;
+  --atardecer: #E07A5F;
+  --tierra: #8B5E3C;
+  --wayuu-oro: #D4A843;
+  --texto: #3D2B1F;
+  --blanco: #FFFDF7;
+  --sombra: 0 4px 20px rgba(0,0,0,0.12);
+  --rojo: #D64045;
+  --verde: #4CAF50;
+  --cardon: #5B8C5A;
+  --cielo: #87CEEB;
+  --mar: #0288D1;
+  --morado: #9B59B6;
+  --azul: #4A90D9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+  min-height:100vh;
+  color:var(--texto);
+}
+body::before{
+  content:'';
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+             radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+  pointer-events:none;z-index:0;
+}
+.container{max-width:900px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Top bar */
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;background:rgba(255,253,247,0.95);
+  backdrop-filter:blur(10px);box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  position:sticky;top:0;z-index:100;border-radius:0 0 16px 16px;
+}
+.top-bar .volver{
+  background:var(--atardecer);color:white;border:none;padding:8px 18px;
+  border-radius:20px;font-size:0.9rem;font-weight:bold;cursor:pointer;
+  text-decoration:none;transition:transform 0.2s;
+}
+.top-bar .volver:hover{transform:scale(1.05)}
+.top-bar .titulo{
+  font-size:clamp(0.9rem,2.5vw,1.2rem);color:var(--tierra);font-weight:bold;
+  display:flex;align-items:center;gap:6px;
+}
+.top-bar .progreso{display:flex;gap:6px;align-items:center}
+.top-bar .progreso .dot{
+  width:12px;height:12px;border-radius:50%;
+  background:#ddd;transition:all 0.3s;
+}
+.top-bar .progreso .dot.active{background:var(--wayuu-oro);box-shadow:0 0 8px var(--wayuu-oro)}
+.top-bar .progreso .dot.done{background:var(--verde)}
+.top-bar .progreso .dot.star{background:var(--verde);box-shadow:0 0 8px rgba(76,175,80,0.5)}
+.top-bar .progreso .dot.star::after{content:'\u2B50';font-size:10px;display:flex;align-items:center;justify-content:center}
+
+/* Header */
+.header{
+  text-align:center;padding:20px 15px 10px;position:relative;
+}
+.header .icono-grande{
+  font-size:3.5rem;animation:brillar 2s ease-in-out infinite;display:inline-block;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+  font-size:clamp(1.5rem,4vw,2.2rem);color:var(--tierra);
+  text-shadow:2px 2px 0 var(--wayuu-oro);margin:5px 0;
+}
+.header .grado{
+  display:inline-block;background:var(--wayuu-oro);color:var(--blanco);
+  padding:5px 18px;border-radius:20px;font-weight:bold;font-size:0.9rem;
+}
+.header .deco{font-size:1.2rem;margin:8px 0;letter-spacing:6px;opacity:0.7}
+
+/* Cards */
+.card{
+  background:var(--blanco);border-radius:20px;padding:22px 20px;
+  margin-bottom:18px;box-shadow:var(--sombra);border:2px solid var(--arena);
+  animation:fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card h2{
+  font-size:1.3rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.card h2 .step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:50%;background:var(--wayuu-oro);
+  color:white;font-size:0.9rem;flex-shrink:0;
+}
+.card .etiqueta-check{
+  display:inline-block;background:var(--verde);color:white;padding:3px 10px;
+  border-radius:10px;font-size:0.75rem;margin-left:8px;
+}
+
+/* Step cards inside */
+.paso-activo{
+  border-left:5px solid var(--atardecer);
+}
+.paso-completado{
+  border-left:5px solid var(--verde);opacity:0.85;
+}
+
+/* Buttons */
+.btn{
+  padding:10px 20px;border:none;border-radius:25px;cursor:pointer;
+  font-size:0.95rem;font-weight:bold;transition:all 0.2s;
+  display:inline-flex;align-items:center;gap:6px;font-family:inherit;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;filter:none!important}
+.btn-primario{background:var(--atardecer);color:white;box-shadow:0 4px 12px rgba(224,122,95,0.4)}
+.btn-secundario{background:var(--arena);color:var(--texto)}
+.btn-exito{background:var(--verde);color:white;box-shadow:0 4px 12px rgba(76,175,80,0.4)}
+.btn-azul{background:var(--azul);color:white;box-shadow:0 4px 12px rgba(74,144,217,0.4)}
+.btn-oro{background:var(--wayuu-oro);color:var(--tierra);box-shadow:0 4px 12px rgba(212,168,67,0.4)}
+.btn-morado{background:var(--morado);color:white;box-shadow:0 4px 12px rgba(155,89,182,0.4)}
+.btn-small{padding:8px 16px;font-size:0.85rem}
+
+/* TTS */
+.tts-btn{
+  background:var(--azul);color:white;border:none;border-radius:50%;
+  width:36px;height:36px;font-size:1.1rem;cursor:pointer;transition:all 0.2s;
+  box-shadow:0 2px 8px rgba(74,144,217,0.3);
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.tts-btn:hover{transform:scale(1.1)}
+.tts-btn.hablando{background:var(--atardecer);animation:brillar 0.8s ease-in-out infinite}
+
+/* Character selector */
+.char-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:12px;margin:12px 0;
+}
+.char-card{
+  background:var(--blanco);border:3px solid var(--arena);border-radius:16px;
+  padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.3s;
+}
+.char-card:hover{border-color:var(--wayuu-oro);transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,0.1)}
+.char-card.seleccionado{border-color:var(--atardecer);background:#FFF5EE;box-shadow:0 0 0 3px rgba(224,122,95,0.2)}
+.char-card .char-emoji{font-size:2.5rem;display:block;margin-bottom:6px}
+.char-card .char-nombre{font-weight:bold;font-size:0.95rem;color:var(--tierra)}
+.char-card .char-desc{font-size:0.8rem;color:#888;margin-top:3px}
+
+/* Form fields */
+.grupo-form{
+  margin-bottom:14px;
+}
+.grupo-form label{
+  display:block;font-weight:bold;color:var(--tierra);margin-bottom:4px;font-size:0.9rem;
+}
+.grupo-form input,.grupo-form textarea,.grupo-form select{
+  width:100%;padding:10px 14px;border:2px solid var(--arena);
+  border-radius:12px;font-size:0.95rem;font-family:inherit;
+  background:var(--blanco);transition:border-color 0.3s;
+}
+.grupo-form input:focus,.grupo-form textarea:focus,.grupo-form select:focus{
+  outline:none;border-color:var(--wayuu-oro);box-shadow:0 0 0 3px rgba(212,168,67,0.15);
+}
+.grupo-form textarea{min-height:90px;resize:vertical;line-height:1.6}
+.grupo-form .pista{font-size:0.8rem;color:#999;margin-top:3px;font-style:italic}
+.grupo-form .contador{text-align:right;font-size:0.75rem;color:#aaa;margin-top:2px}
+
+/* Setting scene preview */
+.scene-preview{
+  text-align:center;font-size:4rem;padding:20px;
+  background:linear-gradient(135deg,#FFF8EE,#FEF0DC);
+  border-radius:16px;margin:12px 0;border:2px dashed var(--wayuu-oro);
+}
+.scene-preview .scene-label{display:block;font-size:0.9rem;color:var(--tierra);margin-top:8px;font-weight:bold}
+
+/* Problem selector */
+.problema-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:480px){.problema-grid{grid-template-columns:1fr}}
+.problema-card{
+  background:var(--blanco);border:3px solid var(--arena);border-radius:16px;
+  padding:16px;text-align:center;cursor:pointer;transition:all 0.3s;
+}
+.problema-card:hover{border-color:var(--rojo);transform:translateY(-3px)}
+.problema-card.seleccionado{border-color:var(--rojo);background:#FFF0F0;box-shadow:0 0 0 3px rgba(214,64,69,0.2)}
+.problema-card .prob-emoji{font-size:2.5rem;display:block;margin-bottom:6px}
+.problema-card .prob-nombre{font-weight:bold;font-size:0.9rem}
+
+/* Multiple choice helpers */
+.helper-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+@media(max-width:480px){.helper-grid{grid-template-columns:1fr}}
+.helper-card{
+  background:var(--blanco);border:2px solid var(--arena);border-radius:14px;
+  padding:12px;cursor:pointer;transition:all 0.2s;text-align:center;
+}
+.helper-card:hover{border-color:var(--cardon);background:#F0F8F0}
+.helper-card.seleccionado{border-color:var(--cardon);background:#E8F5E9;box-shadow:0 0 0 3px rgba(91,140,90,0.2)}
+.helper-card .helper-text{font-size:0.9rem;color:var(--texto)}
+
+/* Story display */
+.story-display{
+  background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+  border:2px solid var(--wayuu-oro);border-radius:16px;
+  padding:24px 20px;margin:14px 0;line-height:1.9;font-size:1.05rem;
+  min-height:100px;white-space:pre-wrap;
+}
+.story-display .story-title{
+  text-align:center;font-size:1.2rem;font-weight:bold;color:var(--atardecer);margin-bottom:12px;
+}
+.story-display .story-section{
+  margin-bottom:10px;padding-left:12px;border-left:3px solid var(--arena);
+}
+.story-display .story-section strong{color:var(--tierra)}
+
+/* Question guides */
+.guia-preguntas{
+  background:#FFF8F0;border-radius:12px;padding:14px 16px;margin:10px 0;
+  border-left:4px solid var(--wayuu-oro);
+}
+.guia-preguntas p{margin-bottom:4px;font-size:0.9rem;color:#666}
+.guia-preguntas .emoji-helper{letter-spacing:3px;font-size:1.1rem}
+
+/* Stars display */
+.estrellas-display{text-align:center;margin:16px 0}
+.estrellas-display .estrella{
+  font-size:2.5rem;display:inline-block;margin:0 4px;
+  transition:all 0.4s;opacity:0.2;filter:grayscale(1);
+}
+.estrellas-display .estrella.ganada{
+  opacity:1;filter:grayscale(0);animation:popStar 0.5s ease-out;
+}
+@keyframes popStar{
+  0%{transform:scale(0);opacity:0}
+  60%{transform:scale(1.3)}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* Toast */
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  padding:12px 30px;border-radius:25px;font-weight:bold;font-size:1rem;
+  z-index:1000;animation:slideDown 0.4s ease-out;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);max-width:90vw;text-align:center;
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+.toast.oro{background:var(--wayuu-oro);color:var(--tierra)}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Confetti */
+@keyframes confetti-fall{
+  0%{transform:translateY(-100vh) rotate(0deg);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+.confetti-piece{
+  position:fixed;width:10px;height:10px;border-radius:3px;
+  animation:confetti-fall 2s ease-in forwards;z-index:200;pointer-events:none;
+}
+
+/* Print */
+/* Screens */
+.screen{display:none}
+.screen.active{display:block}
+
+@media print{
+  .top-bar,.btn,.tts-btn{display:none!important}
+  .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{padding:10px}
+  .card{padding:16px 14px}
+  .char-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .char-card .char-emoji{font-size:2rem}
+  .header h1{font-size:1.4rem}
+  .top-bar{padding:8px 12px}
+  .top-bar .titulo{font-size:0.85rem}
+  .top-bar .progreso .dot{width:10px;height:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div>
+    <a href="../" class="volver">← Módulos</a>
+  </div>
+  <div class="titulo">✍️ LENG-106: Escribo mi Historia</div>
+  <div class="progreso" id="progressDots">
+    <span class="dot active" data-step="0"></span>
+    <span class="dot" data-step="1"></span>
+    <span class="dot" data-step="2"></span>
+    <span class="dot" data-step="3"></span>
+    <span class="dot" data-step="4"></span>
+    <span class="dot" data-step="5"></span>
+  </div>
+</div>
+
+<!-- ===== SCREEN 0: WELCOME ===== -->
+<div class="screen" id="screenWelcome">
+  <div class="header">
+    <div class="icono-grande">✍️</div>
+    <h1>Escribo mi Historia</h1>
+    <span class="grado">📖 Lenguaje · Taller Creativo</span>
+    <div class="deco">📝 🎨 ✨ 🌟 📚</div>
+  </div>
+  <div class="card">
+    <p style="font-size:1.05rem;line-height:1.7;text-align:center">
+      ¡Bienvenido al taller de escritura creativa!<br>
+      En <strong>5 pasos</strong> crearás tu propia historia<br>
+      inspirada en la cultura <strong>Wayuu</strong>. 🌵
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:16px 0;padding:0 20px">
+      <p>📖 <strong>Paso 1:</strong> Crea tu personaje</p>
+      <p>🏜️ <strong>Paso 2:</strong> Elige el lugar</p>
+      <p>⚡ <strong>Paso 3:</strong> Define el problema</p>
+      <p>💡 <strong>Paso 4:</strong> Encuentra la solución</p>
+      <p>🏁 <strong>Paso 5:</strong> Escribe el final y comparte</p>
+    </div>
+    <p style="text-align:center;font-style:italic;color:var(--atardecer)">
+      🌟 ¡Cada paso completado te dará una estrella! 🌟
+    </p>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primario" onclick="irAPantalla('personaje')">
+        🚀 ¡Comenzar a escribir!
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 1: PERSONAJE ===== -->
+<div class="screen card paso-activo" id="screenPersonaje">
+  <h2><span class="step-num">1</span> Personaje <span class="etiqueta-check" id="check1" style="display:none">✓ Listo</span></h2>
+  <p style="color:#888;margin-bottom:12px">Elige o crea tu personaje. Dale vida con nombre, edad y personalidad.</p>
+
+  <div style="margin-bottom:10px">
+    <button class="btn btn-small btn-secundario" onclick="hablar('Elige un personaje wayuu: Juyá la lluvia, Mma la tierra, Pulowi la mujer wayuu, el chivo o la iguana. O crea tu propio personaje.')">🔊 Escuchar instrucciones</button>
+  </div>
+
+  <div class="char-grid" id="charGrid">
+    <div class="char-card" data-char="juya" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">🌧️</span>
+      <div class="char-nombre">Juyá</div>
+      <div class="char-desc">La lluvia</div>
+    </div>
+    <div class="char-card" data-char="mma" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">🌍</span>
+      <div class="char-nombre">Mma</div>
+      <div class="char-desc">La tierra</div>
+    </div>
+    <div class="char-card" data-char="pulowi" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">👩🏽</span>
+      <div class="char-nombre">Pulowi</div>
+      <div class="char-desc">Mujer wayuu</div>
+    </div>
+    <div class="char-card" data-char="chivo" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">🐐</span>
+      <div class="char-nombre">Chivo</div>
+      <div class="char-desc">Animal wayuu</div>
+    </div>
+    <div class="char-card" data-char="iguana" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">🦎</span>
+      <div class="char-nombre">Iguana</div>
+      <div class="char-desc">Animal del desierto</div>
+    </div>
+    <div class="char-card" data-char="propio" onclick="seleccionarPersonaje(this)">
+      <span class="char-emoji">✨</span>
+      <div class="char-nombre">¡Crea el tuyo!</div>
+      <div class="char-desc">Personaje original</div>
+    </div>
+  </div>
+
+  <div class="guia-preguntas">
+    <p>💭 Piensa en tu personaje:</p>
+    <p class="emoji-helper">👤 📏 🎭 ❤️ 🌟</p>
+  </div>
+
+  <div class="grupo-form">
+    <label for="charNombre">Nombre del personaje</label>
+    <input type="text" id="charNombre" placeholder="Ej: Juyá, Pulowi, o tu nombre inventado..." oninput="guardarBorrador()">
+  </div>
+  <div class="grupo-form">
+    <label for="charEdad">Edad</label>
+    <input type="text" id="charEdad" placeholder="Ej: 10 años, joven, anciano sabio..." oninput="guardarBorrador()">
+  </div>
+  <div class="grupo-form">
+    <label for="charPersonalidad">Personalidad 🎭</label>
+    <textarea id="charPersonalidad" placeholder="¿Cómo es tu personaje? ¿Es valiente, curioso, alegre, tímido?" oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Juyá es alegre y juguetona, le encanta bailar con el viento.</div>
+  </div>
+  <div class="grupo-form">
+    <label for="charApariencia">Apariencia física 👤</label>
+    <textarea id="charApariencia" placeholder="Describe cómo se ve: color de ojos, cabello, vestimenta..." oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Tiene ojos color miel, trenzas largas y una mochila wayuu tejida.</div>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-exito" onclick="completarPaso(1)">✅ ¡Personaje listo! Continuar →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: LUGAR ===== -->
+<div class="screen card" id="screenLugar">
+  <h2><span class="step-num">2</span> Lugar <span class="etiqueta-check" id="check2" style="display:none">✓ Listo</span></h2>
+  <p style="color:#888;margin-bottom:12px">¿Dónde ocurre tu historia? Elige un escenario de La Guajira.</p>
+
+  <div style="margin-bottom:10px">
+    <button class="btn btn-small btn-secundario" onclick="hablar('Elige dónde ocurre tu historia: el desierto, la ranchería, el jagüey, la playa de Cabo de la Vela, la Serranía de Macuira o el mercado de Maicao. Describe con tus sentidos: qué ves, qué oyes, qué hueles.')">🔊 Escuchar instrucciones</button>
+  </div>
+
+  <div class="char-grid" id="lugarGrid">
+    <div class="char-card" data-lugar="desierto" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">🏜️</span>
+      <div class="char-nombre">Desierto</div>
+      <div class="char-desc">Arena y cardones</div>
+    </div>
+    <div class="char-card" data-lugar="rancheria" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">🏠</span>
+      <div class="char-nombre">Ranchería</div>
+      <div class="char-desc">Comunidad wayuu</div>
+    </div>
+    <div class="char-card" data-lugar="jaguey" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">💧</span>
+      <div class="char-nombre">Jagüey</div>
+      <div class="char-desc">Pozo de agua</div>
+    </div>
+    <div class="char-card" data-lugar="playa" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">🌊</span>
+      <div class="char-nombre">Cabo de la Vela</div>
+      <div class="char-desc">Playa sagrada</div>
+    </div>
+    <div class="char-card" data-lugar="serrania" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">⛰️</span>
+      <div class="char-nombre">Serranía de Macuira</div>
+      <div class="char-desc">Montaña sagrada</div>
+    </div>
+    <div class="char-card" data-lugar="mercado" onclick="seleccionarLugar(this)">
+      <span class="char-emoji">🏪</span>
+      <div class="char-nombre">Mercado de Maicao</div>
+      <div class="char-desc">Comercio y colores</div>
+    </div>
+  </div>
+
+  <div class="scene-preview" id="scenePreview">
+    <span id="sceneEmoji">🏜️</span>
+    <span class="scene-label" id="sceneLabel">Desierto de La Guajira</span>
+  </div>
+
+  <div class="guia-preguntas">
+    <p>🔍 Describe el lugar con tus sentidos:</p>
+    <p class="emoji-helper">👁️ 🧠 👂 👃 ✋</p>
+  </div>
+
+  <div class="grupo-form">
+    <label for="lugarVista">¿Qué ves? 👁️</label>
+    <textarea id="lugarVista" placeholder="Describe lo que se ve en este lugar..." oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Veo arena dorada hasta donde alcanza la vista, cardones altos como guardianes.</div>
+  </div>
+  <div class="grupo-form">
+    <label for="lugarOido">¿Qué escuchas? 👂</label>
+    <textarea id="lugarOido" placeholder="Describe los sonidos del lugar..." oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Escucho el viento silbar entre los cactus y el canto de los pájaros.</div>
+  </div>
+  <div class="grupo-form">
+    <label for="lugarOlor">¿Qué hueles? 👃</label>
+    <textarea id="lugarOlor" placeholder="Describe los olores del lugar..." oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Huele a tierra seca, a sal del mar y a leña de cardón.</div>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-exito" onclick="completarPaso(2)">✅ ¡Lugar listo! Continuar →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: PROBLEMA ===== -->
+<div class="screen card" id="screenProblema">
+  <h2><span class="step-num">3</span> Problema <span class="etiqueta-check" id="check3" style="display:none">✓ Listo</span></h2>
+  <p style="color:#888;margin-bottom:12px">¿Qué problema enfrenta tu personaje? Elige uno o inventa el tuyo.</p>
+
+  <div style="margin-bottom:10px">
+    <button class="btn btn-small btn-secundario" onclick="hablar('Elige un problema para tu historia: una sequía que amenaza la comunidad, la pérdida de los chivos, una curación con medicina wayuu, o inventa tu propio problema.')">🔊 Escuchar instrucciones</button>
+  </div>
+
+  <div class="problema-grid">
+    <div class="problema-card" data-problema="sequia" onclick="seleccionarProblema(this)">
+      <span class="prob-emoji">☀️🔥</span>
+      <div class="prob-nombre">Sequía</div>
+      <div style="font-size:0.8rem;color:#888">Falta de agua en la ranchería</div>
+    </div>
+    <div class="problema-card" data-problema="chivos" onclick="seleccionarProblema(this)">
+      <span class="prob-emoji">🐐❓</span>
+      <div class="prob-nombre">Pérdida de chivos</div>
+      <div style="font-size:0.8rem;color:#888">Los animales se perdieron</div>
+    </div>
+    <div class="problema-card" data-problema="curacion" onclick="seleccionarProblema(this)">
+      <span class="prob-emoji">🌿💚</span>
+      <div class="prob-nombre">Curación wayuu</div>
+      <div style="font-size:0.8rem;color:#888">Alguien necesita medicina ancestral</div>
+    </div>
+    <div class="problema-card" data-problema="propio" onclick="seleccionarProblema(this)">
+      <span class="prob-emoji">💭</span>
+      <div class="prob-nombre">Inventa el tuyo</div>
+      <div style="font-size:0.8rem;color:#888">Crea tu propio problema</div>
+    </div>
+  </div>
+
+  <div class="grupo-form">
+    <label for="problemaDescripcion">Describe el problema</label>
+    <textarea id="problemaDescripcion" placeholder="¿Qué pasó? Explica el problema en detalle..." oninput="guardarBorrador()"></textarea>
+  </div>
+
+  <div class="guia-preguntas">
+    <p>❓ Preguntas guía:</p>
+    <p>💬 ¿Qué pasó exactamente? ¿Cómo se sintió el personaje? ¿Quién más está involucrado?</p>
+  </div>
+
+  <div class="grupo-form">
+    <label for="problemaSentir">¿Cómo se sintió el personaje? 😢😠😨</label>
+    <textarea id="problemaSentir" placeholder="Describe las emociones del personaje frente al problema..." oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Juyá se sintió triste al ver que no había agua. Su corazón latía fuerte de preocupación.</div>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-exito" onclick="completarPaso(3)">✅ ¡Problema listo! Continuar →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4: SOLUCIÓN ===== -->
+<div class="screen card" id="screenSolucion">
+  <h2><span class="step-num">4</span> Solución <span class="etiqueta-check" id="check4" style="display:none">✓ Listo</span></h2>
+  <p style="color:#888;margin-bottom:12px">¿Cómo resuelve el personaje el problema? Elige una idea o escribe la tuya.</p>
+
+  <div style="margin-bottom:10px">
+    <button class="btn btn-small btn-secundario" onclick="hablar('Ahora escribe cómo tu personaje resuelve el problema. Puedes elegir una idea de ayuda o crear tu propia solución.')">🔊 Escuchar instrucciones</button>
+  </div>
+
+  <div class="helper-grid" id="helperGrid">
+    <div class="helper-card" data-helper="ayuda" onclick="seleccionarAyuda(this)">
+      <span style="font-size:2rem;display:block">🤝</span>
+      <div class="helper-text">Pide ayuda a un anciano sabio de la comunidad</div>
+    </div>
+    <div class="helper-card" data-helper="viaje" onclick="seleccionarAyuda(this)">
+      <span style="font-size:2rem;display:block">🚶🏽</span>
+      <div class="helper-text">Emprende un viaje para encontrar una solución</div>
+    </div>
+    <div class="helper-card" data-helper="trabajo" onclick="seleccionarAyuda(this)">
+      <span style="font-size:2rem;display:block">👨🏽‍🌾</span>
+      <div class="helper-text">Trabaja en equipo con su familia o comunidad</div>
+    </div>
+    <div class="helper-card" data-helper="magia" onclick="seleccionarAyuda(this)">
+      <span style="font-size:2rem;display:block">✨</span>
+      <div class="helper-text">Usa conocimientos ancestrales o medicina wayuu</div>
+    </div>
+  </div>
+
+  <div class="grupo-form">
+    <label for="solucionTexto">Escribe la solución</label>
+    <textarea id="solucionTexto" placeholder="¿Cómo resuelve el personaje el problema? Cuenta paso a paso..." oninput="guardarBorrador()"></textarea>
+  </div>
+
+  <div class="guia-preguntas">
+    <p>❓ Preguntas guía:</p>
+    <p>💡 ¿Qué hizo primero? ¿Alguien le ayudó? ¿Qué herramienta o conocimiento usó? ¿Cómo cambió la situación?</p>
+  </div>
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-exito" onclick="completarPaso(4)">✅ ¡Solución lista! Continuar →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 5: FINAL ===== -->
+<div class="screen card" id="screenFinal">
+  <h2><span class="step-num">5</span> Final <span class="etiqueta-check" id="check5" style="display:none">✓ Listo</span></h2>
+  <p style="color:#888;margin-bottom:12px">Escribe el final de tu historia. ¿Cómo termina todo?</p>
+
+  <div style="margin-bottom:10px">
+    <button class="btn btn-small btn-secundario" onclick="hablar('Escribe el final de tu historia. ¿Cómo termina? ¿Qué aprendió el personaje? ¿Cómo cambió la comunidad? Luego podrás leer tu historia completa.')">🔊 Escuchar instrucciones</button>
+  </div>
+
+  <div class="grupo-form">
+    <label for="finalTexto">Escribe el final 📝</label>
+    <textarea id="finalTexto" placeholder="¿Cómo termina la historia? ¿Qué aprendió el personaje? ¿Cómo es la vida después?" oninput="guardarBorrador()"></textarea>
+    <div class="pista">💡 Ej: Juyá sonrió al ver las primeras gotas de lluvia. La comunidad aprendió a cuidar cada gota de agua.</div>
+  </div>
+
+  <div class="guia-preguntas">
+    <p>❓ Preguntas guía:</p>
+    <p>🏁 ¿Termina bien, agridulce o con una enseñanza? ¿Qué cambió en el personaje y su comunidad?</p>
+  </div>
+
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-oro" onclick="previsualizarHistoria()">📖 Ver mi historia completa</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 6: STORY PREVIEW ===== -->
+<div class="screen card" id="screenPreview">
+  <h2>📖 Mi Historia</h2>
+
+  <div style="text-align:center;margin-bottom:12px">
+    <button class="btn btn-small btn-azul" onclick="leerHistoriaCompleta()">🔊 Leer historia en voz alta</button>
+    <button class="btn btn-small btn-secundario" onclick="imprimirHistoria()">🖨️ Imprimir</button>
+  </div>
+
+  <div class="story-display" id="storyDisplay"></div>
+
+  <div class="estrellas-display" id="estrellasDisplay">
+    <span class="estrella" id="star1">⭐</span>
+    <span class="estrella" id="star2">⭐</span>
+    <span class="estrella" id="star3">⭐</span>
+    <span class="estrella" id="star4">⭐</span>
+    <span class="estrella" id="star5">⭐</span>
+  </div>
+  <p style="text-align:center;color:var(--tierra);font-weight:bold" id="mensajeEstrellas"></p>
+
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+    <button class="btn btn-primario" onclick="irAPantalla('personaje')">✏️ Seguir editando</button>
+    <button class="btn btn-exito" onclick="finalizarModulo()">🎉 ¡Completar módulo!</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 7: COMPLETADO ===== -->
+<div class="screen card" id="screenCompletado">
+  <div style="text-align:center;padding:20px 0">
+    <div style="font-size:4rem">🎉🏆🎉</div>
+    <h2 style="font-size:1.8rem;color:var(--atardecer);margin:12px 0">¡Felicidades!</h2>
+    <p style="font-size:1.1rem;color:var(--tierra)">Completaste el taller <strong>Escribo mi Historia</strong></p>
+
+    <div class="estrellas-display" id="estrellasFinal">
+      <span class="estrella ganada">⭐</span>
+      <span class="estrella ganada">⭐</span>
+      <span class="estrella ganada">⭐</span>
+      <span class="estrella ganada">⭐</span>
+      <span class="estrella ganada">⭐</span>
+    </div>
+
+    <div class="story-display" id="storyDisplayFinal" style="text-align:left"></div>
+
+    <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-oro" onclick="leerHistoriaCompleta()">🔊 Leer historia</button>
+      <button class="btn btn-secundario" onclick="imprimirHistoria()">🖨️ Imprimir</button>
+      <button class="btn btn-primario" onclick="reiniciarModulo()">🔄 Escribir otra historia</button>
+    </div>
+    <p style="margin-top:16px;color:#888;font-style:italic">
+      🌟 Anashaatasü pünülia • ¡Hermoso aprendizaje! 🌟
+    </p>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  pasoActual: 0,
+  pasosCompletados: [false,false,false,false,false],
+  personaje: null,
+  lugar: null,
+  problema: null,
+  ayuda: null,
+  charNombre: '',
+  charEdad: '',
+  charPersonalidad: '',
+  charApariencia: '',
+  lugarVista: '',
+  lugarOido: '',
+  lugarOlor: '',
+  problemaDescripcion: '',
+  problemaSentir: '',
+  solucionTexto: '',
+  finalTexto: ''
+};
+
+// ===== SCREENS =====
+const screenNames = ['screenWelcome','screenPersonaje','screenLugar','screenProblema','screenSolucion','screenFinal','screenPreview','screenCompletado'];
+const pasoToScreen = {0:'screenWelcome',1:'screenPersonaje',2:'screenLugar',3:'screenProblema',4:'screenSolucion',5:'screenFinal',6:'screenPreview',7:'screenCompletado'};
+const pasoToStepMap = {screenWelcome:0,screenPersonaje:1,screenLugar:2,screenProblema:3,screenSolucion:4,screenFinal:5,screenPreview:6,screenCompletado:7};
+
+// ===== LOCAL STORAGE =====
+const STORAGE_KEY = 'leng106_historia';
+
+function cargarBorrador() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      Object.assign(state, data);
+      restaurarCampos();
+    }
+  } catch(e) {}
+}
+
+function guardarBorrador() {
+  capturarCampos();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function capturarCampos() {
+  state.charNombre = document.getElementById('charNombre')?.value || '';
+  state.charEdad = document.getElementById('charEdad')?.value || '';
+  state.charPersonalidad = document.getElementById('charPersonalidad')?.value || '';
+  state.charApariencia = document.getElementById('charApariencia')?.value || '';
+  state.lugarVista = document.getElementById('lugarVista')?.value || '';
+  state.lugarOido = document.getElementById('lugarOido')?.value || '';
+  state.lugarOlor = document.getElementById('lugarOlor')?.value || '';
+  state.problemaDescripcion = document.getElementById('problemaDescripcion')?.value || '';
+  state.problemaSentir = document.getElementById('problemaSentir')?.value || '';
+  state.solucionTexto = document.getElementById('solucionTexto')?.value || '';
+  state.finalTexto = document.getElementById('finalTexto')?.value || '';
+}
+
+function restaurarCampos() {
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  setVal('charNombre', state.charNombre);
+  setVal('charEdad', state.charEdad);
+  setVal('charPersonalidad', state.charPersonalidad);
+  setVal('charApariencia', state.charApariencia);
+  setVal('lugarVista', state.lugarVista);
+  setVal('lugarOido', state.lugarOido);
+  setVal('lugarOlor', state.lugarOlor);
+  setVal('problemaDescripcion', state.problemaDescripcion);
+  setVal('problemaSentir', state.problemaSentir);
+  setVal('solucionTexto', state.solucionTexto);
+  setVal('finalTexto', state.finalTexto);
+
+  if (state.personaje) {
+    document.querySelectorAll('.char-card').forEach(c => {
+      if (c.dataset.char === state.personaje) c.classList.add('seleccionado');
+    });
+  }
+  if (state.lugar) {
+    document.querySelectorAll('.char-card[data-lugar]').forEach(c => {
+      if (c.dataset.lugar === state.lugar) {
+        c.classList.add('seleccionado');
+        actualizarScenePreview(state.lugar);
+      }
+    });
+  }
+  if (state.problema) {
+    document.querySelectorAll('.problema-card').forEach(c => {
+      if (c.dataset.problema === state.problema) c.classList.add('seleccionado');
+    });
+  }
+  if (state.ayuda) {
+    document.querySelectorAll('.helper-card').forEach(c => {
+      if (c.dataset.helper === state.ayuda) c.classList.add('seleccionado');
+    });
+  }
+}
+
+// ===== TTS =====
+function hablar(texto) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(texto);
+  utterance.lang = 'es-CO';
+  utterance.rate = 0.85;
+  utterance.pitch = 1.1;
+  utterance.volume = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+// ===== TOAST =====
+function mostrarToast(mensaje, tipo) {
+  tipo = tipo || 'exito';
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = mensaje;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ===== NAVIGATION =====
+function irAPantalla(nombre) {
+  const targetId = nombre.startsWith('screen') ? nombre : 'screen' + nombre.charAt(0).toUpperCase() + nombre.slice(1);
+
+  screenNames.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.style.display = 'none';
+    }
+  });
+
+  const target = document.getElementById(targetId);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    actualizarDots(targetId);
+    actualizarProgresoPasos();
+  }
+}
+
+function actualizarDots(screenId) {
+  const step = pasoToStepMap[screenId] ?? 0;
+  const dots = document.querySelectorAll('#progressDots .dot');
+  dots.forEach((dot, i) => {
+    dot.classList.remove('active', 'done', 'star');
+    if (i < step) {
+      const pasoIdx = i - 1;
+      if (pasoIdx >= 0 && pasoIdx < state.pasosCompletados.length && state.pasosCompletados[pasoIdx]) {
+        dot.classList.add('star');
+      } else {
+        dot.classList.add('done');
+      }
+    }
+    if (i === step) dot.classList.add('active');
+  });
+}
+
+function actualizarProgresoPasos() {
+  for (let i = 0; i < state.pasosCompletados.length; i++) {
+    const check = document.getElementById('check' + (i + 1));
+    if (check) {
+      check.style.display = state.pasosCompletados[i] ? 'inline-block' : 'none';
+    }
+    const card = document.getElementById('screen' + ['Personaje','Lugar','Problema','Solucion','Final'][i]);
+    if (card) {
+      card.classList.remove('paso-activo', 'paso-completado');
+      card.classList.add(state.pasosCompletados[i] ? 'paso-completado' : 'paso-activo');
+    }
+  }
+}
+
+// ===== STEP 1: PERSONAJE =====
+function seleccionarPersonaje(el) {
+  document.querySelectorAll('.char-card[data-char]').forEach(c => c.classList.remove('seleccionado'));
+  el.classList.add('seleccionado');
+  state.personaje = el.dataset.char;
+  guardarBorrador();
+  mostrarToast('✅ Personaje seleccionado: ' + (el.querySelector('.char-nombre')?.textContent || ''), 'exito');
+}
+
+// ===== STEP 2: LUGAR =====
+function seleccionarLugar(el) {
+  document.querySelectorAll('.char-card[data-lugar]').forEach(c => c.classList.remove('seleccionado'));
+  el.classList.add('seleccionado');
+  state.lugar = el.dataset.lugar;
+  actualizarScenePreview(state.lugar);
+  guardarBorrador();
+  mostrarToast('✅ Lugar seleccionado: ' + (el.querySelector('.char-nombre')?.textContent || ''), 'exito');
+}
+
+const sceneData = {
+  desierto: {emoji: '🏜️', label: 'Desierto de La Guajira'},
+  rancheria: {emoji: '🏠', label: 'Ranchería wayuu'},
+  jaguey: {emoji: '💧', label: 'Jagüey — pozo de agua'},
+  playa: {emoji: '🌊⛰️', label: 'Playa de Cabo de la Vela'},
+  serrania: {emoji: '⛰️🌿', label: 'Serranía de Macuira'},
+  mercado: {emoji: '🏪🎪', label: 'Mercado de Maicao'}
+};
+
+function actualizarScenePreview(lugar) {
+  const data = sceneData[lugar];
+  if (!data) return;
+  document.getElementById('sceneEmoji').textContent = data.emoji;
+  document.getElementById('sceneLabel').textContent = data.label;
+}
+
+// ===== STEP 3: PROBLEMA =====
+function seleccionarProblema(el) {
+  document.querySelectorAll('.problema-card').forEach(c => c.classList.remove('seleccionado'));
+  el.classList.add('seleccionado');
+  state.problema = el.dataset.problema;
+  guardarBorrador();
+  mostrarToast('✅ Problema seleccionado', 'exito');
+}
+
+// ===== STEP 4: AYUDA / SOLUCIÓN =====
+function seleccionarAyuda(el) {
+  document.querySelectorAll('.helper-card').forEach(c => c.classList.remove('seleccionado'));
+  el.classList.add('seleccionado');
+  state.ayuda = el.dataset.helper;
+  guardarBorrador();
+  mostrarToast('💡 Idea seleccionada', 'info');
+}
+
+// ===== COMPLETAR PASO =====
+function completarPaso(num) {
+  capturarCampos();
+
+  // Validate step completion
+  let ok = false;
+  if (num === 1) {
+    ok = state.personaje && state.charNombre.trim().length > 0;
+    if (!ok) { mostrarToast('✍️ Elige un personaje y escribe su nombre', 'error'); return; }
+  } else if (num === 2) {
+    ok = state.lugar && (state.lugarVista.trim().length > 0 || state.lugarOido.trim().length > 0);
+    if (!ok) { mostrarToast('✍️ Elige un lugar y describe al menos qué ves o qué escuchas', 'error'); return; }
+  } else if (num === 3) {
+    ok = state.problema && state.problemaDescripcion.trim().length > 0;
+    if (!ok) { mostrarToast('✍️ Elige un problema y descríbelo', 'error'); return; }
+  } else if (num === 4) {
+    ok = state.solucionTexto.trim().length > 0;
+    if (!ok) { mostrarToast('✍️ Escribe cómo se soluciona el problema', 'error'); return; }
+  } else if (num === 5) {
+    ok = state.finalTexto.trim().length > 0;
+    if (!ok) { mostrarToast('✍️ Escribe el final de tu historia', 'error'); return; }
+  }
+
+  state.pasosCompletados[num - 1] = true;
+  guardarBorrador();
+
+  if (num < 5) {
+    const siguiente = ['personaje','lugar','problema','solucion','final'][num];
+    irAPantalla(siguiente);
+    mostrarToast('⭐ ¡Paso ' + num + ' completado!', 'exito');
+  } else {
+    previsualizarHistoria();
+  }
+}
+
+// ===== STORY PREVIEW =====
+function construirHistoria() {
+  capturarCampos();
+
+  const getCharName = () => {
+    if (!state.personaje) return '—';
+    const cards = document.querySelectorAll('.char-card[data-char]');
+    for (const c of cards) {
+      if (c.dataset.char === state.personaje) return c.querySelector('.char-nombre')?.textContent || state.personaje;
+    }
+    return state.personaje;
+  };
+
+  const getLugarName = () => {
+    if (!state.lugar) return '—';
+    const cards = document.querySelectorAll('.char-card[data-lugar]');
+    for (const c of cards) {
+      if (c.dataset.lugar === state.lugar) return c.querySelector('.char-nombre')?.textContent || state.lugar;
+    }
+    return state.lugar;
+  };
+
+  const personajeDesc = state.charNombre || getCharName();
+  const edad = state.charEdad ? ' (' + state.charEdad + ')' : '';
+  const personalidad = state.charPersonalidad || '...';
+  const apariencia = state.charApariencia || '...';
+  const lugarNombre = getLugarName();
+  const vista = state.lugarVista || '...';
+  const oido = state.lugarOido || '...';
+  const olor = state.lugarOlor || '...';
+  const problema = state.problemaDescripcion || '...';
+  const sentir = state.problemaSentir || '...';
+  const solucion = state.solucionTexto || '...';
+  const final = state.finalTexto || '...';
+
+  return {
+    title: '📖 ' + personajeDesc + ' en ' + lugarNombre,
+    parts: [
+      {label: '🌟 Personaje', content: personajeDesc + edad + '. ' + personalidad + ' ' + apariencia},
+      {label: '🏜️ Lugar', content: lugarNombre + '. Veo: ' + vista + '. Escucho: ' + oido + '. Huelo: ' + olor},
+      {label: '⚡ Problema', content: problema + ' ' + sentir},
+      {label: '💡 Solución', content: solucion},
+      {label: '🏁 Final', content: final}
+    ]
+  };
+}
+
+function previsualizarHistoria() {
+  if (state.pasosCompletados.every(v => v)) {
+    mostrarToast('🌟 ¡Todos los pasos completados!', 'exito');
+    lanzarConfeti();
+  }
+
+  const historia = construirHistoria();
+  const display = document.getElementById('storyDisplay');
+  display.innerHTML = '<div class="story-title">' + historia.title + '</div>' +
+    historia.parts.map(p => '<div class="story-section"><strong>' + p.label + ':</strong> ' + p.content + '</div>').join('');
+
+  actualizarEstrellas();
+  irAPantalla('screenPreview');
+}
+
+function actualizarEstrellas() {
+  const total = state.pasosCompletados.filter(v => v).length;
+  for (let i = 1; i <= 5; i++) {
+    const star = document.getElementById('star' + i);
+    if (star) {
+      star.className = 'estrella' + (i <= total ? ' ganada' : '');
+    }
+  }
+  const msg = document.getElementById('mensajeEstrellas');
+  if (total === 5) msg.textContent = '🌟 ¡5 de 5 estrellas! ¡Historia completa!';
+  else if (total >= 3) msg.textContent = '⭐ ' + total + ' de 5 estrellas. ¡Sigue escribiendo!';
+  else msg.textContent = '✍️ ' + total + ' de 5 pasos completados. ¡Continúa tu historia!';
+}
+
+// ===== FINALIZE =====
+function finalizarModulo() {
+  const historia = construirHistoria();
+  const display = document.getElementById('storyDisplayFinal');
+  display.innerHTML = '<div class="story-title">' + historia.title + '</div>' +
+    historia.parts.map(p => '<div class="story-section"><strong>' + p.label + ':</strong> ' + p.content + '</div>').join('');
+
+  irAPantalla('screenCompletado');
+  lanzarConfeti();
+}
+
+// ===== TTS STORY =====
+function leerHistoriaCompleta() {
+  const historia = construirHistoria();
+  const texto = historia.parts.map(p => p.label + '. ' + p.content).join('. ');
+  hablar(texto);
+  mostrarToast('🔊 Leyendo historia en voz alta...', 'info');
+}
+
+// ===== PRINT =====
+function imprimirHistoria() {
+  const historia = construirHistoria();
+  const content = document.getElementById('storyDisplayFinal')?.innerHTML || document.getElementById('storyDisplay')?.innerHTML || '';
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Mi Historia - EduConect Rural</title><style>body{font-family:system-ui,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#333;line-height:1.8}.story-title{text-align:center;font-size:1.4rem;color:#E07A5F;margin-bottom:20px}.story-section{margin-bottom:14px;padding-left:16px;border-left:3px solid #D4A843}.story-section strong{color:#8B5E3C}h1{text-align:center;color:#3D2B1F}.footer{text-align:center;margin-top:30px;font-size:0.85rem;color:#999}</style></head><body><h1>📖 Mi Historia</h1>' + content + '<div class="footer">EduConect Rural · LENG-106: Escribo mi Historia</div></body></html>');
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 500);
+}
+
+// ===== RESTART =====
+function reiniciarModulo() {
+  if (!confirm('¿Estás seguro? Se borrará tu historia actual.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state.pasoActual = 0;
+  state.pasosCompletados = [false,false,false,false,false];
+  state.personaje = null;
+  state.lugar = null;
+  state.problema = null;
+  state.ayuda = null;
+  state.charNombre = '';
+  state.charEdad = '';
+  state.charPersonalidad = '';
+  state.charApariencia = '';
+  state.lugarVista = '';
+  state.lugarOido = '';
+  state.lugarOlor = '';
+  state.problemaDescripcion = '';
+  state.problemaSentir = '';
+  state.solucionTexto = '';
+  state.finalTexto = '';
+
+  document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  document.querySelectorAll('.seleccionado').forEach(el => el.classList.remove('seleccionado'));
+
+  irAPantalla('welcome');
+  mostrarToast('🔄 ¡A escribir una nueva historia!', 'info');
+}
+
+// ===== CONFETTI =====
+function lanzarConfeti() {
+  const colores = ['#E8782A','#F4C542','#D94040','#3A7CC3','#4CAF50','#8E44AD','#FF6B6B','#48DBFB','#D4A843'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.top = -(Math.random() * 100) + 'px';
+      piece.style.width = (Math.random() * 8 + 6) + 'px';
+      piece.style.height = (Math.random() * 8 + 6) + 'px';
+      piece.style.background = colores[Math.floor(Math.random() * colores.length)];
+      piece.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+      piece.style.animationDelay = Math.random() * 0.5 + 's';
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 3000);
+    }, i * 30);
+  }
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  cargarBorrador();
+  actualizarDots('screenWelcome');
+  actualizarProgresoPasos();
+
+  // Auto-save on input
+  document.addEventListener('input', () => guardarBorrador());
+});
+</script>
+
+</body>
+</html>

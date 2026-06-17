@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LENG-103: La Iguana y el Conejo | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+
+/* Container */
+.container{max-width:850px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress bar */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* ============ SECTION 1: CUENTO ============ */
+.cuento-container{
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ position:relative;
+}
+.cuento-container .escena{
+ display:none;
+ animation:fadeIn 0.5s;
+}
+.cuento-container .escena.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.cuento-container .ilustracion{
+ text-align:center;
+ font-size:5rem;
+ margin:10px 0;
+ filter:drop-shadow(3px 3px 3px rgba(0,0,0,0.15));
+}
+.cuento-container p{
+ font-size:1.15rem;
+ line-height:1.7;
+ text-align:justify;
+ color:var(--texto);
+}
+.cuento-nav{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-top:15px;
+ gap:10px;
+}
+.cuento-nav .pagina{
+ font-size:0.8rem;
+ color:var(--tierra);
+ opacity:0.7;
+}
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+
+/* ============ SECTION 2: PREGUNTAS ============ */
+.pregunta{
+ margin-bottom:18px;
+ padding-bottom:14px;
+ border-bottom:1px dashed #e0d5c5;
+}
+.pregunta:last-child{border-bottom:none}
+.pregunta h3{
+ font-size:1rem;
+ margin-bottom:8px;
+ color:var(--tierra);
+}
+.opciones{display:flex;flex-direction:column;gap:8px}
+.opcion{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:12px 15px;
+ background:#FEF7ED;
+ border:2px solid #e8d5c0;
+ border-radius:12px;
+ cursor:pointer;
+ transition:all 0.2s;
+ font-size:0.95rem;
+}
+.opcion:hover{background:#FFF0DD;border-color:var(--wayuu-oro)}
+.opcion.seleccionada{background:#FFF8E1;border-color:var(--wayuu-oro);font-weight:bold}
+.opcion.correcta{background:#E8F5E9;border-color:var(--verde)}
+.opcion.incorrecta{background:#FFEBEE;border-color:var(--rojo)}
+.opcion .letra{
+ width:30px;height:30px;
+ border-radius:50%;
+ background:var(--arena);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-weight:bold;
+ font-size:0.85rem;
+ flex-shrink:0;
+}
+.opcion.seleccionada .letra{background:var(--wayuu-oro);color:white}
+.opcion.correcta .letra{background:var(--verde);color:white}
+.opcion.incorrecta .letra{background:var(--rojo);color:white}
+.feedback{
+ margin-top:6px;
+ padding:5px 10px;
+ border-radius:8px;
+ font-size:0.85rem;
+ display:none;
+}
+.feedback.visible{display:block}
+.feedback.bien{background:#E8F5E9;color:#2E7D32}
+.feedback.mal{background:#FFEBEE;color:#C62828}
+
+/* ============ SECTION 3: ORDENAR ESCENAS ============ */
+.sort-list{
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+ margin:12px 0;
+}
+.sort-item{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:14px 15px;
+ background:#FEF7ED;
+ border:2px solid #e8d5c0;
+ border-radius:12px;
+ cursor:grab;
+ transition:all 0.2s;
+ user-select:none;
+}
+.sort-item:hover{border-color:var(--wayuu-oro);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.sort-item:active{cursor:grabbing}
+.sort-item.dragging{opacity:0.5;transform:scale(0.98)}
+.sort-item.correcto{border-color:var(--verde);background:#E8F5E9}
+.sort-item.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.sort-num{
+ background:var(--wayuu-oro);
+ color:white;
+ width:34px;height:34px;
+ border-radius:50%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-weight:bold;
+ flex-shrink:0;
+}
+.sort-item .emoji{font-size:1.8rem;flex-shrink:0}
+.sort-item .texto{flex:1;font-size:0.95rem}
+
+/* ============ SECTION 4: INICIO-NUDO-DESENLACE ============ */
+.estructura-grid{
+ display:grid;
+ grid-template-columns:1fr;
+ gap:10px;
+ margin:12px 0;
+}
+@media(min-width:600px){
+ .estructura-grid{grid-template-columns:repeat(3,1fr)}
+}
+.parte-card{
+ background:#FEF7ED;
+ border:3px solid #e8d5c0;
+ border-radius:16px;
+ padding:18px 14px;
+ text-align:center;
+ cursor:pointer;
+ transition:all 0.25s;
+ min-height:120px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+}
+.parte-card:hover{border-color:var(--wayuu-oro);transform:translateY(-3px)}
+.parte-card.seleccionado{
+ border-color:var(--atardecer);
+ background:#FFF0E0;
+ box-shadow:0 4px 16px rgba(224,122,95,0.3);
+}
+.parte-card.asignado{
+ border-color:var(--verde);
+ background:#E8F5E9;
+}
+.parte-card .parte-emoji{font-size:2.5rem}
+.parte-card .parte-label{
+ font-weight:bold;
+ font-size:0.8rem;
+ color:var(--tierra);
+ text-transform:uppercase;
+ letter-spacing:1px;
+}
+.parte-card .parte-texto{
+ font-size:0.9rem;
+ line-height:1.4;
+}
+.parte-card .parte-dropzone{
+ min-height:50px;
+ padding:8px;
+ border:2px dashed #d0c0a0;
+ border-radius:10px;
+ margin-top:5px;
+ font-size:0.85rem;
+ color:#999;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:100%;
+}
+.parte-card .parte-dropzone.lleno{
+ border-style:solid;
+ border-color:var(--verde);
+ color:var(--texto);
+}
+
+.escenas-para-arrastrar{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:12px 0;
+ justify-content:center;
+}
+.escena-arrastrable{
+ padding:10px 16px;
+ background:var(--wayuu-oro);
+ color:white;
+ border-radius:20px;
+ cursor:grab;
+ font-size:0.85rem;
+ font-weight:bold;
+ transition:all 0.2s;
+}
+.escena-arrastrable:hover{transform:scale(1.05)}
+.escena-arrastrable.usada{opacity:0.4;cursor:default;transform:none}
+
+/* ============ RESULTADOS FINALES ============ */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+ animation:fadeIn 0.6s;
+}
+.resultados-finales .trofeo{font-size:5rem}
+.resultados-finales h2{font-size:1.8rem;color:var(--atardecer);margin:10px 0}
+.resultados-finales .estrellas{font-size:2.5rem;margin:10px 0}
+.puntaje-detalle{text-align:left;max-width:400px;margin:15px auto}
+.puntaje-row{
+ display:flex;
+ justify-content:space-between;
+ padding:8px 0;
+ border-bottom:1px dashed #e0d5c5;
+}
+
+/* Volver */
+.volver{
+ position:fixed;
+ top:12px;left:12px;
+ background:var(--blanco);
+ padding:8px 16px;
+ border-radius:20px;
+ box-shadow:0 2px 10px rgba(0,0,0,0.1);
+ text-decoration:none;
+ color:var(--tierra);
+ font-weight:bold;
+ font-size:0.9rem;
+ z-index:100;
+ display:flex;
+ align-items:center;
+ gap:5px;
+}
+.volver:hover{background:var(--wayuu-oro);color:white}
+
+/* Responsive */
+@media(max-width:480px){
+ .card{padding:16px 12px}
+ .cuento-container p{font-size:1rem}
+ .opcion{padding:10px 12px;font-size:0.85rem}
+ .btn{padding:8px 16px;font-size:0.85rem}
+}
+
+/* Celebration particles */
+@keyframes confetti-fall{
+ 0%{transform:translateY(-100vh) rotate(0deg);opacity:1}
+ 100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+.confetti{
+ position:fixed;
+ width:10px;height:10px;
+ border-radius:3px;
+ animation:confetti-fall 2s ease-in forwards;
+ z-index:200;
+ pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<a href="../" class="volver">← Módulos</a>
+
+<div class="container">
+ <!-- HEADER -->
+ <div class="header">
+  <div class="sol">☀️</div>
+  <h1>La Iguana y el Conejo</h1>
+  <span class="grado">📖 Lenguaje · 2°-3° Grado</span>
+  <div class="desierto-deco">🌵 🏜️ 🦎 🐇 🌵</div>
+ </div>
+
+ <!-- PROGRESS -->
+ <div class="progreso-wrap">
+  <span class="progreso-label">🏆 Progreso</span>
+  <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+  <span class="progreso-pct" id="progresoPct">0%</span>
+ </div>
+
+ <!-- ============================================= -->
+ <!-- SECTION 1: CUENTO                            -->
+ <!-- ============================================= -->
+ <section class="card activo" id="seccion1">
+  <h2><span class="icono">📖</span> El Cuento Wayuu <span class="etiqueta-check" id="check1" style="display:none">✓ Leído</span></h2>
+
+  <div class="cuento-container" id="cuentoContainer">
+   <!-- Escena 1 -->
+   <div class="escena visible" data-escena="1">
+    <div class="ilustracion">☀️🏜️🌵</div>
+    <p><strong>En el corazón del desierto de La Guajira</strong>, donde el sol brilla todo el día y los cardones se alzan como guardianes verdes, vivía una iguana muy sabia llamada <strong>Juyá</strong>. Su piel era del color de la arena y sus ojos brillaban como dos gotas de agua fresca. Todos los animales del desierto la respetaban porque conocía los secretos de la tierra.</p>
+   </div>
+   <!-- Escena 2 -->
+   <div class="escena" data-escena="2">
+    <div class="ilustracion">🐇💨🦎</div>
+    <p>Un día, llegó un <strong>conejo veloz</strong> llamado <strong>Maleiwa</strong> que venía de tierras lejanas. El conejo, orgulloso de su rapidez, se burlaba de la iguana: <em>—¡Eres tan lenta, Juyá! El desierto necesita animales veloces como yo, no reptiles que se arrastran entre las piedras.</em></p>
+   </div>
+   <!-- Escena 3 -->
+   <div class="escena" data-escena="3">
+    <div class="ilustracion">🦎🗣️🐇</div>
+    <p>La iguana, con su eterna calma, le respondió: <em>—Maleiwa, en el desierto no gana quien corre más rápido, sino quien conoce el camino. Te propongo una carrera hasta el jagüey grande. Si ganas, me iré de estas tierras. Si pierdo, aprenderás a respetar.</em></p>
+   </div>
+   <!-- Escena 4 -->
+   <div class="escena" data-escena="4">
+    <div class="ilustracion">🏁🐇🏃💨</div>
+    <p>El conejo aceptó riendo. A la mañana siguiente, cuando las primeras luces del sol pintaban el cielo de naranja, comenzó la carrera. <strong>Maleiwa salió disparado como el viento</strong>, levantando nubes de arena a su paso. En pocos minutos ya no se le veía. <em>—¡Pobre iguana, ni siquiera ha empezado!</em> —pensó.</p>
+   </div>
+   <!-- Escena 5 -->
+   <div class="escena" data-escena="5">
+    <div class="ilustracion">🐇😴💤🌵</div>
+    <p>Confiado en su ventaja, el conejo decidió descansar bajo la sombra de un cardón. <em>—Tengo tiempo de sobra</em> —se dijo—. <em>Esa iguana tardará horas en llegar.</em> Y se quedó profundamente dormido, arrullado por el canto del viento entre las tunas.</p>
+   </div>
+   <!-- Escena 6 -->
+   <div class="escena" data-escena="6">
+    <div class="ilustracion">🦎🚶💧🌊</div>
+    <p>Mientras tanto, <strong>Juyá caminaba con paso firme</strong>. Conocía cada piedra, cada atajo, cada escondite donde brotaba agua. No se detuvo ni un momento. El sol subía alto en el cielo pero ella seguía, guiada por su sabiduría ancestral.</p>
+   </div>
+   <!-- Escena 7 -->
+   <div class="escena" data-escena="7">
+    <div class="ilustracion">😱🐇⏰💨</div>
+    <p>Cuando el sol estaba en lo más alto, Maleiwa despertó sobresaltado. <em>—¡He dormido demasiado!</em> —gritó. Corrió como nunca antes había corrido, con el corazón latiendo fuerte. Pero al llegar al jagüey grande...</p>
+   </div>
+   <!-- Escena 8 -->
+   <div class="escena" data-escena="8">
+    <div class="ilustracion">🦎💧😊🐇😮</div>
+    <p>Allí estaba Juyá, <strong>bebiendo agua fresca del jagüey</strong> con toda la tranquilidad del mundo. <em>—Llegaste, Maleiwa</em> —dijo la iguana con una sonrisa—. <em>En el desierto guajiro no basta con ser rápido. Hay que ser constante, conocer la tierra y respetar a todos los seres que la habitan.</em></p>
+   </div>
+   <!-- Escena 9 (Moraleja) -->
+   <div class="escena" data-escena="9">
+    <div class="ilustracion">🤝🐇🦎❤️</div>
+    <p>El conejo bajó las orejas, avergonzado. <em>—Tienes razón, Juyá. Me enseñaste que la constancia vale más que la velocidad.</em> Desde aquel día, Maleiwa y Juyá se hicieron grandes amigos y el conejo aprendió que <strong>cada ser del desierto tiene su propio valor y sabiduría</strong>.</p>
+    <p style="text-align:center;font-style:italic;color:var(--atardecer);margin-top:10px;font-size:1.1rem">🌵 Fin del cuento 🌵</p>
+   </div>
+
+   <div class="cuento-nav">
+    <button class="btn btn-secundario" id="btnAnterior" disabled>◀ Anterior</button>
+    <span class="pagina" id="numPagina">1 / 9</span>
+    <button class="btn btn-primario" id="btnSiguiente">Siguiente ▶</button>
+   </div>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+   <button class="btn btn-exito" id="btnCuentoLeido" style="display:none">✓ ¡Terminé de leer! Seguir →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 2: PREGUNTAS DE COMPRENSIÓN          -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion2" style="display:none">
+  <h2><span class="icono">❓</span> Preguntas de Comprensión <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">Responde las siguientes preguntas sobre el cuento. ¡Lee con atención!</p>
+
+  <div id="preguntasContainer">
+   <!-- Pregunta 1 -->
+   <div class="pregunta" data-pregunta="1">
+    <h3>1. ¿Dónde ocurre la historia?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> En la selva amazónica</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> En el desierto de La Guajira</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> En las montañas andinas</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> En una playa del Caribe</div>
+    </div>
+    <div class="feedback" data-feedback="1"></div>
+   </div>
+   <!-- Pregunta 2 -->
+   <div class="pregunta" data-pregunta="2">
+    <h3>2. ¿Cómo se llaman los dos personajes principales?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Sol y Luna</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Cardón y Tuna</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Juyá (la iguana) y Maleiwa (el conejo)</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Jaguar y Colibrí</div>
+    </div>
+    <div class="feedback" data-feedback="2"></div>
+   </div>
+   <!-- Pregunta 3 -->
+   <div class="pregunta" data-pregunta="3">
+    <h3>3. ¿Por qué el conejo se burlaba de la iguana?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Porque la iguana era de color arena</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Porque la iguana era lenta</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Porque la iguana no sabía correr</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Porque la iguana bebía mucha agua</div>
+    </div>
+    <div class="feedback" data-feedback="3"></div>
+   </div>
+   <!-- Pregunta 4 -->
+   <div class="pregunta" data-pregunta="4">
+    <h3>4. ¿Qué hizo el conejo durante la carrera que le costó la victoria?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Se perdió en el desierto</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Se quedó dormido bajo un cardón</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Se fue a buscar agua</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Se encontró con otros animales</div>
+    </div>
+    <div class="feedback" data-feedback="4"></div>
+   </div>
+   <!-- Pregunta 5 -->
+   <div class="pregunta" data-pregunta="5">
+    <h3>5. ¿Cuál es la enseñanza o moraleja del cuento?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Que el más rápido siempre gana</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Que hay que dormir mucho</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Que la constancia y el conocimiento valen más que la velocidad</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Que las iguanas son más rápidas que los conejos</div>
+    </div>
+    <div class="feedback" data-feedback="5"></div>
+   </div>
+  </div>
+
+  <div style="text-align:center;margin-top:15px">
+   <button class="btn btn-primario" id="btnVerificarPreguntas">✓ Verificar respuestas</button>
+   <button class="btn btn-exito" id="btnPreguntasOk" style="display:none">¡Seguir a la siguiente actividad! →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 3: ORDENAR ESCENAS                   -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion3" style="display:none">
+  <h2><span class="icono">🔢</span> Ordenar las Escenas <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">Arrastra las escenas para ordenarlas correctamente, de la primera a la última. Luego haz clic en "Verificar orden".</p>
+
+  <div class="sort-list" id="sortList">
+   <!-- Items will be populated by JS in randomized order -->
+  </div>
+
+  <div style="text-align:center;margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnMezclarEscenas">🔄 Mezclar</button>
+   <button class="btn btn-primario" id="btnVerificarOrden">✓ Verificar orden</button>
+   <button class="btn btn-exito" id="btnOrdenOk" style="display:none">¡Siguiente actividad! →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 4: INICIO - NUDO - DESENLACE        -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion4" style="display:none">
+  <h2><span class="icono">🏗️</span> Inicio, Nudo y Desenlace <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">Arrastra cada escena a la parte que le corresponde: <strong>Inicio</strong> (se presentan los personajes), <strong>Nudo</strong> (el conflicto), o <strong>Desenlace</strong> (cómo termina).</p>
+
+  <div class="escenas-para-arrastrar" id="escenasDraggable">
+   <div class="escena-arrastrable" draggable="true" data-id="esc1" data-parte="">Se presenta a Juyá y Maleiwa</div>
+   <div class="escena-arrastrable" draggable="true" data-id="esc2" data-parte="">El conejo reta a la iguana</div>
+   <div class="escena-arrastrable" draggable="true" data-id="esc3" data-parte="">Conejo e iguana se hacen amigos</div>
+  </div>
+
+  <div class="estructura-grid" id="estructuraGrid">
+   <div class="parte-card" data-parte="inicio" id="zonaInicio">
+    <div class="parte-emoji">🌅</div>
+    <div class="parte-label">Inicio</div>
+    <div class="parte-dropzone" id="dropInicio">Arrastra aquí la escena</div>
+   </div>
+   <div class="parte-card" data-parte="nudo" id="zonaNudo">
+    <div class="parte-emoji">⚡</div>
+    <div class="parte-label">Nudo</div>
+    <div class="parte-dropzone" id="dropNudo">Arrastra aquí la escena</div>
+   </div>
+   <div class="parte-card" data-parte="desenlace" id="zonaDesenlace">
+    <div class="parte-emoji">🌈</div>
+    <div class="parte-label">Desenlace</div>
+    <div class="parte-dropzone" id="dropDesenlace">Arrastra aquí la escena</div>
+   </div>
+  </div>
+
+  <div style="text-align:center;margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnReiniciarEstructura">🔄 Reiniciar</button>
+   <button class="btn btn-primario" id="btnVerificarEstructura">✓ Verificar estructura</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- RESULTADOS FINALES                           -->
+ <!-- ============================================= -->
+ <section class="card" id="seccionResultados" style="display:none">
+  <div class="resultados-finales" id="resultadosContent">
+   <!-- Dynamically filled -->
+  </div>
+ </section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ STATE ============
+const state = {
+ cuentoLeido: false,
+ escenaActual: 0,
+ totalEscenas: 9,
+ preguntasRespondidas: false,
+ preguntasCorrectas: 0,
+ ordenCorrecto: false,
+ estructuraCorrecta: false,
+};
+
+const respuestasCorrectas = {1:'b', 2:'c', 3:'b', 4:'b', 5:'c'};
+
+const escenasOrdenadas = [
+ {id:'e1', emoji:'☀️', texto:'En el desierto guajiro vivía Juyá, una iguana muy sabia respetada por todos.'},
+ {id:'e2', emoji:'🐇', texto:'Llegó Maleiwa, un conejo veloz, que se burló de la lentitud de la iguana.'},
+ {id:'e3', emoji:'🦎', texto:'Juyá propuso una carrera hasta el jagüey grande para darle una lección al conejo.'},
+ {id:'e4', emoji:'🏁', texto:'El conejo salió disparado y en minutos dejó atrás a la iguana.'},
+ {id:'e5', emoji:'😴', texto:'Confiado, Maleiwa se durmió bajo un cardón creyendo que ganaría fácilmente.'},
+ {id:'e6', emoji:'🚶', texto:'Juyá caminó sin parar, conociendo cada atajo del desierto.'},
+ {id:'e7', emoji:'😱', texto:'El conejo despertó tarde y corrió desesperado hacia el jagüey.'},
+ {id:'e8', emoji:'💧', texto:'Al llegar, Juyá ya estaba bebiendo agua fresca. ¡La iguana había ganado!'},
+ {id:'e9', emoji:'🤝', texto:'Maleiwa aprendió la lección y los dos se hicieron grandes amigos.'},
+];
+
+const estructuraCorrecta = {
+ inicio: 'esc1',
+ nudo: 'esc2',
+ desenlace: 'esc3',
+};
+
+// ============ DOM REFS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.cuentoLeido) completadas++;
+ if(state.preguntasRespondidas && state.preguntasCorrectas >= 4) completadas++;
+ if(state.ordenCorrecto) completadas++;
+ if(state.estructuraCorrecta) completadas++;
+ const pct = Math.round((completadas / 4) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECTION 1: CUENTO ============
+function mostrarEscena(idx){
+ $$('#cuentoContainer .escena').forEach(e => e.classList.remove('visible'));
+ const escenas = $$('#cuentoContainer .escena');
+ if(escenas[idx]) escenas[idx].classList.add('visible');
+ $('#numPagina').textContent = (idx+1) + ' / ' + state.totalEscenas;
+ $('#btnAnterior').disabled = (idx === 0);
+ if(idx === state.totalEscenas - 1){
+  $('#btnSiguiente').style.display = 'none';
+  $('#btnCuentoLeido').style.display = 'inline-block';
+ } else {
+  $('#btnSiguiente').style.display = 'inline-block';
+  $('#btnCuentoLeido').style.display = 'none';
+ }
+}
+
+$('#btnAnterior').addEventListener('click', ()=>{
+ if(state.escenaActual > 0){
+  state.escenaActual--;
+  mostrarEscena(state.escenaActual);
+ }
+});
+
+$('#btnSiguiente').addEventListener('click', ()=>{
+ if(state.escenaActual < state.totalEscenas - 1){
+  state.escenaActual++;
+  mostrarEscena(state.escenaActual);
+ }
+});
+
+$('#btnCuentoLeido').addEventListener('click', ()=>{
+ state.cuentoLeido = true;
+ $('#seccion1').classList.remove('activo');
+ $('#seccion1').classList.add('completado');
+ $('#check1').style.display = 'inline-block';
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+});
+
+// ============ SECTION 2: PREGUNTAS ============
+$$('#seccion2 .opcion').forEach(opcion => {
+ opcion.addEventListener('click', function(){
+  const preguntaDiv = this.closest('.pregunta');
+  preguntaDiv.querySelectorAll('.opcion').forEach(o => o.classList.remove('seleccionada'));
+  this.classList.add('seleccionada');
+ });
+});
+
+$('#btnVerificarPreguntas').addEventListener('click', ()=>{
+ let correctas = 0;
+ const preguntas = $$('#seccion2 .pregunta');
+ preguntas.forEach(p => {
+  const num = p.dataset.pregunta;
+  const seleccionada = p.querySelector('.opcion.seleccionada');
+  const feedback = p.querySelector('.feedback');
+  if(!seleccionada) return;
+  const valor = seleccionada.dataset.valor;
+  if(valor === respuestasCorrectas[num]){
+   seleccionada.classList.add('correcta');
+   feedback.textContent = '✅ ¡Correcto!';
+   feedback.className = 'feedback visible bien';
+   correctas++;
+  } else {
+   seleccionada.classList.add('incorrecta');
+   const correctaEl = p.querySelector('.opcion[data-valor="'+respuestasCorrectas[num]+'"]');
+   if(correctaEl) correctaEl.classList.add('correcta');
+   feedback.textContent = '❌ Incorrecto. La respuesta correcta está marcada en verde.';
+   feedback.className = 'feedback visible mal';
+  }
+  // disable further clicks
+  p.querySelectorAll('.opcion').forEach(o => o.style.pointerEvents = 'none');
+ });
+
+ state.preguntasCorrectas = correctas;
+ state.preguntasRespondidas = true;
+ $('#btnVerificarPreguntas').style.display = 'none';
+
+ if(correctas >= 4){
+  $('#btnPreguntasOk').style.display = 'inline-block';
+  $('#check2').style.display = 'inline-block';
+  $('#seccion2').classList.add('completado');
+ } else {
+  // Show retry
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'btn btn-peligro';
+  retryBtn.textContent = '🔄 Intentar de nuevo';
+  retryBtn.style.marginTop = '10px';
+  retryBtn.addEventListener('click', ()=>{
+   preguntas.forEach(p => {
+    p.querySelectorAll('.opcion').forEach(o => {
+     o.classList.remove('seleccionada','correcta','incorrecta');
+     o.style.pointerEvents = 'auto';
+    });
+    const fb = p.querySelector('.feedback');
+    fb.className = 'feedback';
+    fb.textContent = '';
+   });
+   $('#btnVerificarPreguntas').style.display = 'inline-block';
+   retryBtn.remove();
+   state.preguntasRespondidas = false;
+  });
+  $('#seccion2').appendChild(retryBtn);
+ }
+ actualizarProgreso();
+});
+
+$('#btnPreguntasOk').addEventListener('click', ()=>{
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 3: ORDENAR ESCENAS ============
+function buildSortList(){
+ const list = $('#sortList');
+ list.innerHTML = '';
+ // Shuffle
+ const shuffled = [...escenasOrdenadas].sort(() => Math.random() - 0.5);
+ shuffled.forEach((escena, i) => {
+  const div = document.createElement('div');
+  div.className = 'sort-item';
+  div.draggable = true;
+  div.dataset.id = escena.id;
+  div.innerHTML = `
+   <span class="sort-num">${i+1}</span>
+   <span class="emoji">${escena.emoji}</span>
+   <span class="texto">${escena.texto}</span>
+  `;
+  // Drag events
+  div.addEventListener('dragstart', handleDragStart);
+  div.addEventListener('dragend', handleDragEnd);
+  div.addEventListener('dragover', handleDragOver);
+  div.addEventListener('dragenter', handleDragEnter);
+  div.addEventListener('dragleave', handleDragLeave);
+  div.addEventListener('drop', handleDrop);
+  list.appendChild(div);
+ });
+}
+
+let dragItem = null;
+
+function handleDragStart(e){
+ dragItem = this;
+ this.classList.add('dragging');
+ e.dataTransfer.effectAllowed = 'move';
+ e.dataTransfer.setData('text/plain', this.dataset.id);
+}
+
+function handleDragEnd(e){
+ this.classList.remove('dragging');
+ $$('#sortList .sort-item').forEach(item => item.classList.remove('drag-over'));
+ dragItem = null;
+}
+
+function handleDragOver(e){
+ e.preventDefault();
+ e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e){
+ e.preventDefault();
+ this.classList.add('drag-over');
+}
+
+function handleDragLeave(e){
+ this.classList.remove('drag-over');
+}
+
+function handleDrop(e){
+ e.preventDefault();
+ e.stopPropagation();
+ this.classList.remove('drag-over');
+ if(dragItem !== this){
+  const list = $('#sortList');
+  const items = [...list.querySelectorAll('.sort-item')];
+  const fromIdx = items.indexOf(dragItem);
+  const toIdx = items.indexOf(this);
+  if(fromIdx < toIdx){
+   list.insertBefore(dragItem, this.nextSibling);
+  } else {
+   list.insertBefore(dragItem, this);
+  }
+ }
+ // Update numbers
+ $$('#sortList .sort-num').forEach((num, i) => {
+  num.textContent = i + 1;
+ });
+}
+
+$('#btnMezclarEscenas').addEventListener('click', ()=>{
+ state.ordenCorrecto = false;
+ $$('#sortList .sort-item').forEach(item => {
+  item.classList.remove('correcto','incorrecto');
+ });
+ $('#btnOrdenOk').style.display = 'none';
+ buildSortList();
+});
+
+$('#btnVerificarOrden').addEventListener('click', ()=>{
+ const items = $$('#sortList .sort-item');
+ let correcto = true;
+ items.forEach((item, i) => {
+  if(item.dataset.id === escenasOrdenadas[i].id){
+   item.classList.add('correcto');
+   item.classList.remove('incorrecto');
+  } else {
+   item.classList.add('incorrecto');
+   item.classList.remove('correcto');
+   correcto = false;
+  }
+ });
+ if(correcto){
+  state.ordenCorrecto = true;
+  $('#check3').style.display = 'inline-block';
+  $('#seccion3').classList.add('completado');
+  $('#btnOrdenOk').style.display = 'inline-block';
+  $('#btnMezclarEscenas').style.display = 'none';
+  $('#btnVerificarOrden').style.display = 'none';
+  // Disable dragging
+  $$('#sortList .sort-item').forEach(item => item.draggable = false);
+  lanzarConfeti();
+ }
+ actualizarProgreso();
+});
+
+$('#btnOrdenOk').addEventListener('click', ()=>{
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 4: INICIO-NUDO-DESENLACE ============
+const zonas = {
+ inicio: $('#dropInicio'),
+ nudo: $('#dropNudo'),
+ desenlace: $('#dropDesenlace'),
+};
+
+$$('#escenasDraggable .escena-arrastrable').forEach(esc => {
+ esc.addEventListener('dragstart', function(e){
+  if(this.classList.contains('usada')){ e.preventDefault(); return; }
+  e.dataTransfer.setData('text/plain', this.dataset.id);
+  e.dataTransfer.effectAllowed = 'move';
+ });
+});
+
+Object.entries(zonas).forEach(([parte, zona]) => {
+ zona.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+ zona.addEventListener('drop', function(e){
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain');
+  const escenaEl = $(`.escena-arrastrable[data-id="${id}"]`);
+  if(!escenaEl || escenaEl.classList.contains('usada')) return;
+
+  // Remove from previous zone if any
+  const anteriorParte = escenaEl.dataset.parte;
+  if(anteriorParte && zonas[anteriorParte]){
+   zonas[anteriorParte].textContent = 'Arrastra aquí la escena';
+   zonas[anteriorParte].classList.remove('lleno');
+   // Find if another element has this part and clear it
+   const otra = $(`.escena-arrastrable[data-parte="${anteriorParte}"]`);
+   if(otra && otra !== escenaEl){
+    otra.dataset.parte = '';
+    otra.classList.remove('usada');
+   }
+  }
+  // Clear current zone if occupied
+  const ocupante = $(`.escena-arrastrable[data-parte="${parte}"]`);
+  if(ocupante && ocupante !== escenaEl){
+   ocupante.dataset.parte = '';
+   ocupante.classList.remove('usada');
+   // Return to pool
+  }
+
+  escenaEl.dataset.parte = parte;
+  escenaEl.classList.add('usada');
+  zona.textContent = escenaEl.textContent;
+  zona.classList.add('lleno');
+ });
+});
+
+$('#btnReiniciarEstructura').addEventListener('click', ()=>{
+ state.estructuraCorrecta = false;
+ $$('.escena-arrastrable').forEach(esc => {
+  esc.dataset.parte = '';
+  esc.classList.remove('usada');
+ });
+ Object.values(zonas).forEach(z => {
+  z.textContent = 'Arrastra aquí la escena';
+  z.classList.remove('lleno');
+ });
+ $$('.parte-card').forEach(card => card.classList.remove('asignado','seleccionado'));
+});
+
+$('#btnVerificarEstructura').addEventListener('click', ()=>{
+ let correcto = true;
+ Object.entries(estructuraCorrecta).forEach(([parte, idEsperado]) => {
+  const esc = $(`.escena-arrastrable[data-id="${idEsperado}"]`);
+  if(esc && esc.dataset.parte === parte){
+   // correct
+  } else {
+   correcto = false;
+  }
+ });
+ if(correcto){
+  state.estructuraCorrecta = true;
+  $('#check4').style.display = 'inline-block';
+  $('#seccion4').classList.add('completado');
+  $$('.parte-card').forEach(card => card.classList.add('asignado'));
+  lanzarConfeti();
+  setTimeout(mostrarResultados, 1500);
+ } else {
+  alert('❌ Algunas escenas no están en la parte correcta. Revisa:\n\n🌅 INICIO: se presentan los personajes\n⚡ NUDO: el conflicto o problema\n🌈 DESENLACE: cómo se resuelve todo.\n\n¡Inténtalo de nuevo!');
+ }
+ actualizarProgreso();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ const total = 4;
+ let completadas = 0;
+ if(state.cuentoLeido) completadas++;
+ if(state.preguntasRespondidas && state.preguntasCorrectas >= 4) completadas++;
+ if(state.ordenCorrecto) completadas++;
+ if(state.estructuraCorrecta) completadas++;
+
+ let estrellas = '';
+ if(completadas === 4) estrellas = '⭐⭐⭐⭐⭐';
+ else if(completadas >= 3) estrellas = '⭐⭐⭐⭐';
+ else if(completadas >= 2) estrellas = '⭐⭐⭐';
+ else if(completadas >= 1) estrellas = '⭐⭐';
+ else estrellas = '⭐';
+
+ let mensaje = '';
+ if(completadas === 4) mensaje = '¡Excelente! ¡Eres un experto en comprensión lectora!';
+ else if(completadas >= 3) mensaje = '¡Muy bien! Casi completas todo.';
+ else mensaje = 'Sigue practicando. ¡Tú puedes!';
+
+ const puntajePreguntas = state.preguntasCorrectas + ' de 5';
+
+ $('#resultadosContent').innerHTML = `
+  <div class="trofeo">🏆</div>
+  <h2>${mensaje}</h2>
+  <div class="estrellas">${estrellas}</div>
+  <div class="puntaje-detalle">
+   <div class="puntaje-row"><span>📖 Lectura del cuento</span><span>${state.cuentoLeido ? '✅' : '❌'}</span></div>
+   <div class="puntaje-row"><span>❓ Preguntas de comprensión</span><span>${puntajePreguntas}</span></div>
+   <div class="puntaje-row"><span>🔢 Ordenar escenas</span><span>${state.ordenCorrecto ? '✅' : '❌'}</span></div>
+   <div class="puntaje-row"><span>🏗️ Inicio, nudo y desenlace</span><span>${state.estructuraCorrecta ? '✅' : '❌'}</span></div>
+  </div>
+  <p style="margin-top:15px;color:var(--tierra)">🌵 La Guajira · Cultura Wayuu · EduConect Rural</p>
+  <button class="btn btn-primario" style="margin-top:15px" onclick="location.reload()">🔄 Volver a empezar</button>
+  <a href="../" class="btn btn-secundario" style="margin-top:15px;display:inline-flex">← Volver a Módulos</a>
+ `;
+}
+
+// ============ CONFETI ============
+function lanzarConfeti(){
+ const colores = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF8C42','#C77DFF','#FFB347'];
+ for(let i=0; i<50; i++){
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  confetti.style.left = Math.random() * 100 + '%';
+  confetti.style.top = -(Math.random() * 100) + 'px';
+  confetti.style.width = (Math.random() * 8 + 6) + 'px';
+  confetti.style.height = (Math.random() * 8 + 6) + 'px';
+  confetti.style.background = colores[Math.floor(Math.random()*colores.length)];
+  confetti.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+  confetti.style.animationDelay = Math.random() * 0.5 + 's';
+  document.body.appendChild(confetti);
+  setTimeout(() => confetti.remove(), 3000);
+ }
+}
+
+// ============ INIT ============
+buildSortList();
+mostrarEscena(0);
+actualizarProgreso();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>La Guajira en 3D | EduConect Rural</title>
+<style>
+:root {
+  --arena: #F4E1C1;
+  --desierto: #E8B86D;
+  --cardon: #5B8C5A;
+  --cielo: #87CEEB;
+  --atardecer: #E07A5F;
+  --tierra: #8B5E3C;
+  --wayuu-oro: #D4A843;
+  --texto: #3D2B1F;
+  --blanco: #FFFDF7;
+  --sombra: 0 4px 20px rgba(0,0,0,0.12);
+  --rojo: #D64045;
+  --verde: #4CAF50;
+  --azul: #4A90D9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Segoe UI','Comic Sans MS',sans-serif;
+  background:#2a1f14;
+  min-height:100vh;
+  color:var(--texto);
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.canvas-container {
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  z-index:1;
+}
+.canvas-container canvas { display:block; }
+
+/* Info Panel */
+#info-panel {
+  position:fixed;
+  top:20px;right:20px;
+  background:rgba(253,247,235,0.95);
+  border-radius:16px;
+  padding:16px 20px;
+  z-index:10;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  max-width:280px;
+  border:2px solid var(--wayuu-oro);
+  display:none;
+  backdrop-filter:blur(4px);
+}
+#info-panel.visible { display:block; animation:popIn 0.3s ease-out; }
+#info-panel h3 {
+  color:var(--atardecer);
+  font-size:1.1rem;
+  margin-bottom:4px;
+}
+#info-panel .nombre-wayuu {
+  font-size:0.85rem;
+  color:var(--tierra);
+  font-style:italic;
+  margin-bottom:8px;
+}
+#info-panel p {
+  font-size:0.85rem;
+  line-height:1.4;
+  color:var(--texto);
+}
+#info-panel .close-btn {
+  position:absolute;
+  top:8px;right:12px;
+  background:none;
+  border:none;
+  font-size:1.2rem;
+  cursor:pointer;
+  color:var(--tierra);
+  padding:2px 6px;
+}
+#info-panel .close-btn:hover { color:var(--rojo); }
+
+/* Bottom zoom buttons */
+#zoom-buttons {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.zoom-btn {
+  background:rgba(253,247,235,0.9);
+  border:2px solid var(--wayuu-oro);
+  border-radius:25px;
+  padding:8px 16px;
+  font-size:0.82rem;
+  font-weight:bold;
+  cursor:pointer;
+  color:var(--texto);
+  font-family:inherit;
+  transition:all 0.2s;
+  white-space:nowrap;
+}
+.zoom-btn:hover {
+  background:var(--wayuu-oro);
+  color:white;
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+.zoom-btn:active { transform:translateY(0); }
+
+/* Help hint */
+#hint {
+  position:fixed;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:10;
+  background:rgba(45,27,15,0.8);
+  color:#FFD4A3;
+  padding:6px 18px;
+  border-radius:20px;
+  font-size:0.75rem;
+  pointer-events:none;
+  transition:opacity 1s;
+}
+
+/* Loading screen */
+#loading {
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  background:linear-gradient(180deg,#E8B86D,#D4A843,#2a1f14);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  color:white;
+  font-family:'Segoe UI','Comic Sans MS',sans-serif;
+}
+#loading .icono { font-size:5rem; margin-bottom:16px; animation:pulse 1.5s ease-in-out infinite; }
+#loading h2 { font-size:1.4rem; }
+#loading .dots { font-size:2rem; letter-spacing:6px; margin-top:8px; animation:pulse 1.5s ease-in-out infinite; }
+
+/* Error display */
+#error-info {
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:#fff0f0;
+  border:3px solid var(--rojo);
+  border-radius:20px;
+  padding:30px;
+  z-index:200;
+  max-width:500px;
+  text-align:center;
+  display:none;
+  font-family:'Segoe UI',sans-serif;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+}
+#error-info.visible { display:block; }
+#error-info h2 { color:var(--rojo); margin-bottom:10px; }
+#error-info pre {
+  background:#2a1f14;
+  color:#ff9999;
+  padding:12px;
+  border-radius:8px;
+  font-size:0.75rem;
+  text-align:left;
+  overflow-x:auto;
+  margin-top:10px;
+  max-height:200px;
+  overflow-y:auto;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  #info-panel { max-width:240px; right:8px; top:8px; padding:12px 14px; }
+  #info-panel h3 { font-size:0.95rem; }
+  #zoom-buttons { bottom:10px; gap:6px; }
+  .zoom-btn { padding:6px 12px; font-size:0.72rem; }
+}
+
+@keyframes popIn {
+  from { opacity:0; transform:scale(0.8) translateY(-20px); }
+  to { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes pulse {
+  0%,100%{opacity:0.5;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.1)}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="icono">🏜️</div>
+  <h2>Cargando La Guajira en 3D...</h2>
+  <div class="dots">●●●</div>
+</div>
+
+<div id="error-info">
+  <h2>⚠️ Error al cargar la escena 3D</h2>
+  <p>No se pudo inicializar el mundo 3D de La Guajira.</p>
+  <pre id="error-detail"></pre>
+  <p style="margin-top:12px;font-size:0.8rem;">
+    Asegúrate de que <code>../comun/three.min.js</code> existe.<br>
+    Recarga la página e inténtalo de nuevo.
+  </p>
+</div>
+
+<div id="mundo3d701" class="canvas-container"></div>
+
+<div id="info-panel">
+  <button class="close-btn" id="close-info">✕</button>
+  <h3 id="info-name"></h3>
+  <div class="nombre-wayuu" id="info-wayuu"></div>
+  <p id="info-desc"></p>
+</div>
+
+<div id="hint">🖱️ Arrastra para rotar · Rueda para zoom · Clic en animales para aprender</div>
+
+<div id="zoom-buttons">
+  <button class="zoom-btn" data-target="chivo">🐐 Chivo (Mürü)</button>
+  <button class="zoom-btn" data-target="iguana">🦎 Iguana (Wale'erü)</button>
+  <button class="zoom-btn" data-target="flamenco">🦩 Flamenco (Wüchü)</button>
+  <button class="zoom-btn" data-target="serpiente">🐍 Serpiente cascabel</button>
+  <button class="zoom-btn" data-target="rancheria">🛖 Ranchería</button>
+</div>
+
+<script src="../comun/three.min.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  try {
+
+  if (typeof THREE === 'undefined') {
+    throw new Error('Three.js no está cargado. Verifica que ../comun/three.min.js existe.');
+  }
+
+  // ==================== DOM REFS ====================
+  var container = document.getElementById('mundo3d701');
+  var loadingEl = document.getElementById('loading');
+  var errorEl = document.getElementById('error-info');
+  var errorDetail = document.getElementById('error-detail');
+  var infoPanel = document.getElementById('info-panel');
+  var infoName = document.getElementById('info-name');
+  var infoWayuu = document.getElementById('info-wayuu');
+  var infoDesc = document.getElementById('info-desc');
+  var hintEl = document.getElementById('hint');
+  var closeInfoBtn = document.getElementById('close-info');
+
+  // ==================== SCENE SETUP ====================
+  var scene = new THREE.Scene();
+
+  // Sky gradient via renderer clear color
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(new THREE.Color(0x1a0f0a));
+  container.appendChild(renderer.domElement);
+
+  // Camera
+  var camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.5, 200);
+  camera.position.set(12, 8, 16);
+  camera.lookAt(0, 0, 0);
+
+  // Fog
+  scene.fog = new THREE.FogExp2(0xd4a843, 0.00025);
+
+  // Lights
+  var ambientLight = new THREE.AmbientLight(0xffe8c0, 0.7);
+  scene.add(ambientLight);
+
+  var sunLight = new THREE.DirectionalLight(0xfff5e0, 0.9);
+  sunLight.position.set(30, 25, 10);
+  scene.add(sunLight);
+
+  var hemiLight = new THREE.HemisphereLight(0xffd4a3, 0x8b5e3c, 0.4);
+  scene.add(hemiLight);
+
+  // ==================== SKY DOME ====================
+  var skyGeo = new THREE.SphereGeometry(60, 32, 16);
+  var skyColors = [];
+  var skyPositions = skyGeo.attributes.position.array;
+  for (var si = 0; si < skyPositions.length; si += 3) {
+    var sy = skyPositions[si + 1];
+    var st = Math.max(0, (sy + 60) / 115);
+    var sc = new THREE.Color();
+    if (st < 0.35) {
+      sc.setHSL(0.13, 0.5, 0.25 + st * 1.2);
+    } else if (st < 0.65) {
+      sc.setHSL(0.12, 0.7, 0.55 + (st - 0.35) * 1.5);
+    } else {
+      sc.setHSL(0.58, 0.5, 0.55 + (st - 0.65) * 1.0);
+    }
+    skyColors.push(sc.r, sc.g, sc.b);
+  }
+  skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
+  var skyMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.BackSide });
+  var sky = new THREE.Mesh(skyGeo, skyMat);
+  scene.add(sky);
+
+  // ==================== TERRAIN ====================
+  function getTerrainHeight(x, z) {
+    var h = 0;
+    h += Math.sin(x * 0.12) * 0.4;
+    h += Math.cos(z * 0.1) * 0.35;
+    h += Math.sin(x * 0.25 + z * 0.18) * 0.2;
+    h += Math.cos(x * 0.05) * Math.sin(z * 0.08) * 0.5;
+    h += Math.sin((x + z) * 0.06) * 0.3;
+    h += (Math.sin(x * 0.4) * Math.cos(z * 0.35)) * 0.15;
+    return h;
+  }
+
+  var terrainGeo = new THREE.PlaneGeometry(80, 80, 80, 80);
+  terrainGeo.rotateX(-Math.PI / 2);
+  var tp = terrainGeo.attributes.position.array;
+  for (var ti = 0; ti < tp.length; ti += 3) {
+    var tx = tp[ti];
+    var tz = tp[ti + 2];
+    tp[ti + 1] = getTerrainHeight(tx, tz);
+  }
+  terrainGeo.attributes.position.needsUpdate = true;
+  terrainGeo.computeVertexNormals();
+
+  var terrainMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+  var terrain = new THREE.Mesh(terrainGeo, terrainMat);
+  terrain.receiveShadow = true;
+  scene.add(terrain);
+
+  // Flat ground patch for elements
+  var flatGeo = new THREE.PlaneGeometry(15, 10);
+  flatGeo.rotateX(-Math.PI / 2);
+  flatGeo.translate(0, 0.01, 0);
+  var flatMat = new THREE.MeshLambertMaterial({ color: 0xb8965c });
+  var flatGround = new THREE.Mesh(flatGeo, flatMat);
+  scene.add(flatGround);
+
+  // ==================== JAGÜEY (Water pond) ====================
+  function createJaguey() {
+    var jg = new THREE.Group();
+
+    var waterGeo = new THREE.CircleGeometry(1.2, 32);
+    waterGeo.rotateX(-Math.PI / 2);
+    var waterMat = new THREE.MeshLambertMaterial({
+      color: 0x3366aa,
+      transparent: true,
+      opacity: 0.75
+    });
+    var water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.set(-1, 0.03, 4);
+    jg.add(water);
+
+    var ringGeo = new THREE.RingGeometry(1.15, 1.35, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    var ringMat = new THREE.MeshLambertMaterial({ color: 0x6b5b3a });
+    var ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.set(-1, 0.04, 4);
+    jg.add(ring);
+
+    // Small stones around
+    var stoneMat = new THREE.MeshLambertMaterial({ color: 0x8a7a6a });
+    for (var s = 0; s < 16; s++) {
+      var angle = (s / 16) * Math.PI * 2;
+      var sr = 1.3 + Math.random() * 0.4;
+      var stone = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.06 + Math.random() * 0.08, 0),
+        stoneMat
+      );
+      stone.position.set(
+        -1 + Math.cos(angle) * sr,
+        0.03,
+        4 + Math.sin(angle) * sr
+      );
+      jg.add(stone);
+    }
+
+    return jg;
+  }
+  scene.add(createJaguey());
+
+  // ==================== RANCHERÍA (Piichipala) ====================
+  function createRancheria() {
+    var rg = new THREE.Group();
+
+    var stickMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+    var roofMat = new THREE.MeshLambertMaterial({ color: 0x6B4410 });
+
+    // Vertical posts
+    var postPositions = [
+      [-0.5, 0, 0.5], [0.5, 0, 0.5], [-0.5, 0, -0.5], [0.5, 0, -0.5],
+      [0, 0, 0.7], [0, 0, -0.7]
+    ];
+    for (var pp = 0; pp < postPositions.length; pp++) {
+      var post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.05, 1.8, 6),
+        stickMat
+      );
+      post.position.set(postPositions[pp][0], 0.9, postPositions[pp][2]);
+      rg.add(post);
+    }
+
+    // Horizontal beams
+    var beamGeoH = new THREE.CylinderGeometry(0.03, 0.03, 1.15, 6);
+    for (var bh = 0; bh < 2; bh++) {
+      var by = 0.55 + bh * 0.6;
+      var beam = new THREE.Mesh(beamGeoH, stickMat);
+      beam.rotation.z = Math.PI / 2;
+      beam.position.set(0, by, 0.5);
+      rg.add(beam);
+      var beam2 = new THREE.Mesh(beamGeoH, stickMat);
+      beam2.rotation.z = Math.PI / 2;
+      beam2.position.set(0, by, -0.5);
+      rg.add(beam2);
+      var beam3 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 6), stickMat);
+      beam3.rotation.x = Math.PI / 2;
+      beam3.position.set(0.5, by, 0);
+      rg.add(beam3);
+      var beam4 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 6), stickMat);
+      beam4.rotation.x = Math.PI / 2;
+      beam4.position.set(-0.5, by, 0);
+      rg.add(beam4);
+    }
+
+    // Inclined roof sticks (yotojoro)
+    for (var ri = 0; ri < 12; ri++) {
+      var rAngle = (ri / 12) * Math.PI * 2;
+      var roofStick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.025, 1.3, 5),
+        stickMat
+      );
+      roofStick.position.set(
+        Math.cos(rAngle) * 0.15,
+        1.5,
+        Math.sin(rAngle) * 0.15
+      );
+      roofStick.rotation.z = Math.cos(rAngle) * 0.65;
+      roofStick.rotation.x = Math.sin(rAngle) * 0.65;
+      rg.add(roofStick);
+    }
+
+    // Cone roof
+    var cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85, 0.9, 12, 1),
+      roofMat
+    );
+    cone.position.y = 1.85;
+    rg.add(cone);
+
+    // Top cross
+    var topStick = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.02, 0.5, 5),
+      stickMat
+    );
+    topStick.position.y = 2.28;
+    rg.add(topStick);
+
+    // Yotojoro (cardon wood) walls - thin horizontal lines
+    for (var yw = 0; yw < 6; yw++) {
+      var ywy = 0.15 + yw * 0.28;
+      var wallStick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 1.0, 4),
+        new THREE.MeshLambertMaterial({ color: 0x7a6a2a })
+      );
+      wallStick.rotation.z = Math.PI / 2;
+      wallStick.position.set(0, ywy, 0.45);
+      rg.add(wallStick);
+      var ws2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 1.0, 4),
+        new THREE.MeshLambertMaterial({ color: 0x7a6a2a })
+      );
+      ws2.rotation.z = Math.PI / 2;
+      ws2.position.set(0, ywy, -0.45);
+      rg.add(ws2);
+    }
+
+    rg.position.set(4, getTerrainHeight(4, -1), -1);
+    return rg;
+  }
+  var rancheriaObj = createRancheria();
+  scene.add(rancheriaObj);
+
+  // ==================== CARDONES (Columnar cacti) ====================
+  function createCactus(x, z, h) {
+    var cg = new THREE.Group();
+    var cMat = new THREE.MeshLambertMaterial({ color: 0x3d6b35 });
+    var cDark = new THREE.MeshLambertMaterial({ color: 0x2d5325 });
+
+    // Main trunk
+    var trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.13, h, 8, 2),
+      cMat
+    );
+    trunk.position.y = h / 2;
+    cg.add(trunk);
+
+    // Vertical ribs on trunk
+    for (var r = 0; r < 6; r++) {
+      var ra = (r / 6) * Math.PI * 2;
+      var rib = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.02, h * 0.9, 4),
+        cDark
+      );
+      rib.position.set(Math.cos(ra) * 0.08, h / 2, Math.sin(ra) * 0.08);
+      cg.add(rib);
+    }
+
+    // Branches
+    var branchCount = 3 + Math.floor(Math.random() * 2);
+    for (var b = 0; b < branchCount; b++) {
+      var bAngle = (b / branchCount) * Math.PI * 2 + Math.random() * 0.5;
+      var bHeight = h * 0.5 + Math.random() * h * 0.35;
+      var bLen = h * 0.25 + Math.random() * h * 0.3;
+
+      var branch = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.05, bLen, 6),
+        cMat
+      );
+      branch.position.set(
+        Math.cos(bAngle) * 0.1,
+        bHeight,
+        Math.sin(bAngle) * 0.1
+      );
+      branch.rotation.z = Math.cos(bAngle) * 0.55;
+      branch.rotation.x = -Math.sin(bAngle) * 0.55;
+      cg.add(branch);
+
+      // Branch tip (lighter)
+      var tip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.03, bLen * 0.3, 5),
+        new THREE.MeshLambertMaterial({ color: 0x5a8a4a })
+      );
+      tip.position.set(
+        Math.cos(bAngle) * 0.08 + Math.cos(bAngle) * bLen * 0.6,
+        bHeight + bLen * 0.45,
+        Math.sin(bAngle) * 0.08 + Math.sin(bAngle) * bLen * 0.6
+      );
+      tip.rotation.z = branch.rotation.z;
+      tip.rotation.x = branch.rotation.x;
+      cg.add(tip);
+    }
+
+    // Spines (tiny dots around top)
+    var spineMat = new THREE.MeshLambertMaterial({ color: 0xddd5aa });
+    for (var sp = 0; sp < 20; sp++) {
+      var spa = (sp / 20) * Math.PI * 2;
+      var spy = h * 0.6 + (sp / 20) * h * 0.3;
+      var spine = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.003, 0.006, 0.04, 3),
+        spineMat
+      );
+      spine.position.set(
+        Math.cos(spa) * 0.09,
+        spy,
+        Math.sin(spa) * 0.09
+      );
+      spine.rotation.z = Math.cos(spa) * 1.0;
+      spine.rotation.x = Math.sin(spa) * 1.0;
+      cg.add(spine);
+    }
+
+    cg.position.set(x, getTerrainHeight(x, z), z);
+    return cg;
+  }
+
+  // Place cardones around the scene
+  var cactusPositions = [
+    [6, -3, 2.5], [7, 2, 2.2], [5, -5, 2.8], [-4, 6, 3.0],
+    [-5, -4, 2.4], [8, -1, 2.0], [-6, 2, 3.2], [7, -5, 2.6],
+    [-7, -2, 2.3], [3, -6, 2.7], [-3, 7, 2.1], [6, 5, 2.9],
+    [-8, 4, 2.5], [-2, -7, 2.2], [9, 3, 2.4]
+  ];
+  for (var ci = 0; ci < cactusPositions.length; ci++) {
+    var cp = cactusPositions[ci];
+    scene.add(createCactus(cp[0], cp[1], cp[2]));
+  }
+
+  // ==================== ANIMAL: CHIVO (Mürü) ====================
+  function createChivo() {
+    var g = new THREE.Group();
+    var bm = new THREE.MeshLambertMaterial({ color: 0xd4b896 });
+    var dm = new THREE.MeshLambertMaterial({ color: 0xb8956e });
+    var hm = new THREE.MeshLambertMaterial({ color: 0x8a7a6a });
+    var wm = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    var em = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+    // BODY: LatheGeometry
+    var bodyPts = [];
+    bodyPts.push(new THREE.Vector2(0, 0.55));
+    bodyPts.push(new THREE.Vector2(0.08, 0.5));
+    bodyPts.push(new THREE.Vector2(0.2, 0.42));
+    bodyPts.push(new THREE.Vector2(0.35, 0.38));
+    bodyPts.push(new THREE.Vector2(0.5, 0.32));
+    bodyPts.push(new THREE.Vector2(0.62, 0.22));
+    bodyPts.push(new THREE.Vector2(0.68, 0.08));
+    bodyPts.push(new THREE.Vector2(0.6, -0.08));
+    bodyPts.push(new THREE.Vector2(0.45, -0.25));
+    bodyPts.push(new THREE.Vector2(0.25, -0.38));
+    bodyPts.push(new THREE.Vector2(0.08, -0.46));
+    bodyPts.push(new THREE.Vector2(0, -0.5));
+    var body = new THREE.Mesh(new THREE.LatheGeometry(bodyPts, 16), bm);
+    body.scale.set(0.9, 0.9, 0.7);
+    body.position.y = 0.35;
+    g.add(body);
+
+    // HEAD
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), bm);
+    head.position.set(-0.03, 0.72, 0);
+    head.scale.set(1.1, 0.8, 0.8);
+    g.add(head);
+
+    // SNOUT
+    var snout = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), dm);
+    snout.position.set(-0.02, 0.67, -0.21);
+    snout.scale.set(1.2, 0.55, 0.55);
+    g.add(snout);
+
+    // NECK
+    var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.22, 0.28, 8), bm);
+    neck.position.set(0.26, 0.56, 0);
+    neck.rotation.z = -0.35;
+    g.add(neck);
+
+    // LEGS
+    function makeLeg(lx, lz, rz) {
+      var lg = new THREE.Group();
+      var upper = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.25, 6), dm);
+      upper.position.y = -0.125;
+      lg.add(upper);
+      var knee = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 4), dm);
+      knee.position.y = 0.0;
+      lg.add(knee);
+      var lower = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.22, 6), dm);
+      lower.position.y = -0.33;
+      lg.add(lower);
+      var hoof = new THREE.Mesh(
+        new THREE.SphereGeometry(0.035, 6, 4),
+        new THREE.MeshLambertMaterial({ color: 0x5a4a3a })
+      );
+      hoof.position.y = -0.43;
+      hoof.scale.set(1, 0.4, 0.8);
+      lg.add(hoof);
+      lg.position.set(lx, -0.2, lz);
+      if (rz) lg.rotation.z = rz;
+      g.add(lg);
+    }
+    makeLeg(0.42, 0.18);
+    makeLeg(0.42, -0.18);
+    makeLeg(-0.28, 0.18, 0.06);
+    makeLeg(-0.28, -0.18, -0.06);
+
+    // TAIL using TubeGeometry
+    var tailPts = [];
+    tailPts.push(new THREE.Vector3(0, 0, 0));
+    tailPts.push(new THREE.Vector3(-0.05, 0.1, 0.05));
+    tailPts.push(new THREE.Vector3(-0.1, 0.08, 0.1));
+    tailPts.push(new THREE.Vector3(-0.16, 0.13, 0.07));
+    tailPts.push(new THREE.Vector3(-0.2, 0.2, 0.03));
+    tailPts.push(new THREE.Vector3(-0.22, 0.26, 0));
+    var tail = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tailPts), 10, 0.022, 5, false),
+      bm
+    );
+    tail.position.set(-0.63, 0.2, 0);
+    g.add(tail);
+
+    // EARS: ShapeGeometry with beziers
+    var earShape = new THREE.Shape();
+    earShape.moveTo(0, 0);
+    earShape.bezierCurveTo(0.09, 0.04, 0.09, 0.14, 0.01, 0.18);
+    earShape.bezierCurveTo(-0.04, 0.1, -0.04, 0.03, 0, 0);
+    [-1, 1].forEach(function(s) {
+      var ear = new THREE.Mesh(new THREE.ShapeGeometry(earShape), dm);
+      ear.position.set(-0.14, 0.79, 0.08 * s);
+      ear.rotation.y = -0.3 * s;
+      ear.rotation.x = 0.15;
+      ear.rotation.z = 0.1 * s;
+      g.add(ear);
+    });
+
+    // HORNS: TubeGeometry
+    function makeHorn(sd) {
+      var pts = [];
+      pts.push(new THREE.Vector3(0, 0, 0));
+      pts.push(new THREE.Vector3(0.03 * sd, 0.05, 0.02 * sd));
+      pts.push(new THREE.Vector3(0.06 * sd, 0.1, 0.04 * sd));
+      pts.push(new THREE.Vector3(0.08 * sd, 0.15, 0.02 * sd));
+      pts.push(new THREE.Vector3(0.06 * sd, 0.2, 0));
+      var h = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.018, 5, false),
+        hm
+      );
+      h.position.set(-0.04, 0.8, 0.04 * sd);
+      g.add(h);
+    }
+    makeHorn(1);
+    makeHorn(-1);
+
+    // EYES
+    [-1, 1].forEach(function(s) {
+      var white = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), wm);
+      white.position.set(-0.04, 0.77, 0.13 * s);
+      g.add(white);
+      var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), em);
+      pupil.position.set(-0.03, 0.77, 0.146 * s);
+      pupil.scale.set(0.5, 0.9, 0.5);
+      g.add(pupil);
+    });
+
+    // BEARD
+    var beardPts = [];
+    beardPts.push(new THREE.Vector3(0, 0, 0));
+    beardPts.push(new THREE.Vector3(-0.005, -0.04, 0.005));
+    beardPts.push(new THREE.Vector3(-0.005, -0.08, 0.002));
+    beardPts.push(new THREE.Vector3(0, -0.1, 0));
+    var beard = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(beardPts), 5, 0.01, 4, false),
+      hm
+    );
+    beard.position.set(-0.05, 0.57, -0.18);
+    g.add(beard);
+
+    g.scale.setScalar(0.7);
+    g.userData = {
+      name: 'Chivo',
+      wayuu: 'Mürü',
+      desc: 'El chivo es el animal más importante para el pueblo wayuu. Provee leche, carne y piel. Las familias wayuu miden su riqueza por la cantidad de chivos que poseen. Son resistentes al clima seco del desierto guajiro y pueden sobrevivir comiendo cactus y plantas espinosas.'
+    };
+    return g;
+  }
+
+  // ==================== ANIMAL: IGUANA (Wale'erü) ====================
+  function createIguana() {
+    var g = new THREE.Group();
+    var gm = new THREE.MeshLambertMaterial({ color: 0x4a7a3a });
+    var lg = new THREE.MeshLambertMaterial({ color: 0x6aaa50 });
+    var dm = new THREE.MeshLambertMaterial({ color: 0x3a602a });
+    var wm = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    var em = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+    // BODY: flattened LatheGeometry
+    var bodyPts = [];
+    bodyPts.push(new THREE.Vector2(0, 0.18));
+    bodyPts.push(new THREE.Vector2(0.06, 0.15));
+    bodyPts.push(new THREE.Vector2(0.22, 0.12));
+    bodyPts.push(new THREE.Vector2(0.4, 0.08));
+    bodyPts.push(new THREE.Vector2(0.52, 0.0));
+    bodyPts.push(new THREE.Vector2(0.42, -0.08));
+    bodyPts.push(new THREE.Vector2(0.22, -0.12));
+    bodyPts.push(new THREE.Vector2(0.06, -0.15));
+    bodyPts.push(new THREE.Vector2(0, -0.18));
+    var body = new THREE.Mesh(new THREE.LatheGeometry(bodyPts, 14), gm);
+    body.scale.set(1.0, 0.22, 0.45);
+    body.position.y = 0.06;
+    g.add(body);
+
+    // HEAD
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), lg);
+    head.position.set(0.55, 0.06, 0);
+    head.scale.set(1.3, 0.7, 0.7);
+    g.add(head);
+
+    // EYES (protruding)
+    [-1, 1].forEach(function(s) {
+      var eyeBase = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), gm);
+      eyeBase.position.set(0.6, 0.1, 0.06 * s);
+      g.add(eyeBase);
+      var eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 5), wm);
+      eyeWhite.position.set(0.62, 0.1, 0.06 * s);
+      g.add(eyeWhite);
+      var eyePupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 5, 5), em);
+      eyePupil.position.set(0.635, 0.1, 0.06 * s);
+      g.add(eyePupil);
+    });
+
+    // MOUTH
+    var mouth = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.01, 0.04),
+      new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+    );
+    mouth.position.set(0.63, 0.03, 0);
+    g.add(mouth);
+
+    // DORSAL CREST (small cones along spine)
+    for (var dc = 0; dc < 12; dc++) {
+      var t = dc / 11;
+      var cx = 0.52 * (1 - t) - 0.3 * t;
+      var cy = 0.15 * (1 - t * 0.5) + 0.02;
+      var cone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.012, 0.04 + t * 0.02, 4),
+        dm
+      );
+      cone.position.set(cx, cy, 0);
+      g.add(cone);
+    }
+
+    // LEGS
+    function makeIguanaLeg(lx, lz, sd) {
+      var legGrp = new THREE.Group();
+      var upperLeg = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.05, 0.04),
+        gm
+      );
+      upperLeg.position.y = -0.03;
+      legGrp.add(upperLeg);
+      var lowerLeg = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, 0.06, 0.03),
+        gm
+      );
+      lowerLeg.position.set(sd * 0.03, -0.08, 0);
+      legGrp.add(lowerLeg);
+      var foot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.015, 0.06),
+        dm
+      );
+      foot.position.set(sd * 0.04, -0.11, 0);
+      legGrp.add(foot);
+      legGrp.position.set(lx, 0.01, lz * 0.35);
+      g.add(legGrp);
+    }
+    makeIguanaLeg(0.2, 1, 1);
+    makeIguanaLeg(0.2, -1, -1);
+    makeIguanaLeg(-0.2, 1, 1);
+    makeIguanaLeg(-0.2, -1, -1);
+
+    // TAIL: TubeGeometry
+    var tailPts = [];
+    tailPts.push(new THREE.Vector3(-0.3, 0.05, 0));
+    tailPts.push(new THREE.Vector3(-0.55, 0.03, 0.02));
+    tailPts.push(new THREE.Vector3(-0.8, 0.01, 0.06));
+    tailPts.push(new THREE.Vector3(-1.05, -0.01, 0.12));
+    tailPts.push(new THREE.Vector3(-1.3, -0.01, 0.2));
+    tailPts.push(new THREE.Vector3(-1.55, 0.0, 0.3));
+    tailPts.push(new THREE.Vector3(-1.75, 0.01, 0.42));
+    var tail = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tailPts), 16, 0.025, 6, false),
+      gm
+    );
+    g.add(tail);
+
+    g.scale.setScalar(0.9);
+    g.userData = {
+      name: 'Iguana',
+      wayuu: 'Wale\'erü',
+      desc: 'La iguana verde habita en los bosques secos y matorrales de La Guajira. Los wayuu la consideran un alimento tradicional y también la respetan como parte de la fauna nativa. Se camufla entre los cardones y puede trepar árboles con facilidad.'
+    };
+    return g;
+  }
+
+  // ==================== ANIMAL: FLAMENCO (Wüchü) ====================
+  function createFlamenco() {
+    var g = new THREE.Group();
+    var pm = new THREE.MeshLambertMaterial({ color: 0xff8c94 });
+    var pDark = new THREE.MeshLambertMaterial({ color: 0xe06070 });
+    var pLight = new THREE.MeshLambertMaterial({ color: 0xffb8bf });
+    var wm = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    var em = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    var lm = new THREE.MeshLambertMaterial({ color: 0xffaa44 });
+    var bm = new THREE.MeshLambertMaterial({ color: 0x222222 });
+
+    // BODY: LatheGeometry round
+    var bodyPts = [];
+    bodyPts.push(new THREE.Vector2(0, 0.22));
+    bodyPts.push(new THREE.Vector2(0.08, 0.18));
+    bodyPts.push(new THREE.Vector2(0.18, 0.12));
+    bodyPts.push(new THREE.Vector2(0.28, 0.05));
+    bodyPts.push(new THREE.Vector2(0.3, -0.05));
+    bodyPts.push(new THREE.Vector2(0.25, -0.12));
+    bodyPts.push(new THREE.Vector2(0.15, -0.18));
+    bodyPts.push(new THREE.Vector2(0.05, -0.22));
+    bodyPts.push(new THREE.Vector2(0, -0.24));
+    var body = new THREE.Mesh(new THREE.LatheGeometry(bodyPts, 16), pm);
+    body.scale.set(0.55, 0.55, 0.45);
+    body.position.y = 0.8;
+    g.add(body);
+
+    // NECK: TubeGeometry S-curve
+    var neckPts = [];
+    neckPts.push(new THREE.Vector3(0.15, 0.85, 0));
+    neckPts.push(new THREE.Vector3(0.25, 1.0, 0.02));
+    neckPts.push(new THREE.Vector3(0.4, 1.25, 0.05));
+    neckPts.push(new THREE.Vector3(0.55, 1.55, 0.05));
+    neckPts.push(new THREE.Vector3(0.62, 1.8, 0.02));
+    neckPts.push(new THREE.Vector3(0.6, 1.95, 0));
+    var neck = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(neckPts), 12, 0.035, 8, false),
+      pLight
+    );
+    g.add(neck);
+
+    // HEAD
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), pLight);
+    head.position.set(0.6, 1.98, 0);
+    head.scale.set(1.2, 0.8, 0.7);
+    g.add(head);
+
+    // EYES
+    [-1, 1].forEach(function(s) {
+      var white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 4), wm);
+      white.position.set(0.65, 1.99, 0.04 * s);
+      g.add(white);
+      var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.007, 5, 4), em);
+      pupil.position.set(0.66, 1.99, 0.04 * s);
+      g.add(pupil);
+    });
+
+    // BEAK: ConeGeometry
+    var beak = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 6), bm);
+    beak.position.set(0.68, 1.95, 0);
+    beak.rotation.z = -Math.PI / 2;
+    g.add(beak);
+
+    // Beak tip (curved down)
+    var beakTip = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.04, 5), bm);
+    beakTip.position.set(0.74, 1.92, 0);
+    beakTip.rotation.z = -Math.PI / 4;
+    g.add(beakTip);
+
+    // WINGS: ShapeGeometry
+    var wingShape = new THREE.Shape();
+    wingShape.moveTo(0, 0);
+    wingShape.bezierCurveTo(0.05, 0.1, 0.2, 0.3, 0.3, 0.52);
+    wingShape.bezierCurveTo(0.25, 0.4, 0.1, 0.15, 0, 0.05);
+    wingShape.bezierCurveTo(-0.02, 0.02, -0.01, 0.01, 0, 0);
+
+    [-1, 1].forEach(function(s) {
+      var wing = new THREE.Mesh(new THREE.ShapeGeometry(wingShape), pDark);
+      wing.position.set(0.08, 0.75, 0.12 * s);
+      wing.rotation.x = -0.3;
+      wing.rotation.y = s * Math.PI / 5;
+      wing.rotation.z = -0.2;
+      wing.scale.set(1, 1, s);
+      g.add(wing);
+    });
+
+    // LEGS: thin cylinders
+    function makeFlamencoLeg(lz) {
+      var lgGrp = new THREE.Group();
+      var upperLeg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.012, 0.7, 6),
+        lm
+      );
+      upperLeg.position.y = -0.35;
+      lgGrp.add(upperLeg);
+      var knee = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 4), lm);
+      knee.position.y = 0.0;
+      lgGrp.add(knee);
+      var lowerLeg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.007, 0.01, 0.6, 6),
+        lm
+      );
+      lowerLeg.position.y = -0.65;
+      lgGrp.add(lowerLeg);
+      var foot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.008, 0.02),
+        new THREE.MeshLambertMaterial({ color: 0xdd8833 })
+      );
+      foot.position.y = -0.95;
+      lgGrp.add(foot);
+      lgGrp.position.set(0.05, 0.5, lz * 0.06);
+      g.add(lgGrp);
+    }
+    makeFlamencoLeg(1);
+    makeFlamencoLeg(-1);
+
+    // TAIL FEATHERS
+    for (var tf = 0; tf < 5; tf++) {
+      var tfa = (tf / 5) * Math.PI * 0.5 - Math.PI * 0.25;
+      var feather = new THREE.Mesh(
+        new THREE.ConeGeometry(0.02, 0.15, 4),
+        pDark
+      );
+      feather.position.set(
+        -0.12,
+        0.62,
+        Math.sin(tfa) * 0.08
+      );
+      feather.rotation.x = -0.5;
+      feather.rotation.z = Math.cos(tfa) * 0.3;
+      g.add(feather);
+    }
+
+    g.scale.setScalar(0.8);
+    g.userData = {
+      name: 'Flamenco',
+      wayuu: 'Wüchü',
+      desc: 'Los flamencos rosados visitan las costas y humedales de La Guajira. Su color rosado viene de los crustáceos que comen. En la cultura wayuu, el flamenco simboliza la elegancia y la capacidad de adaptarse a ambientes extremos. Se les puede ver en las salinas de Manaure.'
+    };
+    return g;
+  }
+
+  // ==================== ANIMAL: SERPIENTE CASCABEL ====================
+  function createSerpiente() {
+    var g = new THREE.Group();
+    var sm = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+    var sDark = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+    var tm = new THREE.MeshLambertMaterial({ color: 0xddc080 });
+    var wm = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    var em = new THREE.MeshLambertMaterial({ color: 0x111111 });
+
+    // BODY: TubeGeometry with wavy points
+    var snakePts = [];
+    snakePts.push(new THREE.Vector3(0, 0.05, 0));
+    snakePts.push(new THREE.Vector3(0.3, 0.04, 0.06));
+    snakePts.push(new THREE.Vector3(0.6, 0.05, 0.02));
+    snakePts.push(new THREE.Vector3(0.9, 0.04, -0.04));
+    snakePts.push(new THREE.Vector3(1.2, 0.06, 0.01));
+    snakePts.push(new THREE.Vector3(1.5, 0.04, 0.08));
+    snakePts.push(new THREE.Vector3(1.8, 0.05, 0.03));
+    snakePts.push(new THREE.Vector3(2.1, 0.05, -0.03));
+    snakePts.push(new THREE.Vector3(2.4, 0.06, 0.02));
+    snakePts.push(new THREE.Vector3(2.7, 0.04, 0.06));
+    snakePts.push(new THREE.Vector3(3.0, 0.05, -0.01));
+    snakePts.push(new THREE.Vector3(3.3, 0.06, 0.04));
+    var snakeBody = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(snakePts), 40, 0.04, 8, false),
+      sm
+    );
+    g.add(snakeBody);
+
+    // Diamond pattern along body
+    for (var dp = 0; dp < 24; dp++) {
+      var dpt = (dp + 1) / 25;
+      var curve = new THREE.CatmullRomCurve3(snakePts);
+      var dpPos = curve.getPointAt(dpt);
+      var diamond = new THREE.Mesh(
+        new THREE.SphereGeometry(0.045, 4, 2),
+        sDark
+      );
+      diamond.position.copy(dpPos);
+      diamond.position.y += 0.02;
+      diamond.scale.set(1.2, 0.3, 0.8);
+      g.add(diamond);
+    }
+
+    // HEAD (triangular)
+    var headGroup = new THREE.Group();
+    var headBase = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), tm);
+    headBase.scale.set(0.8, 0.45, 0.9);
+    headGroup.add(headBase);
+
+    // Pointed snout
+    var snoutPt = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.08, 6), tm);
+    snoutPt.position.set(0.06, 0, 0);
+    snoutPt.rotation.z = -Math.PI / 2;
+    headGroup.add(snoutPt);
+
+    // Eyes
+    [-1, 1].forEach(function(s) {
+      var white = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 4), wm);
+      white.position.set(0.01, 0.015, 0.04 * s);
+      headGroup.add(white);
+      var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.006, 5, 4), em);
+      pupil.position.set(0.015, 0.015, 0.045 * s);
+      pupil.scale.set(0.3, 1, 0.3);
+      headGroup.add(pupil);
+    });
+
+    // Tongue
+    var tongue = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.002, 0.002, 0.06, 4),
+      new THREE.MeshLambertMaterial({ color: 0xff3333 })
+    );
+    tongue.position.set(0.09, -0.005, 0);
+    tongue.rotation.z = Math.PI / 2;
+    headGroup.add(tongue);
+
+    // Fork
+    var fork1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.001, 0.001, 0.03, 3),
+      new THREE.MeshLambertMaterial({ color: 0xff3333 })
+    );
+    fork1.position.set(0.12, 0.008, 0);
+    fork1.rotation.z = Math.PI / 4;
+    headGroup.add(fork1);
+    var fork2 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.001, 0.001, 0.03, 3),
+      new THREE.MeshLambertMaterial({ color: 0xff3333 })
+    );
+    fork2.position.set(0.12, -0.008, 0);
+    fork2.rotation.z = -Math.PI / 4;
+    headGroup.add(fork2);
+
+    // Position head at start of curve
+    var headPos = new THREE.CatmullRomCurve3(snakePts).getPointAt(0);
+    headGroup.position.copy(headPos);
+    headGroup.position.y += 0.03;
+    g.add(headGroup);
+
+    // TAIL RATTLE (cascabel)
+    var rattleGroup = new THREE.Group();
+    var rattleRings = [];
+    for (var rr = 0; rr < 6; rr++) {
+      var rattleRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.025 - rr * 0.002, 0.006, 4, 8),
+        tm
+      );
+      rattleRing.position.z = rr * 0.025;
+      rattleRing.rotation.x = Math.PI / 2;
+      rattleGroup.add(rattleRing);
+      rattleRings.push(rattleRing);
+    }
+    // Tip
+    var rattleTip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.05, 5), tm);
+    rattleTip.position.z = 0.15;
+    rattleTip.rotation.x = -Math.PI / 2;
+    rattleGroup.add(rattleTip);
+
+    var tailPos = new THREE.CatmullRomCurve3(snakePts).getPointAt(1);
+    rattleGroup.position.copy(tailPos);
+    g.add(rattleGroup);
+
+    g.userData = {
+      name: 'Serpiente Cascabel',
+      wayuu: 'Maa\'ala',
+      desc: 'La serpiente cascabel habita en las zonas áridas de La Guajira. Su característico cascabel en la cola le sirve para advertir a los depredadores. En la cosmovisión wayuu, las serpientes representan la conexión entre la tierra y el mundo espiritual.'
+    };
+    return g;
+  }
+
+  // ==================== SAND PARTICLES ====================
+  var particlesGeo = new THREE.BufferGeometry();
+  var particleCount = 300;
+  var particlePositions = new Float32Array(particleCount * 3);
+  for (var p = 0; p < particleCount * 3; p += 3) {
+    particlePositions[p] = (Math.random() - 0.5) * 40;
+    particlePositions[p + 1] = Math.random() * 3;
+    particlePositions[p + 2] = (Math.random() - 0.5) * 40;
+  }
+  particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  var particlesMat = new THREE.PointsMaterial({
+    color: 0xd4c4a4,
+    size: 0.08,
+    transparent: true,
+    opacity: 0.35,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  var particles = new THREE.Points(particlesGeo, particlesMat);
+  scene.add(particles);
+  particles.renderOrder = 999;
+  particles.material.depthTest = false;
+
+  // Ground particles
+  var groundParticlesGeo = new THREE.BufferGeometry();
+  var gpCount = 500;
+  var gpPositions = new Float32Array(gpCount * 3);
+  for (var gpi = 0; gpi < gpCount * 3; gpi += 3) {
+    gpPositions[gpi] = (Math.random() - 0.5) * 25;
+    gpPositions[gpi + 1] = 0.03 + Math.random() * 0.02;
+    gpPositions[gpi + 2] = (Math.random() - 0.5) * 25;
+  }
+  groundParticlesGeo.setAttribute('position', new THREE.BufferAttribute(gpPositions, 3));
+  var groundParticlesMat = new THREE.PointsMaterial({
+    color: 0xb8955a,
+    size: 0.06,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  var groundParticles = new THREE.Points(groundParticlesGeo, groundParticlesMat);
+  scene.add(groundParticles);
+  groundParticles.renderOrder = 998;
+  groundParticles.material.depthTest = false;
+
+  // ==================== SMALL ROCKS ====================
+  var rockMat = new THREE.MeshLambertMaterial({ color: 0x9a8a7a });
+  for (var rk = 0; rk < 40; rk++) {
+    var rkx = (Math.random() - 0.5) * 35;
+    var rkz = (Math.random() - 0.5) * 35;
+    var rks = 0.05 + Math.random() * 0.2;
+    var rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(rks, 0),
+      rockMat
+    );
+    rock.position.set(rkx, getTerrainHeight(rkx, rkz) + rks * 0.3, rkz);
+    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    scene.add(rock);
+  }
+
+  // ==================== PLACE ANIMALS ====================
+  var interactiveObjects = [];
+
+  var chivo = createChivo();
+  chivo.position.set(-3, getTerrainHeight(-3, 2), 2);
+  scene.add(chivo);
+  interactiveObjects.push(chivo);
+
+  var iguana = createIguana();
+  iguana.position.set(2, getTerrainHeight(2, -3), -3);
+  iguana.rotation.y = -0.5;
+  scene.add(iguana);
+  interactiveObjects.push(iguana);
+
+  var flamenco = createFlamenco();
+  flamenco.position.set(-2, getTerrainHeight(-2, 4.5), 4.5);
+  scene.add(flamenco);
+  interactiveObjects.push(flamenco);
+
+  var serpiente = createSerpiente();
+  serpiente.position.set(5, getTerrainHeight(5, 2), 2);
+  serpiente.rotation.y = -0.3;
+  scene.add(serpiente);
+  interactiveObjects.push(serpiente);
+
+  // Tag ranchería for interaction
+  rancheriaObj.userData = {
+    name: 'Ranchería',
+    wayuu: 'Piichipala',
+    desc: 'La ranchería es la vivienda tradicional wayuu. Está construida con yotojoro (el corazón seco del cardón) y techos de paja. Representa la unidad familiar y es el centro de la vida social y cultural del pueblo wayuu.'
+  };
+  interactiveObjects.push(rancheriaObj);
+
+  // ==================== SCENE GRAVITY MARKER ====================
+  // Small wooden posts marking key locations (trupillos)
+  var postMat = new THREE.MeshLambertMaterial({ color: 0x6B4226 });
+  var markerPositions = [
+    [-3, 0, 2], [2, 0, -3], [-2, 0, 4.5], [5, 0, 2], [4, 0, -1]
+  ];
+  for (var mp = 0; mp < markerPositions.length; mp++) {
+    var markX = markerPositions[mp][0];
+    var markZ = markerPositions[mp][2];
+    if (mp === 4) {
+      // Ranchería marker
+      var mark = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.5, 6), postMat);
+      mark.position.set(4, getTerrainHeight(4, -1) + 0.25, -1);
+      scene.add(mark);
+    }
+  }
+
+  // ==================== MANUAL CAMERA CONTROLS ====================
+  var target = new THREE.Vector3(0, 0.5, 0);
+  var spherical = new THREE.Spherical();
+  spherical.setFromVector3(
+    new THREE.Vector3().copy(camera.position).sub(target)
+  );
+  var isMouseDown = false;
+  var lastMouse = { x: 0, y: 0 };
+  var lastTouchData = { x: 0, y: 0, d: 0 };
+
+  function updateCamera() {
+    camera.position.setFromSpherical(spherical).add(target);
+    camera.lookAt(target);
+  }
+
+  renderer.domElement.addEventListener('mousedown', function(e) {
+    isMouseDown = true;
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (!isMouseDown) return;
+    var dx = e.clientX - lastMouse.x;
+    var dy = e.clientY - lastMouse.y;
+    spherical.theta -= dx * 0.005;
+    spherical.phi -= dy * 0.005;
+    spherical.phi = Math.max(0.08, Math.min(Math.PI * 0.48, spherical.phi));
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+    updateCamera();
+  });
+
+  window.addEventListener('mouseup', function() {
+    isMouseDown = false;
+  });
+
+  renderer.domElement.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    spherical.radius *= e.deltaY > 0 ? 1.06 : 0.94;
+    spherical.radius = Math.max(4, Math.min(50, spherical.radius));
+    updateCamera();
+  }, { passive: false });
+
+  // Touch support
+  renderer.domElement.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      lastTouchData.x = e.touches[0].clientX;
+      lastTouchData.y = e.touches[0].clientY;
+      isMouseDown = true;
+    } else if (e.touches.length === 2) {
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchData.d = Math.sqrt(dx * dx + dy * dy);
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (e.touches.length === 1 && isMouseDown) {
+      var tx = e.touches[0].clientX - lastTouchData.x;
+      var ty = e.touches[0].clientY - lastTouchData.y;
+      spherical.theta -= tx * 0.005;
+      spherical.phi -= ty * 0.005;
+      spherical.phi = Math.max(0.08, Math.min(Math.PI * 0.48, spherical.phi));
+      lastTouchData.x = e.touches[0].clientX;
+      lastTouchData.y = e.touches[0].clientY;
+      updateCamera();
+    } else if (e.touches.length === 2) {
+      var dx2 = e.touches[0].clientX - e.touches[1].clientX;
+      var dy2 = e.touches[0].clientY - e.touches[1].clientY;
+      var d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+      spherical.radius *= lastTouchData.d / d2;
+      spherical.radius = Math.max(4, Math.min(50, spherical.radius));
+      lastTouchData.d = d2;
+      updateCamera();
+    }
+  }, { passive: false });
+
+  renderer.domElement.addEventListener('touchend', function() {
+    isMouseDown = false;
+  });
+
+  // ==================== RAYCASTER ====================
+  var raycaster = new THREE.Raycaster();
+  raycaster.far = 60;
+  var mouse = new THREE.Vector2();
+
+  renderer.domElement.addEventListener('click', function(e) {
+    // Skip if we were dragging (significant mouse movement)
+    if (Math.abs(e.clientX - lastMouse.x) > 3 || Math.abs(e.clientY - lastMouse.y) > 3) {
+      return;
+    }
+
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    // Collect all meshes from interactive groups
+    var allMeshes = [];
+    for (var ai = 0; ai < interactiveObjects.length; ai++) {
+      var obj = interactiveObjects[ai];
+      obj.traverse(function(child) {
+        if (child.isMesh) {
+          allMeshes.push({ mesh: child, root: obj });
+        }
+      });
+    }
+
+    var meshTargets = [];
+    for (var am = 0; am < allMeshes.length; am++) {
+      meshTargets.push(allMeshes[am].mesh);
+    }
+
+    var intersects = raycaster.intersectObjects(meshTargets, false);
+
+    if (intersects.length > 0) {
+      var hitMesh = intersects[0].object;
+      var hitRoot = null;
+      for (var ai2 = 0; ai2 < allMeshes.length; ai2++) {
+        if (allMeshes[ai2].mesh === hitMesh) {
+          hitRoot = allMeshes[ai2].root;
+          break;
+        }
+      }
+
+      if (hitRoot && hitRoot.userData && hitRoot.userData.name) {
+        showInfo(hitRoot.userData);
+      }
+    } else {
+      hideInfo();
+    }
+  });
+
+  function showInfo(data) {
+    infoName.textContent = data.name;
+    infoWayuu.textContent = data.wayuu;
+    infoDesc.textContent = data.desc;
+    infoPanel.classList.add('visible');
+  }
+
+  function hideInfo() {
+    infoPanel.classList.remove('visible');
+  }
+
+  closeInfoBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    hideInfo();
+  });
+
+  // ==================== ZOOM BUTTONS ====================
+  var zoomTargets = {
+    chivo: { pos: new THREE.Vector3(-3, 0.7, 2), radius: 4 },
+    iguana: { pos: new THREE.Vector3(2, 0.3, -3), radius: 4 },
+    flamenco: { pos: new THREE.Vector3(-2, 1.2, 4.5), radius: 5 },
+    serpiente: { pos: new THREE.Vector3(6.5, 0.5, 2), radius: 6 },
+    rancheria: { pos: new THREE.Vector3(4, 0.8, -1), radius: 5 }
+  };
+
+  function smoothZoomTo(zt) {
+    var start = target.clone();
+    var startRadius = spherical.radius;
+    var t0 = performance.now();
+    var duration = 900;
+
+    function anim() {
+      var t = Math.min((performance.now() - t0) / duration, 1);
+      var ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+      target.lerpVectors(start, zt.pos, ease);
+      spherical.radius = startRadius + (zt.radius - startRadius) * ease;
+      updateCamera();
+
+      if (t < 1) {
+        requestAnimationFrame(anim);
+      }
+    }
+    requestAnimationFrame(anim);
+  }
+
+  var zoomButtons = document.querySelectorAll('.zoom-btn');
+  for (var zb = 0; zb < zoomButtons.length; zb++) {
+    zoomButtons[zb].addEventListener('click', function() {
+      var targetKey = this.getAttribute('data-target');
+      if (zoomTargets[targetKey]) {
+        smoothZoomTo(zoomTargets[targetKey]);
+      }
+    });
+  }
+
+  // ==================== HIDE HINT AFTER MOVEMENT ====================
+  var hintTimeout;
+  function resetHintTimer() {
+    hintEl.style.opacity = '1';
+    clearTimeout(hintTimeout);
+    hintTimeout = setTimeout(function() {
+      hintEl.style.opacity = '0';
+    }, 6000);
+  }
+  resetHintTimer();
+
+  renderer.domElement.addEventListener('mousedown', resetHintTimer);
+  renderer.domElement.addEventListener('wheel', resetHintTimer);
+  renderer.domElement.addEventListener('touchstart', resetHintTimer);
+
+  // ==================== ANIMATION LOOP ====================
+  var clock = new THREE.Clock();
+  var animationTime = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    var dt = Math.min(clock.getDelta(), 0.1);
+    animationTime += dt;
+
+    // Animate sand particles
+    var ppArr = particlesGeo.attributes.position.array;
+    for (var pa = 0; pa < ppArr.length; pa += 3) {
+      ppArr[pa + 1] += Math.sin(animationTime * 0.8 + ppArr[pa] * 0.5) * 0.002;
+      ppArr[pa] += Math.cos(animationTime * 0.5 + ppArr[pa + 2] * 0.3) * 0.001;
+      if (ppArr[pa + 1] > 2.5) ppArr[pa + 1] = 0.1;
+      if (ppArr[pa + 1] < 0) ppArr[pa + 1] = 2.4;
+    }
+    particlesGeo.attributes.position.needsUpdate = true;
+
+    // Animate ground particles
+    var gpArr = groundParticlesGeo.attributes.position.array;
+    for (var gpa = 0; gpa < gpArr.length; gpa += 3) {
+      gpArr[gpa] += Math.sin(animationTime * 0.6 + gpArr[gpa + 2] * 0.4) * 0.0008;
+      gpArr[gpa + 2] += Math.cos(animationTime * 0.5 + gpArr[gpa] * 0.3) * 0.0008;
+    }
+    groundParticlesGeo.attributes.position.needsUpdate = true;
+
+    // Gentle serpent animation
+    serpiente.position.y = getTerrainHeight(serpiente.position.x, serpiente.position.z) + Math.sin(animationTime * 0.8) * 0.03;
+
+    // Subtle iguana tail wiggle
+    iguana.rotation.y += Math.sin(animationTime * 1.2) * 0.0008;
+
+    // Flamenco gentle bob
+    flamenco.position.y = getTerrainHeight(flamenco.position.x, flamenco.position.z) + Math.sin(animationTime * 1.5) * 0.02;
+
+    renderer.render(scene, camera);
+  }
+
+  // ==================== RESIZE ====================
+  window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ==================== START ====================
+  // Hide loading screen
+  loadingEl.style.display = 'none';
+
+  // Update hint position hint
+  hintEl.textContent = '🖱️ Arrastra para rotar · Rueda para zoom · Clic en animales para aprender';
+
+  // Begin rendering
+  animate();
+
+  // Log success
+  console.log('Mundo-3D-701: La Guajira en 3D cargado exitosamente.');
+
+  } catch (err) {
+    // Show error
+    document.getElementById('loading').style.display = 'none';
+    errorEl.classList.add('visible');
+    errorDetail.textContent = err.message + '\n\n' + (err.stack || '');
+    console.error('Mundo-3D-701 error:', err);
+  }
+
+})();
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

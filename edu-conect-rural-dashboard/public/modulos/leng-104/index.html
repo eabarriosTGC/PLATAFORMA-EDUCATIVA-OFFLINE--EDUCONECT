@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LENG-104: Textos y Poemas Wayuu | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --magenta: #C2185B;
+ --morado: #7B1FA2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+.container{max-width:850px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress bar */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:transform 0.2s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Texto expositivo */
+.texto-expo{
+ background:linear-gradient(135deg,#FFFDF7,#FEF3E4);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:22px 20px;
+ margin:12px 0;
+ position:relative;
+ line-height:1.8;
+ font-size:1.1rem;
+ text-align:justify;
+}
+.texto-expo .subtitulo{
+ color:var(--atardecer);
+ font-weight:bold;
+ font-size:1.1rem;
+ margin-top:15px;
+ margin-bottom:5px;
+ border-bottom:2px dotted var(--wayuu-oro);
+ padding-bottom:4px;
+}
+.texto-expo .destacado{
+ background:rgba(212,168,67,0.15);
+ padding:3px 8px;
+ border-radius:6px;
+ font-weight:bold;
+}
+.texto-expo .ilustracion{
+ text-align:center;
+ font-size:3.5rem;
+ margin:15px 0;
+ filter:drop-shadow(3px 3px 3px rgba(0,0,0,0.12));
+}
+
+/* Poem container */
+.poema-container{
+ background:linear-gradient(135deg,#FFF8EE,#FEF0DC);
+ border:2px solid var(--wayuu-oro);
+ border-radius:16px;
+ padding:25px 20px;
+ margin:12px 0;
+ position:relative;
+ text-align:center;
+}
+.poema-container::before{
+ content:'🌿';
+ position:absolute;
+ top:-15px;
+ left:50%;
+ transform:translateX(-50%);
+ font-size:1.8rem;
+ background:var(--blanco);
+ padding:0 10px;
+}
+.poema-container .titulo-poema{
+ font-size:1.4rem;
+ color:var(--atardecer);
+ font-weight:bold;
+ margin-bottom:15px;
+ font-style:italic;
+}
+.poema-container .estrofa{
+ margin-bottom:18px;
+ padding:10px 0;
+ border-bottom:1px dotted #dcc89e;
+}
+.poema-container .estrofa:last-child{border-bottom:none}
+.poema-container .verso{
+ font-size:1.1rem;
+ line-height:1.8;
+ color:var(--texto);
+ position:relative;
+ padding:2px 0;
+}
+.poema-container .verso .num-verso{
+ display:inline-block;
+ width:24px;
+ height:24px;
+ line-height:24px;
+ background:var(--wayuu-oro);
+ color:white;
+ border-radius:50%;
+ font-size:0.7rem;
+ font-weight:bold;
+ margin-right:8px;
+ vertical-align:middle;
+ opacity:0.7;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+
+/* Preguntas */
+.pregunta{
+ margin-bottom:18px;
+ padding-bottom:14px;
+ border-bottom:1px dashed #e0d5c5;
+}
+.pregunta:last-child{border-bottom:none}
+.pregunta h3{
+ font-size:1rem;
+ margin-bottom:8px;
+ color:var(--tierra);
+}
+.opciones{display:flex;flex-direction:column;gap:8px}
+.opcion{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:12px 15px;
+ background:#FEF7ED;
+ border:2px solid #e8d5c0;
+ border-radius:12px;
+ cursor:pointer;
+ transition:all 0.2s;
+ font-size:0.95rem;
+}
+.opcion:hover{background:#FFF0DD;border-color:var(--wayuu-oro)}
+.opcion.seleccionada{background:#FFF8E1;border-color:var(--wayuu-oro);font-weight:bold}
+.opcion.correcta{background:#E8F5E9;border-color:var(--verde)}
+.opcion.incorrecta{background:#FFEBEE;border-color:var(--rojo)}
+.opcion .letra{
+ width:30px;height:30px;
+ border-radius:50%;
+ background:var(--arena);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-weight:bold;
+ font-size:0.85rem;
+ flex-shrink:0;
+}
+.opcion.seleccionada .letra{background:var(--wayuu-oro);color:white}
+.opcion.correcta .letra{background:var(--verde);color:white}
+.opcion.incorrecta .letra{background:var(--rojo);color:white}
+.feedback{
+ margin-top:6px;
+ padding:5px 10px;
+ border-radius:8px;
+ font-size:0.85rem;
+ display:none;
+}
+.feedback.visible{display:block}
+.feedback.bien{background:#E8F5E9;color:#2E7D32}
+.feedback.mal{background:#FFEBEE;color:#C62828}
+
+/* Versos y estrofas activity */
+.analisis-grid{
+ display:grid;
+ grid-template-columns:1fr;
+ gap:15px;
+ margin:12px 0;
+}
+@media(min-width:600px){
+ .analisis-grid{grid-template-columns:repeat(2,1fr)}
+}
+.analisis-card{
+ background:#FEF7ED;
+ border:3px solid #e8d5c0;
+ border-radius:16px;
+ padding:18px 14px;
+ text-align:center;
+}
+.analisis-card h4{
+ color:var(--atardecer);
+ font-size:1rem;
+ margin-bottom:10px;
+}
+.analisis-card .respuesta-libre{
+ width:100%;
+ padding:10px;
+ border:2px solid #e0d5c5;
+ border-radius:10px;
+ font-size:0.95rem;
+ background:white;
+ text-align:center;
+ margin:5px 0;
+ font-family:inherit;
+}
+.analisis-card .respuesta-libre:focus{
+ outline:none;
+ border-color:var(--wayuu-oro);
+ box-shadow:0 0 0 3px rgba(212,168,67,0.2);
+}
+.analisis-card .pista{
+ font-size:0.8rem;
+ color:#999;
+ margin-top:5px;
+ font-style:italic;
+}
+
+/* Rimas: matching game */
+.rimas-container{
+ display:flex;
+ flex-wrap:wrap;
+ gap:12px;
+ margin:12px 0;
+ justify-content:center;
+}
+.rima-palabra{
+ padding:12px 20px;
+ background:var(--wayuu-oro);
+ color:white;
+ border-radius:20px;
+ font-weight:bold;
+ cursor:pointer;
+ transition:all 0.2s;
+ font-size:1rem;
+ user-select:none;
+}
+.rima-palabra:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(212,168,67,0.4)}
+.rima-palabra.seleccionada{
+ background:var(--atardecer);
+ box-shadow:0 0 0 4px rgba(224,122,95,0.3);
+ transform:scale(1.08);
+}
+.rima-palabra.emparejada{
+ background:var(--verde);
+ cursor:default;
+ opacity:0.8;
+}
+.rima-palabra.error-temp{
+ background:var(--rojo);
+ animation:shake 0.4s;
+}
+@keyframes shake{
+ 0%,100%{transform:translateX(0)}
+ 25%{transform:translateX(-6px)}
+ 50%{transform:translateX(6px)}
+ 75%{transform:translateX(-4px)}
+}
+.rimas-parejas{
+ margin-top:15px;
+ padding:12px;
+ background:#E8F5E9;
+ border-radius:12px;
+ display:none;
+}
+.rimas-parejas.visible{display:block}
+.rima-par{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ padding:6px 0;
+ font-size:0.95rem;
+ justify-content:center;
+}
+.rima-par span{font-weight:bold;color:var(--verde)}
+
+/* Juego completar versos */
+.completar-verso{
+ background:linear-gradient(135deg,#FFFDF7,#FFF3E0);
+ border:3px solid var(--desierto);
+ border-radius:16px;
+ padding:18px;
+ margin:12px 0;
+ text-align:center;
+}
+.completar-verso .verso-incompleto{
+ font-size:1.2rem;
+ line-height:2;
+ margin:10px 0;
+}
+.completar-verso .hueco{
+ display:inline-block;
+ min-width:120px;
+ padding:5px 15px;
+ border-bottom:3px dashed var(--atardecer);
+ margin:0 5px;
+ color:var(--atardecer);
+ font-weight:bold;
+ transition:all 0.3s;
+}
+.completar-verso .hueco.lleno{
+ border-bottom-style:solid;
+ border-bottom-color:var(--verde);
+ background:rgba(76,175,80,0.08);
+ border-radius:6px;
+}
+.completar-verso .hueco.correcto{
+ border-bottom-color:var(--verde);
+ background:rgba(76,175,80,0.12);
+}
+.completar-verso .hueco.incorrecto{
+ border-bottom-color:var(--rojo);
+ background:rgba(214,64,69,0.08);
+}
+.palabras-opciones{
+ display:flex;
+ flex-wrap:wrap;
+ gap:10px;
+ margin:15px 0;
+ justify-content:center;
+}
+.palabra-opcion{
+ padding:10px 18px;
+ background:var(--arena);
+ border:2px solid var(--desierto);
+ border-radius:25px;
+ cursor:pointer;
+ font-weight:bold;
+ font-size:0.95rem;
+ transition:all 0.2s;
+}
+.palabra-opcion:hover{
+ background:var(--wayuu-oro);
+ color:white;
+ border-color:var(--wayuu-oro);
+}
+.palabra-opcion.usada{opacity:0.4;cursor:default;text-decoration:line-through}
+.palabra-opcion.usada:hover{background:var(--arena);color:inherit;border-color:var(--desierto)}
+
+/* Resultados finales */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+ animation:fadeIn 0.6s;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.resultados-finales .trofeo{font-size:5rem}
+.resultados-finales h2{font-size:1.8rem;color:var(--atardecer);margin:10px 0}
+.resultados-finales .estrellas{font-size:2.5rem;margin:10px 0}
+.puntaje-detalle{text-align:left;max-width:400px;margin:15px auto}
+.puntaje-row{
+ display:flex;
+ justify-content:space-between;
+ padding:8px 0;
+ border-bottom:1px dashed #e0d5c5;
+}
+
+/* Volver */
+.volver{
+ position:fixed;
+ top:12px;left:12px;
+ background:var(--blanco);
+ padding:8px 16px;
+ border-radius:20px;
+ box-shadow:0 2px 10px rgba(0,0,0,0.1);
+ text-decoration:none;
+ color:var(--tierra);
+ font-weight:bold;
+ font-size:0.9rem;
+ z-index:100;
+ display:flex;
+ align-items:center;
+ gap:5px;
+}
+.volver:hover{background:var(--wayuu-oro);color:white}
+
+/* Responsive */
+@media(max-width:480px){
+ .card{padding:16px 12px}
+ .texto-expo{font-size:1rem;padding:16px 12px}
+ .opcion{padding:10px 12px;font-size:0.85rem}
+ .btn{padding:8px 16px;font-size:0.85rem}
+ .poema-container .verso{font-size:1rem}
+}
+
+/* Confetti */
+@keyframes confetti-fall{
+ 0%{transform:translateY(-100vh) rotate(0deg);opacity:1}
+ 100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+.confetti{
+ position:fixed;
+ width:10px;height:10px;
+ border-radius:3px;
+ animation:confetti-fall 2s ease-in forwards;
+ z-index:200;
+ pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<a href="../" class="volver">← Módulos</a>
+
+<div class="container">
+ <!-- HEADER -->
+ <div class="header">
+  <div class="sol">☀️</div>
+  <h1>Textos y Poemas Wayuu</h1>
+  <span class="grado">📖 Lenguaje · 4° Grado</span>
+  <div class="desierto-deco">🌵 🏜️ 📝 🎵 🌵</div>
+ </div>
+
+ <!-- PROGRESS -->
+ <div class="progreso-wrap">
+  <span class="progreso-label">🏆 Progreso</span>
+  <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+  <span class="progreso-pct" id="progresoPct">0%</span>
+ </div>
+
+ <!-- ============================================= -->
+ <!-- SECTION 1: TEXTO EXPOSITIVO                    -->
+ <!-- ============================================= -->
+ <section class="card activo" id="seccion1">
+  <h2><span class="icono">📖</span> Leer: La Guajira, tierra de los Wayuu <span class="etiqueta-check" id="check1" style="display:none">✓ Leído</span></h2>
+
+  <div class="texto-expo">
+   <div class="ilustracion">☀️🏜️🌵🐐</div>
+   <p><strong>La Guajira</strong> es una península ubicada al norte de Colombia y Venezuela. Es una tierra de contrastes, donde el <span class="destacado">desierto</span> se encuentra con el mar Caribe. Sus paisajes están llenos de arena dorada, cactus llamados cardones y un cielo azul inmenso que parece no tener fin.</p>
+
+   <div class="subtitulo">🌍 El territorio y su clima</div>
+   <p>La Guajira es una zona <span class="destacado">semiárida</span>, lo que significa que llueve muy poco durante el año. Las temperaturas pueden superar los 35 grados centígrados. Sin embargo, la vida ha encontrado su camino: plantas como el cardón, la tuna y el dividivi resisten la sequía, y animales como la iguana, el conejo, la cabra y el flamenco habitan esta tierra.</p>
+
+   <div class="subtitulo">👥 El pueblo Wayuu</div>
+   <p>Los <span class="destacado">Wayuu</span> son el pueblo indígena más numeroso de Colombia. Han vivido en La Guajira por cientos de años. Su idioma es el <em>wayuunaiki</em> y su cultura es muy rica en tradiciones orales, tejidos artesanales y danzas. La familia y el respeto a los mayores son valores fundamentales para ellos. Las mujeres wayuu son famosas por sus hermosas <span class="destacado">mochilas</span> tejidas a mano con hilos de colores vivos.</p>
+
+   <div class="subtitulo">💰 La economía guajira</div>
+   <p>La economía de La Guajira se basa en varias actividades. La <span class="destacado">ganadería</span> de cabras y ovejas es muy importante, ya que estos animales se adaptan bien al clima seco. También se destaca la <span class="destacado">artesanía</span>: las mochilas, chinchorros (hamacas) y sombreros wayuu son reconocidos en todo el mundo. La <span class="destacado">pesca</span> en las costas, la extracción de sal en Manaure y el turismo también aportan al sustento de las familias guajiras.</p>
+
+   <div class="ilustracion">🧵🐟🧂🎒</div>
+   <p style="text-align:center;font-style:italic;color:var(--atardecer);margin-top:10px">🌵 La Guajira: donde el desierto canta y el Caribe sueña 🌵</p>
+  </div>
+
+  <div style="text-align:center;margin-top:15px">
+   <button class="btn btn-exito" id="btnTextoLeido">✓ ¡Terminé de leer! Seguir →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 2: PREGUNTAS DE COMPRENSIÓN            -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion2" style="display:none">
+  <h2><span class="icono">❓</span> Preguntas de Comprensión <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">Responde las siguientes preguntas sobre el texto que acabas de leer.</p>
+
+  <div id="preguntasContainer">
+   <!-- Pregunta 1 -->
+   <div class="pregunta" data-pregunta="1">
+    <h3>1. ¿Dónde está ubicada La Guajira?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Al sur de Colombia y Ecuador</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Al norte de Colombia y Venezuela</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> En el centro de Brasil</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> En la costa del Pacífico</div>
+    </div>
+    <div class="feedback" data-feedback="1"></div>
+   </div>
+   <!-- Pregunta 2 -->
+   <div class="pregunta" data-pregunta="2">
+    <h3>2. El pueblo indígena que habita La Guajira se llama:</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Arhuaco</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Kogui</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Wayuu</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Emberá</div>
+    </div>
+    <div class="feedback" data-feedback="2"></div>
+   </div>
+   <!-- Pregunta 3 -->
+   <div class="pregunta" data-pregunta="3">
+    <h3>3. ¿Por qué La Guajira es una zona semiárida?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Porque está rodeada de mar</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Porque llueve muy poco durante el año</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Porque hay muchos animales</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Porque tiene muchas montañas</div>
+    </div>
+    <div class="feedback" data-feedback="3"></div>
+   </div>
+   <!-- Pregunta 4 -->
+   <div class="pregunta" data-pregunta="4">
+    <h3>4. ¿Cuáles son tres actividades económicas de La Guajira mencionadas en el texto?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Minería, agricultura y tecnología</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Industria automotriz, cine y música</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Ganadería de cabras, artesanía y pesca</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Comercio de oro, petróleo y diamantes</div>
+    </div>
+    <div class="feedback" data-feedback="4"></div>
+   </div>
+   <!-- Pregunta 5 -->
+   <div class="pregunta" data-pregunta="5">
+    <h3>5. ¿Qué tipo de texto es "La Guajira, tierra de los Wayuu"?</h3>
+    <div class="opciones">
+     <div class="opcion" data-valor="a"><span class="letra">A</span> Un cuento fantástico</div>
+     <div class="opcion" data-valor="b"><span class="letra">B</span> Un poema</div>
+     <div class="opcion" data-valor="c"><span class="letra">C</span> Un texto expositivo</div>
+     <div class="opcion" data-valor="d"><span class="letra">D</span> Una noticia</div>
+    </div>
+    <div class="feedback" data-feedback="5"></div>
+   </div>
+  </div>
+
+  <div style="text-align:center;margin-top:15px">
+   <button class="btn btn-primario" id="btnVerificarPreguntas">✓ Verificar respuestas</button>
+   <button class="btn btn-exito" id="btnPreguntasOk" style="display:none">¡Seguir al poema! →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 3: POEMA WAYUU                         -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion3" style="display:none">
+  <h2><span class="icono">🎵</span> Poema: El Canto del Desierto <span class="etiqueta-check" id="check3" style="display:none">✓ Leído</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px;text-align:center">Un poema inspirado en la tradición oral wayuu sobre la naturaleza y la tierra guajira.</p>
+
+  <div class="poema-container" id="poemaContainer">
+   <div class="titulo-poema">🌿 El Canto del Desierto 🌿</div>
+
+   <div class="estrofa" data-estrofa="1">
+    <div class="verso"><span class="num-verso">1</span>El viento sopla en la arena <strong>dorada</strong>,</div>
+    <div class="verso"><span class="num-verso">2</span>la tierra guajira nunca está <strong>callada</strong>.</div>
+    <div class="verso"><span class="num-verso">3</span>Canta el cardón con su verde <strong>voz</strong>,</div>
+    <div class="verso"><span class="num-verso">4</span>bajo la luz del sol que es un <strong>dios</strong>.</div>
+   </div>
+
+   <div class="estrofa" data-estrofa="2">
+    <div class="verso"><span class="num-verso">5</span>Las cabras caminan por el <strong>sendero</strong>,</div>
+    <div class="verso"><span class="num-verso">6</span>buscando agua en el mes de <strong>enero</strong>.</div>
+    <div class="verso"><span class="num-verso">7</span>El jagüey brilla como un <strong>espejo</strong>,</div>
+    <div class="verso"><span class="num-verso">8</span>reflejando el cielo y sus <strong>reflejos</strong>.</div>
+   </div>
+
+   <div class="estrofa" data-estrofa="3">
+    <div class="verso"><span class="num-verso">9</span>La noche llega con su manto <strong>oscuro</strong>,</div>
+    <div class="verso"><span class="num-verso">10</span>y el wayuu sueña un futuro <strong>puro</strong>.</div>
+    <div class="verso"><span class="num-verso">11</span>Las estrellas cuentan historias <strong>viejas</strong>,</div>
+    <div class="verso"><span class="num-verso">12</span>que el desierto guarda entre sus <strong>quejas</strong>.</div>
+   </div>
+
+   <div class="estrofa" data-estrofa="4">
+    <div class="verso"><span class="num-verso">13</span>Teje la mochila la mujer <strong>wayuu</strong>,</div>
+    <div class="verso"><span class="num-verso">14</span>con hilos de sueños y luz del <strong>tayu</strong>.</div>
+    <div class="verso"><span class="num-verso">15</span>El mar Caribe besa la <strong>arena</strong>,</div>
+    <div class="verso"><span class="num-verso">16</span>mientras la tierra canta serena y <strong>buena</strong>.</div>
+   </div>
+  </div>
+
+  <div style="text-align:center;margin-top:15px">
+   <button class="btn btn-exito" id="btnPoemaLeido">✓ ¡Qué hermoso poema! Seguir →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 4: ANALIZAR VERSOS, ESTROFAS Y RIMAS  -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion4" style="display:none">
+  <h2><span class="icono">🔍</span> Analizar: Versos, Estrofas y Rimas <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">Vamos a analizar la estructura del poema. Responde las preguntas y encuentra las rimas.</p>
+
+  <div class="analisis-grid">
+   <!-- Cuántos versos -->
+   <div class="analisis-card">
+    <h4>📏 ¿Cuántos versos tiene el poema completo?</h4>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:8px">(Cuenta todos los renglones del poema)</p>
+    <input type="number" class="respuesta-libre" id="respVersos" placeholder="Escribe un número..." min="1" max="50">
+    <div class="pista" id="pistaVersos"></div>
+   </div>
+
+   <!-- Cuántas estrofas -->
+   <div class="analisis-card">
+    <h4>📦 ¿Cuántas estrofas tiene el poema?</h4>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:8px">(Cada estrofa es un grupo de versos separado por un espacio)</p>
+    <input type="number" class="respuesta-libre" id="respEstrofas" placeholder="Escribe un número..." min="1" max="10">
+    <div class="pista" id="pistaEstrofas"></div>
+   </div>
+
+   <!-- Versos por estrofa -->
+   <div class="analisis-card">
+    <h4>🔢 ¿Cuántos versos tiene cada estrofa?</h4>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:8px">(Observa cuántos renglones hay en cada grupo)</p>
+    <input type="number" class="respuesta-libre" id="respVersosPorEstrofa" placeholder="Escribe un número..." min="1" max="10">
+    <div class="pista" id="pistaVersosPorEstrofa"></div>
+   </div>
+
+   <!-- Tipo de rima -->
+   <div class="analisis-card">
+    <h4>🎯 ¿Cómo es la rima en cada estrofa?</h4>
+    <p style="font-size:0.9rem;color:#888;margin-bottom:8px">(Observa cómo terminan los versos 1-2 y 3-4)</p>
+    <div class="opciones" style="text-align:left">
+     <div class="opcion" data-valor="a" id="opcionRimaA"><span class="letra">A</span> Riman el 1° con el 3° y el 2° con el 4°</div>
+     <div class="opcion" data-valor="b" id="opcionRimaB"><span class="letra">B</span> Riman el 1° con el 2° y el 3° con el 4°</div>
+     <div class="opcion" data-valor="c" id="opcionRimaC"><span class="letra">C</span> No tienen rima</div>
+    </div>
+    <div class="feedback" id="feedbackRima"></div>
+   </div>
+  </div>
+
+  <!-- Emparejar rimas -->
+  <div class="analisis-card" style="margin-top:15px">
+   <h4>🧩 Empareja las palabras que riman</h4>
+   <p style="font-size:0.9rem;color:#888;margin-bottom:10px">Haz clic en dos palabras que rimen entre sí para formar parejas.</p>
+   <div class="rimas-container" id="rimasContainer">
+    <!-- Filled by JS -->
+   </div>
+   <div class="rimas-parejas" id="rimasParejas">
+    <strong>✅ Parejas encontradas:</strong>
+    <div id="parejasList"></div>
+   </div>
+  </div>
+
+  <div style="text-align:center;margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-primario" id="btnVerificarAnalisis">✓ Verificar análisis</button>
+   <button class="btn btn-exito" id="btnAnalisisOk" style="display:none">¡Vamos al juego! →</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- SECTION 5: JUEGO - COMPLETAR VERSOS            -->
+ <!-- ============================================= -->
+ <section class="card" id="seccion5" style="display:none">
+  <h2><span class="icono">🎮</span> Juego: Completa los Versos <span class="etiqueta-check" id="check5" style="display:none">✓ Completado</span></h2>
+  <p style="color:#8B7355;margin-bottom:15px">¡Algunas palabras del poema se han perdido en el desierto! Ayuda a recuperarlas. Haz clic en una palabra de abajo y luego en el hueco donde debe ir.</p>
+
+  <div id="juegoCompletar">
+   <!-- Filled by JS -->
+  </div>
+
+  <div class="palabras-opciones" id="palabrasOpciones">
+   <!-- Filled by JS -->
+  </div>
+
+  <div style="text-align:center;margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-secundario" id="btnReiniciarJuego">🔄 Reiniciar juego</button>
+   <button class="btn btn-primario" id="btnVerificarJuego">✓ Verificar palabras</button>
+  </div>
+ </section>
+
+ <!-- ============================================= -->
+ <!-- RESULTADOS FINALES                             -->
+ <!-- ============================================= -->
+ <section class="card" id="seccionResultados" style="display:none">
+  <div class="resultados-finales" id="resultadosContent">
+   <!-- Dynamically filled -->
+  </div>
+ </section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ STATE ============
+const state = {
+ textoLeido: false,
+ preguntasRespondidas: false,
+ preguntasCorrectas: 0,
+ poemaLeido: false,
+ analisisCompletado: false,
+ juegoCompletado: false,
+};
+
+const respuestasCorrectas = {1:'b', 2:'c', 3:'b', 4:'c', 5:'c'};
+const totalActividades = 5;
+
+// ============ DOM REFS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.textoLeido) completadas++;
+ if(state.preguntasRespondidas && state.preguntasCorrectas >= 4) completadas++;
+ if(state.poemaLeido) completadas++;
+ if(state.analisisCompletado) completadas++;
+ if(state.juegoCompletado) completadas++;
+ const pct = Math.round((completadas / totalActividades) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECTION 1: TEXTO EXPOSITIVO ============
+$('#btnTextoLeido').addEventListener('click', ()=>{
+ state.textoLeido = true;
+ $('#seccion1').classList.remove('activo');
+ $('#seccion1').classList.add('completado');
+ $('#check1').style.display = 'inline-block';
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+});
+
+// ============ SECTION 2: PREGUNTAS ============
+$$('#seccion2 .opcion').forEach(opcion => {
+ opcion.addEventListener('click', function(){
+  const preguntaDiv = this.closest('.pregunta');
+  preguntaDiv.querySelectorAll('.opcion').forEach(o => o.classList.remove('seleccionada'));
+  this.classList.add('seleccionada');
+ });
+});
+
+$('#btnVerificarPreguntas').addEventListener('click', ()=>{
+ let correctas = 0;
+ const preguntas = $$('#seccion2 .pregunta');
+ preguntas.forEach(p => {
+  const num = p.dataset.pregunta;
+  const seleccionada = p.querySelector('.opcion.seleccionada');
+  const feedback = p.querySelector('.feedback');
+  if(!seleccionada) return;
+  const valor = seleccionada.dataset.valor;
+  if(valor === respuestasCorrectas[num]){
+   seleccionada.classList.add('correcta');
+   feedback.textContent = '\u2705 \u00a1Correcto!';
+   feedback.className = 'feedback visible bien';
+   correctas++;
+  } else {
+   seleccionada.classList.add('incorrecta');
+   const correctaEl = p.querySelector('.opcion[data-valor="'+respuestasCorrectas[num]+'"]');
+   if(correctaEl) correctaEl.classList.add('correcta');
+   feedback.textContent = '\u274c Incorrecto. La respuesta correcta est\u00e1 marcada en verde.';
+   feedback.className = 'feedback visible mal';
+  }
+  p.querySelectorAll('.opcion').forEach(o => o.style.pointerEvents = 'none');
+ });
+
+ state.preguntasCorrectas = correctas;
+ state.preguntasRespondidas = true;
+ $('#btnVerificarPreguntas').style.display = 'none';
+
+ if(correctas >= 4){
+  $('#btnPreguntasOk').style.display = 'inline-block';
+  $('#check2').style.display = 'inline-block';
+  $('#seccion2').classList.add('completado');
+ } else {
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'btn btn-peligro';
+  retryBtn.textContent = '\ud83d\udd04 Intentar de nuevo';
+  retryBtn.style.marginTop = '10px';
+  retryBtn.addEventListener('click', ()=>{
+   preguntas.forEach(p => {
+    p.querySelectorAll('.opcion').forEach(o => {
+     o.classList.remove('seleccionada','correcta','incorrecta');
+     o.style.pointerEvents = 'auto';
+    });
+    const fb = p.querySelector('.feedback');
+    fb.className = 'feedback';
+    fb.textContent = '';
+   });
+   $('#btnVerificarPreguntas').style.display = 'inline-block';
+   retryBtn.remove();
+   state.preguntasRespondidas = false;
+  });
+  $('#seccion2').querySelector('div').appendChild(retryBtn);
+ }
+ actualizarProgreso();
+});
+
+$('#btnPreguntasOk').addEventListener('click', ()=>{
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 3: POEMA ============
+$('#btnPoemaLeido').addEventListener('click', ()=>{
+ state.poemaLeido = true;
+ $('#seccion3').classList.add('completado');
+ $('#check3').style.display = 'inline-block';
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+});
+
+// ============ SECTION 4: ANALISIS DE VERSOS, ESTROFAS Y RIMAS ============
+// Rima selection
+$$('#seccion4 .opcion').forEach(opcion => {
+ opcion.addEventListener('click', function(){
+  const parent = this.closest('.analisis-card');
+  parent.querySelectorAll('.opcion').forEach(o => o.classList.remove('seleccionada'));
+  this.classList.add('seleccionada');
+ });
+});
+
+// Rim matching game
+const rimasPares = [
+ {a:'dorada', b:'callada'},
+ {a:'voz', b:'dios'},
+ {a:'sendero', b:'enero'},
+ {a:'espejo', b:'reflejos'},
+ {a:'oscuro', b:'puro'},
+ {a:'viejas', b:'quejas'},
+ {a:'wayuu', b:'tayu'},
+ {a:'arena', b:'buena'},
+];
+
+let selectedRima = null;
+let rimasEncontradas = 0;
+
+function buildRimasGame(){
+ const container = $('#rimasContainer');
+ container.innerHTML = '';
+ // Collect all words and shuffle them
+ const allWords = [];
+ rimasPares.forEach(par => {
+  allWords.push(par.a);
+  allWords.push(par.b);
+ });
+ // Shuffle
+ const shuffled = [...allWords].sort(() => Math.random() - 0.5);
+
+ shuffled.forEach(word => {
+  const el = document.createElement('div');
+  el.className = 'rima-palabra';
+  el.textContent = word;
+  el.dataset.palabra = word;
+  el.addEventListener('click', () => onRimaClick(el));
+  container.appendChild(el);
+ });
+
+ selectedRima = null;
+ rimasEncontradas = 0;
+ $('#parejasList').innerHTML = '';
+ $('#rimasParejas').classList.remove('visible');
+}
+
+function onRimaClick(el){
+ if(el.classList.contains('emparejada')) return;
+
+ if(selectedRima === null){
+  // First selection
+  el.classList.add('seleccionada');
+  selectedRima = el;
+ } else if(selectedRima === el){
+  // Deselect
+  el.classList.remove('seleccionada');
+  selectedRima = null;
+ } else {
+  // Try to match
+  const word1 = selectedRima.dataset.palabra;
+  const word2 = el.dataset.palabra;
+  const match = rimasPares.find(p =>
+   (p.a === word1 && p.b === word2) || (p.a === word2 && p.b === word1)
+  );
+
+  if(match){
+   // Correct!
+   selectedRima.classList.remove('seleccionada');
+   selectedRima.classList.add('emparejada');
+   el.classList.add('emparejada');
+   rimasEncontradas++;
+
+   // Add to list
+   const parDiv = document.createElement('div');
+   parDiv.className = 'rima-par';
+   parDiv.innerHTML = '<span>\u27a1\ufe0f</span> ' + word1 + ' \u2194 ' + word2;
+   $('#parejasList').appendChild(parDiv);
+   $('#rimasParejas').classList.add('visible');
+
+   selectedRima = null;
+  } else {
+   // Error
+   el.classList.add('error-temp');
+   selectedRima.classList.add('error-temp');
+   setTimeout(() => {
+    el.classList.remove('error-temp');
+    selectedRima.classList.remove('error-temp','seleccionada');
+    selectedRima = null;
+   }, 400);
+  }
+ }
+}
+
+// Verify analysis
+$('#btnVerificarAnalisis').addEventListener('click', ()=>{
+ let todoBien = true;
+
+ // Versos: 16
+ const respVersos = parseInt($('#respVersos').value);
+ if(respVersos === 16){
+  $('#pistaVersos').textContent = '\u2705 \u00a1Correcto! El poema tiene 16 versos.';
+  $('#pistaVersos').style.color = 'var(--verde)';
+ } else {
+  $('#pistaVersos').textContent = '\u274c El poema tiene 16 versos. \u00a1Cu\u00e9ntalos bien!';
+  $('#pistaVersos').style.color = 'var(--rojo)';
+  todoBien = false;
+ }
+
+ // Estrofas: 4
+ const respEstrofas = parseInt($('#respEstrofas').value);
+ if(respEstrofas === 4){
+  $('#pistaEstrofas').textContent = '\u2705 \u00a1Correcto! El poema tiene 4 estrofas.';
+  $('#pistaEstrofas').style.color = 'var(--verde)';
+ } else {
+  $('#pistaEstrofas').textContent = '\u274c El poema tiene 4 estrofas (4 grupos de versos).';
+  $('#pistaEstrofas').style.color = 'var(--rojo)';
+  todoBien = false;
+ }
+
+ // Versos por estrofa: 4
+ const respVxE = parseInt($('#respVersosPorEstrofa').value);
+ if(respVxE === 4){
+  $('#pistaVersosPorEstrofa').textContent = '\u2705 \u00a1Correcto! Cada estrofa tiene 4 versos.';
+  $('#pistaVersosPorEstrofa').style.color = 'var(--verde)';
+ } else {
+  $('#pistaVersosPorEstrofa').textContent = '\u274c Cada estrofa tiene 4 versos. \u00a1Obs\u00e9rvalo!';
+  $('#pistaVersosPorEstrofa').style.color = 'var(--rojo)';
+  todoBien = false;
+ }
+
+ // Rima: B (1° con 2°, 3° con 4°)
+ const selRima = $('#seccion4 .analisis-card:last-child .opcion.seleccionada');
+ if(selRima && selRima.dataset.valor === 'b'){
+  $('#feedbackRima').textContent = '\u2705 \u00a1Correcto! En cada estrofa riman el 1\u00b0 con el 2\u00b0 y el 3\u00b0 con el 4\u00b0 (rima AABB).';
+  $('#feedbackRima').className = 'feedback visible bien';
+ } else {
+  $('#feedbackRima').textContent = '\u274c En cada estrofa riman el 1\u00b0 con el 2\u00b0 y el 3\u00b0 con el 4\u00b0. F\u00edjate: dorada-callada, voz-dios...';
+  $('#feedbackRima').className = 'feedback visible mal';
+  todoBien = false;
+ }
+
+ if(todoBien && rimasEncontradas >= 8){
+  state.analisisCompletado = true;
+  $('#check4').style.display = 'inline-block';
+  $('#seccion4').classList.add('completado');
+  $('#btnAnalisisOk').style.display = 'inline-block';
+  $('#btnVerificarAnalisis').style.display = 'none';
+  lanzarConfeti();
+ } else if(todoBien && rimasEncontradas < 8){
+  alert('\u2705 \u00a1Muy bien con los n\u00fameros! Pero a\u00fan te faltan ' + (8 - rimasEncontradas) + ' parejas de rimas por encontrar. \u00a1Empareja todas las palabras que riman!');
+ } else if(!todoBien && rimasEncontradas >= 8){
+  alert('\u2705 \u00a1Encontraste todas las rimas! Pero revisa tus respuestas sobre versos y estrofas.');
+ }
+ actualizarProgreso();
+});
+
+$('#btnAnalisisOk').addEventListener('click', ()=>{
+ $('#seccion5').style.display = 'block';
+ $('#seccion5').scrollIntoView({behavior:'smooth'});
+});
+
+// ============ SECTION 5: COMPLETAR VERSOS ============
+const juegoVersos = [
+ {texto: 'El viento sopla en la arena ___ ,', respuesta: 'dorada', pista: '(color del desierto)'},
+ {texto: 'la tierra guajira nunca est\u00e1 ___ .', respuesta: 'callada', pista: '(lo contrario de silenciosa)'},
+ {texto: 'Canta el card\u00f3n con su verde ___ ,', respuesta: 'voz', pista: '(con lo que cantamos)'},
+ {texto: 'bajo la luz del sol que es un ___ .', respuesta: 'dios', pista: '(ser supremo)'},
+ {texto: 'Las cabras caminan por el ___ ,', respuesta: 'sendero', pista: '(camino en el desierto)'},
+ {texto: 'buscando agua en el mes de ___ .', respuesta: 'enero', pista: '(primer mes del a\u00f1o)'},
+ {texto: 'El jag\u00fcey brilla como un ___ ,', respuesta: 'espejo', pista: '(donde te miras)'},
+ {texto: 'reflejando el cielo y sus ___ .', respuesta: 'reflejos', pista: '(lo que se ve en el agua)'},
+];
+
+let juegoState = [];
+let huecoSeleccionado = null;
+
+function buildJuegoCompletar(){
+ const container = $('#juegoCompletar');
+ container.innerHTML = '';
+ juegoState = [];
+ huecoSeleccionado = null;
+
+ juegoVersos.forEach((item, idx) => {
+  const div = document.createElement('div');
+  div.className = 'completar-verso';
+
+  const textoConHueco = item.texto.replace('___', '<span class="hueco" data-idx="'+idx+'" data-respuesta="'+item.respuesta+'">______</span>');
+
+  div.innerHTML = `
+   <div class="verso-incompleto">${textoConHueco}</div>
+   <div style="font-size:0.8rem;color:#999;font-style:italic">Pista: ${item.pista}</div>
+  `;
+  container.appendChild(div);
+
+  juegoState.push({idx, lleno: false, palabra: null, correcto: null});
+ });
+
+ // Word options
+ const palabras = juegoVersos.map(v => v.respuesta);
+ const shuffled = [...palabras].sort(() => Math.random() - 0.5);
+ const opcionesContainer = $('#palabrasOpciones');
+ opcionesContainer.innerHTML = '';
+
+ shuffled.forEach(palabra => {
+  const el = document.createElement('div');
+  el.className = 'palabra-opcion';
+  el.textContent = palabra;
+  el.dataset.palabra = palabra;
+  el.addEventListener('click', () => onPalabraOpcionClick(el));
+  opcionesContainer.appendChild(el);
+ });
+
+ // Attach click to huecos
+ $$('.hueco').forEach(hueco => {
+  hueco.addEventListener('click', () => onHuecoClick(hueco));
+ });
+}
+
+function onHuecoClick(hueco){
+ const idx = parseInt(hueco.dataset.idx);
+ if(juegoState[idx].lleno) return;
+
+ // Deselect previous
+ if(huecoSeleccionado){
+  huecoSeleccionado.style.outline = '';
+ }
+ huecoSeleccionado = hueco;
+ hueco.style.outline = '3px solid var(--atardecer)';
+ hueco.style.outlineOffset = '2px';
+}
+
+function onPalabraOpcionClick(el){
+ if(el.classList.contains('usada')) return;
+
+ if(!huecoSeleccionado){
+  // Flash to indicate need to select a hueco first
+  el.style.transform = 'scale(1.1)';
+  setTimeout(() => { el.style.transform = ''; }, 200);
+  return;
+ }
+
+ const idx = parseInt(huecoSeleccionado.dataset.idx);
+ const palabra = el.dataset.palabra;
+ const respuesta = huecoSeleccionado.dataset.respuesta;
+
+ // Check if this word was already used elsewhere
+ const usoPrevio = juegoState.findIndex(s => s.palabra === palabra && s.idx !== idx);
+ if(usoPrevio >= 0){
+  // Remove from previous
+  const prevHueco = $(`.hueco[data-idx="${usoPrevio}"]`);
+  if(prevHueco){
+   prevHueco.textContent = '______';
+   prevHueco.classList.remove('lleno','correcto','incorrecto');
+  }
+  juegoState[usoPrevio].lleno = false;
+  juegoState[usoPrevio].palabra = null;
+  juegoState[usoPrevio].correcto = null;
+  // Re-enable the palabra-opcion
+  const prevOpcion = $(`.palabra-opcion[data-palabra="${palabra}"]`);
+  if(prevOpcion) prevOpcion.classList.remove('usada');
+ }
+
+ huecoSeleccionado.textContent = palabra;
+ huecoSeleccionado.classList.add('lleno');
+ el.classList.add('usada');
+
+ juegoState[idx].lleno = true;
+ juegoState[idx].palabra = palabra;
+
+ // Deselect hueco
+ huecoSeleccionado.style.outline = '';
+ huecoSeleccionado = null;
+}
+
+$('#btnReiniciarJuego').addEventListener('click', ()=>{
+ buildJuegoCompletar();
+});
+
+$('#btnVerificarJuego').addEventListener('click', ()=>{
+ let todasLlenas = true;
+ let todasCorrectas = true;
+
+ juegoState.forEach(s => {
+  if(!s.lleno){
+   todasLlenas = false;
+   return;
+  }
+  const hueco = $(`.hueco[data-idx="${s.idx}"]`);
+  if(s.palabra === hueco.dataset.respuesta){
+   hueco.classList.add('correcto');
+   s.correcto = true;
+  } else {
+   hueco.classList.add('incorrecto');
+   s.correcto = false;
+   todasCorrectas = false;
+  }
+ });
+
+ if(!todasLlenas){
+  alert('\u26a0\ufe0f Debes llenar todos los huecos antes de verificar. \u00a1Selecciona un hueco y luego la palabra!');
+  return;
+ }
+
+ if(todasCorrectas){
+  state.juegoCompletado = true;
+  $('#check5').style.display = 'inline-block';
+  $('#seccion5').classList.add('completado');
+  lanzarConfeti();
+  setTimeout(mostrarResultados, 1500);
+ } else {
+  alert('\u274c Algunas palabras no son correctas. Las correctas est\u00e1n en verde. Usa el bot\u00f3n "Reiniciar juego" para intentarlo de nuevo.');
+ }
+ actualizarProgreso();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ let completadas = 0;
+ if(state.textoLeido) completadas++;
+ if(state.preguntasRespondidas && state.preguntasCorrectas >= 4) completadas++;
+ if(state.poemaLeido) completadas++;
+ if(state.analisisCompletado) completadas++;
+ if(state.juegoCompletado) completadas++;
+
+ let estrellas = '';
+ if(completadas === 5) estrellas = '\u2b50\u2b50\u2b50\u2b50\u2b50';
+ else if(completadas >= 4) estrellas = '\u2b50\u2b50\u2b50\u2b50';
+ else if(completadas >= 3) estrellas = '\u2b50\u2b50\u2b50';
+ else if(completadas >= 2) estrellas = '\u2b50\u2b50';
+ else estrellas = '\u2b50';
+
+ let mensaje = '';
+ if(completadas === 5) mensaje = '\u00a1Excelente! \u00a1Eres un experto en textos y poemas wayuu!';
+ else if(completadas >= 4) mensaje = '\u00a1Muy bien! Casi completas todo.';
+ else mensaje = 'Sigue practicando. \u00a1T\u00fa puedes!';
+
+ const puntajePreguntas = state.preguntasCorrectas + ' de 5';
+
+ $('#resultadosContent').innerHTML = `
+  <div class="trofeo">\ud83c\udfc6</div>
+  <h2>${mensaje}</h2>
+  <div class="estrellas">${estrellas}</div>
+  <div class="puntaje-detalle">
+   <div class="puntaje-row"><span>\ud83d\udcd6 Lectura del texto expositivo</span><span>${state.textoLeido ? '\u2705' : '\u274c'}</span></div>
+   <div class="puntaje-row"><span>\u2753 Preguntas de comprensi\u00f3n</span><span>${puntajePreguntas}</span></div>
+   <div class="puntaje-row"><span>\ud83c\udfb5 Lectura del poema wayuu</span><span>${state.poemaLeido ? '\u2705' : '\u274c'}</span></div>
+   <div class="puntaje-row"><span>\ud83d\udd0d An\u00e1lisis de versos, estrofas y rimas</span><span>${state.analisisCompletado ? '\u2705' : '\u274c'}</span></div>
+   <div class="puntaje-row"><span>\ud83c\udfae Juego: Completar versos</span><span>${state.juegoCompletado ? '\u2705' : '\u274c'}</span></div>
+  </div>
+  <p style="margin-top:15px;color:var(--tierra)">\ud83c\udf35 La Guajira · Cultura Wayuu · EduConect Rural</p>
+  <button class="btn btn-primario" style="margin-top:15px" onclick="location.reload()">\ud83d\udd04 Volver a empezar</button>
+  <a href="../" class="btn btn-secundario" style="margin-top:15px;display:inline-flex">\u2190 Volver a M\u00f3dulos</a>
+ `;
+}
+
+// ============ CONFETI ============
+function lanzarConfeti(){
+ const colores = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF8C42','#C77DFF','#FFB347'];
+ for(let i=0; i<50; i++){
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti';
+  confetti.style.left = Math.random() * 100 + '%';
+  confetti.style.top = -(Math.random() * 100) + 'px';
+  confetti.style.width = (Math.random() * 8 + 6) + 'px';
+  confetti.style.height = (Math.random() * 8 + 6) + 'px';
+  confetti.style.background = colores[Math.floor(Math.random()*colores.length)];
+  confetti.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+  confetti.style.animationDelay = Math.random() * 0.5 + 's';
+  document.body.appendChild(confetti);
+  setTimeout(() => confetti.remove(), 3000);
+ }
+}
+
+// ============ INIT ============
+buildRimasGame();
+buildJuegoCompletar();
+actualizarProgreso();
+
+})();
+</script>
+</body>
+</html>

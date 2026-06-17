@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quiz Saber 11 — Concurso de Conocimiento | EduConect Rural</title>
+<style>
+/* ===== RESET Y BASE ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --arena:#F4E1C1;
+  --desierto:#E8B86D;
+  --cardon:#5B8C5A;
+  --cielo:#87CEEB;
+  --atardecer:#E07A5F;
+  --tierra:#8B5E3C;
+  --wayuu-oro:#D4A843;
+  --texto:#3D2B1F;
+  --blanco:#FFFDF7;
+  --sombra:0 8px 32px rgba(0,0,0,0.25);
+  --rojo:#D64045;
+  --verde:#4CAF50;
+  --azul:#4A90D9;
+  --morado:#9B59B6;
+  --naranja:#F4A261;
+  --bg-oscuro:#0B0B1F;
+  --bg-card:#141432;
+  --oro-brillante:#F5C518;
+  --oro-claro:#FFE484;
+  --oro-profundo:#B8860B;
+  --plata:#C0C0C0;
+  --bronce:#CD7F32;
+  --temporizador-verde:#06D6A0;
+  --temporizador-amarillo:#FFD166;
+  --temporizador-rojo:#EF476F;
+  --resplandor:0 0 20px rgba(245,197,24,0.4);
+  --trans-rapida:0.2s ease;
+  --trans-media:0.4s ease;
+  --trans-lenta:0.6s ease;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI','Comic Sans MS','Trebuchet MS',sans-serif;
+  background:var(--bg-oscuro);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(212,168,67,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(224,122,95,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(135,206,235,0.04) 0%, transparent 70%);
+  min-height:100vh;
+  color:#E8E6F0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+  overflow-x:hidden;
+}
+.container{
+  max-width:900px;
+  width:100%;
+  margin:0 auto;
+  position:relative;
+  z-index:1;
+}
+
+/* ===== PARTÍCULAS DE FONDO ===== */
+.particulas{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.particula{
+  position:absolute;
+  width:4px;height:4px;
+  background:var(--oro-brillante);
+  border-radius:50%;
+  animation:flotar linear infinite;
+  opacity:0;
+}
+@keyframes flotar{
+  0%{opacity:0;transform:translateY(100vh) scale(0)}
+  10%{opacity:0.6}
+  90%{opacity:0.2}
+  100%{opacity:0;transform:translateY(-10vh) scale(1)}
+}
+
+/* ===== PANTALLAS ===== */
+.pantalla{
+  display:none;
+  animation:entrarPantalla 0.5s ease-out;
+}
+.pantalla.activa{
+  display:block;
+}
+@keyframes entrarPantalla{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ===== CARD BASE ===== */
+.card{
+  background:var(--bg-card);
+  border-radius:24px;
+  padding:30px 28px;
+  margin-bottom:18px;
+  box-shadow:var(--sombra);
+  border:2px solid rgba(212,168,67,0.25);
+  position:relative;
+  overflow:hidden;
+  transition:transform var(--trans-media),border-color var(--trans-media);
+}
+.card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;
+  width:5px;
+  height:100%;
+  border-radius:5px 0 0 5px;
+  background:var(--oro-brillante);
+  opacity:0.6;
+}
+.card:hover{border-color:rgba(212,168,67,0.5)}
+.card.oro{border-color:var(--oro-brillante);box-shadow:var(--resplandor)}
+
+/* ===== HEADER TV ===== */
+.header-tv{
+  text-align:center;
+  padding:5px 0 15px;
+  position:relative;
+}
+.header-tv .logo-tv{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:linear-gradient(135deg,var(--oro-profundo),var(--oro-brillante));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-size:2.8rem;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:5px;
+  text-shadow:none;
+}
+.header-tv .sub-logo{
+  color:var(--plata);
+  font-size:1rem;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+.header-tv .estrellas-deco{
+  font-size:2rem;
+  letter-spacing:15px;
+  margin:10px 0;
+}
+
+/* ===== PROGRESO ===== */
+.progreso-wrap{
+  background:rgba(20,20,50,0.8);
+  border-radius:15px;
+  padding:10px 18px;
+  margin:5px 0 18px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.3);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border:1px solid rgba(212,168,67,0.2);
+}
+.progreso-label{
+  font-weight:bold;
+  font-size:0.85rem;
+  white-space:nowrap;
+  color:var(--oro-claro);
+}
+.progreso-bar{
+  flex:1;
+  height:14px;
+  background:rgba(255,255,255,0.08);
+  border-radius:10px;
+  overflow:hidden;
+}
+.progreso-fill{
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,var(--oro-profundo),var(--oro-brillante),var(--oro-claro));
+  transition:width 0.6s ease;
+  width:0%;
+}
+.progreso-pct{
+  font-weight:bold;
+  color:var(--oro-brillante);
+  font-size:0.85rem;
+  min-width:36px;
+  text-align:right;
+}
+
+/* ===== BIENVENIDA ===== */
+.bienvenida-tv{
+  text-align:center;
+}
+.bienvenida-tv .trofeo-gigante{
+  font-size:7rem;
+  animation:flotarTrofeo 2.5s ease-in-out infinite;
+  display:block;
+  margin:0 auto;
+}
+@keyframes flotarTrofeo{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-15px)}
+}
+.bienvenida-tv h1{
+  font-size:2.2rem;
+  color:var(--oro-brillante);
+  margin:10px 0;
+  text-shadow:0 0 30px rgba(245,197,24,0.3);
+}
+.bienvenida-tv .descripcion{
+  font-size:1.15rem;
+  color:#C0BFD0;
+  line-height:1.6;
+  max-width:650px;
+  margin:15px auto;
+}
+.bienvenida-tv .rondas-preview{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:25px 0;
+}
+.bienvenida-tv .ronda-preview{
+  background:rgba(212,168,67,0.08);
+  border:2px solid rgba(212,168,67,0.2);
+  border-radius:16px;
+  padding:18px 10px;
+  text-align:center;
+  transition:transform var(--trans-rapida),border-color var(--trans-rapida);
+}
+.bienvenida-tv .ronda-preview:hover{
+  transform:translateY(-4px);
+  border-color:var(--oro-brillante);
+}
+.ronda-preview .ronda-icono{font-size:2.5rem;display:block;margin-bottom:8px}
+.ronda-preview .ronda-nombre{font-weight:bold;font-size:0.9rem;color:var(--oro-claro);margin-bottom:4px}
+.ronda-preview .ronda-tema{font-size:0.78rem;color:#A0A0B8;line-height:1.3}
+
+/* ===== BOTONES ===== */
+.btn{
+  display:inline-block;
+  padding:14px 35px;
+  border-radius:30px;
+  border:none;
+  font-size:1.1rem;
+  font-weight:bold;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all var(--trans-rapida);
+  font-family:inherit;
+  letter-spacing:0.5px;
+  position:relative;
+  overflow:hidden;
+}
+.btn:active{transform:scale(0.96)}
+.btn-oro{
+  background:linear-gradient(135deg,var(--oro-profundo),var(--oro-brillante));
+  color:#1A1A2E;
+  box-shadow:0 6px 24px rgba(245,197,24,0.3);
+  font-size:1.25rem;
+  padding:16px 45px;
+}
+.btn-oro:hover{
+  box-shadow:0 8px 32px rgba(245,197,24,0.5);
+  transform:translateY(-2px);
+}
+.btn-resplandor{
+  background:transparent;
+  color:var(--oro-brillante);
+  border:2px solid var(--oro-brillante);
+  padding:12px 30px;
+}
+.btn-resplandor:hover{
+  background:rgba(245,197,24,0.1);
+  box-shadow:var(--resplandor);
+}
+.btn-exito{
+  background:var(--verde);
+  color:white;
+  box-shadow:0 4px 16px rgba(76,175,80,0.3);
+}
+.btn-exito:hover{box-shadow:0 6px 22px rgba(76,175,80,0.5);transform:translateY(-2px)}
+.btn-reintentar{
+  background:var(--azul);
+  color:white;
+  box-shadow:0 4px 16px rgba(74,144,217,0.3);
+}
+.btn-reintentar:hover{box-shadow:0 6px 22px rgba(74,144,217,0.5);transform:translateY(-2px)}
+
+/* ===== RONDA HEADER ===== */
+.ronda-header{
+  text-align:center;
+  margin-bottom:20px;
+}
+.ronda-header .ronda-titulo{
+  font-size:1.8rem;
+  color:var(--oro-brillante);
+  font-weight:900;
+}
+.ronda-header .ronda-subtitulo{
+  font-size:0.95rem;
+  color:#9090A8;
+  margin-top:3px;
+}
+.ronda-header .pregunta-contador{
+  display:inline-block;
+  background:rgba(245,197,24,0.12);
+  padding:5px 18px;
+  border-radius:20px;
+  font-weight:bold;
+  color:var(--oro-claro);
+  font-size:0.85rem;
+  margin-top:8px;
+}
+
+/* ===== TEMPORIZADOR ===== */
+.temporizador-wrap{
+  margin:12px 0 20px;
+  text-align:center;
+}
+.temporizador-etiqueta{
+  font-size:0.8rem;
+  color:#808098;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-bottom:6px;
+}
+.temporizador-barra-outer{
+  width:100%;
+  height:10px;
+  background:rgba(255,255,255,0.06);
+  border-radius:8px;
+  overflow:hidden;
+  position:relative;
+}
+.temporizador-barra-inner{
+  height:100%;
+  border-radius:8px;
+  transition:width 0.3s linear,background 0.3s;
+  width:100%;
+  background:var(--temporizador-verde);
+}
+.temporizador-digitos{
+  font-size:2.5rem;
+  font-weight:900;
+  margin-top:4px;
+  transition:color 0.3s;
+  color:var(--temporizador-verde);
+  text-shadow:0 0 12px rgba(6,214,160,0.4);
+}
+
+/* ===== PREGUNTA ===== */
+.pregunta-box{
+  background:rgba(255,255,255,0.03);
+  border-radius:18px;
+  padding:22px;
+  margin-bottom:20px;
+  border:1px solid rgba(212,168,67,0.15);
+}
+.pregunta-enunciado{
+  font-size:1.2rem;
+  font-weight:600;
+  color:#E8E6F0;
+  line-height:1.5;
+  margin-bottom:10px;
+}
+.pregunta-categoria{
+  display:inline-block;
+  font-size:0.72rem;
+  background:rgba(212,168,67,0.15);
+  color:var(--oro-claro);
+  padding:3px 12px;
+  border-radius:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:8px;
+}
+
+/* ===== OPCIONES 2x2 GRID ===== */
+.opciones-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:20px;
+}
+.opcion-btn{
+  background:rgba(255,255,255,0.03);
+  border:2px solid rgba(255,255,255,0.1);
+  border-radius:16px;
+  padding:18px 15px;
+  text-align:left;
+  cursor:pointer;
+  color:#D0CFE0;
+  font-size:1rem;
+  font-family:inherit;
+  transition:all var(--trans-rapida);
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  position:relative;
+}
+.opcion-btn:hover{
+  border-color:var(--oro-brillante);
+  background:rgba(245,197,24,0.06);
+  transform:translateY(-2px);
+}
+.opcion-btn .letra{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;height:32px;
+  min-width:32px;
+  border-radius:50%;
+  background:rgba(245,197,24,0.15);
+  color:var(--oro-brillante);
+  font-weight:900;
+  font-size:0.9rem;
+}
+.opcion-btn.correcta{
+  border-color:var(--verde) !important;
+  background:rgba(76,175,80,0.12) !important;
+  animation:destelloVerde 0.6s ease;
+}
+.opcion-btn.correcta .letra{background:var(--verde);color:white}
+.opcion-btn.incorrecta{
+  border-color:var(--rojo) !important;
+  background:rgba(214,64,69,0.12) !important;
+  animation:sacudida 0.5s ease;
+}
+.opcion-btn.incorrecta .letra{background:var(--rojo);color:white}
+.opcion-btn:disabled{cursor:not-allowed;opacity:0.7}
+.opcion-btn:disabled:hover{transform:none;border-color:rgba(255,255,255,0.1)}
+
+@keyframes destelloVerde{
+  0%,100%{box-shadow:0 0 0 rgba(76,175,80,0)}
+  50%{box-shadow:0 0 30px rgba(76,175,80,0.5)}
+}
+@keyframes sacudida{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px)}
+  30%{transform:translateX(8px)}
+  45%{transform:translateX(-5px)}
+  60%{transform:translateX(5px)}
+  75%{transform:translateX(-2px)}
+}
+
+/* ===== FEEDBACK ===== */
+.feedback-box{
+  display:none;
+  padding:18px 20px;
+  border-radius:14px;
+  margin:12px 0 0;
+  font-size:0.95rem;
+  line-height:1.5;
+  animation:entrarFeedback 0.3s ease;
+}
+.feedback-box.mostrar{display:block}
+.feedback-box.acierto{
+  background:rgba(76,175,80,0.1);
+  border:1px solid rgba(76,175,80,0.3);
+  color:#A5D6A7;
+}
+.feedback-box.fallo{
+  background:rgba(214,64,69,0.1);
+  border:1px solid rgba(214,64,69,0.3);
+  color:#EF9A9A;
+}
+.feedback-box .feedback-icono{font-size:1.5rem;margin-right:8px}
+.feedback-box .feedback-puntos{font-weight:bold;color:var(--oro-brillante);margin-top:4px}
+.feedback-box .feedback-explicacion{margin-top:4px;font-style:italic;color:#B0B0C8}
+@keyframes entrarFeedback{
+  from{opacity:0;transform:translateY(-10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ===== RACHA ===== */
+.racha-indicador{
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.85);
+  color:var(--oro-brillante);
+  font-size:2rem;
+  font-weight:900;
+  padding:15px 35px;
+  border-radius:20px;
+  z-index:100;
+  animation:rachaPopup 1.5s ease forwards;
+  pointer-events:none;
+  text-align:center;
+  border:2px solid var(--oro-brillante);
+  box-shadow:0 0 40px rgba(245,197,24,0.4);
+}
+@keyframes rachaPopup{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}
+  30%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+  60%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1) translateY(-20px)}
+}
+
+/* ===== PANTALLA FINAL ===== */
+.final-header{text-align:center}
+.final-header .trofeo-resultado{font-size:6rem;animation:flotarTrofeo 2s ease-in-out infinite}
+.final-header .puntaje-total{
+  font-size:4rem;
+  font-weight:900;
+  background:linear-gradient(135deg,var(--oro-brillante),var(--oro-claro));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;
+}
+.final-header .puntaje-label{color:#9090A8;font-size:1rem;text-transform:uppercase;letter-spacing:3px}
+.final-header .frase-final{font-size:1.1rem;color:#C0BFD0;margin-top:10px;font-style:italic}
+
+.estadisticas-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:20px 0;
+}
+.estadistica-item{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(212,168,67,0.15);
+  border-radius:14px;
+  padding:15px 10px;
+  text-align:center;
+}
+.estadistica-item .est-numero{font-size:1.8rem;font-weight:900;color:var(--oro-brillante)}
+.estadistica-item .est-etiqueta{font-size:0.75rem;color:#808098;margin-top:4px}
+
+/* ===== LOGROS ===== */
+.logros-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin:20px 0;
+}
+.logro-item{
+  background:rgba(255,255,255,0.02);
+  border:2px solid rgba(255,255,255,0.08);
+  border-radius:16px;
+  padding:18px 15px;
+  text-align:center;
+  transition:all var(--trans-media);
+  opacity:0.4;
+}
+.logro-item.desbloqueado{
+  border-color:var(--oro-brillante);
+  background:rgba(245,197,24,0.06);
+  opacity:1;
+  box-shadow:0 0 20px rgba(245,197,24,0.15);
+}
+.logro-item .logro-icono{font-size:2.8rem;display:block;margin-bottom:8px}
+.logro-item .logro-nombre{font-weight:bold;color:var(--oro-claro);font-size:1rem;margin-bottom:3px}
+.logro-item .logro-descripcion{font-size:0.78rem;color:#808098;line-height:1.3}
+.logro-item.bloqueado .logro-icono{filter:grayscale(1);opacity:0.4}
+
+/* ===== ESTRELLAS ===== */
+.estrellas-display{
+  text-align:center;
+  margin:15px 0;
+}
+.estrellas-display .estrella{
+  font-size:3rem;
+  display:inline-block;
+  animation:brilloEstrella 1.5s ease-in-out infinite;
+}
+.estrellas-display .estrella:nth-child(2){animation-delay:0.3s}
+.estrellas-display .estrella:nth-child(3){animation-delay:0.6s}
+@keyframes brilloEstrella{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.2);filter:brightness(1.5)}
+}
+
+/* ===== CONFETI ===== */
+.confeti-container{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  pointer-events:none;
+  z-index:999;
+}
+.confeti{
+  position:absolute;
+  font-size:1.8rem;
+  animation:caidaConfeti 3s ease-out forwards;
+}
+@keyframes caidaConfeti{
+  0%{opacity:1;transform:translateY(-10vh) rotate(0deg) scale(0.5)}
+  25%{opacity:1;transform:translateY(30vh) rotate(180deg) scale(1.2)}
+  75%{opacity:0.8;transform:translateY(85vh) rotate(540deg) scale(1)}
+  100%{opacity:0;transform:translateY(105vh) rotate(720deg) scale(0.3)}
+}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 30px;
+  border-radius:25px;
+  font-weight:bold;
+  z-index:1000;
+  animation:slideDown 0.4s ease-out;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  font-family:inherit;
+  font-size:0.95rem;
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+.toast.dorado{background:linear-gradient(135deg,var(--oro-profundo),var(--oro-brillante));color:#1A1A2E}
+@keyframes slideDown{
+  from{opacity:0;transform:translateX(-50%) translateY(-30px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:700px){
+  .header-tv .logo-tv{font-size:2rem}
+  .opciones-grid{grid-template-columns:1fr}
+  .rondas-preview{grid-template-columns:repeat(2,1fr)}
+  .estadisticas-grid{grid-template-columns:repeat(2,1fr)}
+  .logros-grid{grid-template-columns:1fr}
+  .card{padding:20px 16px}
+  .btn-oro{font-size:1.1rem;padding:14px 35px}
+  .bienvenida-tv h1{font-size:1.6rem}
+  .final-header .puntaje-total{font-size:3rem}
+}
+@media(max-width:400px){
+  body{padding:8px}
+  .card{padding:16px 12px}
+  .btn{padding:11px 22px;font-size:0.95rem}
+  .rondas-preview{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="particulas" id="particulas"></div>
+
+<div class="container">
+
+  <!-- ==================== HEADER TV ==================== -->
+  <div class="header-tv">
+    <div class="logo-tv">QUIZ SABER 11</div>
+    <div class="sub-logo">Concurso de Conocimiento</div>
+    <div class="estrellas-deco">⭐ 🌟 ⭐ 🌟 ⭐</div>
+  </div>
+
+  <!-- ==================== BARRA DE PROGRESO ==================== -->
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <!-- ==================== PANTALLA 1: BIENVENIDA ==================== -->
+  <div class="pantalla activa" id="pantalla1">
+    <div class="card oro bienvenida-tv">
+      <span class="trofeo-gigante">🏆</span>
+      <h1>¡Bienvenido al Quiz Saber 11!</h1>
+      <p class="descripcion">
+        Demuestra lo que sabes sobre <strong>La Guajira, Colombia y el mundo.</strong>
+        Responde 20 preguntas en 4 rondas. ¡Cada segundo cuenta! 
+        Gana puntos extra con rachas de aciertos y desbloquea logros especiales.
+      </p>
+
+      <div class="rondas-preview">
+        <div class="ronda-preview">
+          <span class="ronda-icono">📖</span>
+          <div class="ronda-nombre">Ronda 1</div>
+          <div class="ronda-tema">Lenguaje: lectura, sinónimos, ortografía</div>
+        </div>
+        <div class="ronda-preview">
+          <span class="ronda-icono">🔢</span>
+          <div class="ronda-nombre">Ronda 2</div>
+          <div class="ronda-tema">Matemáticas: cálculo mental, geometría</div>
+        </div>
+        <div class="ronda-preview">
+          <span class="ronda-icono">🔬</span>
+          <div class="ronda-nombre">Ronda 3</div>
+          <div class="ronda-tema">Ciencias: ecosistemas, cuerpo, plantas</div>
+        </div>
+        <div class="ronda-preview">
+          <span class="ronda-icono">🧶</span>
+          <div class="ronda-nombre">Ronda 4</div>
+          <div class="ronda-tema">Cultura Wayuu: lengua y cosmovisión</div>
+        </div>
+      </div>
+
+      <p style="color:#9090A8;font-size:0.85rem;margin-bottom:20px">
+        ⏱️ 15 segundos por pregunta · 🎯 4 opciones por pregunta · 🔥 Rachas de aciertos · 🏅 4 logros
+      </p>
+
+      <button class="btn btn-oro" id="btnIniciar" onclick="iniciarQuiz()">
+        ⚡ ¡Comenzar Concurso!
+      </button>
+      <p style="color:#606080;font-size:0.78rem;margin-top:12px">
+        🌵🐐 Con contenido de La Guajira y la cultura Wayuu 🐐🌵
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== PANTALLA 2: RONDA 1 — LENGUAJE ==================== -->
+  <div class="pantalla" id="pantalla2">
+    <div class="card">
+      <div class="ronda-header">
+        <div class="ronda-titulo">📖 Ronda 1: Lenguaje</div>
+        <div class="ronda-subtitulo">Comprensión lectora, sinónimos y ortografía</div>
+        <div class="pregunta-contador" id="contadorRonda1">Pregunta 1 de 5</div>
+      </div>
+      <div class="temporizador-wrap">
+        <div class="temporizador-etiqueta">⏱️ Tiempo</div>
+        <div class="temporizador-barra-outer">
+          <div class="temporizador-barra-inner" id="barraTemporal1"></div>
+        </div>
+        <div class="temporizador-digitos" id="digitosTiempo1">15</div>
+      </div>
+      <div class="pregunta-box" id="preguntaBox1">
+        <span class="pregunta-categoria" id="categoria1"></span>
+        <div class="pregunta-enunciado" id="enunciado1"></div>
+      </div>
+      <div class="opciones-grid" id="opciones1"></div>
+      <div class="feedback-box" id="feedback1"></div>
+      <div style="text-align:center;margin-top:15px">
+        <button class="btn btn-exito" id="btnSiguiente1" style="display:none" onclick="siguientePregunta(1)">
+          Siguiente pregunta →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANTALLA 3: RONDA 2 — MATEMÁTICAS ==================== -->
+  <div class="pantalla" id="pantalla3">
+    <div class="card">
+      <div class="ronda-header">
+        <div class="ronda-titulo">🔢 Ronda 2: Matemáticas</div>
+        <div class="ronda-subtitulo">Cálculo mental, geometría básica y problemas</div>
+        <div class="pregunta-contador" id="contadorRonda2">Pregunta 1 de 5</div>
+      </div>
+      <div class="temporizador-wrap">
+        <div class="temporizador-etiqueta">⏱️ Tiempo</div>
+        <div class="temporizador-barra-outer">
+          <div class="temporizador-barra-inner" id="barraTemporal2"></div>
+        </div>
+        <div class="temporizador-digitos" id="digitosTiempo2">15</div>
+      </div>
+      <div class="pregunta-box" id="preguntaBox2">
+        <span class="pregunta-categoria" id="categoria2"></span>
+        <div class="pregunta-enunciado" id="enunciado2"></div>
+      </div>
+      <div class="opciones-grid" id="opciones2"></div>
+      <div class="feedback-box" id="feedback2"></div>
+      <div style="text-align:center;margin-top:15px">
+        <button class="btn btn-exito" id="btnSiguiente2" style="display:none" onclick="siguientePregunta(2)">
+          Siguiente pregunta →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANTALLA 4: RONDA 3 — CIENCIAS ==================== -->
+  <div class="pantalla" id="pantalla4">
+    <div class="card">
+      <div class="ronda-header">
+        <div class="ronda-titulo">🔬 Ronda 3: Ciencias</div>
+        <div class="ronda-subtitulo">Ecosistemas, cuerpo humano y plantas wayuu</div>
+        <div class="pregunta-contador" id="contadorRonda3">Pregunta 1 de 5</div>
+      </div>
+      <div class="temporizador-wrap">
+        <div class="temporizador-etiqueta">⏱️ Tiempo</div>
+        <div class="temporizador-barra-outer">
+          <div class="temporizador-barra-inner" id="barraTemporal3"></div>
+        </div>
+        <div class="temporizador-digitos" id="digitosTiempo3">15</div>
+      </div>
+      <div class="pregunta-box" id="preguntaBox3">
+        <span class="pregunta-categoria" id="categoria3"></span>
+        <div class="pregunta-enunciado" id="enunciado3"></div>
+      </div>
+      <div class="opciones-grid" id="opciones3"></div>
+      <div class="feedback-box" id="feedback3"></div>
+      <div style="text-align:center;margin-top:15px">
+        <button class="btn btn-exito" id="btnSiguiente3" style="display:none" onclick="siguientePregunta(3)">
+          Siguiente pregunta →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANTALLA 5: RONDA 4 — CULTURA WAYUU ==================== -->
+  <div class="pantalla" id="pantalla5">
+    <div class="card">
+      <div class="ronda-header">
+        <div class="ronda-titulo">🧶 Ronda 4: Cultura Wayuu</div>
+        <div class="ronda-subtitulo">Wayuunaiki, cosmovisión y geografía guajira</div>
+        <div class="pregunta-contador" id="contadorRonda4">Pregunta 1 de 5</div>
+      </div>
+      <div class="temporizador-wrap">
+        <div class="temporizador-etiqueta">⏱️ Tiempo</div>
+        <div class="temporizador-barra-outer">
+          <div class="temporizador-barra-inner" id="barraTemporal4"></div>
+        </div>
+        <div class="temporizador-digitos" id="digitosTiempo4">15</div>
+      </div>
+      <div class="pregunta-box" id="preguntaBox4">
+        <span class="pregunta-categoria" id="categoria4"></span>
+        <div class="pregunta-enunciado" id="enunciado4"></div>
+      </div>
+      <div class="opciones-grid" id="opciones4"></div>
+      <div class="feedback-box" id="feedback4"></div>
+      <div style="text-align:center;margin-top:15px">
+        <button class="btn btn-exito" id="btnSiguiente4" style="display:none" onclick="siguientePregunta(4)">
+          Siguiente pregunta →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANTALLA 6: FINAL ==================== -->
+  <div class="pantalla" id="pantalla6">
+    <div class="card oro">
+      <div class="final-header">
+        <div class="trofeo-resultado" id="trofeoFinal">🏆</div>
+        <div class="puntaje-label">PUNTAJE TOTAL</div>
+        <div class="puntaje-total" id="puntajeTotal">0</div>
+        <div class="frase-final" id="fraseFinal"></div>
+      </div>
+
+      <div class="estrellas-display" id="estrellasDisplay"></div>
+
+      <div class="estadisticas-grid">
+        <div class="estadistica-item">
+          <div class="est-numero" id="estAciertos">0</div>
+          <div class="est-etiqueta">✅ Aciertos</div>
+        </div>
+        <div class="estadistica-item">
+          <div class="est-numero" id="estRacha">0</div>
+          <div class="est-etiqueta">🔥 Mejor Racha</div>
+        </div>
+        <div class="estadistica-item">
+          <div class="est-numero" id="estRapidas">0</div>
+          <div class="est-etiqueta">⚡ Rápidas</div>
+        </div>
+        <div class="estadistica-item">
+          <div class="est-numero" id="estTiempo">0s</div>
+          <div class="est-etiqueta">⏱️ Tiempo Prom.</div>
+        </div>
+      </div>
+
+      <h3 style="text-align:center;color:var(--oro-claro);margin:10px 0">🏅 Logros Desbloqueados</h3>
+      <div class="logros-grid" id="logrosGrid"></div>
+
+      <div style="text-align:center;margin-top:25px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-oro" onclick="reiniciarQuiz()">🔄 ¡Jugar de nuevo!</button>
+        <a href="/modulos/" class="btn btn-resplandor">← Volver a Módulos</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="confeti-container" id="confetiContainer"></div>
+
+<script>
+// ============================================================
+// QUIZ SABER 11 — Motor del Concurso
+// ============================================================
+(function(){
+  'use strict';
+
+  // Helpers
+  function $(sel){ return document.querySelector(sel); }
+  function $$(sel){ return document.querySelectorAll(sel); }
+
+  // ===== PARTÍCULAS DE FONDO =====
+  (function(){
+    var container = document.getElementById('particulas');
+    for(var i = 0; i < 30; i++){
+      var p = document.createElement('div');
+      p.className = 'particula';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (8 + Math.random() * 15) + 's';
+      p.style.animationDelay = Math.random() * 10 + 's';
+      p.style.width = (2 + Math.random() * 4) + 'px';
+      p.style.height = p.style.width;
+      container.appendChild(p);
+    }
+  })();
+
+  // ===== BANCO DE PREGUNTAS (20 preguntas, 4 rondas × 5) =====
+  var preguntas = [
+    // RONDA 1: LENGUAJE (índices 0-4)
+    {
+      ronda: 1,
+      categoria: 'Comprensión Lectora',
+      enunciado: 'Lee el texto: "El cardón se alza orgulloso en el desierto guajiro, sus brazos verdes guardan agua para los días sin lluvia." ¿Cuál es la idea principal?',
+      opciones: [
+        'A. El cardón es un cactus que almacena agua en el desierto guajiro',
+        'B. El desierto guajiro no tiene lluvia nunca',
+        'C. Los brazos del cardón son de color marrón',
+        'D. El cardón es un animal que vive en La Guajira'
+      ],
+      correcta: 0,
+      explicacion: 'El texto describe cómo el cardón (un cactus) guarda agua en sus brazos para sobrevivir en el desierto guajiro. ¡Así se adapta a su entorno!'
+    },
+    {
+      ronda: 1,
+      categoria: 'Sinónimos',
+      enunciado: 'En el cuento wayuu, la palabra "Mma" significa "tierra". ¿Cuál de estas palabras es un SINÓNIMO de "tierra"?',
+      opciones: [
+        'A. Cielo',
+        'B. Suelo',
+        'C. Agua',
+        'D. Fuego'
+      ],
+      correcta: 1,
+      explicacion: '"Suelo" es un sinónimo de "tierra". Ambas se refieren a la superficie donde vivimos y cultivamos. En wayuunaiki, "Mma" representa el territorio sagrado.'
+    },
+    {
+      ronda: 1,
+      categoria: 'Ortografía',
+      enunciado: '¿Cuál de las siguientes palabras está escrita CORRECTAMENTE?',
+      opciones: [
+        'A. Guajira (con j)',
+        'B. Guajira (con g y j mezcladas)',
+        'C. Guagira (con g)',
+        'D. Wuajira (con w)'
+      ],
+      correcta: 0,
+      explicacion: '"Guajira" se escribe con G al inicio y J en medio. Es el nombre correcto del departamento peninsular del norte de Colombia, tierra del pueblo wayuu.'
+    },
+    {
+      ronda: 1,
+      categoria: 'Comprensión Lectora',
+      enunciado: '"Juyá, la lluvia, llegó bailando sobre la ranchería. Las gotas cantaban sobre el techo de yotojoro y los niños reían." ¿Qué sentimiento transmite este texto?',
+      opciones: [
+        'A. Tristeza y soledad',
+        'B. Miedo y preocupación',
+        'C. Alegría y celebración',
+        'D. Aburrimiento y sueño'
+      ],
+      correcta: 2,
+      explicacion: 'Las palabras "bailando", "cantaban" y "reían" transmiten alegría. La lluvia (Juyá) es sagrada para los wayuu y su llegada es motivo de celebración.'
+    },
+    {
+      ronda: 1,
+      categoria: 'Sinónimos',
+      enunciado: 'En el texto: "El palabrero wayuu es sabio y respetado." ¿Qué palabra puede reemplazar a "sabio" sin cambiar el significado?',
+      opciones: [
+        'A. Joven',
+        'B. Rápido',
+        'C. Inteligente',
+        'D. Pequeño'
+      ],
+      correcta: 2,
+      explicacion: '"Inteligente" es sinónimo de "sabio". El Pütchipü\'üi (palabrero) es una figura wayuu que resuelve conflictos usando su sabiduría y conocimiento de las tradiciones.'
+    },
+
+    // RONDA 2: MATEMÁTICAS (índices 5-9)
+    {
+      ronda: 2,
+      categoria: 'Cálculo Mental',
+      enunciado: 'Un pastor wayuu tiene 25 chivos en la mañana. Al atardecer regresan 18. ¿Cuántos chivos le faltan por regresar?',
+      opciones: [
+        'A. 5',
+        'B. 7',
+        'C. 9',
+        'D. 12'
+      ],
+      correcta: 1,
+      explicacion: '25 totales - 18 que regresaron = 7 chivos faltan. El pastoreo de chivos (kaa\'ula) es una actividad fundamental en la economía wayuu.'
+    },
+    {
+      ronda: 2,
+      categoria: 'Geometría Básica',
+      enunciado: 'Los tejidos wayuu (mochilas) tienen formas geométricas llamadas "kanas". Si un diseño usa triángulos repetidos, ¿cuántos lados tiene cada triángulo?',
+      opciones: [
+        'A. 2 lados',
+        'B. 3 lados',
+        'C. 4 lados',
+        'D. 5 lados'
+      ],
+      correcta: 1,
+      explicacion: 'Un triángulo tiene exactamente 3 lados. Las kanas wayuu usan triángulos, rombos y otras figuras geométricas que representan elementos de la naturaleza.'
+    },
+    {
+      ronda: 2,
+      categoria: 'Problemas',
+      enunciado: 'En una ranchería hay 4 familias. Cada familia tiene 3 chinchorros (hamacas). ¿Cuántos chinchorros hay en total?',
+      opciones: [
+        'A. 7',
+        'B. 10',
+        'C. 12',
+        'D. 16'
+      ],
+      correcta: 2,
+      explicacion: '4 familias × 3 chinchorros = 12 chinchorros. El chinchorro wayuu es más que una hamaca: es un símbolo cultural tejido a mano con diseños únicos.'
+    },
+    {
+      ronda: 2,
+      categoria: 'Cálculo Mental',
+      enunciado: 'Si tienes 45 litros de agua en un jagüey y usas 17 litros para los animales, ¿cuántos litros quedan?',
+      opciones: [
+        'A. 22',
+        'B. 26',
+        'C. 28',
+        'D. 32'
+      ],
+      correcta: 2,
+      explicacion: '45 - 17 = 28 litros. Los jagüeyes son reservorios de agua tradicionales en La Guajira, esenciales para la vida en el desierto.'
+    },
+    {
+      ronda: 2,
+      categoria: 'Geometría Básica',
+      enunciado: '¿Cuántos vértices (esquinas) tiene un rectángulo?',
+      opciones: [
+        'A. 2',
+        'B. 3',
+        'C. 4',
+        'D. 6'
+      ],
+      correcta: 2,
+      explicacion: 'Un rectángulo tiene 4 vértices, uno en cada esquina. Las figuras de 4 lados como el rectángulo aparecen frecuentemente en los patrones de tejido wayuu.'
+    },
+
+    // RONDA 3: CIENCIAS (índices 10-14)
+    {
+      ronda: 3,
+      categoria: 'Ecosistemas',
+      enunciado: 'En el ecosistema del desierto guajiro, ¿cuál de estos animales es nativo de La Guajira?',
+      opciones: [
+        'A. El oso polar',
+        'B. El flamenco rosado (Wüchü)',
+        'C. El pingüino',
+        'D. El tigre de bengala'
+      ],
+      correcta: 1,
+      explicacion: 'El flamenco rosado (Wüchü en wayuunaiki) habita en las salinas y lagunas costeras de La Guajira. ¡Sus plumas rosadas son inconfundibles!'
+    },
+    {
+      ronda: 3,
+      categoria: 'Cuerpo Humano',
+      enunciado: '¿Cuál es el órgano más grande del cuerpo humano?',
+      opciones: [
+        'A. El corazón',
+        'B. El cerebro',
+        'C. La piel',
+        'D. El hígado'
+      ],
+      correcta: 2,
+      explicacion: 'La piel es el órgano más grande del cuerpo. Nos protege del calor, del frío y de los microbios. En el desierto, la piel necesita cuidados especiales.'
+    },
+    {
+      ronda: 3,
+      categoria: 'Plantas Wayuu',
+      enunciado: '¿Cómo se llama en wayuunaiki la planta del cardón, usada para construir viviendas?',
+      opciones: [
+        'A. Trupillo',
+        'B. Dividivi',
+        'C. Yotojoro',
+        'D. Sábila'
+      ],
+      correcta: 2,
+      explicacion: 'El yotojoro es el tallo seco del cardón. Los wayuu lo usan para hacer las paredes de sus viviendas tradicionales. ¡Es ligero, resistente y fresco!'
+    },
+    {
+      ronda: 3,
+      categoria: 'Ecosistemas',
+      enunciado: '¿Qué es un jagüey en La Guajira?',
+      opciones: [
+        'A. Un tipo de cactus',
+        'B. Un reservorio de agua artificial',
+        'C. Un animal del desierto',
+        'D. Una danza wayuu'
+      ],
+      correcta: 1,
+      explicacion: 'Un jagüey es un reservorio de agua construido para almacenar agua de lluvia. Es vital para las comunidades wayuu y sus animales durante la sequía.'
+    },
+    {
+      ronda: 3,
+      categoria: 'Cuerpo Humano',
+      enunciado: '¿Cuántos huesos tiene aproximadamente el cuerpo humano adulto?',
+      opciones: [
+        'A. 100',
+        'B. 156',
+        'C. 206',
+        'D. 300'
+      ],
+      correcta: 2,
+      explicacion: 'El cuerpo humano adulto tiene 206 huesos. Los huesos nos dan forma, protegen nuestros órganos y nos permiten movernos.'
+    },
+
+    // RONDA 4: CULTURA WAYUU (índices 15-19)
+    {
+      ronda: 4,
+      categoria: 'Wayuunaiki',
+      enunciado: '¿Qué significa la palabra "Wale\'erü" en wayuunaiki?',
+      opciones: [
+        'A. Chivo',
+        'B. Iguana',
+        'C. Flamenco',
+        'D. Tortuga'
+      ],
+      correcta: 1,
+      explicacion: 'Wale\'erü significa iguana. La iguana es un animal importante en la cultura wayuu: aparece en cuentos y en la alimentación tradicional.'
+    },
+    {
+      ronda: 4,
+      categoria: 'Cosmovisión',
+      enunciado: 'Para los wayuu, "Juyá" es el espíritu de la lluvia. ¿Por qué es tan importante?',
+      opciones: [
+        'A. Porque trae el frío del norte',
+        'B. Porque riega los cultivos y llena los jagüeyes',
+        'C. Porque anuncia la llegada del verano',
+        'D. Porque trae animales nuevos'
+      ],
+      correcta: 1,
+      explicacion: 'Juyá (la lluvia) es sagrada porque riega los cultivos, llena los jagüeyes y da vida al desierto. Sin Juyá, la tierra se seca. Los wayuu le rezan y le dan gracias.'
+    },
+    {
+      ronda: 4,
+      categoria: 'Geografía',
+      enunciado: 'La Guajira es el departamento más al norte de Colombia. ¿Con qué país comparte frontera?',
+      opciones: [
+        'A. Ecuador',
+        'B. Panamá',
+        'C. Venezuela',
+        'D. Brasil'
+      ],
+      correcta: 2,
+      explicacion: 'La Guajira comparte frontera con Venezuela al este. El pueblo wayuu vive a ambos lados de la frontera desde tiempos ancestrales.'
+    },
+    {
+      ronda: 4,
+      categoria: 'Cosmovisión',
+      enunciado: '¿Qué representa la "Yonna", la danza tradicional wayuu?',
+      opciones: [
+        'A. La guerra entre clanes',
+        'B. El cortejo y la conexión con la naturaleza',
+        'C. La llegada de los españoles',
+        'D. El fin de la cosecha'
+      ],
+      correcta: 1,
+      explicacion: 'La Yonna (danza wayuu) representa el cortejo, el equilibrio con la naturaleza y la fuerza. La mujer baila mientras el hombre intenta seguir su ritmo. Es patrimonio cultural.'
+    },
+    {
+      ronda: 4,
+      categoria: 'Wayuunaiki',
+      enunciado: '¿Cómo se dice "gracias" en wayuunaiki?',
+      opciones: [
+        'A. Jamaya',
+        'B. Anayawachijaa',
+        'C. Piama',
+        'D. Wayuu'
+      ],
+      correcta: 1,
+      explicacion: '"Anayawachijaa" significa "gracias" en wayuunaiki. Los números en wayuunaiki son: wane (1), piama (2), apünüin (3). "Jamaya" significa "está bien".'
+    }
+  ];
+
+  // ===== ESTADO GLOBAL DEL QUIZ =====
+  var estado = {
+    rondaActual: 0,
+    preguntaActual: 1,
+    idxGlobal: 0,
+    puntaje: 0,
+    aciertos: 0,
+    racha: 0,
+    mejorRacha: 0,
+    respuestasRapidas: 0,
+    tiempoTotalUsado: 0,
+    tiempoRestante: 15,
+    tiempoTotalPorPregunta: 15,
+    cronometro: null,
+    respondida: false,
+    rondasCompletadas: [false, false, false, false],
+    aciertosPorRonda: [0, 0, 0, 0]
+  };
+
+  // ===== SONIDOS (TTS con SpeechSynthesis) =====
+  function hablar(texto){
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'es-ES';
+      u.rate = 0.9;
+      u.pitch = 1.1;
+      window.speechSynthesis.speak(u);
+    }
+  }
+
+  // ===== TOAST =====
+  function mostrarToast(msg, tipo){
+    var t = document.createElement('div');
+    t.className = 'toast ' + tipo;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, 2200);
+  }
+
+  // ===== ACTUALIZAR PROGRESO =====
+  function actualizarProgreso(){
+    var completadas = 0;
+    var totalRondas = 4;
+    for(var i = 0; i < 4; i++){
+      if(estado.rondasCompletadas[i]) completadas++;
+    }
+    // Si estamos a mitad de la ronda, sumamos parcial
+    if(!estado.rondasCompletadas[estado.rondaActual] && estado.preguntaActual > 1){
+      completadas += (estado.preguntaActual - 1) / 5;
+    }
+    var pct = Math.round((completadas / totalRondas) * 100);
+    if(pct > 100) pct = 100;
+    document.getElementById('progresoFill').style.width = pct + '%';
+    document.getElementById('progresoPct').textContent = pct + '%';
+  }
+
+  // ===== MOSTRAR PANTALLA =====
+  function mostrarPantalla(id){
+    var pantallas = document.querySelectorAll('.pantalla');
+    for(var i = 0; i < pantallas.length; i++){
+      pantallas[i].style.display = 'none';
+      pantallas[i].classList.remove('activa');
+    }
+    var target = document.getElementById(id);
+    if(target){
+      target.style.display = 'block';
+      target.classList.add('activa');
+      target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+
+  // ===== INICIAR QUIZ =====
+  function iniciarQuiz(){
+    estado.rondaActual = 1;
+    estado.preguntaActual = 1;
+    estado.idxGlobal = 0;
+    estado.puntaje = 0;
+    estado.aciertos = 0;
+    estado.racha = 0;
+    estado.mejorRacha = 0;
+    estado.respuestasRapidas = 0;
+    estado.tiempoTotalUsado = 0;
+    estado.rondasCompletadas = [false, false, false, false];
+    estado.aciertosPorRonda = [0, 0, 0, 0];
+    estado.respondida = false;
+    actualizarProgreso();
+    mostrarPantalla('pantalla2');
+    cargarPregunta(1);
+  }
+
+  window.iniciarQuiz = iniciarQuiz;
+
+  // ===== CARGAR PREGUNTA =====
+  function cargarPregunta(ronda){
+    estado.rondaActual = ronda;
+    estado.respondida = false;
+    estado.tiempoRestante = estado.tiempoTotalPorPregunta;
+    estado.tiempoTotalUsado = 0;
+
+    // Calcular índice de la pregunta actual para esta ronda
+    var idxEnRonda = estado.preguntaActual - 1;
+    // Encontrar el índice global de la primera pregunta de esta ronda
+    var inicioRonda = (ronda - 1) * 5;
+    var idxGlobal = inicioRonda + idxEnRonda;
+    estado.idxGlobal = idxGlobal;
+
+    var p = preguntas[idxGlobal];
+    var rondaLetra = ['', '1', '2', '3', '4'][ronda];
+
+    // Actualizar contador
+    document.getElementById('contadorRonda' + rondaLetra).textContent = 'Pregunta ' + estado.preguntaActual + ' de 5';
+
+    // Categoría
+    document.getElementById('categoria' + rondaLetra).textContent = p.categoria;
+
+    // Enunciado
+    document.getElementById('enunciado' + rondaLetra).textContent = p.enunciado;
+
+    // Opciones
+    var opcionesHTML = '';
+    var letras = ['A', 'B', 'C', 'D'];
+    for(var i = 0; i < p.opciones.length; i++){
+      opcionesHTML += '<button class="opcion-btn" onclick="seleccionarRespuesta(' + ronda + ',' + i + ')" id="opcion' + ronda + '_' + i + '">';
+      opcionesHTML += '<span class="letra">' + letras[i] + '</span>';
+      opcionesHTML += '<span>' + p.opciones[i].substring(3) + '</span>';
+      opcionesHTML += '</button>';
+    }
+    document.getElementById('opciones' + rondaLetra).innerHTML = opcionesHTML;
+
+    // Ocultar feedback y botón siguiente
+    var fb = document.getElementById('feedback' + rondaLetra);
+    fb.classList.remove('mostrar', 'acierto', 'fallo');
+    fb.style.display = 'none';
+    document.getElementById('btnSiguiente' + rondaLetra).style.display = 'none';
+
+    // Iniciar temporizador
+    iniciarTemporizador(ronda);
+    actualizarProgreso();
+  }
+
+  window.cargarPregunta = cargarPregunta;
+
+  // ===== TEMPORIZADOR =====
+  function iniciarTemporizador(ronda){
+    clearInterval(estado.cronometro);
+    estado.tiempoRestante = estado.tiempoTotalPorPregunta;
+    var rondaLetra = ['', '1', '2', '3', '4'][ronda];
+    var barra = document.getElementById('barraTemporal' + rondaLetra);
+    var digitos = document.getElementById('digitosTiempo' + rondaLetra);
+
+    function actualizarDisplay(){
+      var pct = (estado.tiempoRestante / estado.tiempoTotalPorPregunta) * 100;
+      barra.style.width = pct + '%';
+      digitos.textContent = estado.tiempoRestante;
+
+      if(pct > 50){
+        barra.style.background = 'var(--temporizador-verde)';
+        digitos.style.color = 'var(--temporizador-verde)';
+        digitos.style.textShadow = '0 0 12px rgba(6,214,160,0.4)';
+      } else if(pct > 25){
+        barra.style.background = 'var(--temporizador-amarillo)';
+        digitos.style.color = 'var(--temporizador-amarillo)';
+        digitos.style.textShadow = '0 0 12px rgba(255,209,102,0.4)';
+      } else {
+        barra.style.background = 'var(--temporizador-rojo)';
+        digitos.style.color = 'var(--temporizador-rojo)';
+        digitos.style.textShadow = '0 0 12px rgba(239,71,111,0.4)';
+      }
+      if(estado.tiempoRestante <= 5){
+        digitos.style.animation = 'sacudida 0.5s ease infinite';
+      } else {
+        digitos.style.animation = '';
+      }
+    }
+
+    actualizarDisplay();
+
+    estado.cronometro = setInterval(function(){
+      estado.tiempoRestante--;
+      estado.tiempoTotalUsado++;
+      actualizarDisplay();
+      if(estado.tiempoRestante <= 0){
+        clearInterval(estado.cronometro);
+        tiempoAgotado(ronda);
+      }
+    }, 1000);
+  }
+
+  function detenerTemporizador(){
+    clearInterval(estado.cronometro);
+  }
+
+  // ===== TIEMPO AGOTADO =====
+  function tiempoAgotado(ronda){
+    if(estado.respondida) return;
+    estado.respondida = true;
+    detenerTemporizador();
+
+    var p = preguntas[estado.idxGlobal];
+    var rondaLetra = ['', '1', '2', '3', '4'][ronda];
+
+    // Marcar la correcta
+    var btnCorrecto = document.getElementById('opcion' + rondaLetra + '_' + p.correcta);
+    if(btnCorrecto) btnCorrecto.classList.add('correcta');
+
+    // Deshabilitar todas
+    deshabilitarOpciones(ronda);
+
+    // Mostrar feedback
+    var fb = document.getElementById('feedback' + rondaLetra);
+    fb.innerHTML = '<span class="feedback-icono">⏰</span> ¡Se acabó el tiempo!<br>' +
+      '<span style="color:var(--oro-brillante)">Respuesta correcta: ' + p.opciones[p.correcta].substring(0,1) + '</span><br>' +
+      '<span class="feedback-explicacion">' + p.explicacion + '</span>';
+    fb.className = 'feedback-box fallo mostrar';
+    fb.style.display = 'block';
+
+    // Penalización por tiempo
+    estado.racha = 0;
+    document.getElementById('btnSiguiente' + rondaLetra).style.display = 'inline-block';
+  }
+
+  // ===== SELECCIONAR RESPUESTA =====
+  function seleccionarRespuesta(ronda, opcionIdx){
+    if(estado.respondida) return;
+    estado.respondida = true;
+    detenerTemporizador();
+
+    var p = preguntas[estado.idxGlobal];
+    var rondaLetra = ['', '1', '2', '3', '4'][ronda];
+    var esCorrecta = (opcionIdx === p.correcta);
+
+    // Marcar la seleccionada y la correcta
+    var btnSeleccionado = document.getElementById('opcion' + rondaLetra + '_' + opcionIdx);
+    var btnCorrecto = document.getElementById('opcion' + rondaLetra + '_' + p.correcta);
+
+    if(esCorrecta){
+      btnSeleccionado.classList.add('correcta');
+    } else {
+      btnSeleccionado.classList.add('incorrecta');
+      if(btnCorrecto) btnCorrecto.classList.add('correcta');
+    }
+
+    // Deshabilitar todas las opciones
+    deshabilitarOpciones(ronda);
+
+    // Calcular puntuación
+    var pctTiempoRestante = estado.tiempoRestante / estado.tiempoTotalPorPregunta;
+    var puntosBase = 0;
+    var velocidadTexto = '';
+
+    if(!esCorrecta){
+      puntosBase = 0;
+      velocidadTexto = '';
+      estado.racha = 0;
+    } else {
+      if(pctTiempoRestante > 0.7){
+        puntosBase = 15;
+        velocidadTexto = '⚡ ¡Rápido!';
+        estado.respuestasRapidas++;
+      } else if(pctTiempoRestante >= 0.3){
+        puntosBase = 10;
+        velocidadTexto = '👍 ¡Buen tiempo!';
+      } else {
+        puntosBase = 5;
+        velocidadTexto = '🐢 ¡Justo a tiempo!';
+      }
+      estado.aciertos++;
+      estado.racha++;
+      if(estado.racha > estado.mejorRacha) estado.mejorRacha = estado.racha;
+
+      // Bonus de racha
+      var bonusRacha = 0;
+      if(estado.racha >= 3 && estado.racha % 3 === 0){
+        bonusRacha = 5;
+        mostrarNotificacionRacha();
+      }
+      puntosBase += bonusRacha;
+      estado.puntaje += puntosBase;
+
+      // Registrar acierto en la ronda
+      var idxRonda = ronda - 1;
+      estado.aciertosPorRonda[idxRonda]++;
+
+      // Toast de acierto
+      var toastMsg = '✅ ¡Correcto! +' + puntosBase + ' pts';
+      if(bonusRacha > 0) toastMsg += ' (+5 racha)';
+      mostrarToast(toastMsg, 'exito');
+    }
+
+    // Mostrar feedback
+    var fb = document.getElementById('feedback' + rondaLetra);
+    var puntosStr = esCorrecta ? ('<div class="feedback-puntos">' + velocidadTexto + ' +' + puntosBase + ' puntos</div>') : '';
+    fb.innerHTML = '<span class="feedback-icono">' + (esCorrecta ? '✅' : '❌') + '</span> ' +
+      (esCorrecta ? '¡Muy bien!' : 'Respuesta incorrecta') + '<br>' +
+      '<span style="color:var(--oro-brillante)">Respuesta correcta: ' + p.opciones[p.correcta].substring(0,1) + '</span>' +
+      puntosStr +
+      '<div class="feedback-explicacion">' + p.explicacion + '</div>';
+    fb.className = 'feedback-box ' + (esCorrecta ? 'acierto' : 'fallo') + ' mostrar';
+    fb.style.display = 'block';
+
+    // Leer explicación en voz alta
+    if(esCorrecta && pctTiempoRestante > 0.5){
+      hablar(p.explicacion);
+    }
+
+    // Mostrar botón siguiente
+    document.getElementById('btnSiguiente' + rondaLetra).style.display = 'inline-block';
+  }
+
+  window.seleccionarRespuesta = seleccionarRespuesta;
+
+  function deshabilitarOpciones(ronda){
+    var rondaLetra = ['', '1', '2', '3', '4'][ronda];
+    var btns = document.querySelectorAll('#opciones' + rondaLetra + ' .opcion-btn');
+    for(var i = 0; i < btns.length; i++){
+      btns[i].disabled = true;
+    }
+  }
+
+  // ===== NOTIFICACIÓN DE RACHA =====
+  function mostrarNotificacionRacha(){
+    var rachaEl = document.createElement('div');
+    rachaEl.className = 'racha-indicador';
+    rachaEl.innerHTML = '🔥 ¡RACHA x' + estado.racha + '!<br><span style="font-size:1rem">+5 puntos extra</span>';
+    document.body.appendChild(rachaEl);
+    setTimeout(function(){ rachaEl.remove(); }, 1600);
+  }
+
+  // ===== SIGUIENTE PREGUNTA =====
+  function siguientePregunta(ronda){
+    estado.preguntaActual++;
+
+    if(estado.preguntaActual > 5){
+      // Ronda completada
+      estado.rondasCompletadas[ronda - 1] = true;
+      estado.preguntaActual = 1;
+      actualizarProgreso();
+
+      if(ronda < 4){
+        // Ir a la siguiente ronda
+        var siguientePantalla = 'pantalla' + (ronda + 2); // pantalla3, pantalla4, pantalla5
+        mostrarPantalla(siguientePantalla);
+        cargarPregunta(ronda + 1);
+      } else {
+        // Última ronda completada, ir a resultados
+        estado.rondasCompletadas[3] = true;
+        actualizarProgreso();
+        mostrarResultados();
+      }
+    } else {
+      // Siguiente pregunta en la misma ronda
+      cargarPregunta(ronda);
+    }
+  }
+
+  window.siguientePregunta = siguientePregunta;
+
+  // ===== MOSTRAR RESULTADOS FINALES =====
+  function mostrarResultados(){
+    detenerTemporizador();
+    mostrarPantalla('pantalla6');
+    actualizarProgreso();
+    document.getElementById('progresoFill').style.width = '100%';
+    document.getElementById('progresoPct').textContent = '100%';
+    // Ensure progress never exceeds 100%
+    if(parseInt(document.getElementById('progresoPct').textContent) > 100){
+      document.getElementById('progresoPct').textContent = '100%';
+    }
+
+    var puntaje = estado.puntaje;
+    var aciertos = estado.aciertos;
+    var total = 20;
+    var pctAciertos = Math.round((aciertos / total) * 100);
+
+    // Puntaje
+    document.getElementById('puntajeTotal').textContent = puntaje;
+
+    // Trofeo según desempeño
+    var trofeoEl = document.getElementById('trofeoFinal');
+    if(pctAciertos >= 95) trofeoEl.textContent = '👑';
+    else if(pctAciertos >= 80) trofeoEl.textContent = '🏆';
+    else if(pctAciertos >= 60) trofeoEl.textContent = '🥈';
+    else if(pctAciertos >= 40) trofeoEl.textContent = '🥉';
+    else trofeoEl.textContent = '📚';
+
+    // Frase final
+    var frases = [];
+    if(pctAciertos >= 95) frases = ['¡Eres un campeón absoluto!', '¡Conocimiento de otro nivel!', '¡La Guajira está orgullosa de ti!'];
+    else if(pctAciertos >= 80) frases = ['¡Excelente trabajo!', '¡Casi perfecto!', '¡Eres un genio del saber!'];
+    else if(pctAciertos >= 60) frases = ['¡Buen trabajo! Sigue aprendiendo.', '¡Vas por buen camino!', '¡Con práctica lo harás aún mejor!'];
+    else if(pctAciertos >= 40) frases = ['¡Sigue intentando! Cada día se aprende más.', '¡No te rindas, el conocimiento crece!'];
+    else frases = ['¡Ánimo! Cada pregunta es una oportunidad de aprender.', '¡El saber no ocupa lugar, sigue estudiando!'];
+    document.getElementById('fraseFinal').textContent = frases[Math.floor(Math.random() * frases.length)];
+
+    // Estadísticas
+    document.getElementById('estAciertos').textContent = aciertos + '/' + total;
+    document.getElementById('estRacha').textContent = estado.mejorRacha;
+    document.getElementById('estRapidas').textContent = estado.respuestasRapidas;
+    var tiempoProm = aciertos > 0 ? Math.round(estado.tiempoTotalUsado / total) : 0;
+    document.getElementById('estTiempo').textContent = tiempoProm + 's';
+
+    // Estrellas
+    var estrellasHTML = '';
+    var numEstrellas = pctAciertos >= 95 ? 3 : (pctAciertos >= 70 ? 2 : (pctAciertos >= 40 ? 1 : 0));
+    for(var s = 0; s < numEstrellas; s++){
+      estrellasHTML += '<span class="estrella">⭐</span>';
+    }
+    if(numEstrellas === 0) estrellasHTML = '<span style="color:#808098;font-size:1.5rem">Sin estrellas esta vez. ¡Sigue practicando!</span>';
+    document.getElementById('estrellasDisplay').innerHTML = estrellasHTML;
+
+    // Logros
+    var logros = [
+      {
+        id: 'aprendiz',
+        icono: '🌱',
+        nombre: 'Aprendiz',
+        descripcion: 'Acertar 5 o más preguntas',
+        desbloqueado: aciertos >= 5
+      },
+      {
+        id: 'sabio',
+        icono: '🧠',
+        nombre: 'Sabio',
+        descripcion: 'Completar una ronda perfecta (5/5)',
+        desbloqueado: estado.aciertosPorRonda.some(function(r){ return r >= 5; })
+      },
+      {
+        id: 'genio',
+        icono: '💡',
+        nombre: 'Genio',
+        descripcion: 'Acertar 15 o más preguntas',
+        desbloqueado: aciertos >= 15
+      },
+      {
+        id: 'campeon',
+        icono: '👑',
+        nombre: 'Campeón',
+        descripcion: '¡Responder las 20 preguntas correctamente!',
+        desbloqueado: aciertos >= 20
+      }
+    ];
+
+    var logrosHTML = '';
+    for(var l = 0; l < logros.length; l++){
+      var logro = logros[l];
+      logrosHTML += '<div class="logro-item ' + (logro.desbloqueado ? 'desbloqueado' : 'bloqueado') + '">';
+      logrosHTML += '<span class="logro-icono">' + logro.icono + '</span>';
+      logrosHTML += '<div class="logro-nombre">' + logro.nombre + '</div>';
+      logrosHTML += '<div class="logro-descripcion">' + logro.descripcion + '</div>';
+      logrosHTML += '</div>';
+    }
+    document.getElementById('logrosGrid').innerHTML = logrosHTML;
+
+    // Toast por logros desbloqueados
+    var logrosDesbloqueados = logros.filter(function(l){ return l.desbloqueado; });
+    if(logrosDesbloqueados.length > 0){
+      var nombres = logrosDesbloqueados.map(function(l){ return l.nombre; }).join(', ');
+      mostrarToast('🏅 ¡Logros desbloqueados: ' + nombres + '!', 'dorado');
+      hablar('¡Felicitaciones! Has desbloqueado ' + logrosDesbloqueados.length + ' logros: ' + nombres);
+    }
+
+    // Confeti si >= 80%
+    if(pctAciertos >= 80){
+      lanzarConfetti(['🎉', '🏆', '⭐', '🌟', '✨', '💫', '🎊', '🥇', '👏', '🔥', '💪', '🎯']);
+    }
+
+    // Toast final
+    if(pctAciertos >= 80){
+      mostrarToast('🎉 ¡Increíble! ' + pctAciertos + '% de aciertos', 'exito');
+    }
+  }
+
+  // ===== CONFETI =====
+  function lanzarConfetti(emojis){
+    var container = document.getElementById('confetiContainer');
+    for(var i = 0; i < 50; i++){
+      setTimeout(function(){
+        var c = document.createElement('span');
+        c.className = 'confeti';
+        c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        c.style.left = (Math.random() * 95) + '%';
+        c.style.animationDuration = (2 + Math.random() * 3) + 's';
+        c.style.animationDelay = Math.random() * 0.5 + 's';
+        c.style.fontSize = (1.2 + Math.random() * 2.5) + 'rem';
+        container.appendChild(c);
+        setTimeout(function(){ c.remove(); }, 3500);
+      }, i * 60);
+    }
+  }
+
+  // ===== REINICIAR QUIZ =====
+  function reiniciarQuiz(){
+    estado.rondaActual = 0;
+    estado.preguntaActual = 1;
+    estado.idxGlobal = 0;
+    estado.puntaje = 0;
+    estado.aciertos = 0;
+    estado.racha = 0;
+    estado.mejorRacha = 0;
+    estado.respuestasRapidas = 0;
+    estado.tiempoTotalUsado = 0;
+    estado.rondasCompletadas = [false, false, false, false];
+    estado.aciertosPorRonda = [0, 0, 0, 0];
+    estado.respondida = false;
+    detenerTemporizador();
+    document.getElementById('progresoFill').style.width = '0%';
+    document.getElementById('progresoPct').textContent = '0%';
+    document.getElementById('confetiContainer').innerHTML = '';
+    mostrarPantalla('pantalla1');
+  }
+
+  window.reiniciarQuiz = reiniciarQuiz;
+
+  // ===== INICIALIZAR =====
+  actualizarProgreso();
+
+})();
+</script>
+
+</body>
+</html>

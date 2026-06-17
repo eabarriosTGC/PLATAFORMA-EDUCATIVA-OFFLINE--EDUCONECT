@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conteo Wayuu - EduConect Rural</title>
+    <link rel="stylesheet" href="../estilos-globales.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="fondo-deserto">
+        <div class="sol"></div>
+        <div class="nube nube-1"></div>
+        <div class="nube nube-2"></div>
+    </div>
+
+    <header class="header-modulo">
+        <button class="btn-volver" onclick="location.href='../index.html'">← Volver</button>
+        <h1>🐐 Conteo Wayuu</h1>
+        <p>¿Cuántos hay en la ranchería? ¡Cuenta conmigo!</p>
+    </header>
+
+    <div class="puntaje">
+        <div class="puntaje-item estrellas">⭐ <span id="estrellas">0</span></div>
+        <div class="puntaje-item aciertos">✅ <span id="aciertos">0</span>/<span id="total">5</span></div>
+    </div>
+
+    <div class="barra-progreso">
+        <div class="barra-progreso-fill" id="barra"></div>
+    </div>
+
+    <main class="area-juego" id="area-juego">
+        <div class="escena-conteo" id="escena">
+            <canvas id="canvas-conteo" width="600" height="350"></canvas>
+            <div class="pregunta-conteo" id="pregunta"></div>
+        </div>
+
+        <div class="opciones-conteo" id="opciones"></div>
+
+        <div class="controles-conteo">
+            <button class="btn-primario" id="btn-verificar" disabled>Verificar</button>
+            <button class="btn-secundario" id="btn-siguiente" style="display:none;">Siguiente →</button>
+        </div>
+
+        <div class="mensaje-final" id="mensaje-final" style="display:none;">
+            <h2>🎉 ¡Excelente!</h2>
+            <p>Completaste todas las actividades</p>
+            <button class="btn-primario" onclick="location.reload()">Jugar otra vez</button>
+        </div>
+    </main>
+
+    <footer class="footer-modulo">
+        <p>EduConect Rural — Sin conexión a internet</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

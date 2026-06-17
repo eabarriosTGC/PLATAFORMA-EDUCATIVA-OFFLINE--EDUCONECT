@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CLI-401: Cuidando Nuestra Agua | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E8F5E9,#C8E6C9,#A5D6A7);min-height:100vh}
+.container{max-width:600px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+.header .sub{color:var(--tierra-clara);font-size:0.9rem}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--mar);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:20px;color:var(--tierra)}
+
+.simulador{text-align:center;margin:20px 0}
+
+.molino-wrap{position:relative;display:inline-block;margin:10px 0;cursor:pointer;user-select:none;touch-action:manipulation}
+.molino-wrap:active .molino-aspa{transform:rotate(15deg)}
+.molino-aspa{font-size:5rem;display:inline-block;transition:transform 0.1s;line-height:1}
+.molino-base{font-size:3rem;margin-top:-10px}
+.clicks-hint{color:#999;font-size:0.8rem;margin-top:4px}
+
+.tanque-wrap{background:white;border-radius:20px;padding:20px;box-shadow:var(--sombra);border:2px solid var(--mar);margin:20px 0}
+.tanque-visual{width:120px;height:200px;border:4px solid var(--tierra-clara);border-radius:0 0 12px 12px;margin:10px auto;position:relative;overflow:hidden;background:linear-gradient(180deg,#f0f0f0,#ddd)}
+.tanque-agua{position:absolute;bottom:0;left:0;right:0;height:0%;background:linear-gradient(180deg,rgba(41,182,246,0.8),rgba(2,136,209,0.9));transition:height 0.3s ease}
+.tanque-agua::before{content:'';position:absolute;top:-4px;left:0;right:0;height:8px;background:rgba(255,255,255,0.4);border-radius:50%}
+
+.tanque-label{font-size:1rem;color:var(--tierra);margin-top:8px;font-weight:bold}
+
+.usos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.uso-card{background:white;border:2px solid #ddd;border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.3s;font-family:inherit}
+.uso-card:hover{border-color:var(--mar);transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,0.1)}
+.uso-card .icono{font-size:2.5rem;display:block;margin-bottom:6px}
+.uso-card .nombre{font-size:0.85rem;font-weight:bold;color:var(--tierra)}
+.uso-card .puntos{font-size:0.75rem;color:#999;margin-top:3px}
+.uso-card.usado{opacity:0.5;pointer-events:none;filter:grayscale(0.5)}
+.uso-card.recomendado{border-color:var(--verde);background:#E8F5E9}
+
+.resultado{display:none;text-align:center;padding:30px 20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:5rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@keyframes girar{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes burbuja{0%{transform:translateY(0);opacity:0.8}100%{transform:translateY(-60px);opacity:0}}
+
+@media(max-width:600px){
+  .usos-grid{grid-template-columns:1fr 1fr}
+  .molino-aspa{font-size:4rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🌍 Cuidando Nuestra Agua</h1>
+    <div class="sub">Clima y Ambiente · Gestión del agua en La Guajira</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion" id="instruccion">
+    💨 Toca el <strong>molino de viento (aerobomba)</strong> repetidamente para extraer agua del subsuelo. ¡20 toques llenan el tanque!
+  </div>
+
+  <div class="simulador">
+    <div class="molino-wrap" id="molinoWrap">
+      <div class="molino-aspa" id="molinoAspa">💨</div>
+      <div class="molino-base">🏗️</div>
+      <div class="clicks-hint" id="clicksHint">0 / 20 toques</div>
+    </div>
+
+    <div class="tanque-wrap">
+      <div class="tanque-visual">
+        <div class="tanque-agua" id="tanqueAgua"></div>
+      </div>
+      <div class="tanque-label" id="tanqueLabel">💧 Tanque vacío (0%)</div>
+    </div>
+  </div>
+
+  <div class="instruccion" id="instruccion2" style="display:none">
+    💧 ¡El tanque está lleno! Ahora decide cómo usar el agua de forma responsable:
+  </div>
+
+  <div class="usos-grid" id="usosGrid"></div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">💧</div>
+    <h2>¡Protector del Agua!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Sabes cómo obtener agua y usarla de manera responsable. El agua es vida, no la desperdicies.</p>
+    <div style="margin-top:15px;font-size:2rem">🏅</div>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var nivelAgua = 0;
+var toques = 0;
+var progresoVal = 0;
+var toquesMeta = 20;
+var usosCompletados = 0;
+
+var usos = [
+  {id:'tomar', icono:'🚰', nombre:'Tomar agua', pts:10, desc:'Lo más importante: hidratarse'},
+  {id:'regar', icono:'🌱', nombre:'Regar la huerta', pts:10, desc:'Para cultivar alimentos'},
+  {id:'aseo', icono:'🧽', nombre:'Lavarse las manos', pts:10, desc:'Higiene básica'},
+  {id:'animales', icono:'🐐', nombre:'Dar a los animales', pts:10, desc:'Los chivos también necesitan'},
+  {id:'cocinar', icono:'🍲', nombre:'Cocinar alimentos', pts:10, desc:'Preparar la comida'},
+  {id:'jugar', icono:'💦', nombre:'Jugar con agua', pts:-5, desc:'Desperdiciar agua 🚫'}
+];
+
+function init(){
+  document.getElementById('molinoWrap').addEventListener('click', bombear);
+  cargarProgreso();
+  actualizarTanque();
+}
+
+function bombear(){
+  if(nivelAgua >= 100) return;
+  toques++;
+
+  var aspa = document.getElementById('molinoAspa');
+  aspa.style.transform = 'rotate(' + (toques * 30) + 'deg)';
+
+  nivelAgua = Math.min(100, (toques / toquesMeta) * 100);
+  document.getElementById('clicksHint').textContent = toques + ' / ' + toquesMeta + ' toques';
+
+  actualizarTanque();
+
+  if(nivelAgua >= 100){
+    progresoVal = 50;
+    guardarProgreso();
+    actualizarProgreso();
+    document.getElementById('instruccion').style.display = 'none';
+    document.getElementById('instruccion2').style.display = 'block';
+    document.getElementById('clicksHint').textContent = '✅ ¡Tanque lleno!';
+    mostrarUsos();
+    hablar('¡Tanque lleno! Ahora elige cómo usar el agua de forma responsable.');
+  }
+}
+
+function mostrarUsos(){
+  var grid = document.getElementById('usosGrid');
+  grid.innerHTML = '';
+  usos.forEach(function(u){
+    var card = document.createElement('button');
+    card.className = 'uso-card';
+    card.dataset.id = u.id;
+    card.innerHTML = '<span class="icono">' + u.icono + '</span><span class="nombre">' + u.nombre + '</span><span class="puntos">' + (u.pts > 0 ? '+' : '') + u.pts + ' pts</span>';
+    card.addEventListener('click', function(){ seleccionarUso(u, this); });
+    grid.appendChild(card);
+  });
+}
+
+function seleccionarUso(uso, card){
+  if(card.classList.contains('usado')) return;
+
+  card.classList.add('usado');
+  usosCompletados++;
+
+  if(uso.pts < 0){
+    mostrarToast('🚫 ' + uso.desc + '. El agua no es para jugar en La Guajira, es un tesoro escaso.', 'error');
+    hablar('El agua no es para jugar. En La Guajira el agua escasea y debemos cuidarla.');
+    progresoVal = Math.max(0, progresoVal - 10);
+    guardarProgreso();
+    actualizarProgreso();
+    return;
+  }
+
+  progresoVal = Math.min(100, progresoVal + 10);
+  guardarProgreso();
+  actualizarProgreso();
+
+  mostrarToast('✅ ' + uso.desc, 'exito');
+  hablar('Buena decisión. ' + uso.desc + '. Así cuidas el agua.');
+
+  if(usosCompletados >= 5){
+    setTimeout(function(){
+      document.getElementById('resultado').classList.add('visible');
+      guardarDiario();
+      hablar('¡Felicidades! Eres un protector del agua. Sabes cómo obtenerla y usarla responsablemente.');
+    }, 800);
+  }
+}
+
+function actualizarTanque(){
+  document.getElementById('tanqueAgua').style.height = nivelAgua + '%';
+  var label = document.getElementById('tanqueLabel');
+  if(nivelAgua < 30) label.innerHTML = '💧 Tanque bajo (' + Math.round(nivelAgua) + '%) — Sigue bombeando';
+  else if(nivelAgua < 100) label.innerHTML = '⏳ Llenando... (' + Math.round(nivelAgua) + '%)';
+  else label.innerHTML = '✅ <strong>¡Tanque Lleno!</strong> Elige cómo usar el agua';
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = Math.min(100, progresoVal) + '%';
+  document.getElementById('progresoPct').textContent = Math.min(100, progresoVal) + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('cli401_progreso', progresoVal); } catch(e){}
+}
+
+function cargarProgreso(){
+  try {
+    var saved = parseInt(localStorage.getItem('cli401_progreso')) || 0;
+    progresoVal = saved;
+    if(progresoVal >= 50){
+      nivelAgua = 100;
+      toques = toquesMeta;
+      document.getElementById('clicksHint').textContent = toques + ' / ' + toquesMeta + ' toques';
+      document.getElementById('instruccion').style.display = 'none';
+      document.getElementById('instruccion2').style.display = 'block';
+      mostrarUsos();
+    }
+    actualizarProgreso();
+    actualizarTanque();
+  } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('cli-401', 'modulo_completado', { puntos: progresoVal, estrellas: 3 }, 'Cuidando Nuestra Agua', '🌍');
+    }
+  } catch(e){}
+}
+
+function mostrarToast(msg, tipo){
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function(){
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ toast.remove(); }, 300);
+  }, 3000);
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

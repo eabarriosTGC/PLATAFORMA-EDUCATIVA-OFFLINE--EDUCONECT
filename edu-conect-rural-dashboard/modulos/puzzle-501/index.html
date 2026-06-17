@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>PUZZLE-501: Mapa de La Guajira | EduConect Rural</title>
+<style>
+*{margin:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{background:linear-gradient(135deg,#1a0a2e 0%,#16213e 40%,#0f3460 70%,#1a0a2e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI','Comic Sans MS',sans-serif;padding:10px;overflow-x:hidden}
+.pantalla{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:680px;min-height:95vh}
+.pantalla.activa{display:flex}
+.pantalla.pantalla-juego{justify-content:flex-start;padding-top:10px}
+
+/* ===== BIENVENIDA ===== */
+.bienvenida-card{background:linear-gradient(145deg,#fff9f0,#fff3e0);border-radius:28px;padding:40px 30px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.35);max-width:560px;width:100%}
+.bienvenida-card .icono{font-size:5rem;margin-bottom:10px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.2))}
+.bienvenida-card h1{color:#1a0a2e;font-size:2rem;margin-bottom:8px;font-weight:800}
+.bienvenida-card .sub{color:#8B4513;font-size:1.1rem;margin-bottom:12px;font-weight:600}
+.bienvenida-card .mapa-preview{background:linear-gradient(135deg,#87CEEB,#B0E0E6);border-radius:20px;padding:15px;margin:15px auto;max-width:280px;box-shadow:inset 0 2px 10px rgba(0,0,0,0.1)}
+.bienvenida-card .mapa-preview svg{width:100%;height:auto;display:block}
+.bienvenida-card .niveles{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.bienvenida-card .nivel-btn{padding:14px 24px;border-radius:50px;border:none;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.3s;color:white;min-width:100px;box-shadow:0 6px 20px rgba(0,0,0,0.2)}
+.bienvenida-card .nivel-btn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+.bienvenida-card .nivel-btn:active{transform:scale(0.95)}
+.nivel-btn.n1{background:linear-gradient(135deg,#43A047,#66BB6A)}
+.nivel-btn.n2{background:linear-gradient(135deg,#FB8C00,#FFA726)}
+.nivel-btn.n3{background:linear-gradient(135deg,#E53935,#EF5350)}
+.bienvenida-card .estrellas-row{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.bienvenida-card .estrella-nivel{font-size:1.8rem;opacity:0.3;transition:opacity 0.3s}
+.bienvenida-card .estrella-nivel.ganada{opacity:1}
+.bienvenida-card .volver{display:inline-block;margin-top:22px;padding:10px 28px;background:#1a0a2e;color:white;border-radius:30px;text-decoration:none;font-weight:700;font-size:0.95rem;transition:transform 0.3s}
+.bienvenida-card .volver:hover{transform:scale(1.05)}
+
+/* ===== HUD ===== */
+.hud{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:560px;padding:10px 15px;background:rgba(255,255,255,0.1);border-radius:20px;margin-bottom:12px;backdrop-filter:blur(10px);color:white;flex-wrap:wrap;gap:8px}
+.hud-item{display:flex;align-items:center;gap:6px;font-weight:700;font-size:1rem}
+.hud-item .icono-hud{font-size:1.4rem}
+.hud-timer{display:flex;align-items:center;gap:8px;flex:1;min-width:120px}
+.timer-bar-outer{flex:1;height:14px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;min-width:80px}
+.timer-bar-inner{height:100%;border-radius:10px;transition:width 1s linear,background 0.5s}
+.timer-bar-inner.verde{background:linear-gradient(90deg,#43A047,#66BB6A)}
+.timer-bar-inner.amarillo{background:linear-gradient(90deg,#FDD835,#FB8C00)}
+.timer-bar-inner.rojo{background:linear-gradient(90deg,#E53935,#FF5252)}
+.timer-texto{font-weight:800;font-size:1.1rem;min-width:45px;text-align:right;font-variant-numeric:tabular-nums}
+.btn-hud{padding:8px 18px;border-radius:30px;border:none;font-weight:700;cursor:pointer;font-size:0.9rem;transition:all 0.2s;color:white;white-space:nowrap}
+.btn-hud.salir{background:rgba(255,255,255,0.15)}
+.btn-hud.salir:hover{background:rgba(255,255,255,0.3)}
+.btn-hud.pista{background:linear-gradient(135deg,#7B1FA2,#9C27B0)}
+.btn-hud.pista:hover{transform:scale(1.05)}
+.btn-hud.pista:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+
+/* ===== AREA DE JUEGO ===== */
+.juego-area{display:flex;flex-direction:column;align-items:center;gap:15px;width:100%;max-width:560px}
+.tablero-container{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3);background:rgba(0,0,0,0.15)}
+.tablero-container .tablero-bg{position:absolute;inset:0;opacity:0.12;pointer-events:none}
+.tablero-piezas{position:relative}
+.pieza-board{position:absolute;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
+.pieza-board.colocada{filter:brightness(1.1) drop-shadow(0 0 6px rgba(76,175,80,0.5))}
+.pieza-board.colocada::after{content:'';position:absolute;inset:-3px;border:3px solid #4CAF50;border-radius:4px;animation:snapGlow 0.5s ease-out;pointer-events:none}
+@keyframes snapGlow{0%{border-color:#4CAF50;box-shadow:0 0 20px #4CAF50}100%{border-color:transparent;box-shadow:0 0 0px transparent}}
+
+.piezas-bandeja{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:10px;min-height:80px;background:rgba(255,255,255,0.08);border-radius:16px;align-items:center}
+.pieza-drag{position:relative;cursor:grab;transition:transform 0.2s,box-shadow 0.2s;touch-action:none;z-index:1}
+.pieza-drag:active{cursor:grabbing}
+.pieza-drag.arrastrando{z-index:1000;transform:scale(1.08);box-shadow:0 15px 40px rgba(0,0,0,0.4);filter:brightness(1.15)}
+.pieza-drag.colocada-bandeja{opacity:0.2;pointer-events:none;transform:scale(0.85)}
+.pieza-drag.incorrecta{animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.pieza-drag svg{display:block}
+.pieza-label{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:6px;pointer-events:none;white-space:nowrap}
+
+.msg-nivel{color:white;font-weight:800;font-size:1.1rem;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.resaltado{color:#FFD700}
+
+/* ===== FINAL ===== */
+.final-card{background:linear-gradient(145deg,#1a237e,#283593,#1a237e);border-radius:28px;padding:35px 25px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.4);max-width:560px;width:100%;color:white}
+.final-card .icono-final{font-size:5rem;animation:bounce 0.6s ease infinite alternate}
+@keyframes bounce{0%{transform:translateY(0)}100%{transform:translateY(-15px)}}
+.final-card h1{font-size:2.2rem;margin-bottom:8px;text-shadow:0 4px 15px rgba(255,215,0,0.4)}
+.final-card .puntaje{font-size:3rem;font-weight:900;color:#FFD700;margin:10px 0;text-shadow:0 4px 20px rgba(255,215,0,0.5)}
+.final-card .estrellas-final{font-size:3rem;margin:10px 0}
+.final-card .stats{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin:15px 0}
+.final-card .stat-item{background:rgba(255,255,255,0.1);border-radius:16px;padding:12px 20px;min-width:80px}
+.final-card .stat-valor{font-size:1.6rem;font-weight:900}
+.final-card .stat-label{font-size:0.8rem;opacity:0.7}
+.final-card .mapa-completo{background:linear-gradient(135deg,#87CEEB,#B0E0E6);border-radius:18px;padding:12px;margin:15px auto;max-width:350px}
+.final-card .mapa-completo svg{width:100%;height:auto}
+.final-card .municipios-leyenda{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0}
+.final-card .muni-badge{background:rgba(255,255,255,0.15);border-radius:20px;padding:6px 14px;font-size:0.85rem;font-weight:700}
+.final-card .muni-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.final-card .btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.final-card .btn-final{padding:12px 28px;border-radius:50px;border:none;font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.3s;text-decoration:none}
+.final-card .btn-repetir{background:linear-gradient(135deg,#FF6F00,#FF8F00);color:white}
+.final-card .btn-repetir:hover{transform:scale(1.05)}
+.final-card .btn-menu{background:rgba(255,255,255,0.2);color:white}
+.final-card .btn-menu:hover{background:rgba(255,255,255,0.35)}
+
+/* Confeti */
+.confeti-container{position:fixed;inset:0;pointer-events:none;z-index:9999}
+.confeti-piece{position:absolute;width:12px;height:12px;border-radius:3px;animation:confetiFall linear forwards}
+@keyframes confetiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* Overlay pausa */
+.overlay-pausa{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:5000;backdrop-filter:blur(4px)}
+.overlay-pausa .contenido{background:white;border-radius:24px;padding:35px;text-align:center;max-width:360px}
+.overlay-pausa h2{font-size:1.8rem;color:#1a0a2e;margin-bottom:15px}
+.overlay-pausa .btn-pausa{padding:12px 30px;border-radius:50px;border:none;font-weight:700;font-size:1rem;cursor:pointer;margin:6px;transition:transform 0.2s}
+.overlay-pausa .btn-pausa:hover{transform:scale(1.05)}
+.overlay-pausa .btn-continuar{background:#43A047;color:white}
+.overlay-pausa .btn-abandonar{background:#E53935;color:white}
+
+/* Responsive */
+@media(max-width:500px){
+  .bienvenida-card{padding:25px 15px}
+  .bienvenida-card h1{font-size:1.5rem}
+  .bienvenida-card .nivel-btn{padding:10px 16px;font-size:0.85rem}
+  .hud{padding:8px 10px;gap:4px}
+  .hud-item{font-size:0.8rem}
+  .hud-item .icono-hud{font-size:1.1rem}
+  .timer-texto{font-size:0.9rem}
+  .piezas-bandeja{gap:6px;padding:6px}
+  .msg-nivel{font-size:0.9rem}
+  .final-card{padding:25px 15px}
+  .final-card h1{font-size:1.5rem}
+  .final-card .puntaje{font-size:2rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HIDDEN SVG DEFS ============ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- Clip paths for rectangular pieces will be generated by JS -->
+    <!-- Clip paths for irregular pieces (Nivel 2) will be generated by JS -->
+  </defs>
+</svg>
+
+<!-- ============ PANTALLA 1: BIENVENIDA ============ -->
+<section class="pantalla activa" id="pantalla-bienvenida">
+  <div class="bienvenida-card">
+    <div class="icono">🧩</div>
+    <h1>Arma el Mapa de La Guajira</h1>
+    <p class="sub">Departamento de Colombia — Península Caribe</p>
+    <div class="mapa-preview">
+      <svg viewBox="0 0 400 500" id="mapa-preview-svg" style="width:100%;max-width:260px">
+        <rect width="400" height="500" fill="#87CEEB" rx="8"/>
+        <path d="M80,430 C65,395 55,355 52,310 C49,265 55,225 68,190 C78,160 80,130 95,100 C115,65 145,40 180,25 C210,15 235,22 255,38 C275,55 290,80 300,110 C312,150 322,200 325,250 C328,300 320,345 300,380 C280,410 250,430 210,440 C160,448 115,442 80,430 Z" fill="#D4A76A" stroke="#8B4513" stroke-width="3"/>
+        <ellipse cx="165" cy="140" rx="40" ry="18" fill="#A0855B" opacity="0.7"/>
+        <ellipse cx="180" cy="125" rx="25" ry="12" fill="#B8956C" opacity="0.6"/>
+        <circle cx="95" cy="400" r="5" fill="#E53935"/>
+        <circle cx="110" cy="200" r="5" fill="#E53935"/>
+        <circle cx="170" cy="150" r="5" fill="#E53935"/>
+        <circle cx="280" cy="270" r="5" fill="#E53935"/>
+        <text x="87" y="415" font-size="10" fill="#1a0a2e" font-weight="700">Riohacha</text>
+        <text x="80" y="185" font-size="10" fill="#1a0a2e" font-weight="700">Manaure</text>
+        <text x="135" y="135" font-size="10" fill="#1a0a2e" font-weight="700">Uribia</text>
+        <text x="245" y="260" font-size="10" fill="#1a0a2e" font-weight="700">Maicao</text>
+        <text x="330" y="28" font-size="9" fill="#0D47A1" font-weight="700">Mar Caribe</text>
+        <text x="8" y="490" font-size="8" fill="#333">Escala ~50km</text>
+        <line x1="10" y1="470" x2="110" y2="470" stroke="#333" stroke-width="2"/>
+        <line x1="10" y1="466" x2="10" y2="474" stroke="#333" stroke-width="2"/>
+        <line x1="110" y1="466" x2="110" y2="474" stroke="#333" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="niveles">
+      <button class="nivel-btn n1" onclick="iniciarNivel(1)">🌱 Nivel 1<br><small>9 piezas</small></button>
+      <button class="nivel-btn n2" onclick="iniciarNivel(2)">🌵 Nivel 2<br><small>12 piezas · 2 min</small></button>
+      <button class="nivel-btn n3" onclick="iniciarNivel(3)">🏜️ Nivel 3<br><small>16 piezas · 90 s</small></button>
+    </div>
+    <div class="estrellas-row" id="estrellas-row">
+      <span class="estrella-nivel" id="est-n1" title="Nivel 1">⭐</span>
+      <span class="estrella-nivel" id="est-n2" title="Nivel 2">⭐</span>
+      <span class="estrella-nivel" id="est-n3" title="Nivel 3">⭐</span>
+    </div>
+    <a href="/modulos/" class="volver">← Volver a Módulos</a>
+  </div>
+</section>
+
+<!-- ============ PANTALLA 2-4: JUEGO (reutilizada) ============ -->
+<section class="pantalla pantalla-juego" id="pantalla-juego">
+  <div class="hud">
+    <div class="hud-item"><span class="icono-hud">⭐</span> <span id="hud-estrellas">0</span></div>
+    <div class="hud-item"><span class="icono-hud">💎</span> <span id="hud-puntos">0</span></div>
+    <div class="hud-timer" id="hud-timer-cont">
+      <span class="icono-hud">⏱️</span>
+      <div class="timer-bar-outer"><div class="timer-bar-inner verde" id="timer-bar" style="width:100%"></div></div>
+      <span class="timer-texto" id="timer-texto">--</span>
+    </div>
+    <div class="hud-item"><span class="icono-hud">🧩</span> <span id="hud-colocadas">0</span>/<span id="hud-total">0</span></div>
+    <button class="btn-hud pista" id="btn-pista" onclick="usarPista()">💡 Pista</button>
+    <button class="btn-hud salir" onclick="pausarJuego()">✕</button>
+  </div>
+  <p class="msg-nivel" id="msg-nivel"></p>
+  <div class="juego-area" id="juego-area">
+    <div class="tablero-container" id="tablero-container">
+      <div class="tablero-piezas" id="tablero-piezas"></div>
+    </div>
+    <div class="piezas-bandeja" id="piezas-bandeja"></div>
+  </div>
+</section>
+
+<!-- ============ PANTALLA 5: FINAL ============ -->
+<section class="pantalla" id="pantalla-final">
+  <div class="final-card">
+    <div class="icono-final" id="icono-final">🎉</div>
+    <h1 id="final-titulo">¡Mapa Completo!</h1>
+    <div class="puntaje" id="final-puntaje">0 pts</div>
+    <div class="estrellas-final" id="final-estrellas">⭐⭐⭐</div>
+    <div class="stats">
+      <div class="stat-item"><div class="stat-valor" id="stat-tiempo">0s</div><div class="stat-label">Tiempo</div></div>
+      <div class="stat-item"><div class="stat-valor" id="stat-bonus">+0</div><div class="stat-label">Bonus</div></div>
+      <div class="stat-item"><div class="stat-valor" id="stat-pistas">0</div><div class="stat-label">Pistas</div></div>
+    </div>
+    <div class="mapa-completo">
+      <svg viewBox="0 0 400 500" id="mapa-final-svg" style="width:100%;max-width:320px"></svg>
+    </div>
+    <div class="municipios-leyenda">
+      <span class="muni-badge"><span class="muni-dot" style="background:#E53935"></span>Riohacha · Capital</span>
+      <span class="muni-badge"><span class="muni-dot" style="background:#FF7043"></span>Uribia · Mayor territorio</span>
+      <span class="muni-badge"><span class="muni-dot" style="background:#AB47BC"></span>Maicao · Frontera</span>
+      <span class="muni-badge"><span class="muni-dot" style="background:#42A5F5"></span>Manaure · Sal y mar</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn-final btn-repetir" onclick="repetirNivel()">🔄 Repetir Nivel</button>
+      <button class="btn-final btn-menu" onclick="irMenu()">🏠 Menú Principal</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OVERLAY PAUSA ============ -->
+<div class="overlay-pausa" id="overlay-pausa" style="display:none">
+  <div class="contenido">
+    <h2>⏸️ Juego Pausado</h2>
+    <p style="margin-bottom:18px;color:#666">Tómate un descanso. El temporizador está detenido.</p>
+    <button class="btn-pausa btn-continuar" onclick="reanudarJuego()">▶️ Continuar</button>
+    <button class="btn-pausa btn-abandonar" onclick="abandonarNivel()">🚪 Salir al Menú</button>
+  </div>
+</div>
+
+<!-- ============ CONTENEDOR CONFETI ============ -->
+<div class="confeti-container" id="confeti-container"></div>
+
+<script>
+// ===================== DATOS DEL MAPA =====================
+var MAPA_PATH = 'M80,430 C65,395 55,355 52,310 C49,265 55,225 68,190 C78,160 80,130 95,100 C115,65 145,40 180,25 C210,15 235,22 255,38 C275,55 290,80 300,110 C312,150 322,200 325,250 C328,300 320,345 300,380 C280,410 250,430 210,440 C160,448 115,442 80,430 Z';
+
+var MONTANAS_PATH = 'M140,150 Q160,110 180,125 Q190,100 205,115 Q215,95 195,85';
+var MONTANAS_PATH2 = 'M175,135 Q190,118 200,130';
+
+var MUNICIPIOS = [
+  {id:'riohacha', nombre:'Riohacha', cx:95, cy:405, color:'#E53935', esCapital:true},
+  {id:'manaure', nombre:'Manaure', cx:110, cy:200, color:'#42A5F5', esCapital:false},
+  {id:'uribia', nombre:'Uribia', cx:170, cy:150, color:'#FF7043', esCapital:false},
+  {id:'maicao', nombre:'Maicao', cx:280, cy:275, color:'#AB47BC', esCapital:false}
+];
+
+function generarSVGCompleto(conEtiquetas) {
+  var svg = '';
+  svg += '<rect width="400" height="500" fill="#87CEEB" rx="4"/>';
+  svg += '<path d="' + MAPA_PATH + '" fill="#E8C97A" stroke="#6D4C21" stroke-width="2.8" stroke-linejoin="round"/>';
+  svg += '<path d="' + MONTANAS_PATH + '" fill="none" stroke="#A0855B" stroke-width="3" stroke-linecap="round" opacity="0.8"/>';
+  svg += '<path d="' + MONTANAS_PATH2 + '" fill="none" stroke="#B8956C" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>';
+  for (var i = 0; i < MUNICIPIOS.length; i++) {
+    var m = MUNICIPIOS[i];
+    svg += '<circle cx="' + m.cx + '" cy="' + m.cy + '" r="6" fill="' + m.color + '" stroke="white" stroke-width="1.5"/>';
+    if (conEtiquetas) {
+      var dx = (i === 0 || i === 2) ? -48 : 18;
+      var dy = (i === 1) ? -14 : (i === 2) ? -14 : 14;
+      svg += '<text x="' + (m.cx + dx) + '" y="' + (m.cy + dy) + '" font-size="11" fill="#1a0a2e" font-weight="700" text-anchor="' + ((i===0||i===2)?'end':'start') + '">' + m.nombre + '</text>';
+    }
+  }
+  svg += '<text x="340" y="28" font-size="10" fill="#0D47A1" font-weight="700">Mar Caribe</text>';
+  svg += '<line x1="10" y1="475" x2="110" y2="475" stroke="#333" stroke-width="1.5"/>';
+  svg += '<line x1="10" y1="471" x2="10" y2="479" stroke="#333" stroke-width="1.5"/>';
+  svg += '<line x1="110" y1="471" x2="110" y2="479" stroke="#333" stroke-width="1.5"/>';
+  svg += '<text x="60" y1="480" y="485" font-size="8" fill="#333" text-anchor="middle">~50 km</text>';
+  return svg;
+}
+
+// ===================== ESTADO GLOBAL =====================
+var MAPA_W = 400;
+var MAPA_H = 500;
+var nivelActual = 0;
+var cols = 0;
+var rows = 0;
+var totalPiezas = 0;
+var tiempoTotal = 0;
+var tiempoRestante = 0;
+var timerInterval = null;
+var piezasColocadas = 0;
+var puntajeTotal = 0;
+var estrellasNivel = 0;
+var pistasUsadas = 0;
+var maxPistas = 2;
+var juegoPausado = false;
+var juegoTerminado = false;
+var celdaW = 0;
+var celdaH = 0;
+var tableroPixelW = 0;
+var tableroPixelH = 0;
+var piezasData = [];
+var arrastrando = null;
+var arrastrandoOffsetX = 0;
+var arrastrandoOffsetY = 0;
+var arrastrandoInicioX = 0;
+var arrastrandoInicioY = 0;
+var nivelCompletado = {n1:false, n2:false, n3:false};
+var snapThreshold = 30;
+
+// Cargar progreso guardado
+function cargarProgreso() {
+  try {
+    var guardado = localStorage.getItem('puzzle501_progreso');
+    if (guardado) {
+      var prog = JSON.parse(guardado);
+      if (prog.n1) nivelCompletado.n1 = true;
+      if (prog.n2) nivelCompletado.n2 = true;
+      if (prog.n3) nivelCompletado.n3 = true;
+    }
+  } catch(e) {}
+}
+
+function guardarProgreso() {
+  try {
+    localStorage.setItem('puzzle501_progreso', JSON.stringify({
+      n1: nivelCompletado.n1,
+      n2: nivelCompletado.n2,
+      n3: nivelCompletado.n3
+    }));
+  } catch(e) {}
+}
+
+function actualizarEstrellasMenu() {
+  document.getElementById('est-n1').classList.toggle('ganada', nivelCompletado.n1);
+  document.getElementById('est-n2').classList.toggle('ganada', nivelCompletado.n2);
+  document.getElementById('est-n3').classList.toggle('ganada', nivelCompletado.n3);
+}
+
+// ===================== NAVEGACION =====================
+function mostrarPantalla(id) {
+  var pantallas = document.querySelectorAll('.pantalla');
+  for (var i = 0; i < pantallas.length; i++) {
+    pantallas[i].classList.remove('activa');
+  }
+  document.getElementById(id).classList.add('activa');
+}
+
+function irMenu() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  juegoPausado = false;
+  juegoTerminado = false;
+  document.getElementById('overlay-pausa').style.display = 'none';
+  mostrarPantalla('pantalla-bienvenida');
+  actualizarEstrellasMenu();
+}
+
+// ===================== INICIAR NIVEL =====================
+function iniciarNivel(nivel) {
+  nivelActual = nivel;
+  juegoTerminado = false;
+  juegoPausado = false;
+  piezasColocadas = 0;
+  puntajeTotal = 0;
+  estrellasNivel = 0;
+  pistasUsadas = 0;
+  arrastrando = null;
+  document.getElementById('overlay-pausa').style.display = 'none';
+
+  if (nivel === 1) {
+    cols = 3; rows = 3; tiempoTotal = 0; snapThreshold = 30;
+  } else if (nivel === 2) {
+    cols = 4; rows = 3; tiempoTotal = 120; snapThreshold = 28;
+  } else {
+    cols = 4; rows = 4; tiempoTotal = 90; snapThreshold = 25;
+  }
+  totalPiezas = cols * rows;
+  celdaW = MAPA_W / cols;
+  celdaH = MAPA_H / rows;
+
+  mostrarPantalla('pantalla-juego');
+  document.getElementById('msg-nivel').innerHTML = '<span class="resaltado">Nivel ' + nivel + '</span> — ' + cols + '×' + rows + ' = ' + totalPiezas + ' piezas' + (tiempoTotal > 0 ? ' · ' + formatearTiempo(tiempoTotal) : ' · Sin tiempo');
+  document.getElementById('hud-estrellas').textContent = '0';
+  document.getElementById('hud-puntos').textContent = '0';
+  document.getElementById('hud-colocadas').textContent = '0';
+  document.getElementById('hud-total').textContent = totalPiezas;
+  document.getElementById('btn-pista').disabled = false;
+  document.getElementById('btn-pista').textContent = '💡 Pista (' + (maxPistas - pistasUsadas) + ')';
+
+  // Timer
+  var timerCont = document.getElementById('hud-timer-cont');
+  if (tiempoTotal > 0) {
+    timerCont.style.display = 'flex';
+    tiempoRestante = tiempoTotal;
+    document.getElementById('timer-texto').textContent = formatearTiempo(tiempoRestante);
+    document.getElementById('timer-bar').style.width = '100%';
+    document.getElementById('timer-bar').className = 'timer-bar-inner verde';
+  } else {
+    timerCont.style.display = 'none';
+  }
+
+  construirTablero();
+  generarPiezas();
+  iniciarTimer();
+}
+
+function formatearTiempo(segundos) {
+  var m = Math.floor(segundos / 60);
+  var s = segundos % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// ===================== TIMER =====================
+function iniciarTimer() {
+  clearInterval(timerInterval);
+  if (tiempoTotal <= 0) return;
+  timerInterval = setInterval(function() {
+    if (juegoPausado || juegoTerminado) return;
+    tiempoRestante--;
+    document.getElementById('timer-texto').textContent = formatearTiempo(tiempoRestante);
+    var pct = (tiempoRestante / tiempoTotal) * 100;
+    document.getElementById('timer-bar').style.width = pct + '%';
+    var bar = document.getElementById('timer-bar');
+    if (pct > 50) {
+      bar.className = 'timer-bar-inner verde';
+    } else if (pct > 25) {
+      bar.className = 'timer-bar-inner amarillo';
+    } else {
+      bar.className = 'timer-bar-inner rojo';
+    }
+    if (tiempoRestante <= 0) {
+      clearInterval(timerInterval);
+      juegoTerminado = true;
+      mostrarFinal(false);
+    }
+  }, 1000);
+}
+
+// ===================== PAUSA =====================
+function pausarJuego() {
+  if (juegoTerminado) return;
+  juegoPausado = true;
+  document.getElementById('overlay-pausa').style.display = 'flex';
+}
+
+function reanudarJuego() {
+  juegoPausado = false;
+  document.getElementById('overlay-pausa').style.display = 'none';
+}
+
+function abandonarNivel() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  irMenu();
+}
+
+// ===================== CONSTRUIR TABLERO =====================
+function construirTablero() {
+  var container = document.getElementById('tablero-container');
+  var anchoDisponible = Math.min(window.innerWidth - 30, 500);
+  var altoDisponible = Math.min(window.innerHeight * 0.42, 600);
+  var escalaW = anchoDisponible / MAPA_W;
+  var escalaH = altoDisponible / MAPA_H;
+  var escala = Math.min(escalaW, escalaH);
+  tableroPixelW = Math.floor(MAPA_W * escala);
+  tableroPixelH = Math.floor(MAPA_H * escala);
+
+  container.style.width = tableroPixelW + 'px';
+  container.style.height = tableroPixelH + 'px';
+
+  var tablero = document.getElementById('tablero-piezas');
+  tablero.style.width = tableroPixelW + 'px';
+  tablero.style.height = tableroPixelH + 'px';
+  tablero.innerHTML = '';
+
+  // Silhouette overlay
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var celda = document.createElement('div');
+      celda.style.position = 'absolute';
+      celda.style.left = Math.floor(c * tableroPixelW / cols) + 'px';
+      celda.style.top = Math.floor(r * tableroPixelH / rows) + 'px';
+      celda.style.width = Math.floor(tableroPixelW / cols) + 'px';
+      celda.style.height = Math.floor(tableroPixelH / rows) + 'px';
+      celda.style.border = '2px dashed rgba(255,255,255,0.2)';
+      celda.style.borderRadius = '3px';
+      celda.dataset.col = c;
+      celda.dataset.row = r;
+      tablero.appendChild(celda);
+    }
+  }
+}
+
+// ===================== GENERAR PIEZAS =====================
+function generarClipRectangular(col, row, w, h) {
+  return '<rect x="' + (col * w) + '" y="' + (row * h) + '" width="' + w + '" height="' + h + '" rx="2"/>';
+}
+
+function generarClipIrregular(col, row, cols, rows, w, h) {
+  var tabSize = Math.min(w, h) * 0.22;
+  var tabExt = Math.min(w, h) * 0.14;
+  var x = col * w;
+  var y = row * h;
+
+  // Tab pattern: checkboard-ish
+  var tabRight = (col < cols - 1) && ((row + col) % 2 === 0);
+  var tabBottom = (row < rows - 1) && ((row + col) % 2 === (col % 2));
+
+  // Compensate: if left neighbor has tab, we have a blank
+  var blankLeft = (col > 0) && ((row + (col - 1)) % 2 === 0);
+  var blankTop = (row > 0) && (((row - 1) + col) % 2 === (col % 2));
+
+  var d = 'M ' + x + ',' + y;
+
+  // Top edge
+  if (blankTop) {
+    d += ' L ' + (x + w/2 - tabSize/2) + ',' + y;
+    d += ' C ' + (x + w/2 - tabSize/2) + ',' + (y - tabExt) + ' ' + (x + w/2 + tabSize/2) + ',' + (y - tabExt) + ' ' + (x + w/2 + tabSize/2) + ',' + y;
+  }
+  d += ' L ' + (x + w) + ',' + y;
+
+  // Right edge
+  if (tabRight) {
+    d += ' L ' + (x + w) + ',' + (y + h/2 - tabSize/2);
+    d += ' C ' + (x + w + tabExt) + ',' + (y + h/2 - tabSize/2) + ' ' + (x + w + tabExt) + ',' + (y + h/2 + tabSize/2) + ' ' + (x + w) + ',' + (y + h/2 + tabSize/2);
+  }
+  d += ' L ' + (x + w) + ',' + (y + h);
+
+  // Bottom edge
+  if (tabBottom) {
+    d += ' L ' + (x + w - w/2 + tabSize/2) + ',' + (y + h);
+    d += ' C ' + (x + w - w/2 + tabSize/2) + ',' + (y + h + tabExt) + ' ' + (x + w - w/2 - tabSize/2) + ',' + (y + h + tabExt) + ' ' + (x + w - w/2 - tabSize/2) + ',' + (y + h);
+  }
+  d += ' L ' + x + ',' + (y + h);
+
+  // Left edge
+  if (blankLeft) {
+    d += ' L ' + x + ',' + (y + h - h/2 + tabSize/2);
+    d += ' C ' + (x - tabExt) + ',' + (y + h - h/2 + tabSize/2) + ' ' + (x - tabExt) + ',' + (y + h - h/2 - tabSize/2) + ' ' + x + ',' + (y + h - h/2 - tabSize/2);
+  }
+
+  d += ' Z';
+  return d;
+}
+
+function generarPiezas() {
+  var bandeja = document.getElementById('piezas-bandeja');
+  bandeja.innerHTML = '';
+  piezasData = [];
+
+  var escalaX = tableroPixelW / MAPA_W;
+  var escalaY = tableroPixelH / MAPA_H;
+  var piezaWpx = Math.floor(celdaW * escalaX);
+  var piezaHpx = Math.floor(celdaH * escalaY);
+
+  // Generate all clip paths inside the hidden SVG
+  var defsEl = document.querySelector('svg[width="0"] defs');
+  defsEl.innerHTML = '';
+
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var clipId = 'clip-n' + nivelActual + '-' + c + '-' + r;
+      var clipD;
+      if (nivelActual === 2) {
+        clipD = generarClipIrregular(c, r, cols, rows, celdaW, celdaH);
+      } else {
+        clipD = generarClipRectangular(c, r, celdaW, celdaH);
+      }
+      var clipPathEl = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+      clipPathEl.setAttribute('id', clipId);
+      clipPathEl.innerHTML = clipD;
+      defsEl.appendChild(clipPathEl);
+    }
+  }
+
+  // Create piece data
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      piezasData.push({
+        col: c,
+        row: r,
+        colocada: false,
+        id: 'p' + nivelActual + '-' + c + '-' + r,
+        targetLeft: Math.floor(c * piezaWpx),
+        targetTop: Math.floor(r * piezaHpx),
+        w: piezaWpx,
+        h: piezaHpx,
+        clipId: 'clip-n' + nivelActual + '-' + c + '-' + r
+      });
+    }
+  }
+
+  // Shuffle
+  for (var i = piezasData.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = piezasData[i];
+    piezasData[i] = piezasData[j];
+    piezasData[j] = tmp;
+  }
+
+  // Create DOM elements in bandeja
+  var bandejaWidth = bandeja.offsetWidth || 500;
+  for (var i = 0; i < piezasData.length; i++) {
+    var pd = piezasData[i];
+    var pieza = document.createElement('div');
+    pieza.className = 'pieza-drag';
+    pieza.id = pd.id;
+    pieza.style.width = pd.w + 'px';
+    pieza.style.height = pd.h + 'px';
+    pieza.dataset.index = i;
+    pieza.style.transform = 'rotate(' + ((Math.random() - 0.5) * 15).toFixed(1) + 'deg)';
+
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + MAPA_W + ' ' + MAPA_H);
+    svg.style.position = 'absolute';
+    svg.style.left = '0px';
+    svg.style.top = '0px';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('clip-path', 'url(#' + pd.clipId + ')');
+    g.innerHTML = generarSVGCompleto(false);
+    svg.appendChild(g);
+    pieza.appendChild(svg);
+
+    // Nivel 3: show municipality labels on pieces that contain them
+    if (nivelActual === 3) {
+      for (var mi = 0; mi < MUNICIPIOS.length; mi++) {
+        var m = MUNICIPIOS[mi];
+        var mCol = Math.floor(m.cx / celdaW);
+        var mRow = Math.floor(m.cy / celdaH);
+        if (mCol === pd.col && mRow === pd.row) {
+          var label = document.createElement('div');
+          label.className = 'pieza-label';
+          label.textContent = m.nombre;
+          pieza.appendChild(label);
+          pd.municipio = m.nombre;
+        }
+      }
+    }
+
+    // Touch events
+    pieza.addEventListener('touchstart', function(e) { iniciarArrastre(e, this); }, {passive: false});
+    pieza.addEventListener('touchmove', function(e) { moverArrastre(e, this); }, {passive: false});
+    pieza.addEventListener('touchend', function(e) { soltarArrastre(e, this); });
+
+    // Mouse events
+    pieza.addEventListener('mousedown', function(e) { iniciarArrastre(e, this); });
+    document.addEventListener('mousemove', function(e) {
+      if (arrastrando) moverArrastre(e, arrastrando.elemento);
+    });
+    document.addEventListener('mouseup', function(e) {
+      if (arrastrando) soltarArrastre(e, arrastrando.elemento);
+    });
+
+    bandeja.appendChild(pieza);
+  }
+}
+
+// ===================== DRAG & DROP =====================
+function getPos(e) {
+  if (e.touches && e.touches.length > 0) {
+    return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  }
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
+  }
+  return {x: e.clientX, y: e.clientY};
+}
+
+function iniciarArrastre(e, el) {
+  if (juegoPausado || juegoTerminado) return;
+  var idx = parseInt(el.dataset.index);
+  if (piezasData[idx].colocada) return;
+  e.preventDefault();
+
+  var pos = getPos(e);
+  var rect = el.getBoundingClientRect();
+  arrastrando = {
+    elemento: el,
+    index: idx,
+    offsetX: pos.x - rect.left,
+    offsetY: pos.y - rect.top,
+    inicioX: rect.left,
+    inicioY: rect.top,
+    padreOriginal: el.parentElement
+  };
+
+  el.classList.add('arrastrando');
+  el.style.position = 'fixed';
+  el.style.left = (pos.x - arrastrando.offsetX) + 'px';
+  el.style.top = (pos.y - arrastrando.offsetY) + 'px';
+  el.style.zIndex = '500';
+  el.style.transform = 'scale(1.08)';
+  el.style.margin = '0';
+}
+
+function moverArrastre(e, el) {
+  if (!arrastrando || arrastrando.elemento !== el) return;
+  e.preventDefault();
+  var pos = getPos(e);
+  el.style.left = (pos.x - arrastrando.offsetX) + 'px';
+  el.style.top = (pos.y - arrastrando.offsetY) + 'px';
+}
+
+function soltarArrastre(e, el) {
+  if (!arrastrando) return;
+  var ar = arrastrando;
+  arrastrando = null;
+
+  el.classList.remove('arrastrando');
+  el.style.zIndex = '1';
+
+  var pos = getPos(e);
+  var elRect = el.getBoundingClientRect();
+  var elCX = elRect.left + elRect.width / 2;
+  var elCY = elRect.top + elRect.height / 2;
+
+  var tableroRect = document.getElementById('tablero-piezas').getBoundingClientRect();
+  var pd = piezasData[ar.index];
+
+  // Check if dropped near target on board
+  var targetCX = tableroRect.left + pd.targetLeft + pd.w / 2;
+  var targetCY = tableroRect.top + pd.targetTop + pd.h / 2;
+  var dist = Math.sqrt(Math.pow(elCX - targetCX, 2) + Math.pow(elCY - targetCY, 2));
+
+  if (dist < snapThreshold * (tableroPixelW / MAPA_W) && !pd.colocada) {
+    // Snap!
+    colocarPieza(ar.index, el);
+  } else {
+    // Return to tray
+    devolverPieza(ar.index, el);
+  }
+}
+
+function colocarPieza(idx, el) {
+  var pd = piezasData[idx];
+  pd.colocada = true;
+  piezasColocadas++;
+
+  // Move to board
+  var tablero = document.getElementById('tablero-piezas');
+  el.style.position = 'absolute';
+  el.style.left = pd.targetLeft + 'px';
+  el.style.top = pd.targetTop + 'px';
+  el.style.margin = '0';
+  el.style.transform = 'none';
+  el.classList.add('colocada-bandeja');
+  tablero.appendChild(el);
+
+  // Board visual
+  var boardEl = document.createElement('div');
+  boardEl.className = 'pieza-board colocada';
+  boardEl.style.left = pd.targetLeft + 'px';
+  boardEl.style.top = pd.targetTop + 'px';
+  boardEl.style.width = pd.w + 'px';
+  boardEl.style.height = pd.h + 'px';
+  boardEl.style.background = 'rgba(76,175,80,0.08)';
+  boardEl.style.opacity = '0';
+  tablero.appendChild(boardEl);
+  setTimeout(function() { boardEl.style.opacity = '1'; }, 50);
+
+  // Score
+  var puntosBase = 100;
+  if (tiempoTotal > 0) {
+    var bonus = Math.floor(tiempoRestante / tiempoTotal * 50);
+    puntosBase += bonus;
+  }
+  puntajeTotal += puntosBase;
+  document.getElementById('hud-puntos').textContent = puntajeTotal;
+  document.getElementById('hud-colocadas').textContent = piezasColocadas;
+
+  // Animacion
+  el.style.transition = 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)';
+
+  // Check win
+  if (piezasColocadas >= totalPiezas) {
+    setTimeout(function() { mostrarFinal(true); }, 400);
+  }
+}
+
+function devolverPieza(idx, el) {
+  var pd = piezasData[idx];
+  el.classList.add('incorrecta');
+  el.style.transform = 'rotate(' + ((Math.random() - 0.5) * 15).toFixed(1) + 'deg)';
+  setTimeout(function() {
+    el.classList.remove('incorrecta');
+  }, 400);
+
+  // Return to bandeja
+  var bandeja = document.getElementById('piezas-bandeja');
+  el.style.position = 'relative';
+  el.style.left = 'auto';
+  el.style.top = 'auto';
+  el.style.margin = '0';
+  bandeja.appendChild(el);
+}
+
+// ===================== PISTAS =====================
+function usarPista() {
+  if (juegoPausado || juegoTerminado) return;
+  if (pistasUsadas >= maxPistas) return;
+  pistasUsadas++;
+  document.getElementById('btn-pista').textContent = '💡 Pista (' + (maxPistas - pistasUsadas) + ')';
+  if (pistasUsadas >= maxPistas) {
+    document.getElementById('btn-pista').disabled = true;
+  }
+
+  // Find a random unplaced piece and briefly show its target
+  var noColocadas = [];
+  for (var i = 0; i < piezasData.length; i++) {
+    if (!piezasData[i].colocada) noColocadas.push(i);
+  }
+  if (noColocadas.length === 0) return;
+
+  var idx = noColocadas[Math.floor(Math.random() * noColocadas.length)];
+  var pd = piezasData[idx];
+  var el = document.getElementById(pd.id);
+  if (!el) return;
+
+  // Flash the target position
+  var tablero = document.getElementById('tablero-piezas');
+  var indicador = document.createElement('div');
+  indicador.style.position = 'absolute';
+  indicador.style.left = pd.targetLeft + 'px';
+  indicador.style.top = pd.targetTop + 'px';
+  indicador.style.width = pd.w + 'px';
+  indicador.style.height = pd.h + 'px';
+  indicador.style.border = '3px solid #FFD700';
+  indicador.style.borderRadius = '6px';
+  indicador.style.background = 'rgba(255,215,0,0.15)';
+  indicador.style.animation = 'snapGlow 1.5s ease-out';
+  indicador.style.pointerEvents = 'none';
+  indicador.style.zIndex = '10';
+  tablero.appendChild(indicador);
+
+  // Flash the piece
+  el.style.boxShadow = '0 0 25px #FFD700';
+  el.style.transform = 'scale(1.1)';
+  setTimeout(function() {
+    el.style.boxShadow = '';
+    el.style.transform = 'rotate(' + ((Math.random() - 0.5) * 15).toFixed(1) + 'deg)';
+  }, 1500);
+
+  setTimeout(function() {
+    if (indicador.parentElement) indicador.parentElement.removeChild(indicador);
+  }, 1500);
+
+  // Penalize slightly
+  puntajeTotal = Math.max(0, puntajeTotal - 25);
+  document.getElementById('hud-puntos').textContent = puntajeTotal;
+}
+
+// ===================== FINAL =====================
+function mostrarFinal(completado) {
+  juegoTerminado = true;
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  var tiempoUsado = tiempoTotal > 0 ? (tiempoTotal - tiempoRestante) : 0;
+  var bonusTiempo = 0;
+
+  if (completado) {
+    if (tiempoTotal > 0) {
+      bonusTiempo = Math.floor(tiempoRestante * 3);
+      puntajeTotal += bonusTiempo;
+    }
+
+    // Estrellas: 3 stars for <33% time used, 2 for <66%, 1 otherwise
+    if (tiempoTotal > 0) {
+      var ratio = tiempoUsado / tiempoTotal;
+      if (ratio < 0.33) estrellasNivel = 3;
+      else if (ratio < 0.66) estrellasNivel = 2;
+      else estrellasNivel = 1;
+    } else {
+      estrellasNivel = 3;
+    }
+
+    // Guardar progreso
+    if (nivelActual === 1) nivelCompletado.n1 = true;
+    if (nivelActual === 2) nivelCompletado.n2 = true;
+    if (nivelActual === 3) nivelCompletado.n3 = true;
+    guardarProgreso();
+
+    document.getElementById('final-titulo').textContent = '¡Mapa Completo!';
+    document.getElementById('icono-final').textContent = '🎉';
+  } else {
+    document.getElementById('final-titulo').textContent = '⏰ ¡Se acabó el tiempo!';
+    document.getElementById('icono-final').textContent = '⏰';
+    estrellasNivel = 0;
+  }
+
+  var estrellasStr = '';
+  for (var s = 0; s < 3; s++) {
+    estrellasStr += s < estrellasNivel ? '⭐' : '☆';
+  }
+
+  document.getElementById('final-puntaje').textContent = puntajeTotal + ' pts';
+  document.getElementById('final-estrellas').textContent = estrellasStr;
+  document.getElementById('stat-tiempo').textContent = formatearTiempo(tiempoUsado);
+  document.getElementById('stat-bonus').textContent = '+' + bonusTiempo;
+  document.getElementById('stat-pistas').textContent = pistasUsadas;
+
+  // Render complete map
+  document.getElementById('mapa-final-svg').innerHTML = generarSVGCompleto(true);
+
+  mostrarPantalla('pantalla-final');
+
+  if (completado && estrellasNivel >= 2) {
+    lanzarConfeti();
+  }
+
+  actualizarEstrellasMenu();
+}
+
+function repetirNivel() {
+  iniciarNivel(nivelActual);
+}
+
+// ===================== CONFETI =====================
+function lanzarConfeti() {
+  var container = document.getElementById('confeti-container');
+  var colores = ['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE'];
+  var fragment = document.createDocumentFragment();
+
+  for (var i = 0; i < 120; i++) {
+    var piece = document.createElement('div');
+    piece.className = 'confeti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.top = -(Math.random() * 20 + 5) + '%';
+    piece.style.width = (Math.random() * 10 + 6) + 'px';
+    piece.style.height = (Math.random() * 10 + 6) + 'px';
+    piece.style.background = colores[Math.floor(Math.random() * colores.length)];
+    piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    piece.style.animationDelay = Math.random() * 0.8 + 's';
+    fragment.appendChild(piece);
+  }
+
+  container.appendChild(fragment);
+
+  setTimeout(function() {
+    container.innerHTML = '';
+  }, 4000);
+}
+
+// ===================== INICIALIZACION =====================
+function init() {
+  cargarProgreso();
+  actualizarEstrellasMenu();
+  document.getElementById('mapa-preview-svg').innerHTML = generarSVGCompleto(true);
+}
+
+init();
+</script>
+
+</body>
+</html>

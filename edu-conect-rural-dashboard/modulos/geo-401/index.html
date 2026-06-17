@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GEO-401: Viajero Global | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E8F5E9,#C8E6C9,#A5D6A7);min-height:100vh}
+.container{max-width:700px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--verde);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.mapa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+.continente-btn{background:white;border:3px solid var(--arena-oscura);border-radius:16px;padding:20px 12px;cursor:pointer;transition:all 0.3s;font-family:inherit;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.06);position:relative;overflow:hidden}
+.continente-btn:hover{transform:translateY(-4px);border-color:var(--verde);box-shadow:0 8px 24px rgba(0,0,0,0.12)}
+.continente-btn:active{transform:scale(0.97)}
+.continente-btn .bandera{font-size:3rem;display:block;margin-bottom:6px}
+.continente-btn .nombre{font-size:1rem;font-weight:bold;color:var(--tierra)}
+.continente-btn .dato-breve{font-size:0.75rem;color:#999;margin-top:4px;line-height:1.3}
+.continente-btn.completado{border-color:var(--verde);background:#E8F5E9;cursor:default;opacity:0.85}
+.continente-btn.completado::after{content:'✅';position:absolute;top:6px;right:8px;font-size:1.2rem}
+.continente-btn.completado:hover{transform:none}
+
+.pasaporte{background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:20px;padding:24px;color:white;margin-top:24px;box-shadow:0 8px 24px rgba(108,92,231,0.3)}
+.pasaporte h2{font-size:1.4rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sellos-container{display:flex;gap:10px;flex-wrap:wrap;min-height:60px;background:rgba(255,255,255,0.15);border-radius:14px;padding:14px;margin-top:10px}
+.sello{background:linear-gradient(135deg,#fbc531,#f39c12);color:var(--tierra);padding:8px 16px;border-radius:20px;font-weight:bold;border:2px dashed #e1b12c;transform:rotate(-3deg);font-size:0.95rem;display:flex;align-items:center;gap:6px;animation:popIn 0.3s ease-out;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.sello .check{color:#27ae60}
+.pasaporte .contador-sellos{font-size:0.85rem;opacity:0.8;margin-top:8px}
+
+.mundo-explorado{display:none;text-align:center;padding:20px}
+.mundo-explorado.visible{display:block}
+
+.info-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:20px;padding:24px;max-width:380px;width:90%;z-index:100;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;display:none;animation:popIn 0.3s ease-out}
+.info-modal.visible{display:block}
+.info-modal .modal-emoji{font-size:4rem;margin-bottom:8px}
+.info-modal h3{color:var(--tierra);margin-bottom:6px}
+.info-modal p{color:#666;line-height:1.6;margin-bottom:14px}
+.info-modal .btn-modal{background:var(--verde);color:white;border:none;padding:10px 28px;border-radius:25px;font-size:1rem;cursor:pointer;font-weight:bold;font-family:inherit}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99;display:none}
+.overlay.visible{display:block}
+
+@keyframes popIn{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+@media(max-width:500px){
+  .mapa-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .continente-btn{padding:14px 8px}
+  .continente-btn .bandera{font-size:2.2rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🌎 Viajero Global</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Geografía · Explora los 6 continentes</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🛫 Haz clic en un continente para viajar y aprender un dato curioso. ¡Colecciona los <strong>6 sellos</strong> en tu pasaporte!
+  </div>
+
+  <div class="mapa-grid" id="mapaGrid"></div>
+
+  <div class="pasaporte">
+    <h2>🛂 Mi Pasaporte</h2>
+    <div class="sellos-container" id="sellosContainer">
+      <span style="opacity:0.5;font-size:0.9rem">🌍 Viaja a los continentes para ganar sellos</span>
+    </div>
+    <div class="contador-sellos" id="contadorSellos">0 / 6 sellos</div>
+  </div>
+
+  <div class="mundo-explorado" id="mundoExplorado">
+    <div style="font-size:4rem">🌏</div>
+    <h2 style="color:var(--tierra)">¡Exploraste el mundo entero!</h2>
+    <p style="color:#666;font-size:1.1rem">Conoces los secretos de los 6 continentes.</p>
+    <div style="margin:15px 0;font-size:3rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde)">¡Ciudadano del Mundo!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="info-modal" id="infoModal">
+    <div class="modal-emoji" id="modalEmoji">🌍</div>
+    <h3 id="modalTitulo">Continente</h3>
+    <p id="modalDato">Dato curioso</p>
+    <button class="btn-modal" onclick="cerrarModal()">✅ ¡Sello obtenido!</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var continentes = [
+  {nombre:'América', bandera:'🌎', dato:'Aquí está Colombia, nuestro país. El Amazonas, el río más caudaloso del mundo, atraviesa Sudamérica. 🦜', color:'#2ecc71'},
+  {nombre:'Europa', bandera:'🌍', dato:'Tiene países muy antiguos con castillos medievales. ¡La Torre Eiffel de París tiene 330 metros de altura! 🏰', color:'#3498db'},
+  {nombre:'África', bandera:'🌍', dato:'La cuna de la humanidad. El desierto del Sahara es el más grande del mundo. Aquí viven leones, jirafas y elefantes. 🦁', color:'#e67e22'},
+  {nombre:'Asia', bandera:'🌏', dato:'El continente más grande y poblado. La Muralla China es la estructura más larga construida por humanos. ¡Se ve desde el espacio! 🐼', color:'#e74c3c'},
+  {nombre:'Oceanía', bandera:'🌏', dato:'El continente de las islas. Australia tiene canguros y koalas. La Gran Barrera de Coral es el arrecife más grande del mundo. 🦘', color:'#9b59b6'},
+  {nombre:'Antártida', bandera:'🧊', dato:'El lugar más frío de la Tierra (-89°C). No hay ciudades ni países. Solo viven científicos y pingüinos. 🐧', color:'#1abc9c'}
+];
+
+var sellos = [];
+var progresoVal = 0;
+
+function init(){
+  renderizarMapa();
+  cargarProgreso();
+  actualizarUI();
+}
+
+function renderizarMapa(){
+  var grid = document.getElementById('mapaGrid');
+  grid.innerHTML = '';
+  continentes.forEach(function(c, idx){
+    var btn = document.createElement('button');
+    btn.className = 'continente-btn';
+    btn.dataset.idx = idx;
+    btn.innerHTML = '<span class="bandera">' + c.bandera + '</span><span class="nombre">' + c.nombre + '</span><span class="dato-breve">' + c.dato.split('.')[0] + '.</span>';
+    btn.addEventListener('click', function(){ viajar(idx); });
+    grid.appendChild(btn);
+  });
+}
+
+function viajar(idx){
+  if(sellos.includes(idx)){
+    mostrarToast('🔁 Ya tienes el sello de ' + continentes[idx].nombre + '. ¡Explora otro lugar!', 'info');
+    return;
+  }
+
+  var c = continentes[idx];
+  document.getElementById('overlay').classList.add('visible');
+  document.getElementById('infoModal').classList.add('visible');
+  document.getElementById('modalEmoji').textContent = c.bandera;
+  document.getElementById('modalTitulo').textContent = '🛫 ' + c.nombre;
+  document.getElementById('modalDato').textContent = c.dato;
+
+  sellos.push(idx);
+  actualizarUI();
+  guardarProgreso();
+  hablar('Viajando a ' + c.nombre + '. ' + c.dato);
+}
+
+function cerrarModal(){
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('infoModal').classList.remove('visible');
+
+  progresoVal = Math.min(100, Math.round((sellos.length / continentes.length) * 100));
+  actualizarProgreso();
+
+  if(sellos.length >= continentes.length){
+    document.getElementById('mundoExplorado').classList.add('visible');
+    guardarDiario();
+    hablar('¡Felicidades! Has explorado el mundo entero. Eres un ciudadano global.');
+  }
+}
+
+function actualizarUI(){
+  var container = document.getElementById('sellosContainer');
+  if(sellos.length === 0){
+    container.innerHTML = '<span style="opacity:0.5;font-size:0.9rem">🌍 Viaja a los continentes para ganar sellos</span>';
+  } else {
+    container.innerHTML = '';
+    sellos.sort().forEach(function(idx){
+      var s = document.createElement('div');
+      s.className = 'sello';
+      s.innerHTML = '<span class="check">✅</span> ' + continentes[idx].bandera + ' ' + continentes[idx].nombre;
+      container.appendChild(s);
+    });
+  }
+  document.getElementById('contadorSellos').textContent = sellos.length + ' / ' + continentes.length + ' sellos';
+
+  document.querySelectorAll('.continente-btn').forEach(function(btn){
+    var idx = parseInt(btn.dataset.idx);
+    if(sellos.includes(idx)){
+      btn.classList.add('completado');
+    } else {
+      btn.classList.remove('completado');
+    }
+  });
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progresoVal + '%';
+  document.getElementById('progresoPct').textContent = progresoVal + '%';
+}
+
+function guardarProgreso(){
+  try {
+    localStorage.setItem('geo401_sellos', JSON.stringify(sellos));
+    localStorage.setItem('geo401_progreso', progresoVal);
+  } catch(e){}
+}
+
+function cargarProgreso(){
+  try {
+    var saved = JSON.parse(localStorage.getItem('geo401_sellos'));
+    if(saved && Array.isArray(saved)){
+      sellos = saved;
+      actualizarUI();
+    }
+    var p = parseInt(localStorage.getItem('geo401_progreso')) || 0;
+    progresoVal = p;
+    actualizarProgreso();
+  } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('geo-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Viajero Global', '🌎');
+    }
+  } catch(e){}
+}
+
+function mostrarToast(msg, tipo){
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + tipo;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function(){
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ toast.remove(); }, 300);
+  }, 2500);
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

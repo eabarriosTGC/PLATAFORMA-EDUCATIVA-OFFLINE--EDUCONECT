@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c45a2c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>EduConect Rural — Dashboard</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+</head>
+<body>
+
+  <!-- Hamburger button (mobile) -->
+  <button id="hamburger-btn" aria-label="Menú">☰</button>
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- Sidebar lateral -->
+  <aside id="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <span class="brand-icon">🌵</span>
+      <a href="#dashboard" data-view="dashboard" style="text-decoration:none;color:inherit;flex:1;">
+        <div>
+          <div class="brand-name">EduConect Rural</div>
+          <div class="brand-sub">Plataforma Educativa Offline</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Botón Inicio — fijo, siempre visible -->
+    <a href="#dashboard" data-view="dashboard" class="sidebar-inicio-btn active" id="sidebar-inicio-btn">
+      <span>🏠</span>
+      <span>Inicio</span>
+    </a>
+
+    <!-- Sección: Navegación Escolar -->
+    <div class="sidebar-section">
+      <div class="sidebar-subsection-title">APRENDIZAJE (Ley 115)</div>
+
+      <a href="/modulos/index.html" class="sidebar-item">
+        <span class="sidebar-item-icon">🎮</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Módulos Interactivos</span>
+          <span class="sidebar-item-desc" id="sidebar-modulos-count">46 juegos y lecciones</span>
+        </div>
+      </a>
+
+      <a href="#categoria" data-cat="Ciencias y Naturaleza" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🔬</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Ciencias y Naturaleza</span>
+          <span class="sidebar-item-desc">Naturales, Ambiental, Física, Química</span>
+        </div>
+        <span class="nav-badge" data-cat="Ciencias y Naturaleza">0</span>
+      </a>
+
+      <a href="#categoria" data-cat="Comunidad y Sociedad" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">👥</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Comunidad y Sociedad</span>
+          <span class="sidebar-item-desc">Sociales, Historia, Geografía, Ética</span>
+        </div>
+        <span class="nav-badge" data-cat="Comunidad y Sociedad">0</span>
+      </a>
+
+      <a href="#categoria" data-cat="Lenguajes" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">📝</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Lenguajes</span>
+          <span class="sidebar-item-desc">Castellano, Inglés, Wayuunaiki</span>
+        </div>
+        <span class="nav-badge" data-cat="Lenguajes">0</span>
+      </a>
+
+      <a href="#categoria" data-cat="Lógica" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🧮</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Lógica</span>
+          <span class="sidebar-item-desc">Matemáticas, Geometría, Álgebra</span>
+        </div>
+        <span class="nav-badge" data-cat="Lógica">0</span>
+      </a>
+
+      <a href="#categoria" data-cat="Cuerpo y Expresión" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🏃</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Cuerpo y Expresión</span>
+          <span class="sidebar-item-desc">Artística, Educación Física</span>
+        </div>
+        <span class="nav-badge" data-cat="Cuerpo y Expresión">0</span>
+      </a>
+
+      <a href="#categoria" data-cat="Tecnología" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">💻</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Tecnología</span>
+          <span class="sidebar-item-desc">Informática, Digital, Programación</span>
+        </div>
+        <span class="nav-badge" data-cat="Tecnología">0</span>
+      </a>
+    </div>
+
+    <!-- Sección: Proyectos -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">PROYECTOS</div>
+      <a href="#categoria" data-cat="Transversales" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🔄</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Transversales</span>
+          <span class="sidebar-item-desc">Educación Sexual, Ambiental, Paz</span>
+        </div>
+        <span class="nav-badge" data-cat="Transversales">0</span>
+      </a>
+    </div>
+
+    <!-- Sección: Recursos Extra -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">RECURSOS EXTRA</div>
+
+      <a href="#biblioteca" data-view="biblioteca" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">📚</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Biblioteca Digital</span>
+          <span class="sidebar-item-desc">PDFs y libros descargables</span>
+        </div>
+        <span class="nav-badge" id="badge-biblioteca">0</span>
+      </a>
+
+      <a href="#youtube" data-view="youtube" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">📺</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Videos Descargados</span>
+          <span class="sidebar-item-desc">Videos educativos offline</span>
+        </div>
+        <span class="nav-badge" id="badge-videos">0</span>
+      </a>
+
+      <a href="#wikipedia" data-view="wikipedia" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🌐</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Wikipedia Offline</span>
+          <span class="sidebar-item-desc">Enciclopedia libre sin internet</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Sección: Gestión Docente -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">GESTIÓN DOCENTE</div>
+      <a href="#profesores" data-view="profesores" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">👨‍🏫</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Panel de Profesores</span>
+          <span class="sidebar-item-desc">Estadísticas, progreso, gestión</span>
+        </div>
+      </a>
+      <a href="#progreso" data-view="progreso" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">📊</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Mi Progreso</span>
+          <span class="sidebar-item-desc">Avance personal y logros</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Footer con toggle -->
+    <div class="sidebar-footer">
+      <label class="toggle-rol" id="toggle-rol">
+        <span>👤 Estudiante</span>
+        <input type="checkbox" id="rol-checkbox">
+        <span class="toggle-track"></span>
+        <span>Docente 👨‍🏫</span>
+      </label>
+    </div>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main id="main-content">
+    <!-- Header con saludo + búsqueda + estado conexión -->
+    <header id="header">
+      <span class="header-greeting">
+        <span class="wave-emoji">👋</span>
+        <span id="greeting-text">¡Hola, Estudiante!</span>
+      </span>
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="search-input" placeholder="Buscar cursos, libros, videos..." autocomplete="off">
+        <div class="search-dropdown" id="search-dropdown"></div>
+      </div>
+      <span class="conn-badge" id="conn-badge">✅ Servidor Local</span>
+    </header>
+
+    <!-- Contenedor dinámico de vistas -->
+    <div id="view-container">
+      <!-- Vista dashboard (default) -->
+      <!-- Vista Módulos Interactivos -->
+      <section id="view-modulos" class="view-section view-hidden">
+        <div class="section-title">🎮 Módulos Interactivos</div>
+        <div class="modulos-grid" id="modulos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;"></div>
+        <div class="empty-state" id="modulos-empty" style="display:none;">No se encontraron módulos.</div>
+        <div id="modulos-loading" style="text-align:center;padding:48px;display:none;">
+          <div style="font-size:2rem;animation:spin 1s linear infinite;">⏳</div>
+          <p style="color:var(--text-muted);">Cargando módulos...</p>
+        </div>
+      </section>
+
+      <section id="view-dashboard" class="view-section view-hidden">
+        <!-- Acceso Rápido -->
+        <section id="quick-access">
+          <div class="section-title">⚡ Acceso Rápido</div>
+          <div class="quick-access-grid">
+            <div class="qa-card qa-cursos card-clickable" data-view="cursos">
+              <div class="qa-icon">🎓</div>
+              <div class="qa-info">
+                <div class="qa-label">Mis Clases</div>
+                <div class="qa-value" id="qa-cursos-count">0</div>
+              </div>
+              <span class="qa-arrow">→</span>
+            </div>
+            <div class="qa-card qa-biblioteca card-clickable" data-view="biblioteca">
+              <div class="qa-icon">📖</div>
+              <div class="qa-info">
+                <div class="qa-label">Biblioteca</div>
+                <div class="qa-value" id="qa-biblioteca-count">0</div>
+              </div>
+              <span class="qa-arrow">→</span>
+            </div>
+            <div class="qa-card qa-progreso card-clickable" data-view="progreso" id="qa-progreso-card">
+              <div class="qa-icon">💾</div>
+              <div class="qa-info">
+                <div class="qa-label">Progreso Guardado</div>
+                <div class="qa-value" id="qa-progreso-pct">Tu avance y actividades</div>
+                <div class="progress-bar-wrap" style="margin-top:6px;">
+                  <div class="progress-bar-fill" id="qa-progreso-bar" style="width:0%;"></div>
+                </div>
+              </div>
+              <span class="qa-arrow">→</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Biblioteca preview -->
+        <section id="biblioteca-preview-section" style="margin-top:32px;">
+          <div style="display:flex;align-items:center;margin-bottom:16px;">
+            <div class="section-title" style="margin-bottom:0;">📖 Biblioteca Digital</div>
+            <a class="view-all-link" data-view="biblioteca" href="#biblioteca" style="margin-left:auto;">Ver todos →</a>
+          </div>
+          <div class="libro-grid" id="biblioteca-preview-grid"></div>
+        </section>
+      </section>
+
+      <!-- Vista cursos -->
+      <section id="view-cursos" class="view-section view-hidden">
+        <div class="section-title">📚 Todos los Cursos</div>
+        <div class="filters-bar" id="cursos-filters"></div>
+        <div class="curso-grid" id="cursos-grid"></div>
+      </section>
+
+      <!-- Vista biblioteca -->
+      <section id="view-biblioteca" class="view-section view-hidden">
+        <div class="section-title">📖 Biblioteca Digital</div>
+        <div class="filters-bar" id="biblioteca-filters">
+          <button class="filter-btn active" data-filter="todos">Todos</button>
+          <button class="filter-btn" data-filter="Wayuu">🌵 Wayuu</button>
+          <button class="filter-btn" data-filter="Cuento">📘 Cuentos</button>
+          <span class="filter-stats" id="biblioteca-stats"></span>
+        </div>
+        <div class="libro-grid" id="biblioteca-grid"></div>
+      </section>
+
+      <!-- Vista progreso -->
+      <section id="view-progreso" class="view-section view-hidden">
+        <div class="section-title">📊 Mi Progreso</div>
+        <div class="stats-grid" id="progreso-stats">
+          <div class="stat-card"><div class="stat-value" id="stat-iniciados">0</div><div class="stat-label">Cursos Iniciados</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-completados">0</div><div class="stat-label">Completados</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-promedio">0%</div><div class="stat-label">Promedio</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Cursos</div></div>
+        </div>
+        <div class="progreso-list" id="progreso-list"></div>
+        <div class="empty-state" id="progreso-empty" style="display:none;">Aún no tienes progreso guardado. ¡Empieza un curso!</div>
+      </section>
+
+      <!-- Vista Videos Descargados -->
+      <section id="view-youtube" class="view-section view-hidden">
+        <div class="section-title">📺 Videos Descargados</div>
+        <div class="video-grid" id="videos-grid"></div>
+        <div class="empty-state" id="videos-empty" style="display:none;">No hay videos descargados. Usá el panel de administración para descargar videos educativos.</div>
+      </section>
+
+      <!-- Vista Panel de Profesores -->
+      <section id="view-profesores" class="view-section view-hidden">
+        <div class="section-title">👨‍🏫 Panel de Profesores</div>
+        <div class="empty-state" style="padding:48px 24px;text-align:center;">
+          <div style="font-size:3rem;margin-bottom:16px;">👨‍🏫</div>
+          <p style="font-size:1.1rem;color:var(--text);margin-bottom:8px;">Accede como Docente para ver estadísticas</p>
+          <p style="font-size:0.85rem;color:var(--text-muted);">Activa el modo Docente en el panel lateral para ver el progreso de tus estudiantes.</p>
+        </div>
+      </section>
+
+      <!-- Vista Wikipedia Offline -->
+      <section id="view-wikipedia" class="view-section view-hidden">
+        <div class="section-title">🌐 Wikipedia Offline</div>
+        <!-- Buscador -->
+        <div style="position:relative;margin-bottom:16px;">
+          <input type="text" id="wiki-search-input" placeholder="Buscar en Wikipedia (ej: Colombia, Agricultura, Ciencia)..."
+            style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:1rem;"
+            autocomplete="off">
+          <div id="wiki-search-results" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:320px;overflow-y:auto;z-index:10;display:none;"></div>
+        </div>
+        <!-- Selector de ZIM -->
+        <div id="wiki-zim-selector" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"></div>
+        <!-- Visor de artículo -->
+        <div id="wiki-article-container">
+          <div class="empty-state" id="wiki-empty" style="padding:48px 24px;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:16px;">🌐</div>
+            <p style="font-size:1.1rem;color:var(--text);margin-bottom:8px;">Wikipedia Offline</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);">Busca artículos de la enciclopedia libre. Todo el contenido funciona sin conexión a internet.</p>
+          </div>
+        </div>
+        <!-- Loading -->
+        <div id="wiki-loading" style="display:none;text-align:center;padding:48px;">
+          <div style="font-size:2rem;animation:spin 1s linear infinite;">⏳</div>
+          <p style="color:var(--text-muted);">Cargando artículo...</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="app-footer">EduConect Rural — Educación Offline para La Guajira 🌵</footer>
+  </main>
+
+  <!-- Overlays / Modals -->
+  <!-- Video Player Modal -->
+  <div class="modal-overlay" id="video-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="video-modal-title">Reproduciendo video</span>
+        <button class="modal-close" id="video-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="video-modal-body">
+        <div class="video-continue-banner" id="video-continue-banner" style="display:none;"></div>
+        <video id="video-player-element" controls playsinline controlsList="nodownload" preload="metadata"></video>
+        <div class="video-modal-info" id="video-modal-info" style="display:none;padding:12px 0 0;">
+          <div class="video-modal-meta" id="video-modal-meta" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;"></div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="video-progress-fill" style="width:0%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Curso Viewer Modal -->
+  <div class="modal-overlay" id="curso-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="curso-modal-title">Visor de Curso</span>
+        <button class="modal-close" id="curso-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="curso-modal-body">
+        <iframe id="curso-iframe" src="" allowfullscreen></iframe>
+      </div>
+      <div class="modal-footer" id="curso-modal-footer">
+        <div class="curso-nav" id="curso-nav" style="display:none;">
+          <button class="modal-btn modal-btn-secondary" id="curso-nav-prev">◀ Anterior</button>
+          <span style="margin:0 8px;font-size:0.85rem;">Pág.</span>
+          <input type="number" class="curso-page-input" id="curso-page-input" value="1" min="1">
+          <span style="font-size:0.85rem;" id="curso-page-total">/ 1</span>
+          <button class="modal-btn modal-btn-secondary" id="curso-nav-next">Siguiente ▶</button>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="progress-bar-wrap" style="width:120px;margin-right:12px;" id="curso-progress-wrap">
+          <div class="progress-bar-fill" id="curso-progress-fill" style="width:0%;"></div>
+        </div>
+        <span id="curso-progress-pct" style="font-size:0.8rem;color:var(--accent);margin-right:8px;">0%</span>
+        <button class="modal-btn modal-btn-success" id="curso-btn-completar">✓ Marcar completado</button>
+        <button class="modal-btn modal-btn-secondary" id="curso-modal-close-btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmación Continuar Modal -->
+  <div class="modal-overlay" id="confirm-continuar-modal">
+    <div class="modal confirm-modal">
+      <div class="modal-header">
+        <span class="modal-title">¿Continuar donde lo dejaste?</span>
+        <button class="modal-close" id="confirm-continuar-close">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px 20px;">
+        <p id="confirm-continuar-text" style="font-size:1rem;margin-bottom:20px;"></p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="modal-btn modal-btn-primary" id="confirm-continuar-btn">Continuar desde ahí</button>
+          <button class="modal-btn modal-btn-secondary" id="confirm-reiniciar-btn">Empezar de nuevo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libro Viewer Modal -->
+  <div class="modal-overlay" id="libro-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="libro-modal-title">Visor de Libro</span>
+        <button class="modal-close" id="libro-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="libro-modal-body">
+        <div class="libro-wayuu-banner" id="libro-wayuu-banner" style="display:none;">🌵 Este libro contiene contenido en Wayuunaiki</div>
+        <iframe id="libro-iframe" src="" allowfullscreen></iframe>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" id="libro-btn-descargar">📥 Descargar PDF</button>
+        <button class="modal-btn modal-btn-secondary" id="libro-modal-close-btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/state.js"></script>
+  <script src="/static/js/buscador.js"></script>
+  <script src="/static/js/video-player.js"></script>
+  <script src="/static/js/curso-viewer.js"></script>
+  <script src="/static/js/libro-viewer.js"></script>
+  <script src="/static/js/progreso-dashboard.js"></script>
+  <script src="/static/js/sidebar-badges.js"></script>
+  <script src="/static/js/wikipedia-viewer.js"></script>
+  <script src="/static/js/modulos-viewer.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+
+</body>
+</html>

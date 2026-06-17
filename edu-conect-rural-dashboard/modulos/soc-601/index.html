@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SOC-601: Mi Territorio — La Guajira | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root{--tierra: #3D2B1F;--tierra-clara: #8B5E3C}
+.mapa-contenedor{
+  background:var(--blanco);border-radius:var(--radio);border:var(--borde);
+  padding:10px;box-shadow:var(--sombra);margin:10px 0;overflow:hidden;
+}
+.mapa-contenedor svg{width:100%;height:auto;display:block}
+.mapa-lugar{cursor:pointer;transition:all 0.3s}
+.mapa-lugar .punto{transition:all 0.3s;cursor:pointer}
+.mapa-lugar .punto:hover{
+  r:10;fill:var(--atardecer);stroke:var(--tierra);stroke-width:3;
+  filter:drop-shadow(0 0 8px rgba(224,122,95,0.6));
+}
+.mapa-lugar .etiqueta-mapa{pointer-events:none}
+.mapa-lugar.seleccionado .punto{r:10;fill:var(--verde);stroke:var(--verde-oscuro);stroke-width:3}
+.mapa-lugar.incorrecto .punto{
+  r:10;fill:var(--rojo);stroke:var(--rojo);stroke-width:3;
+  animation:shake 0.4s ease-out;
+}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.mapa-marina{fill:url(#marGradJ);opacity:0.12}
+.mapa-tierra{fill:var(--arena);stroke:var(--arena-oscura);stroke-width:1.5}
+.juego-area{text-align:center}
+.pista-card{
+  background:linear-gradient(135deg,var(--blanco),var(--arena));
+  border:2px solid var(--wayuu-oro);border-radius:var(--radio);
+  padding:20px;margin:12px 0;min-height:100px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.pista-card .pista-icono{font-size:2.5rem;margin-bottom:6px}
+.pista-card .pista-texto{
+  font-size:1.2rem;font-weight:bold;color:var(--tierra);
+  line-height:1.5;max-width:500px;
+}
+.pista-card .pista-wayuu{
+  font-size:0.95rem;color:var(--atardecer);font-style:italic;margin-top:4px;
+}
+.pista-numero{
+  display:inline-block;background:var(--wayuu-oro);color:var(--tierra);
+  padding:4px 14px;border-radius:12px;font-weight:bold;font-size:0.9rem;margin-bottom:8px;
+}
+.nivel-header{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:8px;margin-bottom:10px;
+}
+.nivel-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--atardecer);color:white;padding:5px 16px;
+  border-radius:15px;font-weight:bold;font-size:1rem;
+}
+.puntos-vivos{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--wayuu-oro);color:var(--tierra);padding:5px 14px;
+  border-radius:15px;font-weight:bold;font-size:1rem;
+}
+.brujula-wrap{display:flex;justify-content:center;margin:8px 0}
+.brujula{
+  display:inline-grid;grid-template-columns:50px 50px 50px;
+  grid-template-rows:50px 50px 50px;gap:2px;
+  background:var(--arena);padding:4px;border-radius:12px;border:2px solid var(--arena-oscura);
+}
+.brujula-cell{
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:0.8rem;background:var(--blanco);border-radius:6px;
+}
+.brujula-cell.norte{background:var(--atardecer);color:white}
+.brujula-cell.centro{background:var(--wayuu-oro);color:var(--tierra);font-size:0.7rem}
+.estrellas-nivel{display:flex;justify-content:center;gap:6px;margin:8px 0;flex-wrap:wrap}
+.estrella-obtenida{font-size:2.2rem;animation:popIn 0.3s ease-out}
+.estrella-vacia{font-size:2.2rem;opacity:0.2;filter:grayscale(1)}
+@media(max-width:500px){
+  .pista-card .pista-texto{font-size:1rem}
+  .brujula{grid-template-columns:36px 36px 36px;grid-template-rows:36px 36px 36px}
+  .brujula-cell{font-size:0.7rem}
+  .nivel-badge,.puntos-vivos{font-size:0.85rem;padding:4px 12px}
+  .estrella-obtenida,.estrella-vacia{font-size:1.6rem}
+}
+@media(max-width:400px){
+  .mapa-contenedor{padding:5px}
+  .mapa-contenedor svg .etiqueta-mapa{font-size:7px!important}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>🗺️ Mi Territorio: La Guajira</h1>
+  <span class="grado">SOC-601 · 5° Grado · Ciencias Sociales</span>
+  <div class="deco-line">🧭🏜️🌊🏔️🧂⭐</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+  <span class="progreso-label">📊 Progreso</span>
+  <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+  <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 1: BIENVENIDA                        -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card activo" id="pantalla1">
+  <h2>🌎 Bienvenido a tu territorio</h2>
+  <div style="text-align:center;padding:10px">
+    <div style="font-size:4rem;animation:brillar 2s ease-in-out infinite">🗺️</div>
+    <p style="font-size:1.3rem;font-weight:bold;color:var(--tierra);margin:12px 0;line-height:1.5">
+      ¡Explora La Guajira y sus lugares sagrados!
+    </p>
+    <p style="color:var(--tierra-clara);margin:8px 0;max-width:550px;margin-left:auto;margin-right:auto">
+      La Guajira es un territorio lleno de historia, cultura y paisajes únicos. Desde las playas de Riohacha hasta las montañas sagradas de Macuira, pasando por los salares de Manaure y el Cabo de la Vela. Los wayuu llaman a esta tierra <strong>Wüinpümüin</strong> — el territorio del agua y la sal.
+    </p>
+    <div class="mapa-contenedor" style="max-width:500px;margin:15px auto">
+      <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="marGradB" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0288D1"/><stop offset="100%" stop-color="#4A90D9"/></linearGradient>
+          <filter id="sombraB"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.2"/></filter>
+        </defs>
+        <rect x="0" y="0" width="500" height="580" fill="url(#marGradB)" opacity="0.12"/>
+        <path class="mapa-tierra" d="M60,500 L50,470 Q40,440 45,410 L40,380 Q30,350 35,320 L30,290 Q25,260 35,230 L40,200 Q45,175 60,155 L75,135 Q90,115 110,100 L130,85 Q150,70 170,60 L190,52 Q210,46 230,48 L250,52 Q270,58 285,65 L300,75 Q315,85 325,100 L335,115 Q345,130 350,150 L355,170 Q360,190 365,210 L370,230 Q375,255 378,280 L382,310 Q385,340 390,370 L395,400 Q398,430 390,460 L380,490 Q370,515 350,530 L330,540 Q310,548 290,550 L265,552 Q240,555 215,550 L190,548 Q160,540 130,530 L100,520 Q80,512 60,500 Z" filter="url(#sombraB)"/>
+        <text x="190" y="260" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">ALTA GUAJIRA</text>
+        <text x="200" y="440" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">MEDIA GUAJIRA</text>
+        <ellipse cx="310" cy="180" rx="25" ry="16" fill="var(--cardon)" opacity="0.25"/>
+        <g transform="translate(440,55)">
+          <circle cx="0" cy="0" r="22" fill="white" stroke="var(--arena-oscura)" stroke-width="1"/>
+          <text x="0" y="-16" text-anchor="middle" font-size="9" fill="var(--atardecer)" font-weight="bold">N</text>
+          <text x="0" y="24" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">S</text>
+          <text x="-18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">O</text>
+          <text x="18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">E</text>
+          <polygon points="0,-18 -4,-4 4,-4" fill="var(--atardecer)"/>
+        </g>
+        <g class="mapa-lugar"><circle cx="95" cy="470" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="95" y="488" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Riohacha</text></g>
+        <g class="mapa-lugar"><circle cx="180" cy="255" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="180" y="273" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Uribia</text></g>
+        <g class="mapa-lugar"><circle cx="350" cy="450" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="350" y="468" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Maicao</text></g>
+        <g class="mapa-lugar"><circle cx="110" cy="310" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="110" y="328" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Manaure</text></g>
+        <g class="mapa-lugar"><circle cx="75" cy="140" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="75" y="130" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Cabo de la Vela</text></g>
+        <g class="mapa-lugar"><circle cx="310" cy="180" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="310" y="168" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Macuira</text></g>
+        <g class="mapa-lugar"><circle cx="180" cy="125" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="180" y="143" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Bahía Portete</text></g>
+        <g class="mapa-lugar"><circle cx="390" cy="380" r="6" fill="var(--atardecer)" stroke="white" stroke-width="2"/><text x="390" y="398" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Paraguachón</text></g>
+        <text x="65" y="48" font-size="11" fill="var(--mar)" font-weight="bold" opacity="0.7">Mar Caribe</text>
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:8px 0">
+      <span class="eco-badge">🏙️ Riohacha</span>
+      <span class="eco-badge">🏕️ Uribia</span>
+      <span class="eco-badge">🏬 Maicao</span>
+      <span class="eco-badge">🧂 Manaure</span>
+      <span class="eco-badge">🏖️ Cabo de la Vela</span>
+      <span class="eco-badge">🏔️ Macuira</span>
+      <span class="eco-badge">⛵ Bahía Portete</span>
+    </div>
+    <p style="color:var(--tierra-clara);font-size:0.9rem;margin-top:10px"><strong>3 niveles</strong> · 8 lugares · Pistas wayuu · Estrellas</p>
+    <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primario" id="btnComenzar" style="font-size:1.1rem;padding:12px 30px">🧭 ¡Empezar juego!</button>
+      <button class="btn btn-azul" onclick="hablar('La Guajira es un territorio lleno de historia. Explora sus lugares sagrados mientras aprendes sobre la cultura wayuu.')">🔊 Escuchar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 2: NIVEL 1                           -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla2" style="display:none">
+  <h2>🌵 Nivel 1: Conoce tu territorio <span class="etiqueta-check" id="check1" style="display:none">✓</span></h2>
+  <div class="nivel-header">
+    <span class="nivel-badge">🥇 Nivel 1 · 4 lugares</span>
+    <span class="puntos-vivos">⭐ Puntos: <span id="puntosL1">0</span></span>
+  </div>
+  <div class="brujula-wrap">
+    <div class="brujula">
+      <div class="brujula-cell norte">N</div><div class="brujula-cell"></div><div class="brujula-cell"></div>
+      <div class="brujula-cell"></div><div class="brujula-cell centro">🧭</div><div class="brujula-cell"></div>
+      <div class="brujula-cell"></div><div class="brujula-cell">S</div><div class="brujula-cell"></div>
+    </div>
+  </div>
+  <div class="juego-area">
+    <div class="pista-card" id="pistaCardL1">
+      <div class="pista-numero" id="pistaNumL1">📍 Lugar 1 de 4</div>
+      <div class="pista-icono" id="pistaIconoL1">🗺️</div>
+      <div class="pista-texto" id="pistaTextoL1">¡Listo para comenzar!</div>
+      <div class="pista-wayuu" id="pistaWayuuL1" style="display:none"></div>
+    </div>
+    <div style="margin:4px 0;font-size:0.85rem;color:var(--tierra-clara)">🖱️ Haz clic en el lugar correcto del mapa</div>
+    <div class="mapa-contenedor">
+      <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" id="svgN1">
+        <defs>
+          <linearGradient id="mg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0288D1"/><stop offset="100%" stop-color="#4A90D9"/></linearGradient>
+          <filter id="sf1"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.2"/></filter>
+        </defs>
+        <rect x="0" y="0" width="500" height="580" fill="url(#mg1)" opacity="0.12"/>
+        <path class="mapa-tierra" d="M60,500 L50,470 Q40,440 45,410 L40,380 Q30,350 35,320 L30,290 Q25,260 35,230 L40,200 Q45,175 60,155 L75,135 Q90,115 110,100 L130,85 Q150,70 170,60 L190,52 Q210,46 230,48 L250,52 Q270,58 285,65 L300,75 Q315,85 325,100 L335,115 Q345,130 350,150 L355,170 Q360,190 365,210 L370,230 Q375,255 378,280 L382,310 Q385,340 390,370 L395,400 Q398,430 390,460 L380,490 Q370,515 350,530 L330,540 Q310,548 290,550 L265,552 Q240,555 215,550 L190,548 Q160,540 130,530 L100,520 Q80,512 60,500 Z" filter="url(#sf1)"/>
+        <text x="190" y="260" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">ALTA GUAJIRA</text>
+        <text x="200" y="440" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">MEDIA GUAJIRA</text>
+        <ellipse cx="310" cy="180" rx="25" ry="16" fill="var(--cardon)" opacity="0.25"/>
+        <g transform="translate(440,55)">
+          <circle cx="0" cy="0" r="22" fill="white" stroke="var(--arena-oscura)" stroke-width="1"/>
+          <text x="0" y="-16" text-anchor="middle" font-size="9" fill="var(--atardecer)" font-weight="bold">N</text>
+          <text x="0" y="24" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">S</text>
+          <text x="-18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">O</text>
+          <text x="18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">E</text>
+          <polygon points="0,-18 -4,-4 4,-4" fill="var(--atardecer)"/>
+        </g>
+        <g class="mapa-lugar" data-id="riohacha"><circle class="punto" cx="95" cy="470" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="95" y="490" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Riohacha</text></g>
+        <g class="mapa-lugar" data-id="uribia"><circle class="punto" cx="180" cy="255" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="275" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Uribia</text></g>
+        <g class="mapa-lugar" data-id="maicao"><circle class="punto" cx="350" cy="450" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="350" y="470" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Maicao</text></g>
+        <g class="mapa-lugar" data-id="manaure"><circle class="punto" cx="110" cy="310" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="110" y="330" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Manaure</text></g>
+        <g class="mapa-lugar" data-id="cabo"><circle class="punto" cx="75" cy="140" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="75" y="130" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Cabo de la Vela</text></g>
+        <g class="mapa-lugar" data-id="macuira"><circle class="punto" cx="310" cy="180" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="310" y="168" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Macuira</text></g>
+        <g class="mapa-lugar" data-id="portete"><circle class="punto" cx="180" cy="125" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="145" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Bahía Portete</text></g>
+        <g class="mapa-lugar" data-id="paraguachon"><circle class="punto" cx="390" cy="380" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="390" y="400" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Paraguachón</text></g>
+      </svg>
+    </div>
+    <div class="estrellas-nivel" id="estrellasL1">
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-secundario" id="btnReiniciarL1">🔄 Reiniciar nivel</button>
+      <button class="btn btn-exito" id="btnSiguienteL2" style="display:none">🚀 ¡Siguiente nivel! →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 3: NIVEL 2                           -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla3" style="display:none">
+  <h2>🧭 Nivel 2: Pistas cardinales <span class="etiqueta-check" id="check2" style="display:none">✓</span></h2>
+  <div class="nivel-header">
+    <span class="nivel-badge">🥈 Nivel 2 · 6 lugares</span>
+    <span class="puntos-vivos">⭐ Puntos: <span id="puntosL2">0</span></span>
+  </div>
+  <div class="juego-area">
+    <div class="pista-card" id="pistaCardL2">
+      <div class="pista-numero" id="pistaNumL2">📍 Lugar 1 de 6</div>
+      <div class="pista-icono" id="pistaIconoL2">🧭</div>
+      <div class="pista-texto" id="pistaTextoL2">Usa los puntos cardinales...</div>
+      <div class="pista-wayuu" id="pistaWayuuL2" style="display:none"></div>
+    </div>
+    <div class="mapa-contenedor">
+      <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" id="svgN2">
+        <defs>
+          <linearGradient id="mg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0288D1"/><stop offset="100%" stop-color="#4A90D9"/></linearGradient>
+          <filter id="sf2"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.2"/></filter>
+        </defs>
+        <rect x="0" y="0" width="500" height="580" fill="url(#mg2)" opacity="0.12"/>
+        <path class="mapa-tierra" d="M60,500 L50,470 Q40,440 45,410 L40,380 Q30,350 35,320 L30,290 Q25,260 35,230 L40,200 Q45,175 60,155 L75,135 Q90,115 110,100 L130,85 Q150,70 170,60 L190,52 Q210,46 230,48 L250,52 Q270,58 285,65 L300,75 Q315,85 325,100 L335,115 Q345,130 350,150 L355,170 Q360,190 365,210 L370,230 Q375,255 378,280 L382,310 Q385,340 390,370 L395,400 Q398,430 390,460 L380,490 Q370,515 350,530 L330,540 Q310,548 290,550 L265,552 Q240,555 215,550 L190,548 Q160,540 130,530 L100,520 Q80,512 60,500 Z" filter="url(#sf2)"/>
+        <text x="190" y="260" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">ALTA GUAJIRA</text>
+        <text x="200" y="440" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">MEDIA GUAJIRA</text>
+        <ellipse cx="310" cy="180" rx="25" ry="16" fill="var(--cardon)" opacity="0.25"/>
+        <g transform="translate(440,55)">
+          <circle cx="0" cy="0" r="22" fill="white" stroke="var(--arena-oscura)" stroke-width="1"/>
+          <text x="0" y="-16" text-anchor="middle" font-size="9" fill="var(--atardecer)" font-weight="bold">N</text>
+          <text x="0" y="24" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">S</text>
+          <text x="-18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">O</text>
+          <text x="18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">E</text>
+          <polygon points="0,-18 -4,-4 4,-4" fill="var(--atardecer)"/>
+        </g>
+        <g class="mapa-lugar" data-id="riohacha"><circle class="punto" cx="95" cy="470" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="95" y="490" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Riohacha</text></g>
+        <g class="mapa-lugar" data-id="uribia"><circle class="punto" cx="180" cy="255" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="275" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Uribia</text></g>
+        <g class="mapa-lugar" data-id="maicao"><circle class="punto" cx="350" cy="450" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="350" y="470" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Maicao</text></g>
+        <g class="mapa-lugar" data-id="manaure"><circle class="punto" cx="110" cy="310" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="110" y="330" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Manaure</text></g>
+        <g class="mapa-lugar" data-id="cabo"><circle class="punto" cx="75" cy="140" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="75" y="130" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Cabo de la Vela</text></g>
+        <g class="mapa-lugar" data-id="macuira"><circle class="punto" cx="310" cy="180" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="310" y="168" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Macuira</text></g>
+        <g class="mapa-lugar" data-id="portete"><circle class="punto" cx="180" cy="125" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="145" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Bahía Portete</text></g>
+        <g class="mapa-lugar" data-id="paraguachon"><circle class="punto" cx="390" cy="380" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="390" y="400" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Paraguachón</text></g>
+      </svg>
+    </div>
+    <div class="estrellas-nivel" id="estrellasL2">
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-secundario" id="btnReiniciarL2">🔄 Reiniciar nivel</button>
+      <button class="btn btn-exito" id="btnSiguienteL3" style="display:none">🚀 ¡Nivel final! →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 4: NIVEL 3                           -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla4" style="display:none">
+  <h2>🏆 Nivel 3: Nombres wayuu <span class="etiqueta-check" id="check3" style="display:none">✓</span></h2>
+  <div class="nivel-header">
+    <span class="nivel-badge">🏆 Nivel 3 · 8 lugares</span>
+    <span class="puntos-vivos">⭐ Puntos: <span id="puntosL3">0</span></span>
+  </div>
+  <div class="juego-area">
+    <div class="pista-card" id="pistaCardL3">
+      <div class="pista-numero" id="pistaNumL3">📍 Lugar 1 de 8</div>
+      <div class="pista-icono" id="pistaIconoL3">🏆</div>
+      <div class="pista-texto" id="pistaTextoL3">¡El desafío final!</div>
+      <div class="pista-wayuu" id="pistaWayuuL3" style="display:none"></div>
+    </div>
+    <div class="mapa-contenedor">
+      <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" id="svgN3">
+        <defs>
+          <linearGradient id="mg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0288D1"/><stop offset="100%" stop-color="#4A90D9"/></linearGradient>
+          <filter id="sf3"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.2"/></filter>
+        </defs>
+        <rect x="0" y="0" width="500" height="580" fill="url(#mg3)" opacity="0.12"/>
+        <path class="mapa-tierra" d="M60,500 L50,470 Q40,440 45,410 L40,380 Q30,350 35,320 L30,290 Q25,260 35,230 L40,200 Q45,175 60,155 L75,135 Q90,115 110,100 L130,85 Q150,70 170,60 L190,52 Q210,46 230,48 L250,52 Q270,58 285,65 L300,75 Q315,85 325,100 L335,115 Q345,130 350,150 L355,170 Q360,190 365,210 L370,230 Q375,255 378,280 L382,310 Q385,340 390,370 L395,400 Q398,430 390,460 L380,490 Q370,515 350,530 L330,540 Q310,548 290,550 L265,552 Q240,555 215,550 L190,548 Q160,540 130,530 L100,520 Q80,512 60,500 Z" filter="url(#sf3)"/>
+        <text x="190" y="260" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">ALTA GUAJIRA</text>
+        <text x="200" y="440" text-anchor="middle" font-size="11" fill="var(--tierra-clara)" font-weight="bold" opacity="0.4">MEDIA GUAJIRA</text>
+        <ellipse cx="310" cy="180" rx="25" ry="16" fill="var(--cardon)" opacity="0.25"/>
+        <g transform="translate(440,55)">
+          <circle cx="0" cy="0" r="22" fill="white" stroke="var(--arena-oscura)" stroke-width="1"/>
+          <text x="0" y="-16" text-anchor="middle" font-size="9" fill="var(--atardecer)" font-weight="bold">N</text>
+          <text x="0" y="24" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">S</text>
+          <text x="-18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">O</text>
+          <text x="18" y="3" text-anchor="middle" font-size="9" fill="var(--tierra-clara)" font-weight="bold">E</text>
+          <polygon points="0,-18 -4,-4 4,-4" fill="var(--atardecer)"/>
+        </g>
+        <g class="mapa-lugar" data-id="riohacha"><circle class="punto" cx="95" cy="470" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="95" y="490" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Riohacha</text></g>
+        <g class="mapa-lugar" data-id="uribia"><circle class="punto" cx="180" cy="255" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="275" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Uribia</text></g>
+        <g class="mapa-lugar" data-id="maicao"><circle class="punto" cx="350" cy="450" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="350" y="470" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Maicao</text></g>
+        <g class="mapa-lugar" data-id="manaure"><circle class="punto" cx="110" cy="310" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="110" y="330" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Manaure</text></g>
+        <g class="mapa-lugar" data-id="cabo"><circle class="punto" cx="75" cy="140" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="75" y="130" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Cabo de la Vela</text></g>
+        <g class="mapa-lugar" data-id="macuira"><circle class="punto" cx="310" cy="180" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="310" y="168" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold" dominant-baseline="auto">Macuira</text></g>
+        <g class="mapa-lugar" data-id="portete"><circle class="punto" cx="180" cy="125" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="180" y="145" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Bahía Portete</text></g>
+        <g class="mapa-lugar" data-id="paraguachon"><circle class="punto" cx="390" cy="380" r="7" fill="var(--azul)" stroke="white" stroke-width="2"/><text x="390" y="400" text-anchor="middle" class="etiqueta-mapa" font-size="10" fill="var(--tierra)" font-weight="bold">Paraguachón</text></g>
+      </svg>
+    </div>
+    <div class="estrellas-nivel" id="estrellasL3">
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+      <span class="estrella-vacia">⭐</span><span class="estrella-vacia">⭐</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-secundario" id="btnReiniciarL3">🔄 Reiniciar nivel</button>
+      <button class="btn btn-exito" id="btnFinalizar" style="display:none">🏆 ¡Ver resultados!</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 5: RESULTADOS                        -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla5" style="display:none">
+  <h2>🏆 Resultados finales</h2>
+  <div class="resultados-finales">
+    <div id="estrellaFinal">🏆</div>
+    <div class="puntaje" id="puntajeFinal">0%</div>
+    <p class="mensaje" id="mensajeFinal">¡Excelente! Conoces los lugares de La Guajira.</p>
+    <div id="resumenNiveles" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:20px 0"></div>
+    <p style="color:var(--tierra-clara);font-size:0.9rem;text-align:center;max-width:500px;margin:10px auto;line-height:1.6">
+      🌍 <strong>¿Sabías qué?</strong> Para los wayuu, el territorio (Wüinpümüin) no es solo tierra: es la memoria de sus ancestros, el hogar de sus espíritus y la fuente de su cultura. Cada lugar tiene un nombre sagrado y una historia que contar. ¡Proteger el territorio es proteger la vida wayuu!
+    </p>
+    <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+      <a href="../" class="btn btn-secundario" style="text-decoration:none">← Volver a módulos</a>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const $ = sel => document.querySelector(sel);
+
+  const lugares = {
+    riohacha: { id:'riohacha', nombre:'Riohacha', emoji:'🏙️', wayuu:'Süchikü' },
+    uribia:   { id:'uribia',   nombre:'Uribia',   emoji:'🏕️', wayuu:'Woumain' },
+    maicao:   { id:'maicao',   nombre:'Maicao',   emoji:'🏬', wayuu:'Maikau' },
+    manaure:  { id:'manaure',  nombre:'Manaure',  emoji:'🧂', wayuu:'Manaure' },
+    cabo:     { id:'cabo',     nombre:'Cabo de la Vela', emoji:'🏖️', wayuu:'Jepirra' },
+    macuira:  { id:'macuira',  nombre:'Serranía de Macuira', emoji:'🏔️', wayuu:'Makuira' },
+    portete:  { id:'portete',  nombre:'Bahía Portete', emoji:'⛵', wayuu:'Palawa\'a' },
+    paraguachon: { id:'paraguachon', nombre:'Paraguachón', emoji:'🛣️', wayuu:'Parawachon' },
+  };
+
+  const niveles = [
+    { id:1,total:4, lugares:['riohacha','uribia','maicao','manaure'],
+      pistas:{
+        riohacha: { texto:'Soy la capital del departamento. Mis hermosas playas están bañadas por el mar Caribe. ¿Qué lugar soy?', icono:'🏙️', wayuu:'' },
+        uribia:   { texto:'Me llaman la "capital indígena" de Colombia. Aquí vive la mayoría del pueblo wayuu con sus rancherías.', icono:'🏕️', wayuu:'' },
+        maicao:   { texto:'Soy la ciudad más comercial de La Guajira, llena de mercados cerca de la frontera con Venezuela.', icono:'🏬', wayuu:'' },
+        manaure:  { texto:'En mí se produce la sal más blanca del país. Mis salares brillan bajo el sol guajiro.', icono:'🧂', wayuu:'' }
+      }
+    },
+    { id:2,total:6, lugares:['cabo','macuira','riohacha','portete','uribia','maicao'],
+      pistas:{
+        cabo:     { texto:'Estoy al NORESTE, en la punta de la península. Soy un lugar sagrado donde el mar y el desierto se encuentran.', icono:'🏖️', wayuu:'Jepirra — lugar donde descansan las almas wayuu' },
+        macuira:  { texto:'Estoy al SURESTE de Cabo de la Vela. Soy una montaña cubierta de niebla, un bosque nublado en medio del desierto.', icono:'🏔️', wayuu:'Makuira — montaña sagrada que atrapa la niebla' },
+        riohacha: { texto:'Estoy al SUR de Manaure. Soy la capital, fundada a orillas del mar. Mis playas se extienden por kilómetros.', icono:'🏙️', wayuu:'Süchikü — la capital del pueblo wayuu' },
+        portete:  { texto:'Estoy al NOROESTE de Uribia. Fui un importante puerto para la exportación de carbón en una hermosa bahía.', icono:'⛵', wayuu:'Palawa\'a — la gran bahía de los pescadores' },
+        uribia:   { texto:'Estoy al SUR de Bahía Portete. Soy el corazón de la cultura wayuu donde gobierna el consejo de ancianos.', icono:'🏕️', wayuu:'Woumain — tierra de los wayuu' },
+        maicao:   { texto:'Estoy al SURESTE de Uribia. Soy la puerta a Venezuela, llena de colores y comercio fronterizo.', icono:'🏬', wayuu:'Maikau — ciudad de intercambio' }
+      }
+    },
+    { id:3,total:8, lugares:['cabo','macuira','riohacha','manaure','portete','maicao','uribia','paraguachon'],
+      pistas:{
+        cabo:     { texto:'Me llaman Jepirra en wayuunaiki. Soy el lugar sagrado donde las almas wayuu descansan después de la vida.', icono:'🏖️', wayuu:'Jepirra — lugar de descanso eterno' },
+        macuira:  { texto:'Soy Makuira, la montaña sagrada. Mi bosque atrapa las nubes del mar y las convierte en agua dulce.', icono:'🏔️', wayuu:'Makuira — la que besa las nubes' },
+        riohacha: { texto:'Soy Süchikü. Aunque mi nombre español significa "río de hacha", mi verdadero nombre wayuu habla del encuentro entre el río y el mar.', icono:'🏙️', wayuu:'Süchikü — donde el río besa el mar' },
+        manaure:  { texto:'Soy el territorio de la sal. Mis salinas son pozos de agua que el sol convierte en montañas blancas.', icono:'🧂', wayuu:'Manaure — la tierra que produce el oro blanco' },
+        portete:  { texto:'Soy Palawa\'a en wayuunaiki. Mi bahía profunda fue refugio de naves piratas y hoy es puerto de pescadores.', icono:'⛵', wayuu:'Palawa\'a — bahía de los vientos' },
+        maicao:   { texto:'Soy Maikau, la ciudad del trueque. Mis calles huelen a café, carbón y mantas wayuu.', icono:'🏬', wayuu:'Maikau — mercado de los dos mundos' },
+        uribia:   { texto:'Soy Woumain, la cuna del Pueblo Wayuu. Mis ancianos aún deciden con la vara de mando y el consejo.', icono:'🏕️', wayuu:'Woumain — donde nace la palabra' },
+        paraguachon: { texto:'Soy Parawachon, el camino entre Colombia y Venezuela. Los wayuu cruzan sin preguntar, porque el territorio wayuu no tiene fronteras.', icono:'🛣️', wayuu:'Parawachon — el paso de los dos países' }
+      }
+    }
+  ];
+
+  const state = {
+    pantallaActual:1, nivelActual:0,
+    nivelPistaActual:0, nivelPuntos:0, nivelAcertados:0, puedeJugar:false,
+    l1:{puntos:0,completado:false}, l2:{puntos:0,completado:false}, l3:{puntos:0,completado:false}
+  };
+
+  function hablar(texto){
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang='es-ES'; u.rate=0.9; u.pitch=1.05;
+      window.speechSynthesis.speak(u);
+    }
+  }
+
+  function actualizarProgreso(){
+    let c=0; const t=3;
+    if(state.l1.completado) c++;
+    if(state.l2.completado) c++;
+    if(state.l3.completado) c++;
+    const p = Math.round(c/t*100);
+    $('#progresoFill').style.width=p+'%';
+    $('#progresoPct').textContent=p+'%';
+  }
+
+  function mostrarToast(m,tipo){
+    const d=document.createElement('div');
+    d.className='toast '+tipo; d.textContent=m;
+    document.body.appendChild(d);
+    setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity 0.3s';setTimeout(()=>d.remove(),300)},2500);
+  }
+
+  function irAPantalla(n){
+    for(let i=1;i<=5;i++){const e=$('#pantalla'+i);if(e){e.style.display='none';e.classList.remove('activo')}}
+    const t=$('#pantalla'+n);
+    if(t){t.style.display='block';t.classList.add('activo');t.scrollIntoView({behavior:'smooth',block:'start'})}
+    state.pantallaActual=n;
+  }
+
+  function bindMapClicks(nivelIdx){
+    const svgId = 'svgN' + (nivelIdx+1);
+    const svg = document.getElementById(svgId);
+    if(!svg) return;
+    const grupos = svg.querySelectorAll('.mapa-lugar');
+    grupos.forEach(g => {
+      g.style.cursor = 'pointer';
+      const nuevo = g.cloneNode(true);
+      g.parentNode.replaceChild(nuevo, g);
+      nuevo.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!state.puedeJugar) return;
+        manejarClick(this.dataset.id, nivelIdx, this);
+      });
+    });
+  }
+
+  function iniciarNivel(nivelIdx){
+    const nivel = niveles[nivelIdx];
+    state.nivelActual = nivelIdx;
+    state.nivelPistaActual = 0;
+    state.nivelPuntos = 0;
+    state.nivelAcertados = 0;
+    state.puedeJugar = true;
+    const key = 'l' + (nivelIdx+1);
+    state[key] = { puntos: 0, completado: false };
+    $('#check' + (nivelIdx+1)).style.display = 'none';
+    $('#pantalla' + (nivelIdx+2)).classList.remove('completado');
+    $('#puntosL' + (nivelIdx+1)).textContent = '0';
+    const estEl = $('#estrellasL' + (nivelIdx+1));
+    if(estEl){
+      let h=''; for(let i=0;i<nivel.total;i++) h+='<span class="estrella-vacia">⭐</span>';
+      estEl.innerHTML = h;
+    }
+    const nbtn = nivelIdx===0 ? 'btnSiguienteL2' : (nivelIdx===1 ? 'btnSiguienteL3' : 'btnFinalizar');
+    $('#'+nbtn).style.display = 'none';
+    bindMapClicks(nivelIdx);
+    mostrarPista(nivelIdx, 0);
+  }
+
+  function mostrarPista(nivelIdx, pistaIdx){
+    const nivel = niveles[nivelIdx];
+    const lugarId = nivel.lugares[pistaIdx];
+    if(!lugarId) return;
+    const pista = nivel.pistas[lugarId];
+    const num = nivelIdx+1;
+    $('#pistaNumL'+num).textContent = '📍 Lugar ' + (pistaIdx+1) + ' de ' + nivel.total;
+    $('#pistaIconoL'+num).textContent = pista.icono || '📍';
+    $('#pistaTextoL'+num).textContent = pista.texto;
+    const w = $('#pistaWayuuL'+num);
+    if(pista.wayuu){ w.textContent='🧶 '+pista.wayuu; w.style.display='block'; } else { w.style.display='none'; }
+  }
+
+  function manejarClick(id, nivelIdx, el){
+    const nivel = niveles[nivelIdx];
+    const lugarId = nivel.lugares[state.nivelPistaActual];
+    if(!lugarId) return;
+    const key = 'l' + (nivelIdx+1);
+
+    if(id === lugarId){
+      state.nivelAcertados++;
+      state.nivelPuntos += 10;
+      state[key].puntos = state.nivelPuntos;
+      const pts = $('#puntosL' + (nivelIdx+1));
+      if(pts) pts.textContent = state.nivelPuntos;
+
+      el.classList.remove('incorrecto');
+      el.classList.add('seleccionado');
+      const circ = el.querySelector('.punto');
+      if(circ) circ.setAttribute('fill', 'var(--verde)');
+
+      const estEl = $('#estrellasL' + (nivelIdx+1));
+      if(estEl && estEl.children[state.nivelAcertados-1]){
+        const s = estEl.children[state.nivelAcertados-1];
+        s.className='estrella-obtenida'; s.textContent='⭐';
+      }
+
+      const l = lugares[id];
+      mostrarToast('✅ ¡Correcto! ' + l.nombre, 'exito');
+      hablar('¡Correcto! ' + l.nombre + '. ' + (l.wayuu ? 'En wayuunaiki se dice ' + l.wayuu : ''));
+
+      state.nivelPistaActual++;
+
+      if(state.nivelPistaActual >= nivel.total){
+        state[key].completado = true;
+        state.puedeJugar = false;
+        $('#check' + (nivelIdx+1)).style.display = 'inline-block';
+        $('#pantalla' + (nivelIdx+2)).classList.add('completado');
+        actualizarProgreso();
+        if(nivelIdx===0){
+          $('#btnSiguienteL2').style.display = 'inline-block';
+          mostrarToast('🎉 ¡Nivel 1 completado!', 'exito');
+        } else if(nivelIdx===1){
+          $('#btnSiguienteL3').style.display = 'inline-block';
+          mostrarToast('🎉 ¡Nivel 2 completado!', 'exito');
+        } else {
+          $('#btnFinalizar').style.display = 'inline-block';
+          mostrarToast('🏆 ¡Todos los niveles completados!', 'oro');
+        }
+      } else {
+        setTimeout(() => {
+          mostrarPista(nivelIdx, state.nivelPistaActual);
+          const nextLugar = nivel.lugares[state.nivelPistaActual];
+          if(nextLugar){
+            const p = nivel.pistas[nextLugar];
+            hablar(p.texto + (p.wayuu ? ' ' + p.wayuu : ''));
+          }
+        }, 600);
+      }
+    } else {
+      el.classList.remove('seleccionado');
+      el.classList.add('incorrecto');
+      setTimeout(() => el.classList.remove('incorrecto'), 500);
+      mostrarToast('❌ Ese no es. ¡Sigue intentando!', 'error');
+      const p = nivel.pistas[lugarId];
+      hablar('No es ese lugar. Escucha bien: ' + p.texto);
+    }
+  }
+
+  $('#btnComenzar').addEventListener('click', ()=>{
+    irAPantalla(2);
+    iniciarNivel(0);
+    mostrarToast('🌵 Encuentra los 4 lugares básicos', 'info');
+    setTimeout(()=>{
+      const p=niveles[0].pistas[niveles[0].lugares[0]];
+      hablar(p.texto);
+    }, 500);
+  });
+
+  $('#btnReiniciarL1').addEventListener('click',()=>{iniciarNivel(0);mostrarToast('🔄 Nivel 1 reiniciado','info')});
+  $('#btnReiniciarL2').addEventListener('click',()=>{iniciarNivel(1);mostrarToast('🔄 Nivel 2 reiniciado','info')});
+  $('#btnReiniciarL3').addEventListener('click',()=>{iniciarNivel(2);mostrarToast('🔄 Nivel 3 reiniciado','info')});
+
+  $('#btnSiguienteL2').addEventListener('click',()=>{
+    irAPantalla(3); iniciarNivel(1);
+    mostrarToast('🧭 Nivel 2: Usa los puntos cardinales','info');
+    setTimeout(()=>{const p=niveles[1].pistas[niveles[1].lugares[0]];hablar(p.texto+(p.wayuu?' '+p.wayuu:''))},500);
+  });
+  $('#btnSiguienteL3').addEventListener('click',()=>{
+    irAPantalla(4); iniciarNivel(2);
+    mostrarToast('🏆 Nivel 3: Nombres wayuu','info');
+    setTimeout(()=>{const p=niveles[2].pistas[niveles[2].lugares[0]];hablar(p.texto+(p.wayuu?' '+p.wayuu:''))},500);
+  });
+
+  $('#btnFinalizar').addEventListener('click',()=>{irAPantalla(5);mostrarResultados()});
+
+  function mostrarResultados(){
+    const tp = (state.l1.puntos||0)+(state.l2.puntos||0)+(state.l3.puntos||0);
+    const max = (4+6+8)*10;
+    const pct = Math.round(tp/max*100);
+    let emoji,mensaje;
+    if(pct>=90){emoji='🏆';mensaje='¡Eres un verdadero explorador de La Guajira! Conoces los nombres wayuu de cada lugar y entiendes la historia del territorio. Como dice el saber wayuu: "Quien conoce su territorio, nunca está perdido". ¡Jepirra te espera, explorador!';}
+    else if(pct>=70){emoji='🌟';mensaje='¡Muy bien! Has aprendido los lugares más importantes de La Guajira. Los wayuu enseñan que cada lugar tiene un nombre y una historia. Sigue explorando para descubrir todos los secretos del territorio.';}
+    else if(pct>=50){emoji='👍';mensaje='¡Buen trabajo! Conoces varios lugares de La Guajira. Vuelve a jugar para encontrar más lugares y aprender sus nombres en wayuunaiki. El territorio wayuu es grande y tiene muchos secretos.';}
+    else {emoji='🌱';mensaje='Vas comenzando tu viaje por La Guajira. ¡No te rindas! Cada vez que juegues aprenderás más sobre este hermoso territorio lleno de historia y cultura wayuu.';}
+
+    $('#estrellaFinal').textContent=emoji;
+    $('#puntajeFinal').textContent=tp+'/'+max+' puntos ('+pct+'%)';
+    $('#mensajeFinal').textContent=mensaje;
+
+    const nd=[
+      {n:'🥇 Nivel 1',p:state.l1.puntos||0,t:4},
+      {n:'🥈 Nivel 2',p:state.l2.puntos||0,t:6},
+      {n:'🏆 Nivel 3',p:state.l3.puntos||0,t:8}
+    ];
+    let html='';
+    nd.forEach(x=>{
+      const estrellas = x.p>0 ? Array(Math.min(3,Math.max(1,Math.round(x.p/(x.t*10)*3)))).fill('⭐').join('') : '🌑';
+      html+='<div class="resumen-eco"><div class="re-emoji">'+x.n.split(' ')[0]+'</div><div class="re-nombre">'+x.n+'</div><div class="re-dato">'+x.p+'/'+(x.t*10)+' pts</div><div style="font-size:1.2rem;margin-top:4px">'+estrellas+'</div></div>';
+    });
+    $('#resumenNiveles').innerHTML=html;
+
+    const emjs=['🗺️','🧭','🏜️','🌊','🏔️','🧂','⭐','🌟','🏖️','🏙️','🏕️','🏬','⛵','🛣️','🧶','🌵','☀️'];
+    for(let i=0;i<30;i++){
+      setTimeout(()=>{
+        const e=document.createElement('span');
+        e.textContent=emjs[Math.floor(Math.random()*emjs.length)];
+        e.style.cssText='position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+        e.style.left=Math.random()*90+'%'; e.style.top='-50px';
+        document.body.appendChild(e);
+        setTimeout(()=>e.remove(),2600);
+      },i*100);
+    }
+    if(!document.getElementById('animCaer')){
+      const s=document.createElement('style');
+      s.id='animCaer';
+      s.textContent='@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+      document.head.appendChild(s);
+    }
+    actualizarProgreso();
+  }
+
+  actualizarProgreso();
+})();
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

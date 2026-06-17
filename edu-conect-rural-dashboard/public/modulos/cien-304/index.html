@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIEN-304: Cuerpo y Salud Wayuu | EduConect Rural</title>
+    <link rel="stylesheet" href="../comun/educonect.css">
+    <style>
+        :root {
+            --wayuu-orange: #E8782A;
+            --wayuu-yellow: #F4C542;
+            --wayuu-red: #D94040;
+            --wayuu-blue: #3A7CC3;
+            --wayuu-green: #4CAF50;
+            --wayuu-purple: #8E44AD;
+            --wayuu-sand: #F5E6D3;
+            --wayuu-brown: #5D3A1A;
+            --wayuu-teal: #26A69A;
+            --bg-warm: #FFF8F0;
+            --card-bg: #FFFFFF;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.2);
+            --med-green: #2E7D32;
+            --med-blue: #1565C0;
+            --med-pink: #C2185B;
+            --med-purple: #7B1FA2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, #E8F5E9 0%, #FFF3E0 40%, #F5E6D3 70%, #E8D5B7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 800px;
+            min-height: 92vh;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            background: linear-gradient(135deg, var(--wayuu-teal), #00897B);
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-light);
+            min-height: 50px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .top-bar .module-code {
+            font-weight: 700;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .top-bar .grade-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .top-bar .hud {
+            display: flex;
+            gap: 14px;
+            font-weight: 700;
+            font-size: 0.95em;
+        }
+        .top-bar .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* --- PROGRESS BAR --- */
+        .progress-wrap {
+            height: 6px;
+            background: rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--wayuu-teal), var(--wayuu-green), var(--wayuu-blue));
+            transition: width 0.5s ease;
+            width: 0%;
+            border-radius: 0 3px 3px 0;
+        }
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px;
+            background: #fafafa;
+        }
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+        }
+        .progress-dot.active {
+            background: var(--wayuu-teal);
+            box-shadow: 0 0 6px rgba(38,166,154,0.5);
+            transform: scale(1.3);
+        }
+        .progress-dot.done {
+            background: var(--wayuu-green);
+        }
+
+        /* --- BACK BUTTON --- */
+        .btn-back {
+            position: absolute;
+            top: 58px;
+            left: 10px;
+            z-index: 10;
+            background: rgba(255,255,255,0.9);
+            border: 2px solid var(--wayuu-teal);
+            color: var(--wayuu-teal);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-back:hover { background: var(--wayuu-teal); color: white; }
+
+        /* --- SCREENS --- */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 16px 20px 24px;
+            overflow-y: auto;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+        .screen.active { display: flex; }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-4deg); }
+            75% { transform: rotate(4deg); }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        @keyframes popCoin {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            14% { transform: scale(1.2); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.15); }
+            70% { transform: scale(1); }
+        }
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(76,175,80,0.6)); }
+            50% { filter: drop-shadow(0 0 12px rgba(76,175,80,0.9)); }
+        }
+
+        /* --- WELCOME SCREEN --- */
+        .welcome-scene {
+            text-align: center;
+            padding-top: 10px;
+        }
+        .welcome-scene .outshu-svg {
+            width: 100%;
+            max-width: 340px;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        .welcome-scene .shaman-msg {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin: 14px 0;
+            border-left: 5px solid var(--wayuu-teal);
+            text-align: left;
+        }
+        .shaman-msg h2 {
+            color: var(--wayuu-teal);
+            font-size: 1.3em;
+            margin-bottom: 6px;
+        }
+        .shaman-msg p {
+            font-size: 1em;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        .welcome-info-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 14px 0;
+        }
+        .info-card-mini {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.9em;
+            transition: transform 0.2s;
+        }
+        .info-card-mini:hover { transform: translateY(-2px); }
+        .info-card-mini .num {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--wayuu-teal);
+        }
+        .wayuu-pattern {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .wayuu-pattern span {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            transform: rotate(45deg);
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            display: inline-block;
+            padding: 14px 36px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .btn:active { transform: scale(0.94); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--wayuu-teal), #00695C);
+            color: white;
+            box-shadow: 0 6px 20px rgba(38,166,154,0.4);
+        }
+        .btn-primary:hover { box-shadow: 0 8px 25px rgba(38,166,154,0.5); transform: translateY(-2px); }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--wayuu-blue), #2E5FA1);
+            color: white;
+            box-shadow: 0 6px 20px rgba(58,124,195,0.35);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--wayuu-green), #388E3C);
+            color: white;
+            box-shadow: 0 6px 20px rgba(76,175,80,0.35);
+        }
+        .btn-small { padding: 10px 22px; font-size: 0.95em; min-width: auto; }
+        .btn-tts {
+            background: var(--wayuu-sand);
+            border: 2px solid var(--wayuu-teal);
+            color: var(--wayuu-teal);
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .btn-tts:hover { background: var(--wayuu-teal); color: white; }
+
+        /* --- LESSON SCREEN --- */
+        .lesson-header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .lesson-header h2 {
+            font-size: 1.5em;
+            color: var(--wayuu-brown);
+        }
+        .system-tabs {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .system-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .system-tab:hover { border-color: var(--wayuu-teal); }
+        .system-tab.active {
+            background: var(--wayuu-teal);
+            color: white;
+            border-color: var(--wayuu-teal);
+        }
+        .system-content {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .system-content.active { display: flex; }
+        .anatomy-svg-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .anatomy-svg-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .system-info-card {
+            background: var(--wayuu-sand);
+            border-radius: 14px;
+            padding: 14px 18px;
+            border-left: 4px solid var(--wayuu-teal);
+        }
+        .system-info-card h3 {
+            color: var(--wayuu-teal);
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .system-info-card p {
+            font-size: 0.95em;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        .system-info-card .wayuu-tip {
+            margin-top: 6px;
+            font-style: italic;
+            color: var(--wayuu-orange);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .fun-fact-card {
+            background: #E0F7FA;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            color: #00695C;
+            border: 1px dashed var(--wayuu-teal);
+            text-align: center;
+        }
+        /* Clickable organ parts glow */
+        .organ-clickable {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .organ-clickable:hover {
+            filter: brightness(1.2);
+        }
+        .organ-label {
+            font-size: 10px;
+            font-weight: 700;
+            fill: #333;
+            pointer-events: none;
+        }
+        .organ-label-bg {
+            fill: rgba(255,255,255,0.85);
+            rx: 4;
+            pointer-events: none;
+        }
+
+        /* --- RUTA DE LOS ALIMENTOS GAME --- */
+        .food-route-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+        .food-stage-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .food-stage-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75em;
+            color: white;
+            transition: all 0.3s;
+        }
+        .food-stage-dot.done { background: var(--wayuu-green); }
+        .food-stage-dot.active { background: var(--wayuu-teal); animation: pulse 1s infinite; }
+        .food-stage-dot.wrong { background: var(--wayuu-red); }
+        .food-question-box {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 3px solid var(--wayuu-teal);
+        }
+        .food-question-box .stage-emoji {
+            font-size: 3em;
+            display: block;
+        }
+        .food-question-box .stage-name {
+            font-weight: 700;
+            color: var(--wayuu-teal);
+            font-size: 1.3em;
+            margin: 4px 0;
+        }
+        .food-question-box .stage-question {
+            font-size: 1.1em;
+            color: var(--text-dark);
+            margin: 6px 0 10px;
+            line-height: 1.4;
+        }
+        .food-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .food-option {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .food-option:hover {
+            border-color: var(--wayuu-teal);
+            background: #E0F2F1;
+        }
+        .food-option.correct-reveal {
+            border-color: var(--wayuu-green);
+            background: #E8F5E9;
+        }
+        .food-option.wrong-reveal {
+            border-color: var(--wayuu-red);
+            background: #FFEBEE;
+            animation: shake 0.4s;
+        }
+        .food-option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .food-feedback {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.05em;
+            min-height: 28px;
+            padding: 4px;
+        }
+        .food-progress-text {
+            text-align: center;
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        /* --- BOTIQUÍN WAYUU GAME --- */
+        .botiquin-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+        .botiquin-source {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 10px;
+            background: var(--wayuu-sand);
+            border-radius: 14px;
+            min-height: 70px;
+        }
+        .botiquin-source h3 {
+            width: 100%;
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--wayuu-brown);
+            margin-bottom: 2px;
+        }
+        .botiquin-targets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .botiquin-symptom-card {
+            border: 3px dashed #ccc;
+            border-radius: 14px;
+            padding: 10px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+            background: #fafafa;
+            text-align: center;
+        }
+        .botiquin-symptom-card.highlight {
+            border-color: var(--wayuu-teal);
+            background: #E0F2F1;
+            box-shadow: inset 0 0 15px rgba(38,166,154,0.1);
+        }
+        .botiquin-symptom-card.wrong-highlight {
+            border-color: var(--wayuu-red);
+            background: #FFEBEE;
+            animation: shake 0.4s;
+        }
+        .botiquin-symptom-card.matched {
+            border-style: solid;
+            border-color: var(--wayuu-green);
+            background: #E8F5E9;
+        }
+        .botiquin-symptom-card .symptom-icon {
+            font-size: 2.2em;
+        }
+        .botiquin-symptom-card .symptom-name {
+            font-weight: 700;
+            font-size: 0.85em;
+            color: var(--text-dark);
+        }
+        .botiquin-plant {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 8px 14px;
+            cursor: grab;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.9em;
+            touch-action: none;
+            user-select: none;
+        }
+        .botiquin-plant:active { cursor: grabbing; }
+        .botiquin-plant.dragging { opacity: 0.5; transform: scale(0.95); }
+        .botiquin-plant.placed { display: none; }
+        .botiquin-plant .plant-emoji { font-size: 1.5em; }
+        .botiquin-matched-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.85em;
+            border: 2px solid var(--wayuu-green);
+            color: var(--wayuu-green);
+        }
+
+        /* --- FINAL SCREEN --- */
+        .final-header { text-align: center; padding-top: 10px; }
+        .final-header .trophy {
+            font-size: 5em;
+            animation: bounceIn 0.8s ease-out;
+        }
+        .final-header h2 {
+            color: var(--wayuu-teal);
+            font-size: 1.6em;
+            margin: 6px 0;
+        }
+        .stars-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            font-size: 2.5em;
+        }
+        .stars-row .star {
+            animation: bounceIn 0.5s ease-out;
+        }
+        .stars-row .star:nth-child(2) { animation-delay: 0.15s; }
+        .stars-row .star:nth-child(3) { animation-delay: 0.3s; }
+        .achievement-card {
+            background: var(--wayuu-sand);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 12px 0;
+            border-left: 5px solid var(--wayuu-green);
+        }
+        .achievement-card .ach-item {
+            font-size: 0.95em;
+            padding: 4px 0;
+            color: var(--text-dark);
+        }
+        .achievement-card .wayuu-blessing {
+            margin-top: 10px;
+            text-align: center;
+            font-style: italic;
+            color: var(--wayuu-teal);
+            font-weight: 600;
+        }
+        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+
+        /* --- CONFETTI --- */
+        .confetti {
+            position: fixed;
+            top: -20px;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: 3px;
+        }
+        .coin-popup {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            font-weight: 800;
+            font-size: 1.4em;
+            color: var(--wayuu-yellow);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: popCoin 1s ease-out forwards;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 500px) {
+            .food-options { grid-template-columns: 1fr; }
+            .botiquin-targets { grid-template-columns: 1fr; }
+            .welcome-info-cards { grid-template-columns: 1fr; }
+            .btn { padding: 12px 28px; font-size: 1.05em; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <span class="module-code">CIEN-304</span>
+        <span class="grade-badge">Grado 4°</span>
+        <div class="hud">
+            <div class="hud-item">⭐ <span id="hud-stars">0</span></div>
+            <div class="hud-item">💎 <span id="hud-points">0</span></div>
+        </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrap"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-dots" id="progress-dots"></div>
+
+    <!-- BACK BUTTON -->
+    <a class="btn-back" href="../index.html" title="Volver al catálogo">← Salir</a>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 0: WELCOME -->
+    <!-- ============================================================ -->
+    <section class="screen active" id="screen-welcome">
+        <div class="welcome-scene">
+            <!-- Outshü (Wayuu medicine woman) SVG -->
+            <svg class="outshu-svg" viewBox="0 0 340 220" xmlns="http://www.w3.org/2000/svg" style="animation: float 3s ease-in-out infinite;">
+                <defs>
+                    <linearGradient id="skyGrad2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#B2EBF2"/>
+                        <stop offset="100%" stop-color="#FFF8E1"/>
+                    </linearGradient>
+                    <linearGradient id="sandGrad2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#F5E6D3"/>
+                        <stop offset="100%" stop-color="#DEB887"/>
+                    </linearGradient>
+                </defs>
+                <!-- Sky -->
+                <rect width="340" height="130" fill="url(#skyGrad2)"/>
+                <!-- Sun -->
+                <circle cx="290" cy="35" r="20" fill="#FFD700" opacity="0.9"/>
+                <circle cx="290" cy="35" r="26" fill="#FFD700" opacity="0.2"/>
+                <!-- Mountains in background -->
+                <path d="M0,100 L50,60 L100,95 L150,55 L200,90 L250,50 L300,95 L340,65 L340,130 L0,130 Z" fill="#C5A57E" opacity="0.4"/>
+                <!-- Sand -->
+                <path d="M0,110 Q50,100 100,115 Q180,105 260,118 Q310,110 340,115 L340,220 L0,220 Z" fill="url(#sandGrad2)"/>
+                <path d="M0,128 Q80,118 160,130 Q240,122 340,128 L340,220 L0,220 Z" fill="#DEB887" opacity="0.4"/>
+                <!-- Outshü figure (Wayuu woman in traditional dress) -->
+                <!-- Body / Manta -->
+                <path d="M120,170 L130,110 L210,110 L220,170 Z" fill="#E8782A"/>
+                <path d="M130,110 L210,110 L200,160 L140,160 Z" fill="#F4C542"/>
+                <!-- Geometric pattern on manta -->
+                <line x1="145" y1="120" x2="195" y2="120" stroke="#D94040" stroke-width="1.5"/>
+                <line x1="150" y1="130" x2="190" y2="130" stroke="#3A7CC3" stroke-width="1.5"/>
+                <line x1="145" y1="140" x2="195" y2="140" stroke="#D94040" stroke-width="1.5"/>
+                <!-- Head -->
+                <circle cx="170" cy="95" r="16" fill="#C8A882"/>
+                <!-- Hair -->
+                <path d="M154,90 Q155,72 170,70 Q185,72 186,90" fill="#333"/>
+                <!-- Traditional hat (sombrero wayuu) -->
+                <ellipse cx="170" cy="75" rx="22" ry="6" fill="#8D6E63"/>
+                <rect x="152" y="69" width="36" height="6" rx="3" fill="#5D3A1A"/>
+                <!-- Face -->
+                <circle cx="165" cy="93" r="2" fill="#333"/>
+                <circle cx="175" cy="93" r="2" fill="#333"/>
+                <path d="M166,99 Q170,103 174,99" stroke="#333" stroke-width="1.2" fill="none"/>
+                <!-- Arms -->
+                <path d="M130,120 L105,140" stroke="#C8A882" stroke-width="6" stroke-linecap="round"/>
+                <path d="M210,120 L235,140" stroke="#C8A882" stroke-width="6" stroke-linecap="round"/>
+                <!-- Hands holding mortar (pilón) and pestle -->
+                <circle cx="100" cy="142" r="5" fill="#C8A882"/>
+                <circle cx="240" cy="142" r="5" fill="#C8A882"/>
+                <!-- Mortar bowl -->
+                <ellipse cx="100" cy="152" rx="14" ry="6" fill="#8D6E63"/>
+                <ellipse cx="100" cy="148" rx="14" ry="6" fill="#A1887F"/>
+                <!-- Pestle -->
+                <rect x="236" y="125" width="5" height="20" rx="2" fill="#5D3A1A" transform="rotate(-15,238,135)"/>
+                <!-- Medicinal plants around -->
+                <rect x="70" y="135" width="4" height="18" rx="2" fill="#66BB6A"/>
+                <circle cx="72" cy="133" r="6" fill="#81C784"/>
+                <rect x="280" y="130" width="4" height="16" rx="2" fill="#66BB6A"/>
+                <circle cx="282" cy="128" r="7" fill="#4CAF50"/>
+                <!-- Small cactus -->
+                <rect x="30" y="130" width="6" height="24" rx="3" fill="#388E3C"/>
+                <rect x="24" y="140" width="4" height="12" rx="2" fill="#43A047" transform="rotate(-20,26,146)"/>
+                <!-- Labels -->
+                <text x="170" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#5D3A1A">Outshü — Médica Wayuu</text>
+            </svg>
+
+            <div class="shaman-msg">
+                <h2>🌿 ¡La outshü te invita!</h2>
+                <p>¡Joutai (saludos), pequeño guardián! Soy la <strong>outshü</strong>, la médica tradicional de la ranchería wayuu. Te invito a descubrir cómo funciona tu cuerpo por dentro y aprender los secretos de nuestras <strong>plantas medicinales</strong> que usamos en el desierto guajiro.</p>
+                <p style="margin-top:6px;">¿Sabes cómo viaja la comida por tu cuerpo? ¿O cómo respiras el aire del desierto? ¿Qué planta usa la outshü para curar una quemadura? ¡Vamos a descubrirlo!</p>
+            </div>
+
+            <div class="wayuu-pattern">
+                <span style="background:#E8782A;"></span><span style="background:#F4C542;"></span><span style="background:#D94040;"></span>
+                <span style="background:#3A7CC3;"></span><span style="background:#4CAF50;"></span><span style="background:#8E44AD;"></span>
+                <span style="background:#26A69A;"></span><span style="background:#E8782A;"></span>
+            </div>
+
+            <div class="welcome-info-cards">
+                <div class="info-card-mini"><div class="num">🫁</div><div>3 Sistemas<br>del cuerpo</div></div>
+                <div class="info-card-mini"><div class="num">🌿</div><div>6 Plantas<br>medicinales</div></div>
+                <div class="info-card-mini"><div class="num">🍎</div><div>Ruta de<br>alimentos</div></div>
+                <div class="info-card-mini"><div class="num">🎮</div><div>2 Juegos<br>interactivos</div></div>
+            </div>
+
+            <button class="btn btn-primary" onclick="goToScreen('screen-lesson')" style="margin: 0 auto 10px;">
+                🚀 ¡A explorar el cuerpo!
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 1: LESSON - 3 Body Systems -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-lesson">
+        <div class="lesson-header">
+            <h2>🫀 Los sistemas del cuerpo humano</h2>
+            <p style="color:#888;margin-top:4px;">La outshü dice: "Conoce tu cuerpo para cuidarlo" — Toca cada pestaña para explorar</p>
+        </div>
+
+        <!-- System tabs -->
+        <div class="system-tabs">
+            <button class="system-tab active" onclick="showSystem('digestivo')" id="tab-digestivo">🍎 Digestivo</button>
+            <button class="system-tab" onclick="showSystem('respiratorio')" id="tab-respiratorio">🫁 Respiratorio</button>
+            <button class="system-tab" onclick="showSystem('circulatorio')" id="tab-circulatorio">❤️ Circulatorio</button>
+        </div>
+
+        <!-- DIGESTIVE SYSTEM -->
+        <div class="system-content active" id="sys-digestivo">
+            <div class="anatomy-svg-container">
+                <svg viewBox="0 0 300 440" xmlns="http://www.w3.org/2000/svg" style="max-width:280px;height:auto;">
+                    <!-- Body silhouette -->
+                    <ellipse cx="150" cy="35" rx="28" ry="32" fill="#FFCC80" stroke="#E0A060" stroke-width="1.5"/>
+                    <!-- Neck -->
+                    <rect x="138" y="60" width="24" height="25" rx="4" fill="#FFCC80"/>
+                    <!-- Torso -->
+                    <rect x="95" y="80" width="110" height="200" rx="16" fill="#FFE0B2" stroke="#E0A060" stroke-width="1"/>
+                    <!-- Arms hint -->
+                    <rect x="70" y="85" width="25" height="90" rx="12" fill="#FFCC80" opacity="0.6"/>
+                    <rect x="205" y="85" width="25" height="90" rx="12" fill="#FFCC80" opacity="0.6"/>
+                    <!-- Legs hint -->
+                    <rect x="110" y="278" width="30" height="130" rx="12" fill="#FFCC80" opacity="0.6"/>
+                    <rect x="160" y="278" width="30" height="130" rx="12" fill="#FFCC80" opacity="0.6"/>
+
+                    <!-- Mouth -->
+                    <ellipse cx="150" cy="52" rx="10" ry="6" fill="#E57373" stroke="#C62828" stroke-width="1.5" class="organ-clickable" onclick="Gamificacion.pronunciar('La boca: aquí empieza la digestión. Los dientes trituran la comida y la saliva la humedece.')"/>
+                    <text x="150" y="64" text-anchor="middle" font-size="7" fill="#333" font-weight="700">BOCA</text>
+
+                    <!-- Esophagus -->
+                    <rect x="144" y="73" width="12" height="45" rx="6" fill="#FF8A65" stroke="#E64A19" stroke-width="1" class="organ-clickable" onclick="Gamificacion.pronunciar('El esófago: un tubo que lleva la comida de la boca al estómago.')"/>
+                    <text x="145" y="90" text-anchor="end" font-size="6.5" fill="#333" font-weight="700">ESÓFAGO</text>
+
+                    <!-- Stomach -->
+                    <path d="M125,120 Q120,118 118,132 Q116,150 130,160 L170,160 Q184,150 182,132 Q180,118 175,120 Z" fill="#EF9A9A" stroke="#C62828" stroke-width="1.5" class="organ-clickable" onclick="Gamificacion.pronunciar('El estómago: una bolsa que mezcla la comida con jugos gástricos. ¡La comida se vuelve papilla!')"/>
+                    <text x="150" y="148" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">ESTÓMAGO</text>
+
+                    <!-- Small intestine -->
+                    <path d="M135,165 Q130,170 125,175 Q118,182 125,190 Q132,198 128,205 Q122,212 130,218 Q138,224 135,230 Q130,236 138,240 Q148,246 155,240 Q162,232 158,225 Q154,218 160,210 Q166,202 160,195 Q154,188 160,182 Q166,176 160,170" fill="none" stroke="#FF7043" stroke-width="5" stroke-linecap="round" class="organ-clickable" onclick="Gamificacion.pronunciar('El intestino delgado: aquí se absorben los nutrientes de la comida. Mide como 7 metros de largo enrollado.')"/>
+                    <text x="148" y="260" text-anchor="middle" font-size="7" fill="#333" font-weight="700">INTESTINO DELGADO</text>
+
+                    <!-- Large intestine frame -->
+                    <path d="M135,240 L110,240 L108,270 L112,290 L148,292 L150,270 L148,255 L190,255 L190,270 L192,290 L230,290 L232,268 L228,248 L210,246 L210,240" fill="none" stroke="#8D6E63" stroke-width="5" stroke-linecap="round" class="organ-clickable" onclick="Gamificacion.pronunciar('El intestino grueso: absorbe el agua y forma las heces con lo que el cuerpo no necesita.')"/>
+                    <text x="150" y="298" text-anchor="middle" font-size="7" fill="#333" font-weight="700">INTESTINO GRUESO</text>
+
+                    <!-- Food particle (apple) animation hint -->
+                    <circle cx="152" cy="56" r="4" fill="#F44336" opacity="0.9"/>
+                    <line x1="150" y1="54" x2="148" y2="52" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round"/>
+
+                    <!-- Wayuu tip overlay -->
+                    <rect x="180" y="310" width="115" height="50" rx="8" fill="#F5E6D3" stroke="#E8782A" stroke-width="1"/>
+                    <text x="237" y="326" text-anchor="middle" font-size="7.5" fill="#5D3A1A" font-weight="700">🌿 Consejo Wayuu</text>
+                    <text x="237" y="340" text-anchor="middle" font-size="6.5" fill="#5D3A1A">La outshü recomienda</text>
+                    <text x="237" y="352" text-anchor="middle" font-size="6.5" fill="#5D3A1A">masticar bien la arepa</text>
+                </svg>
+            </div>
+
+            <div class="system-info-card">
+                <h3>🍎 Sistema Digestivo</h3>
+                <p>Transforma la comida en nutrientes que tu cuerpo puede usar. El <strong>chivo</strong>, el <strong>pescado</strong> y la <strong>arepa</strong> que comes en la ranchería recorren este camino: boca → esófago → estómago → intestinos.</p>
+                <div class="wayuu-tip">🌵 Dato wayuu: Los frutos del cardón (yotojoro) son ricos en fibra y ayudan a tu digestión.</div>
+            </div>
+            <div class="fun-fact-card">💡 ¡Tu intestino delgado mide unos 7 metros enrollados dentro de tu pancita!</div>
+
+            <div style="text-align:center;margin-top:6px;">
+                <button class="btn-tts" onclick="Gamificacion.pronunciar('El sistema digestivo transforma la comida. La boca tritura, el esófago transporta, el estómago mezcla con jugos gástricos, el intestino delgado absorbe los nutrientes y el intestino grueso forma las heces.')">🔊 Escuchar explicación</button>
+            </div>
+        </div>
+
+        <!-- RESPIRATORY SYSTEM -->
+        <div class="system-content" id="sys-respiratorio">
+            <div class="anatomy-svg-container">
+                <svg viewBox="0 0 300 350" xmlns="http://www.w3.org/2000/svg" style="max-width:280px;height:auto;">
+                    <!-- Head silhouette -->
+                    <ellipse cx="150" cy="30" rx="26" ry="30" fill="#FFCC80" stroke="#E0A060" stroke-width="1.5"/>
+                    <!-- Neck -->
+                    <rect x="138" y="55" width="24" height="20" rx="4" fill="#FFCC80"/>
+                    <!-- Torso -->
+                    <rect x="95" y="70" width="110" height="150" rx="14" fill="#FFE0B2" stroke="#E0A060" stroke-width="1"/>
+
+                    <!-- Nose -->
+                    <ellipse cx="150" cy="42" rx="8" ry="5" fill="#FFAB91" stroke="#E64A19" stroke-width="1" class="organ-clickable" onclick="Gamificacion.pronunciar('La nariz: el aire entra por aquí. Los pelitos de la nariz filtran el polvo del desierto.')"/>
+                    <text x="150" y="78" text-anchor="middle" font-size="7" fill="#333" font-weight="700">NARIZ</text>
+
+                    <!-- Nasal cavity -->
+                    <ellipse cx="150" cy="50" rx="5" ry="3" fill="#FF8A65" opacity="0.5"/>
+
+                    <!-- Trachea -->
+                    <rect x="146" y="70" width="8" height="55" rx="4" fill="#90CAF9" stroke="#1565C0" stroke-width="1" class="organ-clickable" onclick="Gamificacion.pronunciar('La tráquea: un tubo que lleva el aire de la nariz a los pulmones.')"/>
+                    <text x="138" y="95" text-anchor="end" font-size="7" fill="#333" font-weight="700">TRÁQUEA</text>
+
+                    <!-- Bronchi -->
+                    <path d="M150,125 L125,140 L115,148" stroke="#42A5F5" stroke-width="4" fill="none" stroke-linecap="round" class="organ-clickable" onclick="Gamificacion.pronunciar('Los bronquios: ramas que llevan el aire a cada pulmón.')"/>
+                    <path d="M150,125 L175,140 L185,148" stroke="#42A5F5" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+                    <!-- Left lung -->
+                    <path d="M95,135 Q90,125 95,110 Q100,100 115,105 Q130,110 135,130 L140,145 Q142,165 138,185 Q134,196 120,196 Q108,196 105,185 Q100,170 98,155 Q95,145 95,135 Z" fill="#E3F2FD" stroke="#1565C0" stroke-width="1.5" class="organ-clickable" onclick="Gamificacion.pronunciar('El pulmón izquierdo: aquí el oxígeno del aire pasa a tu sangre.')"/>
+                    <!-- Bronchiole tree left -->
+                    <path d="M115,148 L110,155 M115,148 L118,158 M110,155 L105,162 M118,158 L122,167 M110,155 L114,168" stroke="#64B5F6" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- Right lung -->
+                    <path d="M165,130 L170,145 Q172,165 168,185 Q166,196 150,196 Q138,196 136,185 Q132,170 135,155 Q138,138 145,128 Q150,120 158,115 Q170,110 170,126 Q175,130 165,130 Z" fill="#E3F2FD" stroke="#1565C0" stroke-width="1.5" class="organ-clickable" onclick="Gamificacion.pronunciar('El pulmón derecho: es un poquito más grande que el izquierdo. Aquí respiras el aire fresco del desierto.')"/>
+                    <!-- Bronchiole tree right -->
+                    <path d="M185,148 L192,155 M185,148 L182,158 M192,155 L196,162 M182,158 L178,167 M192,155 L188,168" stroke="#64B5F6" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- Air flow arrows -->
+                    <path d="M150,38 L150,44" stroke="#4FC3F7" stroke-width="2" marker-end="url(#blueArrow)"/>
+                    <defs>
+                        <marker id="blueArrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                            <polygon points="0,0 6,3 0,6" fill="#4FC3F7"/>
+                        </marker>
+                    </defs>
+
+                    <text x="150" y="220" text-anchor="middle" font-size="7" fill="#333" font-weight="700">PULMONES</text>
+
+                    <!-- Wayuu tip -->
+                    <rect x="180" y="235" width="115" height="50" rx="8" fill="#F5E6D3" stroke="#E8782A" stroke-width="1"/>
+                    <text x="237" y="252" text-anchor="middle" font-size="7.5" fill="#5D3A1A" font-weight="700">🌿 Consejo Wayuu</text>
+                    <text x="237" y="266" text-anchor="middle" font-size="6.5" fill="#5D3A1A">Respira profundo el aire</text>
+                    <text x="237" y="278" text-anchor="middle" font-size="6.5" fill="#5D3A1A">limpio del desierto</text>
+                </svg>
+            </div>
+
+            <div class="system-info-card">
+                <h3>🫁 Sistema Respiratorio</h3>
+                <p>Toma el oxígeno del aire que respiras y lo lleva a todo tu cuerpo. En la Guajira respiramos aire puro del desierto. El aire entra por la nariz, baja por la tráquea, llega a los bronquios y llena tus pulmones.</p>
+                <div class="wayuu-tip">🌬️ Dato wayuu: El viento del desierto (Joutai) trae aire fresco. Respirar profundo te da energía como al cardón.</div>
+            </div>
+            <div class="fun-fact-card">💡 ¡Tus pulmones pueden contener hasta 5 litros de aire cuando respiras profundo!</div>
+
+            <div style="text-align:center;margin-top:6px;">
+                <button class="btn-tts" onclick="Gamificacion.pronunciar('El sistema respiratorio: el aire entra por la nariz, baja por la tráquea, se divide en bronquios y llena los pulmones. El oxígeno pasa a la sangre y el dióxido de carbono sale al exhalar.')">🔊 Escuchar explicación</button>
+            </div>
+        </div>
+
+        <!-- CIRCULATORY SYSTEM -->
+        <div class="system-content" id="sys-circulatorio">
+            <div class="anatomy-svg-container">
+                <svg viewBox="0 0 300 350" xmlns="http://www.w3.org/2000/svg" style="max-width:280px;height:auto;">
+                    <!-- Body silhouette -->
+                    <ellipse cx="150" cy="25" rx="22" ry="26" fill="#FFCC80" stroke="#E0A060" stroke-width="1.5"/>
+                    <rect x="135" y="48" width="30" height="22" rx="4" fill="#FFCC80"/>
+                    <rect x="95" y="65" width="110" height="200" rx="16" fill="#FFE0B2" stroke="#E0A060" stroke-width="1" opacity="0.7"/>
+                    <rect x="75" y="70" width="20" height="100" rx="10" fill="#FFCC80" opacity="0.5"/>
+                    <rect x="205" y="70" width="20" height="100" rx="10" fill="#FFCC80" opacity="0.5"/>
+                    <rect x="110" y="262" width="28" height="70" rx="12" fill="#FFCC80" opacity="0.5"/>
+                    <rect x="162" y="262" width="28" height="70" rx="12" fill="#FFCC80" opacity="0.5"/>
+
+                    <!-- Heart -->
+                    <g class="organ-clickable" onclick="Gamificacion.pronunciar('El corazón: una bomba que late sin parar. Empuja la sangre por todo tu cuerpo. ¡Late unas 100 mil veces al día!')" style="animation: heartBeat 1.2s infinite;">
+                        <path d="M150,115 L150,115 Q148,102 138,98 Q128,94 124,102 Q118,112 130,125 L150,145 L170,125 Q182,112 176,102 Q172,94 162,98 Q152,102 150,115 Z" fill="#EF5350" stroke="#C62828" stroke-width="1.5"/>
+                    </g>
+                    <text x="150" y="155" text-anchor="middle" font-size="8" fill="#333" font-weight="700">CORAZÓN</text>
+
+                    <!-- Arteries (red) -->
+                    <!-- From heart up -->
+                    <path d="M150,98 L150,75 L150,55" stroke="#F44336" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    <!-- To head -->
+                    <path d="M150,55 Q150,42 148,34 Q146,28 150,28" stroke="#F44336" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <!-- To left arm -->
+                    <path d="M150,75 L130,75 L100,78 L85,85" stroke="#F44336" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <!-- To right arm -->
+                    <path d="M150,75 L170,75 L200,78 L215,85" stroke="#F44336" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- Veins (blue) -->
+                    <!-- From head -->
+                    <path d="M150,30 L154,34 L154,55" stroke="#42A5F5" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <!-- From left arm -->
+                    <path d="M85,90 L100,90 L135,88 L148,88" stroke="#42A5F5" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <!-- From right arm -->
+                    <path d="M215,90 L200,90 L165,88 L152,88" stroke="#42A5F5" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- Down aorta -->
+                    <path d="M150,145 L150,170 L148,200 L150,230 L150,260" stroke="#F44336" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <!-- Down veins -->
+                    <path d="M148,145 L146,170 L144,200 L146,230 L148,260" stroke="#42A5F5" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                    <!-- To legs -->
+                    <path d="M150,260 L128,265 L120,275" stroke="#F44336" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M150,260 L172,265 L180,275" stroke="#F44336" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <!-- Veins from legs -->
+                    <path d="M122,275 L130,268 L148,262" stroke="#42A5F5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M178,275 L170,268 L152,262" stroke="#42A5F5" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+                    <!-- Legend -->
+                    <rect x="210" y="160" width="14" height="8" rx="2" fill="#F44336"/>
+                    <text x="228" y="168" font-size="7" fill="#333">Arterias</text>
+                    <rect x="210" y="174" width="14" height="8" rx="2" fill="#42A5F5"/>
+                    <text x="228" y="182" font-size="7" fill="#333">Venas</text>
+
+                    <!-- Wayuu tip -->
+                    <rect x="180" y="290" width="115" height="50" rx="8" fill="#F5E6D3" stroke="#E8782A" stroke-width="1"/>
+                    <text x="237" y="306" text-anchor="middle" font-size="7.5" fill="#5D3A1A" font-weight="700">🌿 Consejo Wayuu</text>
+                    <text x="237" y="320" text-anchor="middle" font-size="6.5" fill="#5D3A1A">Comer pescado ayuda</text>
+                    <text x="237" y="332" text-anchor="middle" font-size="6.5" fill="#5D3A1A">a tu corazón</text>
+                </svg>
+            </div>
+
+            <div class="system-info-card">
+                <h3>❤️ Sistema Circulatorio</h3>
+                <p>El corazón bombea la sangre por todo tu cuerpo llevando oxígeno y nutrientes. Las <strong>arterias</strong> (rojas) llevan sangre limpia y las <strong>venas</strong> (azules) traen la sangre de vuelta al corazón.</p>
+                <div class="wayuu-tip">🐟 Dato wayuu: El pescado fresco del mar guajiro tiene omega-3, que mantiene tu corazón fuerte como un tambor wayuu.</div>
+            </div>
+            <div class="fun-fact-card">💡 ¡Tu corazón late unas 100,000 veces al día! Coloca tu mano en el pecho y siéntelo.</div>
+
+            <div style="text-align:center;margin-top:6px;">
+                <button class="btn-tts" onclick="Gamificacion.pronunciar('El sistema circulatorio: el corazón bombea la sangre. Las arterias rojas llevan oxígeno a todo el cuerpo. Las venas azules traen la sangre de vuelta. Late sin parar, ¡como un tambor wayuu!')">🔊 Escuchar explicación</button>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="goToScreen('screen-game1')" style="margin: 12px auto; display: block;">
+            🎮 ¡Jugar! Ruta de los alimentos
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 2: GAME 1 - Ruta de los Alimentos -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-game1">
+        <h2 style="text-align:center;color:var(--wayuu-brown);margin-bottom:4px;">🍎 Juego 1: Ruta de los alimentos</h2>
+        <p style="text-align:center;color:#888;font-size:0.9em;margin-bottom:4px;">Sigue el camino de la comida por el sistema digestivo</p>
+
+        <!-- Stage indicator -->
+        <div class="food-stage-indicator" id="food-stage-dots">
+            <div class="food-stage-dot active">1</div>
+            <div class="food-stage-dot">2</div>
+            <div class="food-stage-dot">3</div>
+            <div class="food-stage-dot">4</div>
+            <div class="food-stage-dot">5</div>
+        </div>
+
+        <div class="food-route-container">
+            <div class="food-question-box" id="food-question-box"></div>
+            <div class="food-options" id="food-options"></div>
+        </div>
+
+        <div class="food-feedback" id="food-feedback"></div>
+        <div class="food-progress-text">
+            Etapa <span id="food-stage-num">1</span> de 5 · Aciertos: <span id="food-score">0</span>
+        </div>
+
+        <button class="btn btn-success" id="game1-continue" style="display:none;margin:8px auto;" onclick="goToScreen('screen-game2')">
+            ✅ ¡Siguiente juego!
+        </button>
+        <button class="btn btn-small btn-secondary" style="display:inline-block;margin:4px auto;" onclick="resetFoodGame()">
+            🔄 Intentar de nuevo
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 3: GAME 2 - Botiquín Wayuu -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-game2">
+        <h2 style="text-align:center;color:var(--wayuu-brown);margin-bottom:4px;">🌿 Juego 2: El Botiquín Wayuu</h2>
+        <p style="text-align:center;color:#888;font-size:0.9em;margin-bottom:4px;">Arrastra cada planta medicinal a su dolencia correcta</p>
+
+        <div class="botiquin-layout" id="botiquin-layout">
+            <div class="botiquin-source" id="botiquin-source">
+                <h3>🌿 Plantas medicinales wayuu</h3>
+            </div>
+            <div class="botiquin-targets" id="botiquin-targets">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <div id="game2-feedback" style="text-align:center;font-weight:700;font-size:1em;min-height:28px;padding:6px;"></div>
+        <div style="text-align:center;color:#888;font-size:0.85em;">
+            Colocadas: <span id="game2-placed">0</span> / 6 · Aciertos: <span id="game2-correct">0</span>
+        </div>
+
+        <button class="btn btn-success" id="game2-continue" style="display:none;margin:8px auto;" onclick="goToScreen('screen-final')">
+            🏆 ¡Ver resultados!
+        </button>
+        <button class="btn btn-small btn-secondary" style="display:inline-block;margin:4px auto;" onclick="resetBotiquin()">
+            🔄 Intentar de nuevo
+        </button>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SCREEN 4: FINAL -->
+    <!-- ============================================================ -->
+    <section class="screen" id="screen-final">
+        <div class="final-header">
+            <div class="trophy">🏆</div>
+            <h2>¡Eres un guardián de la salud wayuu!</h2>
+            <p style="color:#666;">La outshü está muy orgullosa de ti</p>
+        </div>
+
+        <div class="stars-row" id="final-stars">
+            <span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span>
+        </div>
+
+        <div class="achievement-card" id="achievement-card"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="restartModule()">🔄 Jugar otra vez</button>
+            <a class="btn btn-secondary" href="../index.html" style="text-decoration:none;">📚 Más módulos</a>
+        </div>
+    </section>
+
+</div><!-- /app-container -->
+
+<!-- External dependencies (fallback if not loaded) -->
+<script src="../comun/gamificacion.js"></script>
+<script src="../comun/progreso.js"></script>
+
+<script>
+// ============================================================
+// GAMIFICACION (self-contained, overridden if ../comun/gamificacion.js loads)
+// ============================================================
+var Gamificacion = window.Gamificacion || {};
+
+Gamificacion.puntos = Gamificacion.puntos || 0;
+Gamificacion.estrellas = Gamificacion.estrellas || 0;
+Gamificacion.logros = Gamificacion.logros || [];
+Gamificacion._inited = Gamificacion._inited || false;
+
+if (!Gamificacion._inited) {
+    Gamificacion._inited = true;
+
+    Gamificacion.registrarAcierto = function() {
+        Gamificacion.puntos += 10;
+        Gamificacion._flashCoin();
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.registrarError = function() {
+        // No points lost
+    };
+
+    Gamificacion.sumarPuntos = function(n) {
+        Gamificacion.puntos += n;
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.sumarEstrella = function() {
+        Gamificacion.estrellas++;
+        Gamificacion.actualizarHUD();
+    };
+
+    Gamificacion.desbloquearLogro = function(id, titulo, icono) {
+        if (!Gamificacion.logros.find(function(l) { return l.id === id; })) {
+            Gamificacion.logros.push({ id: id, titulo: titulo, icono: icono });
+            Gamificacion.actualizarHUD();
+        }
+    };
+
+    Gamificacion.pronunciar = function(texto, velocidad) {
+        velocidad = velocidad || 0.9;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            var utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = 'es-CO';
+            utterance.rate = velocidad;
+            utterance.pitch = 1.1;
+            var voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                var spanishVoice = voices.find(function(v) { return v.lang.indexOf('es') === 0 && v.name.indexOf('Female') !== -1; });
+                if (!spanishVoice) spanishVoice = voices.find(function(v) { return v.lang.indexOf('es') === 0; });
+                if (spanishVoice) utterance.voice = spanishVoice;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
+    Gamificacion.lanzarConfeti = function(count) {
+        count = count || 50;
+        var colors = ['#E8782A','#F4C542','#D94040','#3A7CC3','#4CAF50','#8E44AD','#FF6B6B','#48DBFB','#FFD700','#26A69A'];
+        for (var i = 0; i < count; i++) {
+            setTimeout((function(idx) { return function() {
+                var confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (2.5 + Math.random() * 3) + 's';
+                confetti.style.animationDelay = Math.random() * 0.6 + 's';
+                confetti.style.width = (7 + Math.random() * 12) + 'px';
+                confetti.style.height = (7 + Math.random() * 12) + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                document.body.appendChild(confetti);
+                setTimeout(function() { confetti.remove(); }, 4000);
+            }; })(i), i * 40);
+        }
+    };
+
+    Gamificacion.actualizarHUD = function() {
+        var starsEl = document.getElementById('hud-stars');
+        var pointsEl = document.getElementById('hud-points');
+        if (starsEl) starsEl.textContent = Gamificacion.estrellas;
+        if (pointsEl) pointsEl.textContent = Gamificacion.puntos;
+    };
+
+    Gamificacion.calcularPorcentaje = function(completados, total) {
+        return total > 0 ? Math.round((completados / total) * 100) : 0;
+    };
+
+    Gamificacion._flashCoin = function() {
+        var coin = document.createElement('div');
+        coin.className = 'coin-popup';
+        coin.textContent = '+10 💎';
+        coin.style.left = '50%';
+        coin.style.top = '40%';
+        document.body.appendChild(coin);
+        setTimeout(function() { coin.remove(); }, 1000);
+    };
+}
+
+// ============================================================
+// PROGRESO (self-contained, overridden if ../comun/progreso.js loads)
+// ============================================================
+var Progreso = window.Progreso || {};
+
+if (!Progreso._inited) {
+    Progreso._inited = true;
+
+    Progreso.guardar = function(moduloId, datos) {
+        try {
+            var key = 'educonect_' + moduloId;
+            var existing = JSON.parse(localStorage.getItem(key) || '{}');
+            for (var k in datos) { if (datos.hasOwnProperty(k)) existing[k] = datos[k]; }
+            localStorage.setItem(key, JSON.stringify(existing));
+        } catch(e) { /* storage unavailable */ }
+    };
+
+    Progreso.cargar = function(moduloId) {
+        try {
+            return JSON.parse(localStorage.getItem('educonect_' + moduloId) || '{}');
+        } catch(e) { return {}; }
+    };
+}
+
+// ============================================================
+// SCREEN NAVIGATION
+// ============================================================
+var currentScreen = 'screen-welcome';
+
+function goToScreen(screenId) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+        screens[i].classList.remove('active');
+    }
+    var target = document.getElementById(screenId);
+    if (target) {
+        target.classList.add('active');
+        currentScreen = screenId;
+        updateProgress();
+        if (screenId === 'screen-game1') initFoodGame();
+        if (screenId === 'screen-game2') initBotiquin();
+        if (screenId === 'screen-final') showFinalScreen();
+    }
+}
+
+function updateProgress() {
+    var screens = ['screen-welcome', 'screen-lesson', 'screen-game1', 'screen-game2', 'screen-final'];
+    var idx = screens.indexOf(currentScreen);
+    var pct = idx >= 0 ? Math.round(((idx + 1) / screens.length) * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+
+    var dotsContainer = document.getElementById('progress-dots');
+    dotsContainer.innerHTML = '';
+    for (var i = 0; i < screens.length; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'progress-dot';
+        if (i < idx) dot.classList.add('done');
+        if (i === idx) dot.classList.add('active');
+        dotsContainer.appendChild(dot);
+    }
+}
+
+// ============================================================
+// LESSON: System Tabs
+// ============================================================
+function showSystem(systemName) {
+    // Update tabs
+    var tabs = document.querySelectorAll('.system-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    document.getElementById('tab-' + systemName).classList.add('active');
+
+    // Show content
+    var contents = document.querySelectorAll('.system-content');
+    for (var j = 0; j < contents.length; j++) {
+        contents[j].classList.remove('active');
+    }
+    document.getElementById('sys-' + systemName).classList.add('active');
+
+    // Auto-TTS
+    var mensajes = {
+        'digestivo': 'Sistema digestivo: la boca tritura, el esófago transporta, el estómago mezcla y los intestinos absorben los nutrientes.',
+        'respiratorio': 'Sistema respiratorio: la nariz filtra el aire, la tráquea lo conduce y los pulmones toman el oxígeno.',
+        'circulatorio': 'Sistema circulatorio: el corazón bombea la sangre. Las arterias llevan oxígeno, las venas lo traen de vuelta.'
+    };
+    Gamificacion.pronunciar(mensajes[systemName] || '');
+}
+
+// ============================================================
+// GAME 1: RUTA DE LOS ALIMENTOS (5 stages)
+// ============================================================
+var foodStages = [
+    {
+        stage: 1,
+        emoji: '🦷',
+        name: 'La Boca',
+        question: '¿Qué hacen los dientes cuando comes tu arepa?',
+        options: [
+            { text: 'Trituran y muelen la comida', correct: true },
+            { text: 'Guardan la comida para después', correct: false },
+            { text: 'Empujan la comida al estómago', correct: false },
+            { text: 'No hacen nada', correct: false }
+        ],
+        explanation: '✅ ¡Correcto! Los dientes trituran la comida. La saliva la humedece para formar el bolo alimenticio.',
+        wrongMsg: '❌ Los dientes trituran la comida en pedacitos pequeños. La lengua ayuda a mezclarla con saliva.',
+        ttsCorrect: '¡Correcto! Los dientes trituran y muelen la comida en la boca.',
+        ttsWrong: 'No. Los dientes trituran y muelen la comida. La lengua ayuda a mezclarla con saliva.'
+    },
+    {
+        stage: 2,
+        emoji: '🌀',
+        name: 'El Esófago',
+        question: '¿Cómo viaja la comida de la boca al estómago?',
+        options: [
+            { text: 'Cae por gravedad como una piedra', correct: false },
+            { text: 'El esófago la empuja con movimientos', correct: true },
+            { text: 'Flota por el aire dentro del cuerpo', correct: false },
+            { text: 'La sangre la transporta', correct: false }
+        ],
+        explanation: '✅ ¡Correcto! El esófago empuja la comida hacia abajo con movimientos musculares (peristalsis), ¡como una ola!',
+        wrongMsg: '❌ El esófago es un tubo muscular que empuja la comida con movimientos ondulados. ¡Boca abajo también llega!',
+        ttsCorrect: '¡Correcto! El esófago empuja la comida con movimientos ondulados como una ola.',
+        ttsWrong: 'No. El esófago empuja la comida con movimientos musculares. ¡Como una serpiente empujando!'
+    },
+    {
+        stage: 3,
+        emoji: '🫗',
+        name: 'El Estómago',
+        question: '¿Qué pasa con la comida dentro del estómago?',
+        options: [
+            { text: 'Se congela para conservarse', correct: false },
+            { text: 'Se convierte directamente en sangre', correct: false },
+            { text: 'Se mezcla con jugos gástricos y se vuelve papilla', correct: true },
+            { text: 'Sale inmediatamente del cuerpo', correct: false }
+        ],
+        explanation: '✅ ¡Correcto! El estómago mezcla la comida con jugos gástricos y la convierte en una papilla llamada quimo.',
+        wrongMsg: '❌ En el estómago, la comida se mezcla con jugos gástricos que la deshacen. ¡Se vuelve como una sopa espesa!',
+        ttsCorrect: '¡Correcto! En el estómago la comida se mezcla con jugos gástricos y se convierte en papilla.',
+        ttsWrong: 'No. En el estómago la comida se mezcla con jugos gástricos. Se vuelve una papilla llamada quimo.'
+    },
+    {
+        stage: 4,
+        emoji: '🧬',
+        name: 'El Intestino Delgado',
+        question: '¿Qué pasa con los nutrientes en el intestino delgado?',
+        options: [
+            { text: 'Se eliminan con la orina', correct: false },
+            { text: 'Se absorben y pasan a la sangre', correct: true },
+            { text: 'Se convierten en huesos', correct: false },
+            { text: 'Se guardan en el estómago', correct: false }
+        ],
+        explanation: '✅ ¡Correcto! En el intestino delgado los nutrientes pasan a la sangre para alimentar todo tu cuerpo.',
+        wrongMsg: '❌ El intestino delgado absorbe los nutrientes y los pasa a la sangre. ¡Es la parte más importante de la digestión!',
+        ttsCorrect: '¡Correcto! Los nutrientes se absorben en el intestino delgado y pasan a la sangre.',
+        ttsWrong: 'No. El intestino delgado absorbe los nutrientes de la comida y los pasa a la sangre.'
+    },
+    {
+        stage: 5,
+        emoji: '💧',
+        name: 'El Intestino Grueso',
+        question: '¿Qué hace el intestino grueso con lo que el cuerpo no necesita?',
+        options: [
+            { text: 'Lo transforma en músculos', correct: false },
+            { text: 'Lo manda de vuelta al estómago', correct: false },
+            { text: 'Absorbe agua y forma las heces', correct: true },
+            { text: 'Lo convierte en energía para correr', correct: false }
+        ],
+        explanation: '✅ ¡Correcto! El intestino grueso absorbe el agua que queda y forma las heces con lo que no sirve.',
+        wrongMsg: '❌ El intestino grueso absorbe el agua sobrante y forma las heces (popó) con los desechos que el cuerpo no necesita.',
+        ttsCorrect: '¡Correcto! El intestino grueso absorbe agua y forma las heces con los desechos.',
+        ttsWrong: 'No. El intestino grueso absorbe el agua sobrante y forma las heces con lo que el cuerpo no necesita.'
+    }
+];
+
+var foodCurrentStage = 0;
+var foodScore = 0;
+var foodAnswered = false;
+
+function initFoodGame() {
+    foodCurrentStage = 0;
+    foodScore = 0;
+    foodAnswered = false;
+    document.getElementById('food-score').textContent = '0';
+    document.getElementById('game1-continue').style.display = 'none';
+    document.getElementById('food-feedback').textContent = '';
+    renderFoodStage();
+}
+
+function renderFoodStage() {
+    if (foodCurrentStage >= foodStages.length) {
+        document.getElementById('game1-continue').style.display = 'inline-block';
+        document.getElementById('food-feedback').innerHTML =
+            '<span style="color:#4CAF50;">🎉 ¡Completaste la ruta! ' + foodScore + ' de ' + foodStages.length + ' aciertos</span>';
+        document.getElementById('food-question-box').innerHTML =
+            '<div style="text-align:center;font-size:2em;">🍎➡️🫗➡️🧬➡️💧</div><p style="text-align:center;font-weight:700;color:var(--wayuu-teal);">¡Viajaste por todo el sistema digestivo!</p>';
+        document.getElementById('food-options').innerHTML = '';
+        updateFoodStageDots();
+        Gamificacion.sumarEstrella();
+        Gamificacion.pronunciar('¡Felicitaciones! Recorriste todo el sistema digestivo. Ya sabes cómo viaja la comida por tu cuerpo.');
+        return;
+    }
+
+    foodAnswered = false;
+    var stage = foodStages[foodCurrentStage];
+
+    document.getElementById('food-stage-num').textContent = foodCurrentStage + 1;
+    document.getElementById('food-score').textContent = foodScore;
+    document.getElementById('food-feedback').textContent = '';
+
+    var box = document.getElementById('food-question-box');
+    box.innerHTML =
+        '<span class="stage-emoji">' + stage.emoji + '</span>' +
+        '<div class="stage-name">Etapa ' + stage.stage + ': ' + stage.name + '</div>' +
+        '<div class="stage-question">' + stage.question + '</div>';
+
+    var opts = document.getElementById('food-options');
+    opts.innerHTML = '';
+    // Shuffle options
+    var shuffled = stage.options.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = temp;
+    }
+
+    for (var k = 0; k < shuffled.length; k++) {
+        var opt = shuffled[k];
+        var btn = document.createElement('button');
+        btn.className = 'food-option';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', (function(o, el) {
+            return function() { answerFoodQuestion(o, el); };
+        })(opt, btn));
+        opts.appendChild(btn);
+    }
+
+    updateFoodStageDots();
+}
+
+function updateFoodStageDots() {
+    var dots = document.querySelectorAll('#food-stage-dots .food-stage-dot');
+    for (var i = 0; i < dots.length; i++) {
+        dots[i].classList.remove('active', 'done', 'wrong');
+        if (i < foodCurrentStage) dots[i].classList.add('done');
+        if (i === foodCurrentStage && foodCurrentStage < foodStages.length) dots[i].classList.add('active');
+    }
+}
+
+function answerFoodQuestion(opt, btnEl) {
+    if (foodAnswered) return;
+    foodAnswered = true;
+
+    // Disable all options
+    var allOpts = document.querySelectorAll('#food-options .food-option');
+    for (var i = 0; i < allOpts.length; i++) {
+        allOpts[i].classList.add('disabled');
+    }
+
+    var stage = foodStages[foodCurrentStage];
+
+    if (opt.correct) {
+        btnEl.classList.add('correct-reveal');
+        foodScore++;
+        document.getElementById('food-score').textContent = foodScore;
+        document.getElementById('food-feedback').innerHTML =
+            '<span style="color:#4CAF50;">' + stage.explanation + '</span>';
+        Gamificacion.registrarAcierto();
+        Gamificacion.pronunciar(stage.ttsCorrect);
+        // Mark stage dot as done
+        var dots = document.querySelectorAll('#food-stage-dots .food-stage-dot');
+        if (dots[foodCurrentStage]) {
+            dots[foodCurrentStage].classList.remove('active');
+            dots[foodCurrentStage].classList.add('done');
+        }
+    } else {
+        btnEl.classList.add('wrong-reveal');
+        document.getElementById('food-feedback').innerHTML =
+            '<span style="color:#D94040;">' + stage.wrongMsg + '</span>';
+        Gamificacion.registrarError();
+        Gamificacion.pronunciar(stage.ttsWrong);
+        // Mark wrong
+        var dots = document.querySelectorAll('#food-stage-dots .food-stage-dot');
+        if (dots[foodCurrentStage]) {
+            dots[foodCurrentStage].classList.remove('active');
+            dots[foodCurrentStage].classList.add('wrong');
+        }
+    }
+
+    // Advance after delay
+    setTimeout(function() {
+        foodCurrentStage++;
+        renderFoodStage();
+    }, 2200);
+}
+
+function resetFoodGame() {
+    initFoodGame();
+}
+
+// ============================================================
+// GAME 2: BOTIQUÍN WAYUU - Drag & Drop Plantas Medicinales
+// ============================================================
+var botiquinData = [
+    { id: 'sabila', name: 'Sábila', emoji: '🌵', symptom: 'quemaduras', symptomName: 'Quemaduras / Piel irritada', symptomIcon: '🔥' },
+    { id: 'paico', name: 'Paico', emoji: '🌿', symptom: 'estomago', symptomName: 'Dolor de estómago / Parásitos', symptomIcon: '🤢' },
+    { id: 'prontoalivio', name: 'Pronto Alivio', emoji: '🍃', symptom: 'golpes', symptomName: 'Golpes / Hinchazón', symptomIcon: '🩹' },
+    { id: 'calendula', name: 'Caléndula', emoji: '🌼', symptom: 'heridas', symptomName: 'Heridas / Cortaduras', symptomIcon: '🩸' },
+    { id: 'jengibre', name: 'Jengibre', emoji: '🫚', symptom: 'tos', symptomName: 'Tos / Resfriado', symptomIcon: '🤧' },
+    { id: 'hierbabuena', name: 'Hierbabuena', emoji: '🌱', symptom: 'cabeza', symptomName: 'Dolor de cabeza / Náuseas', symptomIcon: '😣' }
+];
+
+var botiquinPlaced = 0;
+var botiquinCorrect = 0;
+
+function shuffleArray(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
+    }
+}
+
+function initBotiquin() {
+    botiquinPlaced = 0;
+    botiquinCorrect = 0;
+    document.getElementById('game2-placed').textContent = '0';
+    document.getElementById('game2-correct').textContent = '0';
+    document.getElementById('game2-feedback').textContent = '';
+    document.getElementById('game2-continue').style.display = 'none';
+
+    // Build source plants
+    var source = document.getElementById('botiquin-source');
+    source.innerHTML = '<h3>🌿 Plantas medicinales wayuu (arrastra cada una)</h3>';
+    var plants = botiquinData.slice();
+    shuffleArray(plants);
+    for (var i = 0; i < plants.length; i++) {
+        var p = plants[i];
+        var el = document.createElement('div');
+        el.className = 'botiquin-plant';
+        el.draggable = true;
+        el.dataset.id = p.id;
+        el.dataset.symptom = p.symptom;
+        el.id = 'plant-' + p.id;
+        el.innerHTML = '<span class="plant-emoji">' + p.emoji + '</span>' + p.name;
+
+        el.addEventListener('dragstart', botiquinDragStart);
+        el.addEventListener('dragend', botiquinDragEnd);
+        el.addEventListener('touchstart', botiquinTouchStart, { passive: false });
+        el.addEventListener('touchmove', botiquinTouchMove, { passive: false });
+        el.addEventListener('touchend', botiquinTouchEnd, { passive: false });
+
+        source.appendChild(el);
+    }
+
+    // Build target cards
+    var targets = document.getElementById('botiquin-targets');
+    targets.innerHTML = '';
+    var symptoms = botiquinData.slice();
+    shuffleArray(symptoms);
+    for (var j = 0; j < symptoms.length; j++) {
+        var s = symptoms[j];
+        var card = document.createElement('div');
+        card.className = 'botiquin-symptom-card';
+        card.dataset.symptom = s.symptom;
+        card.id = 'symptom-' + s.symptom;
+        card.innerHTML =
+            '<div class="symptom-icon">' + s.symptomIcon + '</div>' +
+            '<div class="symptom-name">' + s.symptomName + '</div>';
+
+        card.addEventListener('dragover', botiquinDragOver);
+        card.addEventListener('dragleave', botiquinDragLeave);
+        card.addEventListener('drop', botiquinDrop);
+
+        targets.appendChild(card);
+    }
+}
+
+// Drag and Drop handlers
+var botiquinDragged = null;
+
+function botiquinDragStart(e) {
+    botiquinDragged = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.id);
+}
+
+function botiquinDragEnd(e) {
+    this.classList.remove('dragging');
+    botiquinDragged = null;
+}
+
+function botiquinDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('highlight');
+}
+
+function botiquinDragLeave(e) {
+    this.classList.remove('highlight');
+}
+
+function botiquinDrop(e) {
+    e.preventDefault();
+    this.classList.remove('highlight');
+    var plantId = e.dataTransfer.getData('text/plain');
+    var plantEl = document.getElementById('plant-' + plantId);
+    if (!plantEl || plantEl.classList.contains('placed')) return;
+
+    var plantSymptom = plantEl.dataset.symptom;
+    var cardSymptom = this.dataset.symptom;
+    var isCorrect = (plantSymptom === cardSymptom);
+
+    placePlantInCard(plantEl, this, isCorrect);
+}
+
+// Touch support for mobile
+var touchPlant = null;
+var touchCloneEl = null;
+var touchOffX = 0;
+var touchOffY = 0;
+
+function botiquinTouchStart(e) {
+    e.preventDefault();
+    if (!e.touches || e.touches.length === 0) return;
+    touchPlant = this;
+    this.classList.add('dragging');
+    var rect = this.getBoundingClientRect();
+    touchOffX = e.touches[0].clientX - rect.left;
+    touchOffY = e.touches[0].clientY - rect.top;
+}
+
+function botiquinTouchMove(e) {
+    e.preventDefault();
+    if (!touchPlant || !e.touches || e.touches.length === 0) return;
+
+    var touch = e.touches[0];
+    var targetCard = getSymptomCardUnder(touch.clientX, touch.clientY);
+
+    var cards = document.querySelectorAll('.botiquin-symptom-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.remove('highlight');
+    }
+    if (targetCard) targetCard.classList.add('highlight');
+
+    if (!touchCloneEl) {
+        touchCloneEl = touchPlant.cloneNode(true);
+        touchCloneEl.style.position = 'fixed';
+        touchCloneEl.style.zIndex = '9997';
+        touchCloneEl.style.opacity = '0.85';
+        touchCloneEl.style.pointerEvents = 'none';
+        touchCloneEl.style.width = touchPlant.offsetWidth + 'px';
+        document.body.appendChild(touchCloneEl);
+    }
+    touchCloneEl.style.left = (touch.clientX - touchOffX) + 'px';
+    touchCloneEl.style.top = (touch.clientY - touchOffY) + 'px';
+}
+
+function botiquinTouchEnd(e) {
+    e.preventDefault();
+    var cards = document.querySelectorAll('.botiquin-symptom-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.remove('highlight');
+    }
+    if (touchCloneEl) {
+        touchCloneEl.remove();
+        touchCloneEl = null;
+    }
+    if (!touchPlant) return;
+
+    var touch = e.changedTouches[0];
+    var targetCard = getSymptomCardUnder(touch.clientX, touch.clientY);
+    touchPlant.classList.remove('dragging');
+
+    if (targetCard && !touchPlant.classList.contains('placed')) {
+        var plantSymptom = touchPlant.dataset.symptom;
+        var cardSymptom = targetCard.dataset.symptom;
+        var isCorrect = (plantSymptom === cardSymptom);
+        placePlantInCard(touchPlant, targetCard, isCorrect);
+    }
+
+    touchPlant = null;
+}
+
+function getSymptomCardUnder(x, y) {
+    var el = document.elementFromPoint(x, y);
+    while (el) {
+        if (el.classList && el.classList.contains('botiquin-symptom-card')) return el;
+        el = el.parentElement;
+    }
+    return null;
+}
+
+function placePlantInCard(plantEl, cardEl, isCorrect) {
+    if (plantEl.classList.contains('placed')) return;
+
+    plantEl.classList.add('placed');
+    plantEl.style.display = 'none';
+
+    if (isCorrect) {
+        cardEl.classList.add('matched');
+        botiquinCorrect++;
+        Gamificacion.registrarAcierto();
+        document.getElementById('game2-feedback').innerHTML =
+            '<span style="color:#4CAF50;">✅ ¡Correcto! ' + plantEl.textContent.trim() + ' es buena para esta dolencia.</span>';
+
+        // Show matched tag
+        var tag = document.createElement('div');
+        tag.className = 'botiquin-matched-tag';
+        tag.innerHTML = plantEl.innerHTML;
+        cardEl.appendChild(tag);
+
+        Gamificacion.pronunciar('¡Correcto! ' + plantEl.textContent.trim() + ' es buena para ese síntoma.', 0.85);
+    } else {
+        cardEl.classList.add('wrong-highlight');
+        document.getElementById('game2-feedback').innerHTML =
+            '<span style="color:#D94040;">❌ ' + plantEl.textContent.trim() + ' no es para esa dolencia. ¡Intenta otra vez!</span>';
+        Gamificacion.registrarError();
+        Gamificacion.pronunciar('Esa planta no es para esa dolencia. Intenta de nuevo.', 0.85);
+
+        // Return plant to source after animation
+        setTimeout(function() {
+            cardEl.classList.remove('wrong-highlight');
+            plantEl.classList.remove('placed');
+            plantEl.style.display = '';
+        }, 600);
+        return;
+    }
+
+    botiquinPlaced++;
+    document.getElementById('game2-placed').textContent = botiquinPlaced;
+    document.getElementById('game2-correct').textContent = botiquinCorrect;
+
+    if (botiquinPlaced >= botiquinData.length) {
+        document.getElementById('game2-feedback').innerHTML =
+            '<span style="color:#4CAF50;">🎉 ¡Botiquín completo! ' + botiquinCorrect + ' de ' + botiquinData.length + ' aciertos. ¡La outshü te felicita!</span>';
+        document.getElementById('game2-continue').style.display = 'inline-block';
+
+        if (botiquinCorrect >= 4) {
+            Gamificacion.sumarEstrella();
+            Gamificacion.pronunciar('¡Excelente! Conoces las plantas medicinales wayuu. La outshü está orgullosa.');
+        }
+    }
+}
+
+function resetBotiquin() {
+    initBotiquin();
+}
+
+// ============================================================
+// FINAL SCREEN
+// ============================================================
+function showFinalScreen() {
+    var totalCorrect = foodScore + botiquinCorrect;
+    var totalQuestions = foodStages.length + botiquinData.length;
+    var percentage = Gamificacion.calcularPorcentaje(totalCorrect, totalQuestions);
+
+    var starCount = 0;
+    if (percentage >= 40) starCount = 1;
+    if (percentage >= 70) starCount = 2;
+    if (percentage >= 85) starCount = 3;
+
+    while (Gamificacion.estrellas < starCount) {
+        Gamificacion.sumarEstrella();
+    }
+
+    var starsContainer = document.getElementById('final-stars');
+    starsContainer.innerHTML = '';
+    for (var i = 0; i < 3; i++) {
+        var span = document.createElement('span');
+        span.className = 'star';
+        span.textContent = i < starCount ? '⭐' : '☆';
+        span.style.animationDelay = (i * 0.2) + 's';
+        starsContainer.appendChild(span);
+    }
+
+    var card = document.getElementById('achievement-card');
+    var msg = '';
+    if (percentage >= 85) {
+        msg = '🌟 ¡Increíble! Conoces tu cuerpo y las plantas medicinales wayuu. La outshü te nombra <strong>"Guardián de la Salud Wayuu"</strong>.';
+        Gamificacion.desbloquearLogro('cien304_guardian', 'Guardián de la Salud Wayuu', '🌟');
+    } else if (percentage >= 70) {
+        msg = '👍 ¡Muy bien! Sabes cómo funciona tu cuerpo y conoces varias plantas medicinales.';
+        Gamificacion.desbloquearLogro('cien304_aprendiz', 'Aprendiz de la Outshü', '🌿');
+    } else if (percentage >= 40) {
+        msg = '🙂 ¡Buen esfuerzo! Sigue aprendiendo sobre tu cuerpo y las plantas wayuu.';
+    } else {
+        msg = '💪 ¡No te rindas! Vuelve a intentarlo y serás un guardián de la salud wayuu.';
+    }
+
+    card.innerHTML = '' +
+        '<p class="ach-item">🍎 <strong>Ruta de los alimentos:</strong> ' + foodScore + '/' + foodStages.length + ' aciertos</p>' +
+        '<p class="ach-item">🌿 <strong>Botiquín Wayuu:</strong> ' + botiquinCorrect + '/' + botiquinData.length + ' aciertos</p>' +
+        '<p class="ach-item">🏆 <strong>Total:</strong> ' + totalCorrect + '/' + totalQuestions + ' (' + percentage + '%)</p>' +
+        '<p class="ach-item">⭐ <strong>Estrellas ganadas:</strong> ' + Gamificacion.estrellas + '</p>' +
+        '<p style="margin-top:8px;font-weight:700;color:var(--wayuu-teal);text-align:center;">' + msg + '</p>' +
+        '<p class="wayuu-blessing">"Que Maleiwa te guíe y las plantas del desierto siempre te cuiden"<br>— La outshü wayuu</p>';
+
+    Progreso.guardar('cien304', {
+        puntos: Gamificacion.puntos,
+        estrellas: Gamificacion.estrellas,
+        porcentaje: percentage,
+        foodScore: foodScore,
+        foodTotal: foodStages.length,
+        botiquinCorrect: botiquinCorrect,
+        botiquinTotal: botiquinData.length,
+        logros: Gamificacion.logros,
+        completado: percentage >= 40
+    });
+
+    Gamificacion.actualizarHUD();
+
+    if (percentage >= 70) {
+        Gamificacion.lanzarConfeti(60);
+    } else if (percentage >= 40) {
+        Gamificacion.lanzarConfeti(30);
+    }
+
+    setTimeout(function() {
+        if (percentage >= 85) {
+            Gamificacion.pronunciar('¡Increíble! Eres un guardián de la salud wayuu. La outshü está muy orgullosa de ti.');
+        } else if (percentage >= 70) {
+            Gamificacion.pronunciar('¡Muy bien! Conoces tu cuerpo y las plantas medicinales wayuu.');
+        } else {
+            Gamificacion.pronunciar('¡Buen trabajo! Sigue aprendiendo sobre tu cuerpo y la medicina wayuu.');
+        }
+    }, 500);
+}
+
+function restartModule() {
+    foodCurrentStage = 0;
+    foodScore = 0;
+    foodAnswered = false;
+    botiquinPlaced = 0;
+    botiquinCorrect = 0;
+    Gamificacion.puntos = 0;
+    Gamificacion.estrellas = 0;
+    Gamificacion.logros = [];
+    Gamificacion.actualizarHUD();
+    document.getElementById('food-feedback').textContent = '';
+    document.getElementById('game1-continue').style.display = 'none';
+    document.getElementById('game2-feedback').textContent = '';
+    document.getElementById('game2-continue').style.display = 'none';
+    document.getElementById('botiquin-source').innerHTML = '<h3>🌿 Plantas medicinales wayuu</h3>';
+    document.getElementById('botiquin-targets').innerHTML = '';
+    goToScreen('screen-welcome');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+
+    var saved = Progreso.cargar('cien304');
+    if (saved.puntos) {
+        Gamificacion.puntos = saved.puntos;
+        Gamificacion.estrellas = saved.estrellas || 0;
+        Gamificacion.logros = saved.logros || [];
+        Gamificacion.actualizarHUD();
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = function() {
+            window.speechSynthesis.getVoices();
+        };
+    }
+});
+</script>
+
+</body>
+</html>

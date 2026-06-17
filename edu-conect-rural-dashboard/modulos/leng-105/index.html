@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LENG-105: El Pütchipü'üi — Argumentación y Resolución de Conflictos Wayuu</title>
+    <style>
+        :root {
+            --arena: #f4e4c1;
+            --tierra: #8b5e3c;
+            --rojo-wayuu: #c0392b;
+            --azul-mar: #1a5276;
+            --verde-cardon: #2d6a4f;
+            --dorado: #b8860b;
+            --crema: #fef9e7;
+            --texto: #2c1810;
+            --gris-claro: #e8e0d5;
+            --borde: #c4a882;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #fdf6e3 0%, #f4e4c1 50%, #e8d5b7 100%);
+            min-height: 100vh;
+            color: var(--texto);
+            line-height: 1.7;
+        }
+
+        /* --- CABECERA --- */
+        .cabecera {
+            background: linear-gradient(180deg, var(--tierra) 0%, #6b3f1f 100%);
+            color: #fff;
+            text-align: center;
+            padding: 28px 20px 22px;
+            border-bottom: 6px solid var(--dorado);
+            position: relative;
+            overflow: hidden;
+        }
+        .cabecera::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 40px,
+                rgba(255,255,255,0.03) 40px,
+                rgba(255,255,255,0.03) 42px
+            );
+            pointer-events: none;
+        }
+        .cabecera .grado-badge {
+            display: inline-block;
+            background: var(--dorado);
+            color: #fff;
+            padding: 4px 18px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .cabecera h1 {
+            font-size: 2em;
+            margin: 6px 0;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .cabecera .subtitulo {
+            font-style: italic;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .cabecera .modulo-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 3px 14px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-top: 6px;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .contenedor {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 24px 50px;
+        }
+
+        /* --- SECCIONES --- */
+        .seccion {
+            background: var(--crema);
+            border: 2px solid var(--borde);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 16px rgba(139,94,60,0.12);
+            position: relative;
+        }
+        .seccion.activa {
+            border-left: 6px solid var(--rojo-wayuu);
+        }
+        .seccion h2 {
+            color: var(--rojo-wayuu);
+            font-size: 1.5em;
+            border-bottom: 2px dashed var(--borde);
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .seccion h2 .icono {
+            font-size: 1.3em;
+        }
+        .seccion h3 {
+            color: var(--azul-mar);
+            margin: 16px 0 8px;
+            font-size: 1.15em;
+        }
+
+        /* --- TEXTO ARGUMENTATIVO --- */
+        .texto-argumentativo {
+            background: linear-gradient(180deg, #fffef9, #fef9e7);
+            border: 1px solid var(--borde);
+            border-radius: 10px;
+            padding: 22px 26px;
+            font-size: 1.05em;
+            line-height: 1.9;
+            position: relative;
+            margin: 14px 0;
+        }
+        .texto-argumentativo::before {
+            content: '📜';
+            position: absolute;
+            top: -16px;
+            left: 20px;
+            font-size: 2em;
+        }
+        .texto-argumentativo .parrafo {
+            margin-bottom: 14px;
+            text-indent: 1.8em;
+            text-align: justify;
+        }
+        .texto-argumentativo .parrafo:last-child {
+            margin-bottom: 0;
+        }
+        .texto-argumentativo .destacado {
+            background: rgba(184,134,11,0.12);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .texto-argumentativo .vocablo {
+            color: var(--rojo-wayuu);
+            font-style: italic;
+            cursor: help;
+            border-bottom: 1px dotted var(--rojo-wayuu);
+        }
+        .glosario {
+            background: #fdf6e3;
+            border: 1px dashed var(--borde);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-size: 0.9em;
+        }
+        .glosario dt {
+            font-weight: bold;
+            color: var(--tierra);
+            margin-top: 4px;
+        }
+        .glosario dd {
+            margin-left: 16px;
+            color: #5a3e2b;
+        }
+
+        /* --- ACTIVIDAD: IDENTIFICAR --- */
+        .actividad-identificar {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 14px 0;
+        }
+        .actividad-identificar .pregunta {
+            margin-bottom: 14px;
+        }
+        .actividad-identificar label {
+            display: block;
+            font-weight: bold;
+            color: var(--azul-mar);
+            margin-bottom: 4px;
+        }
+        .actividad-identificar textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 2px solid var(--borde);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.95em;
+            resize: vertical;
+            background: #fefef9;
+            transition: border-color 0.3s;
+        }
+        .actividad-identificar textarea:focus {
+            outline: none;
+            border-color: var(--dorado);
+            box-shadow: 0 0 0 3px rgba(184,134,11,0.15);
+        }
+        .btn-revisar {
+            display: inline-block;
+            background: var(--verde-cardon);
+            color: #fff;
+            border: none;
+            padding: 10px 26px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+        .btn-revisar:hover {
+            background: #1b4332;
+            transform: translateY(-1px);
+        }
+        .feedback {
+            margin-top: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+        }
+        .feedback.correcto {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .feedback.parcial {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        /* --- CASO: CONFLICTO ENTRE CLANES --- */
+        .caso-conflicto {
+            background: linear-gradient(135deg, #fff 0%, #fef9e7 100%);
+            border: 2px solid var(--rojo-wayuu);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 14px 0;
+            position: relative;
+        }
+        .caso-conflicto::before {
+            content: '⚖️';
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            font-size: 2.2em;
+        }
+        .caso-conflicto .narracion {
+            font-size: 1.02em;
+            line-height: 1.8;
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+        .caso-conflicto .clanes {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+        .clan-card {
+            flex: 1;
+            min-width: 180px;
+            background: #fff;
+            border: 1px solid var(--borde);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        .clan-card.epieyuu {
+            border-top: 4px solid #e74c3c;
+        }
+        .clan-card.uriana {
+            border-top: 4px solid #2980b9;
+        }
+        .clan-card .clan-nombre {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .clan-card .clan-postura {
+            font-size: 0.9em;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* --- ESCRITURA ARGUMENTADA --- */
+        .escritura-argumentada textarea {
+            width: 100%;
+            min-height: 180px;
+            border: 2px solid var(--borde);
+            border-radius: 10px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 0.95em;
+            line-height: 1.7;
+            resize: vertical;
+            background: #fffef9;
+        }
+        .escritura-argumentada textarea:focus {
+            outline: none;
+            border-color: var(--dorado);
+            box-shadow: 0 0 0 3px rgba(184,134,11,0.15);
+        }
+        .guia-escritura {
+            background: #eaf2f8;
+            border-left: 4px solid var(--azul-mar);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 14px;
+            font-size: 0.9em;
+        }
+        .guia-escritura ul {
+            margin-left: 20px;
+            margin-top: 6px;
+        }
+        .guia-escritura li {
+            margin-bottom: 3px;
+        }
+
+        /* --- JUEGO DE ROLES --- */
+        .juego-roles {
+            margin: 14px 0;
+        }
+        .escenarios-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 18px 0;
+        }
+        @media (max-width: 650px) {
+            .escenarios-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .escenario-card {
+            background: #fff;
+            border: 2px solid var(--borde);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .escenario-card:hover {
+            border-color: var(--dorado);
+            box-shadow: 0 6px 20px rgba(139,94,60,0.18);
+            transform: translateY(-2px);
+        }
+        .escenario-card.seleccionado {
+            border-color: var(--verde-cardon);
+            background: #f0faf3;
+            box-shadow: 0 0 0 3px rgba(45,106,79,0.2);
+        }
+        .escenario-card .numero {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 2.5em;
+            color: rgba(139,94,60,0.1);
+            font-weight: bold;
+            pointer-events: none;
+        }
+        .escenario-card h4 {
+            color: var(--tierra);
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+        .escenario-card .situacion {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        .escenario-card .opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .opcion-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        .opcion-btn:hover {
+            background: #eaf7ed;
+            border-color: var(--verde-cardon);
+        }
+        .opcion-btn.elegida {
+            background: var(--verde-cardon);
+            color: #fff;
+            border-color: var(--verde-cardon);
+            font-weight: bold;
+        }
+        .resultado-escenario {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .resultado-escenario.mostrar {
+            display: block;
+        }
+        .resultado-escenario.acierto {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .resultado-escenario.fallo {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        /* --- PUNTAJE --- */
+        .puntaje-panel {
+            background: linear-gradient(135deg, var(--azul-mar), #1a3a4a);
+            color: #fff;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .puntaje-panel .puntaje-titulo {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .puntaje-panel .puntaje-valor {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--dorado);
+        }
+        .puntaje-panel .puntaje-max {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+        .barra-progreso {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .barra-progreso .relleno {
+            height: 100%;
+            background: var(--dorado);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        /* --- REFLEXIÓN FINAL --- */
+        .reflexion-final {
+            background: linear-gradient(135deg, #fdf2e9, #fef9e7);
+            border: 2px solid var(--dorado);
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .reflexion-final h3 {
+            color: var(--rojo-wayuu);
+            margin-bottom: 10px;
+        }
+        .reflexion-final p {
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+        .reflexion-final .frase-wayuu {
+            font-style: italic;
+            font-size: 1.2em;
+            color: var(--tierra);
+            margin: 14px 0;
+            padding: 10px 20px;
+            border-left: 4px solid var(--dorado);
+            background: rgba(184,134,11,0.08);
+            border-radius: 0 8px 8px 0;
+            display: inline-block;
+            text-align: left;
+        }
+
+        /* --- PROGRESO DE SECCIONES --- */
+        .progreso-secciones {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .paso {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gris-claro);
+            border: 2px solid var(--borde);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            color: #999;
+        }
+        .paso.completado {
+            background: var(--verde-cardon);
+            border-color: var(--verde-cardon);
+            color: #fff;
+        }
+        .paso.actual {
+            border-color: var(--dorado);
+            box-shadow: 0 0 12px rgba(184,134,11,0.4);
+            color: var(--dorado);
+            background: #fff;
+        }
+
+        /* --- BOTÓN FINAL --- */
+        .btn-finalizar {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, var(--rojo-wayuu), #a93226);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.15em;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(192,57,43,0.3);
+        }
+        .btn-finalizar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(192,57,43,0.4);
+        }
+        .btn-finalizar:active {
+            transform: translateY(0);
+        }
+
+        /* --- MODAL FINAL --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.visible {
+            display: flex;
+        }
+        .modal-contenido {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-contenido h2 {
+            color: var(--verde-cardon);
+            margin-bottom: 10px;
+        }
+        .modal-contenido .puntaje-final {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--dorado);
+            margin: 10px 0;
+        }
+        .modal-contenido .medalla {
+            font-size: 4em;
+            margin: 10px 0;
+        }
+        .btn-cerrar {
+            background: var(--verde-cardon);
+            color: #fff;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 12px;
+        }
+
+        /* --- UTILIDADES --- */
+        .oculto {
+            display: none;
+        }
+        .separador {
+            border: none;
+            border-top: 1px dashed var(--borde);
+            margin: 18px 0;
+        }
+        .nota {
+            font-size: 0.85em;
+            color: #888;
+            font-style: italic;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== CABECERA ===== -->
+<header class="cabecera">
+    <div class="grado-badge">5° Grado</div>
+    <h1>🌵 El Pütchipü'üi</h1>
+    <p class="subtitulo">Argumentación y resolución de conflictos en la cultura Wayuu</p>
+    <span class="modulo-tag">LENG-105</span>
+</header>
+
+<div class="contenedor">
+
+    <!-- Progreso de secciones -->
+    <div class="progreso-secciones" id="progresoSecciones">
+        <span class="paso actual" id="paso1" title="Lectura">1</span>
+        <span class="paso" id="paso2" title="Identificar">2</span>
+        <span class="paso" id="paso3" title="Caso práctico">3</span>
+        <span class="paso" id="paso4" title="Juego de roles">4</span>
+    </div>
+
+    <!-- ===== SECCIÓN 1: LECTURA DEL TEXTO ARGUMENTATIVO ===== -->
+    <section class="seccion activa" id="seccion1">
+        <h2><span class="icono">📖</span> 1. Lee el texto argumentativo</h2>
+
+        <p style="margin-bottom:10px;">A continuación leerás un texto que explica la importancia del <strong>Pütchipü'üi</strong> —el palabrero wayuu— en la resolución de conflictos. Presta atención a la <em>tesis</em>, los <em>argumentos</em> y la <em>conclusión</em>.</p>
+
+        <div class="texto-argumentativo">
+            <p class="parrafo">
+                En el corazón de la Guajira, donde el sol abraza la tierra árida y el viento susurra entre los cardones, vive el pueblo <span class="vocablo" title="Pueblo indígena de la península de la Guajira">Wayuu</span>. Esta comunidad, una de las más numerosas y orgullosas de Colombia y Venezuela, ha desarrollado durante siglos un sistema propio de justicia y convivencia. En el centro de ese sistema se encuentra una figura admirable: el <span class="destacado">Pütchipü'üi</span>, también conocido como "el palabrero".
+            </p>
+            <p class="parrafo">
+                La <strong>tesis</strong> que defenderemos es la siguiente: <span class="destacado">El Pütchipü'üi es una institución fundamental para la paz y la armonía del pueblo wayuu, porque resuelve los conflictos mediante la palabra, el diálogo y la reparación, evitando la violencia entre clanes familiares.</span>
+            </p>
+            <p class="parrafo">
+                Para sostener esta idea, presentamos tres argumentos principales. <strong>Primer argumento:</strong> El Pütchipü'üi es un mediador neutral, respetado por todas las partes. No pertenece a ninguno de los clanes en conflicto, lo que le permite escuchar sin favoritismos y proponer soluciones justas. Su autoridad no proviene de la fuerza, sino del reconocimiento que la comunidad le otorga por su sabiduría, su conocimiento de las tradiciones y su habilidad con la palabra. Como dicen los wayuu: <em>"La palabra del Pütchipü'üi tiene peso, porque carga la verdad de los ancestros"</em>.
+            </p>
+            <p class="parrafo">
+                <strong>Segundo argumento:</strong> El Pütchipü'üi busca la reparación del daño, no el castigo. En la justicia wayuu, cuando ocurre una ofensa —ya sea un robo, una agresión, un incumplimiento de compromisos matrimoniales o incluso un homicidio—, el objetivo no es encerrar al culpable, sino restaurar el equilibrio roto. El palabrero negocia un <span class="vocablo" title="Indemnización o pago como reparación por un daño causado">pütchi</span> (acuerdo de reparación) que puede incluir bienes materiales —como chivos, collares de <span class="vocablo" title="Piedras semipreciosas de color rojo coral, muy valoradas por los wayuu">tüma</span> o ganado—, así como disculpas públicas y compromisos de buena conducta futura.
+            </p>
+            <p class="parrafo">
+                <strong>Tercer argumento:</strong> El sistema del Pütchipü'üi fortalece los lazos comunitarios y previene ciclos de venganza. Sin esta mediación, los conflictos entre clanes wayuu podrían escalar hasta convertirse en guerras familiares que duren generaciones —las temidas <span class="vocablo" title="Enfrentamientos armados o venganzas prolongadas entre familias o clanes">kajashii</span>—. El palabrero interrumpe ese ciclo destructivo y transforma el conflicto en una oportunidad para reconstruir relaciones. Cada acuerdo logrado es una victoria no de un clan sobre otro, sino de la comunidad entera sobre la división.
+            </p>
+            <p class="parrafo">
+                En <strong>conclusión</strong>, el Pütchipü'üi representa una sabiduría ancestral que nos enseña que los conflictos no se resuelven con más violencia, sino con más diálogo. En un mundo donde las diferencias a menudo terminan en enfrentamientos, la figura del palabrero wayuu nos recuerda que siempre hay un camino de palabras antes que un camino de armas. Por eso, esta institución no solo es valiosa para los wayuu: es un ejemplo para toda la humanidad.
+            </p>
+        </div>
+
+        <div class="glosario">
+            <p><strong>📚 Glosario:</strong></p>
+            <dl>
+                <dt>Pütchipü'üi</dt>
+                <dd>Palabrero o mediador tradicional wayuu, encargado de resolver conflictos mediante el diálogo.</dd>
+                <dt>Pütchi</dt>
+                <dd>Palabra, acuerdo o tratado de paz negociado entre clanes.</dd>
+                <dt>Kajashii</dt>
+                <dd>Venganza o guerra entre familias; ciclo de violencia que el Pütchipü'üi busca romper.</dd>
+                <dt>Tüma</dt>
+                <dd>Piedras de coral rojo muy preciadas, usadas en collares y como parte de pagos de reparación.</dd>
+            </dl>
+        </div>
+
+        <div style="text-align:center; margin-top:16px;">
+            <button class="btn-revisar" onclick="completarLectura()">✅ Terminé de leer — Continuar</button>
+            <p id="confirmacionLectura" class="nota oculto">¡Muy bien! Has completado la lectura. Ahora pasa a identificar las partes del texto.</p>
+        </div>
+    </section>
+
+    <!-- ===== SECCIÓN 2: IDENTIFICAR TESIS, ARGUMENTOS Y CONCLUSIÓN ===== -->
+    <section class="seccion oculto" id="seccion2">
+        <h2><span class="icono">🔍</span> 2. Identifica las partes del texto argumentativo</h2>
+
+        <p>Ahora que has leído el texto, identifica cada una de sus partes. Escribe con tus propias palabras lo que entendiste.</p>
+
+        <div class="actividad-identificar">
+            <div class="pregunta">
+                <label for="tesisInput">📌 TESIS (idea principal que defiende el texto):</label>
+                <textarea id="tesisInput" placeholder="Escribe aquí cuál es la tesis del texto..."></textarea>
+            </div>
+            <div class="pregunta">
+                <label for="arg1Input">💬 ARGUMENTO 1 (primera razón que apoya la tesis):</label>
+                <textarea id="arg1Input" placeholder="Escribe el primer argumento..."></textarea>
+            </div>
+            <div class="pregunta">
+                <label for="arg2Input">💬 ARGUMENTO 2 (segunda razón):</label>
+                <textarea id="arg2Input" placeholder="Escribe el segundo argumento..."></textarea>
+            </div>
+            <div class="pregunta">
+                <label for="arg3Input">💬 ARGUMENTO 3 (tercera razón):</label>
+                <textarea id="arg3Input" placeholder="Escribe el tercer argumento..."></textarea>
+            </div>
+            <div class="pregunta">
+                <label for="conclusionInput">🏁 CONCLUSIÓN (idea final del texto):</label>
+                <textarea id="conclusionInput" placeholder="Escribe la conclusión..."></textarea>
+            </div>
+            <button class="btn-revisar" onclick="revisarIdentificacion()">🔎 Revisar mis respuestas</button>
+            <div id="feedbackIdentificar" class="feedback"></div>
+        </div>
+    </section>
+
+    <!-- ===== SECCIÓN 3: CASO PRÁCTICO ===== -->
+    <section class="seccion oculto" id="seccion3">
+        <h2><span class="icono">⚖️</span> 3. Caso práctico: Conflicto entre clanes</h2>
+
+        <p>Imagina que <strong>tú eres el Pütchipü'üi</strong>. Lee el siguiente caso y escribe una solución argumentada.</p>
+
+        <div class="caso-conflicto">
+            <p class="narracion">
+                En la ranchería de <em>Wopumüin</em>, dos clanes vecinos —los <strong>Epieyuu</strong> y los <strong>Uriana</strong>— han vivido en armonía durante décadas. Sin embargo, hace dos semanas, un grupo de chivos del clan Epieyuu entró en el territorio de los Uriana y destruyó una parte importante de su cultivo de <em>yuja</em> (yuca), del cual dependían para alimentarse y para comerciar en el mercado de Maicao.
+            </p>
+            <p class="narracion">
+                Los Uriana, indignados, retuvieron a los chivos y exigen una compensación de 15 animales y 3 collares de tüma. Los Epieyuu argumentan que fue un accidente —la cerca estaba dañada por las lluvias recientes— y que la exigencia es desproporcionada. Ofrecen solo 3 chivos como gesto de buena voluntad.
+            </p>
+            <p class="narracion">
+                La tensión ha subido: hubo insultos entre los jóvenes de ambos clanes, y los ancianos temen que la situación escale a una <em>kajashii</em> (venganza). Han acudido a ti, el Pütchipü'üi, para que resuelvas el conflicto antes de que sea demasiado tarde.
+            </p>
+
+            <div class="clanes">
+                <div class="clan-card epieyuu">
+                    <div class="clan-nombre">🐐 Clan Epieyuu</div>
+                    <div class="clan-postura">"Fue un accidente. La cerca se cayó con las lluvias. Ofrecemos 3 chivos y reparar la cerca."</div>
+                </div>
+                <div class="clan-card uriana">
+                    <div class="clan-nombre">🌿 Clan Uriana</div>
+                    <div class="clan-postura">"Perdimos nuestra cosecha de yuja. Exigimos 15 chivos y 3 collares de tüma como reparación."</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="escritura-argumentada">
+            <h3>✍️ Escribe tu solución como Pütchipü'üi</h3>
+            <div class="guia-escritura">
+                <p><strong>Tu texto debe incluir:</strong></p>
+                <ul>
+                    <li>Una <strong>tesis</strong> clara (tu propuesta de solución)</li>
+                    <li>Al menos <strong>dos argumentos</strong> que la respalden</li>
+                    <li>Una <strong>conclusión</strong> que invite a ambos clanes a aceptar el acuerdo</li>
+                    <li>Recuerda: busca la reparación y la armonía, no el castigo</li>
+                </ul>
+            </div>
+            <textarea id="solucionPutchipui" placeholder="Escribe aquí tu solución argumentada como Pütchipü'üi...&#10;&#10;Puedes comenzar así:&#10;&#10;«Como Pütchipü'üi de esta ranchería, propongo la siguiente solución...»"></textarea>
+            <button class="btn-revisar" onclick="revisarSolucion()" style="margin-top:12px;">📝 Revisar mi solución</button>
+            <div id="feedbackSolucion" class="feedback"></div>
+        </div>
+    </section>
+
+    <!-- ===== SECCIÓN 4: JUEGO DE ROLES ===== -->
+    <section class="seccion oculto" id="seccion4">
+        <h2><span class="icono">🎭</span> 4. Juego de roles: Tú decides</h2>
+        <p>En cada escenario, elige la mejor decisión como si fueras el Pütchipü'üi. Cada acierto suma <strong>2 puntos</strong>.</p>
+
+        <div class="puntaje-panel">
+            <div>
+                <div class="puntaje-titulo">🏆 Tu puntaje</div>
+                <div class="puntaje-max">Máximo: 8 puntos</div>
+            </div>
+            <div class="puntaje-valor" id="puntajeValor">0</div>
+            <div style="width:100%;">
+                <div class="barra-progreso">
+                    <div class="relleno" id="barraRelleno" style="width:0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="juego-roles">
+            <div class="escenarios-grid">
+                <!-- Escenario 1 -->
+                <div class="escenario-card" id="escenario1">
+                    <div class="numero">01</div>
+                    <h4>Escenario 1: Palabras hirientes</h4>
+                    <p class="situacion">Durante una reunión, un joven del clan A insulta gravemente al tío del clan B. El tío exige que el joven sea castigado físicamente frente a todos.</p>
+                    <div class="opciones">
+                        <button class="opcion-btn" onclick="elegirOpcion(1, 'a', this)">A) Aceptar el castigo físico para dar ejemplo</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(1, 'b', this)">B) Proponer que el joven ofrezca disculpas públicas y entregue un collar de tüma como reparación simbólica</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(1, 'c', this)">C) Ignorar el insulto porque "las palabras se las lleva el viento"</button>
+                    </div>
+                    <div class="resultado-escenario" id="resultado1"></div>
+                </div>
+
+                <!-- Escenario 2 -->
+                <div class="escenario-card" id="escenario2">
+                    <div class="numero">02</div>
+                    <h4>Escenario 2: Deuda pendiente</h4>
+                    <p class="situacion">Hace tres años, el clan Epinayú prestó 20 chivos al clan Jusayú. Ahora los Epinayú los reclaman, pero los Jusayú dicen que ya pagaron con trabajo en la ranchería. No hay testigos.</p>
+                    <div class="opciones">
+                        <button class="opcion-btn" onclick="elegirOpcion(2, 'a', this)">A) Creer a los Epinayú y ordenar que paguen el doble</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(2, 'b', this)">B) Escuchar a ambas partes y buscar un punto medio: devolver 10 chivos y sellar el acuerdo con un ritual compartido</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(2, 'c', this)">C) Decir que como no hay testigos, que cada quien resuelva por su cuenta</button>
+                    </div>
+                    <div class="resultado-escenario" id="resultado2"></div>
+                </div>
+
+                <!-- Escenario 3 -->
+                <div class="escenario-card" id="escenario3">
+                    <div class="numero">03</div>
+                    <h4>Escenario 3: Matrimonio en riesgo</h4>
+                    <p class="situacion">Los clanes Uriana y Pushaina acordaron el matrimonio de sus hijos. Pero la joven se niega porque ama a otro. Los padres exigen que se cumpla el acuerdo o habrá conflicto.</p>
+                    <div class="opciones">
+                        <button class="opcion-btn" onclick="elegirOpcion(3, 'a', this)">A) Obligar a la joven a casarse para mantener la paz entre clanes</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(3, 'b', this)">B) Dialogar con ambas familias para renegociar el acuerdo, respetando la voluntad de la joven y buscando otra forma de alianza</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(3, 'c', this)">C) Declarar que el acuerdo queda anulado sin ninguna compensación</button>
+                    </div>
+                    <div class="resultado-escenario" id="resultado3"></div>
+                </div>
+
+                <!-- Escenario 4 -->
+                <div class="escenario-card" id="escenario4">
+                    <div class="numero">04</div>
+                    <h4>Escenario 4: Agua escasa</h4>
+                    <p class="situacion">Dos clanes comparten un jagüey (pozo de agua). En época de sequía, el clan Sapuana construyó un muro para reservar más agua. El clan Ipuana derribó el muro y ambos están al borde del enfrentamiento.</p>
+                    <div class="opciones">
+                        <button class="opcion-btn" onclick="elegirOpcion(4, 'a', this)">A) Darle la razón a los Ipuana porque el agua es de todos</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(4, 'b', this)">B) Establecer turnos equitativos de uso del jagüey y organizar la construcción conjunta de un nuevo pozo</button>
+                        <button class="opcion-btn" onclick="elegirOpcion(4, 'c', this)">C) Dejar que cada clan resuelva el problema como pueda</button>
+                    </div>
+                    <div class="resultado-escenario" id="resultado4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reflexión final -->
+        <div class="reflexion-final">
+            <h3>🌟 Reflexión final</h3>
+            <p>El Pütchipü'üi nos enseña que la verdadera justicia no busca venganza, sino <strong>restaurar la armonía</strong>. En cada conflicto hay una oportunidad para dialogar, comprender al otro y construir paz.</p>
+            <div class="frase-wayuu">
+                "Sünülia tü pütchika — La palabra tiene poder"<br>
+                <small>— Sabiduría wayuu</small>
+            </div>
+            <p>¿Qué aprendiste hoy que puedas aplicar en tus propios conflictos cotidianos?</p>
+            <textarea id="reflexionFinal" placeholder="Escribe tu reflexión aquí..." style="width:100%; min-height:80px; border:2px solid var(--borde); border-radius:8px; padding:10px; font-family:inherit; margin-top:10px;"></textarea>
+        </div>
+
+        <button class="btn-finalizar" onclick="finalizarModulo()">🎓 Finalizar módulo LENG-105</button>
+    </section>
+
+</div>
+
+<!-- Modal final -->
+<div class="modal-overlay" id="modalFinal">
+    <div class="modal-contenido">
+        <div class="medalla" id="medallaEmoji">🏅</div>
+        <h2>¡Módulo completado!</h2>
+        <p>Has finalizado <strong>LENG-105: El Pütchipü'üi</strong></p>
+        <div class="puntaje-final" id="puntajeFinalDisplay">0 / 8</div>
+        <p id="mensajeFinal"></p>
+        <p style="font-size:0.9em; color:#666; margin-top:8px;">
+            📖 Lectura completada<br>
+            🔍 Identificación de argumentos<br>
+            ⚖️ Caso práctico resuelto<br>
+            🎭 Juego de roles: <span id="aciertosFinal">0/4</span> aciertos
+        </p>
+        <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    // ========== ESTADO ==========
+    var puntaje = 0;
+    var escenariosResueltos = {};
+    var seccionActual = 1;
+    var lecturaCompletada = false;
+    var identificacionRevisada = false;
+    var solucionRevisada = false;
+
+    // ========== NAVEGACIÓN ENTRE SECCIONES ==========
+    function mostrarSeccion(num) {
+        for (var i = 1; i <= 4; i++) {
+            var sec = document.getElementById('seccion' + i);
+            if (sec) sec.classList.add('oculto');
+            var paso = document.getElementById('paso' + i);
+            if (paso) {
+                paso.classList.remove('actual');
+                if (i < num || (i === num && seccionYaCompletada(i))) {
+                    paso.classList.add('completado');
+                } else if (i === num) {
+                    paso.classList.add('actual');
+                }
+            }
+        }
+        var secActual = document.getElementById('seccion' + num);
+        if (secActual) secActual.classList.remove('oculto');
+        // Scroll suave
+        secActual.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function seccionYaCompletada(num) {
+        if (num === 1) return lecturaCompletada;
+        if (num === 2) return identificacionRevisada;
+        if (num === 3) return solucionRevisada;
+        return false;
+    }
+
+    function actualizarProgreso() {
+        var pasos = document.querySelectorAll('.paso');
+        for (var i = 0; i < pasos.length; i++) {
+            var num = i + 1;
+            pasos[i].classList.remove('actual', 'completado');
+            if (seccionYaCompletada(num)) {
+                pasos[i].classList.add('completado');
+            }
+        }
+        var pasoActual = document.getElementById('paso' + seccionActual);
+        if (pasoActual && !seccionYaCompletada(seccionActual)) {
+            pasoActual.classList.add('actual');
+        }
+    }
+
+    // ========== SECCIÓN 1: LECTURA ==========
+    function completarLectura() {
+        lecturaCompletada = true;
+        seccionActual = 2;
+        document.getElementById('confirmacionLectura').classList.remove('oculto');
+        actualizarProgreso();
+        setTimeout(function() {
+            mostrarSeccion(2);
+        }, 600);
+    }
+
+    // ========== SECCIÓN 2: IDENTIFICAR ==========
+    function revisarIdentificacion() {
+        var tesis = (document.getElementById('tesisInput').value || '').toLowerCase().trim();
+        var arg1 = (document.getElementById('arg1Input').value || '').toLowerCase().trim();
+        var arg2 = (document.getElementById('arg2Input').value || '').toLowerCase().trim();
+        var arg3 = (document.getElementById('arg3Input').value || '').toLowerCase().trim();
+        var conclusion = (document.getElementById('conclusionInput').value || '').toLowerCase().trim();
+
+        var fb = document.getElementById('feedbackIdentificar');
+        var aciertos = 0;
+
+        // Palabras clave esperadas para cada campo
+        var clavesTesis = ['pütchipü', 'paz', 'armonía', 'conflicto', 'palabra', 'diálogo', 'mediador', 'palabrero', 'resuelve', 'fundamental', 'importante'];
+        var clavesArg1 = ['neutral', 'mediador', 'respetado', 'imparcial', 'confianza', 'sabiduría', 'reconocimiento', 'autoridad', 'fuerza'];
+        var clavesArg2 = ['reparación', 'daño', 'castigo', 'restaurar', 'equilibrio', 'acuerdo', 'compensación', 'pütchi', 'chivos', 'tüma', 'bienes'];
+        var clavesArg3 = ['venganza', 'ciclo', 'generaciones', 'kajashii', 'lazos', 'comunitarios', 'guerra', 'reconstruir', 'relaciones', 'previene'];
+        var clavesConclusion = ['sabiduría', 'ancestral', 'diálogo', 'violencia', 'ejemplo', 'humanidad', 'palabras', 'armas', 'valiosa', 'enseña'];
+
+        function contarCoincidencias(texto, claves) {
+            var count = 0;
+            for (var i = 0; i < claves.length; i++) {
+                if (texto.indexOf(claves[i]) !== -1) count++;
+            }
+            return count;
+        }
+
+        if (tesis.length > 10 && contarCoincidencias(tesis, clavesTesis) >= 2) aciertos++;
+        if (arg1.length > 10 && contarCoincidencias(arg1, clavesArg1) >= 2) aciertos++;
+        if (arg2.length > 10 && contarCoincidencias(arg2, clavesArg2) >= 2) aciertos++;
+        if (arg3.length > 10 && contarCoincidencias(arg3, clavesArg3) >= 2) aciertos++;
+        if (conclusion.length > 10 && contarCoincidencias(conclusion, clavesConclusion) >= 2) aciertos++;
+
+        if (aciertos >= 4) {
+            fb.className = 'feedback correcto';
+            fb.innerHTML = '✅ ¡Excelente! Has identificado correctamente ' + aciertos + ' de 5 partes del texto argumentativo.';
+            identificacionRevisada = true;
+            seccionActual = 3;
+            actualizarProgreso();
+            setTimeout(function() {
+                mostrarSeccion(3);
+            }, 800);
+        } else if (aciertos >= 2) {
+            fb.className = 'feedback parcial';
+            fb.innerHTML = '⚠️ Vas bien (' + aciertos + ' de 5). Revisa las partes que te faltan e inténtalo de nuevo. Recuerda usar tus propias palabras basadas en el texto.';
+        } else {
+            fb.className = 'feedback parcial';
+            fb.innerHTML = '📝 Te falta desarrollar más tus respuestas (' + aciertos + ' de 5). Vuelve a leer el texto e identifica la tesis, los 3 argumentos y la conclusión. Escribe al menos una oración completa en cada campo.';
+        }
+    }
+
+    // ========== SECCIÓN 3: SOLUCIÓN ARGUMENTADA ==========
+    function revisarSolucion() {
+        var solucion = (document.getElementById('solucionPutchipui').value || '').trim();
+        var fb = document.getElementById('feedbackSolucion');
+
+        if (solucion.length < 80) {
+            fb.className = 'feedback parcial';
+            fb.innerHTML = '⚠️ Tu solución es muy corta. Escribe al menos 4-5 oraciones completas con tesis, argumentos y conclusión. Recuerda la guía de escritura.';
+            return;
+        }
+
+        // Verificar estructura mínima
+        var tieneTesis = solucion.toLowerCase().indexOf('propongo') !== -1 ||
+                         solucion.toLowerCase().indexOf('sugiero') !== -1 ||
+                         solucion.toLowerCase().indexOf('recomiendo') !== -1 ||
+                         solucion.toLowerCase().indexOf('solución') !== -1 ||
+                         solucion.toLowerCase().indexOf('acuerdo') !== -1;
+
+        var tieneArgumento = solucion.toLowerCase().indexOf('porque') !== -1 ||
+                            solucion.toLowerCase().indexOf('debido') !== -1 ||
+                            solucion.toLowerCase().indexOf('razón') !== -1 ||
+                            solucion.toLowerCase().indexOf('argumento') !== -1 ||
+                            solucion.toLowerCase().indexOf('ya que') !== -1;
+
+        var mencionaReparacion = solucion.toLowerCase().indexOf('repar') !== -1 ||
+                                 solucion.toLowerCase().indexOf('compens') !== -1 ||
+                                 solucion.toLowerCase().indexOf('chivo') !== -1 ||
+                                 solucion.toLowerCase().indexOf('pago') !== -1 ||
+                                 solucion.toLowerCase().indexOf('resarc') !== -1;
+
+        var mencionaArmonia = solucion.toLowerCase().indexOf('armonía') !== -1 ||
+                              solucion.toLowerCase().indexOf('paz') !== -1 ||
+                              solucion.toLowerCase().indexOf('diálogo') !== -1 ||
+                              solucion.toLowerCase().indexOf('reconcili') !== -1 ||
+                              solucion.toLowerCase().indexOf('convivencia') !== -1;
+
+        var puntajeSolucion = 0;
+        if (tieneTesis) puntajeSolucion++;
+        if (tieneArgumento) puntajeSolucion++;
+        if (mencionaReparacion) puntajeSolucion++;
+        if (mencionaArmonia) puntajeSolucion++;
+
+        if (puntajeSolucion >= 3) {
+            fb.className = 'feedback correcto';
+            fb.innerHTML = '✅ ¡Muy buena solución! (' + puntajeSolucion + '/4 criterios). Has propuesto una solución con tesis, argumentos, reparación y búsqueda de armonía. Así actúa un verdadero Pütchipü\'üi.';
+            solucionRevisada = true;
+            seccionActual = 4;
+            actualizarProgreso();
+            setTimeout(function() {
+                mostrarSeccion(4);
+            }, 800);
+        } else if (puntajeSolucion >= 2) {
+            fb.className = 'feedback parcial';
+            fb.innerHTML = '⚠️ Vas por buen camino (' + puntajeSolucion + '/4 criterios). Asegúrate de incluir: una propuesta clara, razones que la apoyen, una forma de reparación y un llamado a la armonía.';
+        } else {
+            fb.className = 'feedback parcial';
+            fb.innerHTML = '📝 Tu solución necesita más desarrollo (' + puntajeSolucion + '/4 criterios). Revisa la guía e incluye: tesis, argumentos, reparación concreta y conclusión que invite a la paz.';
+        }
+    }
+
+    // ========== SECCIÓN 4: JUEGO DE ROLES ==========
+    // Respuestas correctas: 1-b, 2-b, 3-b, 4-b (siempre la opción de diálogo y reparación)
+    var respuestasCorrectas = {1: 'b', 2: 'b', 3: 'b', 4: 'b'};
+
+    var mensajesResultado = {
+        '1a': { tipo: 'fallo', texto: '❌ Incorrecto. El Pütchipü\'üi nunca usa la violencia física. Su poder está en la palabra, no en el castigo corporal.' },
+        '1b': { tipo: 'acierto', texto: '✅ ¡Correcto! Las disculpas públicas restauran el honor y el collar de tüma es una reparación simbólica que sana la ofensa sin violencia.' },
+        '1c': { tipo: 'fallo', texto: '❌ Incorrecto. Ignorar un insulto grave puede escalar el conflicto. El Pütchipü\'üi debe abordar todas las ofensas para mantener la paz.' },
+        '2a': { tipo: 'fallo', texto: '❌ Incorrecto. Creer a una sola parte sin evidencia es injusto. El Pütchipü\'üi escucha a ambos lados con imparcialidad.' },
+        '2b': { tipo: 'acierto', texto: '✅ ¡Correcto! Buscar un punto medio y sellar el acuerdo con un ritual restaura la confianza entre clanes. Es la esencia del pütchi.' },
+        '2c': { tipo: 'fallo', texto: '❌ Incorrecto. Abandonar el conflicto a su suerte puede desencadenar una kajashii. El Pütchipü\'üi nunca deja un caso sin resolver.' },
+        '3a': { tipo: 'fallo', texto: '❌ Incorrecto. Forzar un matrimonio va contra la dignidad de la persona. El Pütchipü\'üi busca soluciones que respeten a todos.' },
+        '3b': { tipo: 'acierto', texto: '✅ ¡Correcto! Renegociar el acuerdo respetando la voluntad de la joven mantiene la alianza entre clanes sin sacrificar la libertad individual.' },
+        '3c': { tipo: 'fallo', texto: '❌ Incorrecto. Anular el acuerdo sin compensación deja a una familia agraviada. Debe haber reparación para mantener el equilibrio.' },
+        '4a': { tipo: 'fallo', texto: '❌ Incorrecto. Dar la razón a un solo lado sin diálogo no resuelve la raíz del problema. El agua es de todos, pero la solución debe ser compartida.' },
+        '4b': { tipo: 'acierto', texto: '✅ ¡Correcto! Establecer turnos equitativos resuelve el problema inmediato, y construir juntos un nuevo pozo fortalece la cooperación futura.' },
+        '4c': { tipo: 'fallo', texto: '❌ Incorrecto. Dejar que cada clan resuelva solo puede llevar al enfrentamiento. El Pütchipü\'üi siempre propone una solución conjunta.' }
+    };
+
+    function elegirOpcion(escenario, opcion, btnElem) {
+        // Evitar múltiples selecciones en el mismo escenario
+        if (escenariosResueltos[escenario]) return;
+
+        // Marcar opción elegida
+        var opciones = btnElem.parentElement.querySelectorAll('.opcion-btn');
+        for (var i = 0; i < opciones.length; i++) {
+            opciones[i].classList.remove('elegida');
+        }
+        btnElem.classList.add('elegida');
+
+        var clave = escenario + opcion;
+        var resultado = mensajesResultado[clave];
+        var esCorrecta = (opcion === respuestasCorrectas[escenario]);
+
+        var resultadoDiv = document.getElementById('resultado' + escenario);
+        resultadoDiv.className = 'resultado-escenario mostrar ' + resultado.tipo;
+        resultadoDiv.innerHTML = resultado.texto;
+
+        // Marcar escenario como resuelto
+        escenariosResueltos[escenario] = true;
+
+        // Deshabilitar opciones
+        for (var j = 0; j < opciones.length; j++) {
+            opciones[j].disabled = true;
+            opciones[j].style.cursor = 'default';
+        }
+
+        // Marcar tarjeta como seleccionada
+        var card = document.getElementById('escenario' + escenario);
+        if (card) {
+            card.classList.add('seleccionado');
+        }
+
+        // Sumar puntaje si es correcta
+        if (esCorrecta) {
+            puntaje += 2;
+        }
+
+        actualizarPuntaje();
+    }
+
+    function actualizarPuntaje() {
+        document.getElementById('puntajeValor').textContent = puntaje;
+        var porcentaje = (puntaje / 8) * 100;
+        document.getElementById('barraRelleno').style.width = porcentaje + '%';
+    }
+
+    // ========== FINALIZAR ==========
+    function finalizarModulo() {
+        var aciertos = 0;
+        for (var i = 1; i <= 4; i++) {
+            if (escenariosResueltos[i] && respuestasCorrectas[i]) {
+                // Ya contamos en elegirOpcion
+            }
+        }
+        var escenariosRespondidos = Object.keys(escenariosResueltos).length;
+
+        document.getElementById('puntajeFinalDisplay').textContent = puntaje + ' / 8';
+        document.getElementById('aciertosFinal').textContent = escenariosRespondidos + '/4';
+
+        var medalla = document.getElementById('medallaEmoji');
+        var mensajeFinal = document.getElementById('mensajeFinal');
+
+        if (puntaje >= 7) {
+            medalla.textContent = '🏆';
+            mensajeFinal.innerHTML = '<strong>¡Excelente, eres un verdadero Pütchipü\'üi!</strong><br>Has demostrado gran sabiduría en la resolución de conflictos.';
+        } else if (puntaje >= 5) {
+            medalla.textContent = '🥈';
+            mensajeFinal.innerHTML = '<strong>¡Muy bien!</strong><br>Tienes buen criterio para mediar conflictos. Sigue aprendiendo de la sabiduría wayuu.';
+        } else if (puntaje >= 3) {
+            medalla.textContent = '🥉';
+            mensajeFinal.innerHTML = '<strong>Vas por buen camino.</strong><br>Recuerda: el diálogo y la reparación son las claves del Pütchipü\'üi.';
+        } else {
+            medalla.textContent = '🌱';
+            mensajeFinal.innerHTML = '<strong>Estás aprendiendo.</strong><br>Repasa los escenarios y recuerda que la mejor solución siempre es la que une, no la que divide.';
+        }
+
+        document.getElementById('modalFinal').classList.add('visible');
+
+        // Marcar todo como completado
+        lecturaCompletada = true;
+        identificacionRevisada = true;
+        solucionRevisada = true;
+        actualizarProgreso();
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalFinal').classList.remove('visible');
+    }
+
+    // ========== INICIALIZACIÓN ==========
+    mostrarSeccion(1);
+    actualizarProgreso();
+</script>
+
+</body>
+</html>

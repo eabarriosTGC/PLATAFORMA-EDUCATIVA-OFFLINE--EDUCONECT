@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATE-202: Suma y Resta con Trueque Wayuu | 2° Grado</title>
+<style>
+:root {
+    --arena: #e8d5a3;
+    --arena-claro: #f5eed8;
+    --arena-oscuro: #c4a45a;
+    --azul: #1b4f72;
+    --azul-claro: #2980b9;
+    --azul-profundo: #0a2a3f;
+    --blanco: #fefefe;
+    --rojo: #c0392b;
+    --verde: #27ae60;
+    --naranja: #e67e22;
+    --sombra: 0 4px 12px rgba(27,79,114,0.15);
+    --radio: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, var(--arena-claro) 0%, var(--arena) 100%);
+    color: var(--azul-profundo);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 28px 30px;
+    border-radius: var(--radio) var(--radio) 0 0;
+    text-align: center;
+    box-shadow: var(--sombra);
+    position: relative;
+    overflow: hidden;
+}
+.header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+}
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 150px; height: 150px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+}
+.header h1 { font-size: 2em; position: relative; z-index: 1; }
+.header .subtitulo { font-size: 1.1em; opacity: 0.85; position: relative; z-index: 1; }
+.header .wayuu-badge {
+    display: inline-block;
+    background: var(--arena);
+    color: var(--azul-profundo);
+    padding: 5px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-top: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Navigation tabs */
+.tabs {
+    display: flex;
+    background: var(--blanco);
+    border: 2px solid var(--arena-oscuro);
+    border-top: none;
+    overflow-x: auto;
+}
+.tab-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 14px 8px;
+    font-size: 0.88em;
+    font-weight: 600;
+    border: none;
+    background: var(--blanco);
+    color: var(--azul);
+    cursor: pointer;
+    transition: all 0.25s;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+}
+.tab-btn:hover { background: var(--arena-claro); }
+.tab-btn.activo {
+    background: var(--azul);
+    color: var(--blanco);
+    border-bottom-color: var(--arena-oscuro);
+}
+
+/* Content area */
+.content {
+    background: var(--blanco);
+    border-radius: 0 0 var(--radio) var(--radio);
+    padding: 30px;
+    box-shadow: var(--sombra);
+    min-height: 500px;
+}
+.seccion { display: none; }
+.seccion.activa { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+/* Common elements */
+h2 {
+    color: var(--azul);
+    margin-bottom: 10px;
+    font-size: 1.6em;
+    border-bottom: 2px dashed var(--arena-oscuro);
+    padding-bottom: 8px;
+}
+.intro-text {
+    font-size: 1.05em;
+    color: var(--azul-profundo);
+    margin-bottom: 20px;
+    background: var(--arena-claro);
+    padding: 16px 20px;
+    border-radius: var(--radio);
+    border-left: 4px solid var(--azul);
+}
+.objeto-visual {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8em;
+    margin: 6px;
+    padding: 10px;
+    background: var(--arena-claro);
+    border-radius: 10px;
+    border: 2px solid var(--arena-oscuro);
+    transition: transform 0.2s;
+    user-select: none;
+    min-width: 60px;
+}
+.objeto-visual:hover { transform: scale(1.1); }
+.fila-objetos { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 15px 0; }
+
+.btn {
+    padding: 12px 24px;
+    font-size: 1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primario { background: var(--azul); color: white; }
+.btn-primario:hover { background: var(--azul-claro); transform: translateY(-2px); }
+.btn-exito { background: var(--verde); color: white; }
+.btn-exito:hover { background: #219a52; }
+.btn-peligro { background: var(--rojo); color: white; }
+.btn-peligro:hover { background: #a93226; }
+.btn-naranja { background: var(--naranja); color: white; }
+.btn-naranja:hover { background: #d35400; }
+
+.input-answer {
+    font-size: 1.3em;
+    padding: 10px 16px;
+    width: 120px;
+    border: 3px solid var(--arena-oscuro);
+    border-radius: 8px;
+    text-align: center;
+    background: var(--arena-claro);
+    color: var(--azul-profundo);
+    font-weight: bold;
+}
+.input-answer:focus { outline: none; border-color: var(--azul-claro); }
+
+.feedback {
+    padding: 12px 18px;
+    border-radius: var(--radio);
+    font-weight: bold;
+    margin: 12px 0;
+    display: none;
+    font-size: 1.1em;
+}
+.feedback.correcto { background: #d5f5e3; color: #1e8449; border: 2px solid var(--verde); display: block; }
+.feedback.incorrecto { background: #fadbd8; color: #922b21; border: 2px solid var(--rojo); display: block; }
+
+.score-box {
+    background: var(--azul);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+    display: inline-block;
+    margin: 10px 0;
+}
+
+/* Trueque cards */
+.trueque-card {
+    display: inline-block;
+    text-align: center;
+    background: linear-gradient(180deg, var(--arena-claro), var(--arena));
+    border: 3px solid var(--arena-oscuro);
+    border-radius: var(--radio);
+    padding: 20px 16px;
+    margin: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    min-width: 140px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.trueque-card:hover { transform: translateY(-4px); box-shadow: var(--sombra); }
+.trueque-card .emoji { font-size: 2.5em; display: block; margin-bottom: 6px; }
+.trueque-card .flecha { color: var(--azul); font-size: 1.5em; }
+
+/* Memorama */
+.memorama-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+.carta {
+    background: var(--azul);
+    color: white;
+    font-size: 2em;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s;
+    font-weight: bold;
+    border: 3px solid var(--azul-profundo);
+}
+.carta:hover { transform: scale(1.05); }
+.carta.revelada { background: var(--arena); color: var(--azul-profundo); border-color: var(--arena-oscuro); }
+.carta.emparejada { background: var(--verde); color: white; border-color: #1e8449; cursor: default; }
+.carta.seleccionada { border-color: var(--naranja); box-shadow: 0 0 0 4px rgba(230,126,34,0.4); }
+
+/* Mercado game */
+.mercado-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+.mercado-item {
+    background: var(--arena-claro);
+    border: 2px solid var(--arena-oscuro);
+    border-radius: var(--radio);
+    padding: 16px;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.25s;
+    cursor: pointer;
+    min-width: 120px;
+}
+.mercado-item:hover { background: var(--arena); transform: scale(1.05); }
+.mercado-item .precio { color: var(--azul); font-size: 0.9em; }
+.mercado-carrito {
+    background: var(--azul-profundo);
+    color: white;
+    padding: 16px;
+    border-radius: var(--radio);
+    min-width: 250px;
+}
+.mercado-carrito h3 { color: var(--arena); margin-bottom: 10px; }
+
+/* Progress bar */
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: var(--arena-claro);
+    border-radius: 5px;
+    margin: 15px 0;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--azul-claro);
+    border-radius: 5px;
+    transition: width 0.5s;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--azul);
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>🧮 MATE-202</h1>
+        <div class="subtitulo">Suma y Resta con Trueque Wayuu</div>
+        <div class="wayuu-badge">🌵 Cultura Wayuu — 2° Grado</div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn activo" onclick="mostrarSeccion('intro')">📖 1. El Trueque</button>
+        <button class="tab-btn" onclick="mostrarSeccion('suma')">➕ 2. Suma</button>
+        <button class="tab-btn" onclick="mostrarSeccion('resta')">➖ 3. Resta</button>
+        <button class="tab-btn" onclick="mostrarSeccion('tablas')">✖️ 4. Tablas 1-5</button>
+        <button class="tab-btn" onclick="mostrarSeccion('memorama')">🃏 Memorama</button>
+        <button class="tab-btn" onclick="mostrarSeccion('mercado')">🛒 5. Mercado</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- SECCION 1: INTRO AL TRUEQUE -->
+        <div class="seccion activa" id="sec-intro">
+            <h2>🌵 ¿Qué es el Trueque Wayuu?</h2>
+            <div class="intro-text">
+                En la cultura Wayuu, el <strong>trueque</strong> es una forma de intercambiar cosas sin usar dinero.
+                Por ejemplo: <strong>1 mochila Wayuu</strong> se puede cambiar por <strong>3 chivos</strong>.
+                Así, las personas obtienen lo que necesitan compartiendo lo que tienen. ¡Es matemática en la vida real!
+            </div>
+
+            <h3>🧾 Tabla de Trueques</h3>
+            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:18px 0;">
+                <div class="trueque-card">
+                    <span class="emoji">🎒</span>
+                    <strong>1 Mochila</strong>
+                    <span class="flecha">=</span><br>
+                    <span class="emoji">🐐🐐🐐</span>
+                    <strong>3 Chivos</strong>
+                </div>
+                <div class="trueque-card">
+                    <span class="emoji">🐐</span>
+                    <strong>1 Chivo</strong>
+                    <span class="flecha">=</span><br>
+                    <span class="emoji">🐔🐔🐔🐔🐔</span>
+                    <strong>5 Gallinas</strong>
+                </div>
+                <div class="trueque-card">
+                    <span class="emoji">🐔</span>
+                    <strong>1 Gallina</strong>
+                    <span class="flecha">=</span><br>
+                    <span class="emoji">🥚🥚🥚</span>
+                    <strong>3 Huevos</strong>
+                </div>
+                <div class="trueque-card">
+                    <span class="emoji">🧶</span>
+                    <strong>1 Chinchorro</strong>
+                    <span class="flecha">=</span><br>
+                    <span class="emoji">🐐🐐🐐🐐</span>
+                    <strong>4 Chivos</strong>
+                </div>
+            </div>
+
+            <h3>🧠 Practiquemos: ¿Cuántos chivos vale?</h3>
+            <div style="text-align:center;margin:20px 0;">
+                <p style="font-size:1.2em;">
+                    Si tengo <span style="font-size:2em;">🎒🎒</span> <strong>2 mochilas</strong>, ¿cuántos chivos puedo obtener?
+                </p>
+                <p style="color:var(--azul);font-size:0.95em;">(Recuerda: 1 mochila = 3 chivos)</p>
+                <input type="number" id="trueque-ej1" class="input-answer" placeholder="?" min="0">
+                <button class="btn btn-primario" onclick="verificarTrueque1()">✅ Revisar</button>
+                <div id="fb-trueque1" class="feedback"></div>
+            </div>
+
+            <div style="text-align:center;margin:20px 0;">
+                <p style="font-size:1.2em;">
+                    Si quiero <strong>6 gallinas</strong> <span style="font-size:2em;">🐔🐔🐔🐔🐔🐔</span>, ¿cuántos chivos debo dar?
+                </p>
+                <p style="color:var(--azul);font-size:0.95em;">(Recuerda: 1 chivo = 5 gallinas)</p>
+                <input type="number" id="trueque-ej2" class="input-answer" placeholder="?" min="0">
+                <button class="btn btn-primario" onclick="verificarTrueque2()">✅ Revisar</button>
+                <div id="fb-trueque2" class="feedback"></div>
+            </div>
+
+            <div style="text-align:center;margin-top:30px;">
+                <button class="btn btn-exito" onclick="mostrarSeccion('suma')">¡Vamos a sumar! ➡️</button>
+            </div>
+        </div>
+
+        <!-- SECCION 2: SUMA -->
+        <div class="seccion" id="sec-suma">
+            <h2>➕ Suma con Objetos Wayuu</h2>
+            <div class="intro-text">
+                Sumar es <strong>juntar</strong>. En el trueque, cuando juntas varios animales u objetos,
+                estás sumando. ¡Practiquemos con nuestros objetos del desierto!
+            </div>
+
+            <div id="suma-ejercicio" style="text-align:center;">
+                <h3 id="suma-pregunta">Cargando...</h3>
+                <div id="suma-visual" class="fila-objetos"></div>
+                <div style="margin:10px 0;">
+                    <span style="font-size:1.3em;">Total: </span>
+                    <input type="number" id="suma-respuesta" class="input-answer" placeholder="?" min="0">
+                    <button class="btn btn-primario" onclick="verificarSuma()">✅ Revisar</button>
+                </div>
+                <div id="fb-suma" class="feedback"></div>
+                <div class="score-box" id="score-suma">✅ Aciertos: 0 / 0</div>
+                <button class="btn btn-naranja" onclick="nuevaSuma()" style="margin-top:10px;">🔄 Nueva suma</button>
+            </div>
+
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-exito" onclick="mostrarSeccion('resta')">¡A restar! ➡️</button>
+            </div>
+        </div>
+
+        <!-- SECCION 3: RESTA -->
+        <div class="seccion" id="sec-resta">
+            <h2>➖ Resta: Regalando Chivos</h2>
+            <div class="intro-text">
+                Restar es <strong>quitar o regalar</strong>. En la comunidad Wayuu, cuando regalas chivos
+                o gallinas a otra familia, estás restando de tu rebaño. ¡Veamos cuántos te quedan!
+            </div>
+
+            <div id="resta-ejercicio" style="text-align:center;">
+                <h3 id="resta-pregunta">Cargando...</h3>
+                <div id="resta-visual" class="fila-objetos"></div>
+                <div style="margin:10px 0;">
+                    <span style="font-size:1.3em;">¿Cuántos quedan? </span>
+                    <input type="number" id="resta-respuesta" class="input-answer" placeholder="?" min="0">
+                    <button class="btn btn-primario" onclick="verificarResta()">✅ Revisar</button>
+                </div>
+                <div id="fb-resta" class="feedback"></div>
+                <div class="score-box" id="score-resta">✅ Aciertos: 0 / 0</div>
+                <button class="btn btn-naranja" onclick="nuevaResta()" style="margin-top:10px;">🔄 Nueva resta</button>
+            </div>
+
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-exito" onclick="mostrarSeccion('tablas')">¡A las tablas! ➡️</button>
+            </div>
+        </div>
+
+        <!-- SECCION 4: TABLAS DE MULTIPLICAR 1-5 -->
+        <div class="seccion" id="sec-tablas">
+            <h2>✖️ Tablas de Multiplicar del 1 al 5</h2>
+            <div class="intro-text">
+                Multiplicar es sumar varias veces el mismo número. Si cada mochila vale 3 chivos,
+                entonces 4 mochilas = 4 × 3 = <strong>12 chivos</strong>. ¡Es como el trueque!
+            </div>
+
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+                <button class="btn btn-primario" id="btn-tabla1" onclick="mostrarTabla(1)">Tabla del 1</button>
+                <button class="btn btn-primario" id="btn-tabla2" onclick="mostrarTabla(2)">Tabla del 2</button>
+                <button class="btn btn-primario" id="btn-tabla3" onclick="mostrarTabla(3)">Tabla del 3</button>
+                <button class="btn btn-primario" id="btn-tabla4" onclick="mostrarTabla(4)">Tabla del 4</button>
+                <button class="btn btn-primario" id="btn-tabla5" onclick="mostrarTabla(5)">Tabla del 5</button>
+            </div>
+
+            <div id="tabla-visual" style="background:var(--arena-claro);border-radius:var(--radio);padding:20px;">
+                <h3 style="text-align:center;">Selecciona una tabla para verla</h3>
+            </div>
+
+            <div id="tabla-quiz" style="text-align:center;margin-top:20px;display:none;">
+                <h3>🎯 ¡Ponte a prueba!</h3>
+                <p id="tabla-quiz-pregunta" style="font-size:1.4em;margin:10px 0;"></p>
+                <input type="number" id="tabla-respuesta" class="input-answer" placeholder="?" min="0">
+                <button class="btn btn-primario" onclick="verificarTabla()">✅ Revisar</button>
+                <div id="fb-tabla" class="feedback"></div>
+                <div class="score-box" id="score-tabla">✅ Aciertos: 0 / 0</div>
+            </div>
+
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-exito" onclick="mostrarSeccion('memorama')">¡Al memorama! 🃏</button>
+            </div>
+        </div>
+
+        <!-- SECCION 5: MEMORAMA -->
+        <div class="seccion" id="sec-memorama">
+            <h2>🃏 Memorama de Tablas</h2>
+            <div class="intro-text">
+                Encuentra las parejas: cada <strong>multiplicación</strong> con su <strong>resultado</strong>.
+                ¡Ejercita tu memoria mientras aprendes las tablas del 1 al 5!
+            </div>
+
+            <div id="memorama-tablero" class="memorama-grid"></div>
+            <div style="text-align:center;margin:15px 0;">
+                <div class="score-box" id="score-memorama">🃏 Parejas: 0 / 8</div>
+                <button class="btn btn-naranja" onclick="reiniciarMemorama()" style="margin-left:10px;">🔄 Reiniciar</button>
+            </div>
+
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-exito" onclick="mostrarSeccion('mercado')">¡Al mercado! 🛒</button>
+            </div>
+        </div>
+
+        <!-- SECCION 6: JUEGO DE MERCADO -->
+        <div class="seccion" id="sec-mercado">
+            <h2>🛒 Mercado Wayuu: ¡Compra con Trueque!</h2>
+            <div class="intro-text">
+                Tienes <strong id="mercado-chivos-display">3 chivos</strong> para comprar en el mercado.
+                Cada producto tiene un precio en chivos. ¡Elige bien y practica sumas y restas!
+            </div>
+
+            <div class="score-box" style="margin-bottom:15px;">🐐 Chivos disponibles: <span id="mercado-chivos">3</span></div>
+
+            <div class="mercado-area">
+                <div class="mercado-item" onclick="comprarItem('mochila',2,'🎒 Mochila')">
+                    <div style="font-size:3em;">🎒</div>
+                    <strong>Mochila</strong>
+                    <div class="precio">Precio: 2 chivos</div>
+                </div>
+                <div class="mercado-item" onclick="comprarItem('chinchorro',3,'🧶 Chinchorro')">
+                    <div style="font-size:3em;">🧶</div>
+                    <strong>Chinchorro</strong>
+                    <div class="precio">Precio: 3 chivos</div>
+                </div>
+                <div class="mercado-item" onclick="comprarItem('sombrero',1,'👒 Sombrero')">
+                    <div style="font-size:3em;">👒</div>
+                    <strong>Sombrero</strong>
+                    <div class="precio">Precio: 1 chivo</div>
+                </div>
+                <div class="mercado-item" onclick="comprarItem('olla',2,'🍲 Olla de barro')">
+                    <div style="font-size:3em;">🍲</div>
+                    <strong>Olla de barro</strong>
+                    <div class="precio">Precio: 2 chivos</div>
+                </div>
+                <div class="mercado-item" onclick="comprarItem('gallina',1,'🐔 Gallina')">
+                    <div style="font-size:3em;">🐔</div>
+                    <strong>Gallina</strong>
+                    <div class="precio">Precio: 1 chivo</div>
+                </div>
+                <div class="mercado-item" onclick="comprarItem('huevos',1,'🥚 Huevos (5)')">
+                    <div style="font-size:3em;">🥚</div>
+                    <strong>5 Huevos</strong>
+                    <div class="precio">Precio: 1 chivo</div>
+                </div>
+            </div>
+
+            <div id="fb-mercado" class="feedback" style="text-align:center;margin-top:15px;"></div>
+
+            <div style="margin-top:20px;">
+                <div class="mercado-carrito">
+                    <h3>🛍️ Tus compras:</h3>
+                    <ul id="mercado-lista" style="list-style:none;padding:0;">
+                        <li style="opacity:0.5;">Aún no has comprado nada</li>
+                    </ul>
+                </div>
+                <div style="text-align:center;margin-top:12px;">
+                    <button class="btn btn-peligro" onclick="reiniciarMercado()">🔄 Reiniciar mercado</button>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:30px;padding:20px;background:var(--arena-claro);border-radius:var(--radio);">
+                <p style="font-size:1.2em;">🏆 ¡Felicitaciones por completar MATE-202!</p>
+                <p>Ya sabes sumar, restar y multiplicar usando el trueque Wayuu.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        EduConect Rural · Módulo MATE-202 · Suma y Resta con Trueque Wayuu · 2° Grado
+    </div>
+
+</div>
+
+<script>
+// ============ NAVEGACION ============
+function mostrarSeccion(id) {
+    document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+    var sec = document.getElementById('sec-' + id);
+    if (sec) sec.classList.add('activa');
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+        if (b.textContent.toLowerCase().includes(id.substring(0,6))) b.classList.add('activo');
+    });
+    // Inicializar según sección
+    if (id === 'suma' && !window._sumaInit) { nuevaSuma(); window._sumaInit = true; }
+    if (id === 'resta' && !window._restaInit) { nuevaResta(); window._restaInit = true; }
+    if (id === 'memorama' && !window._memoramaInit) { reiniciarMemorama(); window._memoramaInit = true; }
+    if (id === 'tablas' && !window._tablasInit) { window._tablasInit = true; }
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ============ SECCION 1: TRUEQUE (INTRO) ============
+function verificarTrueque1() {
+    var v = parseInt(document.getElementById('trueque-ej1').value);
+    var fb = document.getElementById('fb-trueque1');
+    if (v === 6) {
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Correcto! 2 mochilas × 3 chivos = 6 chivos. ¡Buen trueque!';
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ Intenta de nuevo. Piensa: 2 mochilas, cada una vale 3 chivos...';
+    }
+}
+
+function verificarTrueque2() {
+    var v = parseInt(document.getElementById('trueque-ej2').value);
+    var fb = document.getElementById('fb-trueque2');
+    // 1 chivo = 5 gallinas. 6 gallinas = ? chivos → 6/5 = 1.2 → redondeamos al concepto: necesitas 2 chivos (y te sobran 4 gallinas de vuelto en el trueque) o 1 chivo no alcanza.
+    // Para 2do grado simplificamos: si quieres 6 gallinas y 1 chivo = 5 gallinas, necesitas 2 chivos.
+    if (v === 2) {
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Correcto! Con 1 chivo solo obtienes 5 gallinas. Necesitas 2 chivos para 6 (y te sobra cambio).';
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ Piensa: 1 chivo = 5 gallinas. ¿1 chivo alcanza para 6 gallinas? ¿Cuántos necesitas?';
+    }
+}
+
+// ============ SECCION 2: SUMA ============
+var sumaAciertos = 0, sumaTotal = 0;
+var sumaActual = { a: 0, b: 0 };
+
+function nuevaSuma() {
+    var a = Math.floor(Math.random() * 6) + 2;  // 2-7
+    var b = Math.floor(Math.random() * 5) + 2;  // 2-6
+    sumaActual = { a: a, b: b };
+    var objetos = ['🐐','🐔','🥚','🎒','🧶','👒','🍲'];
+    var objA = objetos[Math.floor(Math.random() * objetos.length)];
+    var objB = objetos[Math.floor(Math.random() * objetos.length)];
+    document.getElementById('suma-pregunta').textContent = '¿Cuánto es ' + a + ' + ' + b + '?';
+    var visual = '';
+    for (var i = 0; i < a; i++) visual += '<span class="objeto-visual">' + objA + '</span>';
+    visual += '<span style="font-size:2em;align-self:center;">➕</span>';
+    for (var j = 0; j < b; j++) visual += '<span class="objeto-visual">' + objB + '</span>';
+    document.getElementById('suma-visual').innerHTML = visual;
+    document.getElementById('suma-respuesta').value = '';
+    document.getElementById('fb-suma').className = 'feedback';
+    document.getElementById('fb-suma').textContent = '';
+}
+
+function verificarSuma() {
+    var resp = parseInt(document.getElementById('suma-respuesta').value);
+    var fb = document.getElementById('fb-suma');
+    sumaTotal++;
+    if (resp === sumaActual.a + sumaActual.b) {
+        sumaAciertos++;
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Muy bien! ' + sumaActual.a + ' + ' + sumaActual.b + ' = ' + (sumaActual.a + sumaActual.b);
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ ' + sumaActual.a + ' + ' + sumaActual.b + ' = ' + (sumaActual.a + sumaActual.b) + '. ¡Sigue practicando!';
+    }
+    document.getElementById('score-suma').textContent = '✅ Aciertos: ' + sumaAciertos + ' / ' + sumaTotal;
+    setTimeout(nuevaSuma, 2000);
+}
+
+// ============ SECCION 3: RESTA ============
+var restaAciertos = 0, restaTotal = 0;
+var restaActual = { total: 0, quitar: 0 };
+
+function nuevaResta() {
+    var total = Math.floor(Math.random() * 7) + 4;  // 4-10
+    var quitar = Math.floor(Math.random() * (total - 1)) + 1; // 1 a total-1
+    restaActual = { total: total, quitar: quitar };
+    document.getElementById('resta-pregunta').textContent = 'Tienes ' + total + ' chivos y regalas ' + quitar + '. ¿Cuántos te quedan?';
+    var visual = '';
+    for (var i = 0; i < total; i++) {
+        if (i < total - quitar) {
+            visual += '<span class="objeto-visual" style="background:#d5f5e3;">🐐</span>';
+        } else {
+            visual += '<span class="objeto-visual" style="background:#fadbd8;text-decoration:line-through;opacity:0.5;">🐐</span>';
+        }
+    }
+    document.getElementById('resta-visual').innerHTML = visual;
+    document.getElementById('resta-respuesta').value = '';
+    document.getElementById('fb-resta').className = 'feedback';
+    document.getElementById('fb-resta').textContent = '';
+}
+
+function verificarResta() {
+    var resp = parseInt(document.getElementById('resta-respuesta').value);
+    var fb = document.getElementById('fb-resta');
+    restaTotal++;
+    if (resp === restaActual.total - restaActual.quitar) {
+        restaAciertos++;
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Correcto! ' + restaActual.total + ' - ' + restaActual.quitar + ' = ' + (restaActual.total - restaActual.quitar) + ' chivos.';
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ Tenías ' + restaActual.total + ' y regalaste ' + restaActual.quitar + '. Te quedan ' + (restaActual.total - restaActual.quitar) + '.';
+    }
+    document.getElementById('score-resta').textContent = '✅ Aciertos: ' + restaAciertos + ' / ' + restaTotal;
+    setTimeout(nuevaResta, 2000);
+}
+
+// ============ SECCION 4: TABLAS DE MULTIPLICAR ============
+var tablaAciertos = 0, tablaTotal = 0, tablaActual = 1;
+
+function mostrarTabla(n) {
+    tablaActual = n;
+    var html = '<h3 style="text-align:center;color:var(--azul);">📊 Tabla del ' + n + '</h3>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;max-width:600px;margin:10px auto;">';
+    for (var i = 1; i <= 10; i++) {
+        html += '<div style="background:white;padding:8px;text-align:center;border-radius:8px;font-weight:bold;border:1px solid var(--arena-oscuro);">';
+        html += n + ' × ' + i + ' = <span style="color:var(--azul-claro);">' + (n * i) + '</span></div>';
+    }
+    html += '</div>';
+    html += '<p style="text-align:center;margin-top:12px;color:var(--azul);">🐐 Ejemplo trueque: Si 1 mochila = ' + n + ' chivos,<br>entonces 3 mochilas = 3 × ' + n + ' = <strong>' + (3*n) + ' chivos</strong></p>';
+    document.getElementById('tabla-visual').innerHTML = html;
+
+    // Activar botón
+    for (var j=1;j<=5;j++) {
+        var btn = document.getElementById('btn-tabla'+j);
+        btn.style.background = j===n ? 'var(--naranja)' : 'var(--azul)';
+    }
+
+    // Activar quiz
+    document.getElementById('tabla-quiz').style.display = 'block';
+    nuevaPreguntaTabla();
+    tablaAciertos = 0; tablaTotal = 0;
+    document.getElementById('score-tabla').textContent = '✅ Aciertos: 0 / 0';
+}
+
+function nuevaPreguntaTabla() {
+    var factor = Math.floor(Math.random() * 10) + 1;
+    document.getElementById('tabla-quiz-pregunta').textContent = tablaActual + ' × ' + factor + ' = ?';
+    document.getElementById('tabla-quiz-pregunta').dataset.respuesta = tablaActual * factor;
+    document.getElementById('tabla-respuesta').value = '';
+    document.getElementById('fb-tabla').className = 'feedback';
+}
+
+function verificarTabla() {
+    var resp = parseInt(document.getElementById('tabla-respuesta').value);
+    var correcta = parseInt(document.getElementById('tabla-quiz-pregunta').dataset.respuesta);
+    var fb = document.getElementById('fb-tabla');
+    tablaTotal++;
+    if (resp === correcta) {
+        tablaAciertos++;
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Correcto!';
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ La respuesta es ' + correcta + '. ¡Sigue intentando!';
+    }
+    document.getElementById('score-tabla').textContent = '✅ Aciertos: ' + tablaAciertos + ' / ' + tablaTotal;
+    setTimeout(nuevaPreguntaTabla, 1800);
+}
+
+// ============ SECCION 5: MEMORAMA ============
+var memoramaCartas = [];
+var cartaSeleccionada1 = null;
+var cartaSeleccionada2 = null;
+var memoramaBloqueado = false;
+var parejasEncontradas = 0;
+
+function reiniciarMemorama() {
+    // Generar 8 pares: multiplicacion y resultado
+    var pares = [];
+    var usados = [];
+    while (pares.length < 8) {
+        var n = Math.floor(Math.random() * 5) + 1;
+        var f = Math.floor(Math.random() * 10) + 1;
+        var clave = n + 'x' + f;
+        if (usados.indexOf(clave) === -1) {
+            usados.push(clave);
+            pares.push({ tipo: 'pregunta', texto: n + '×' + f, valor: clave });
+            pares.push({ tipo: 'respuesta', texto: '' + (n * f), valor: clave });
+        }
+    }
+    // Barajar
+    memoramaCartas = [];
+    while (pares.length > 0) {
+        var idx = Math.floor(Math.random() * pares.length);
+        memoramaCartas.push(pares[idx]);
+        pares.splice(idx, 1);
+    }
+    memoramaCartas.forEach(function(c, i) { c.idx = i; c.revelada = false; c.emparejada = false; });
+    cartaSeleccionada1 = null;
+    cartaSeleccionada2 = null;
+    memoramaBloqueado = false;
+    parejasEncontradas = 0;
+    document.getElementById('score-memorama').textContent = '🃏 Parejas: 0 / 8';
+    renderizarMemorama();
+}
+
+function renderizarMemorama() {
+    var html = '';
+    memoramaCartas.forEach(function(c, i) {
+        var clases = 'carta';
+        if (c.emparejada) clases += ' emparejada';
+        else if (c.revelada) clases += ' revelada';
+        if ((cartaSeleccionada1 && cartaSeleccionada1.idx === i) || (cartaSeleccionada2 && cartaSeleccionada2.idx === i)) {
+            clases += ' seleccionada';
+        }
+        html += '<div class="' + clases + '" onclick="clickCarta(' + i + ')" data-idx="' + i + '">';
+        html += (c.revelada || c.emparejada) ? c.texto : '❓';
+        html += '</div>';
+    });
+    document.getElementById('memorama-tablero').innerHTML = html;
+}
+
+function clickCarta(idx) {
+    if (memoramaBloqueado) return;
+    var carta = memoramaCartas[idx];
+    if (carta.revelada || carta.emparejada) return;
+    if (cartaSeleccionada1 && cartaSeleccionada1.idx === idx) return;
+
+    carta.revelada = true;
+
+    if (!cartaSeleccionada1) {
+        cartaSeleccionada1 = carta;
+        renderizarMemorama();
+    } else {
+        cartaSeleccionada2 = carta;
+        renderizarMemorama();
+        memoramaBloqueado = true;
+        // Verificar pareja
+        if (cartaSeleccionada1.valor === cartaSeleccionada2.valor &&
+            cartaSeleccionada1.tipo !== cartaSeleccionada2.tipo) {
+            // Pareja correcta
+            setTimeout(function() {
+                cartaSeleccionada1.emparejada = true;
+                cartaSeleccionada2.emparejada = true;
+                parejasEncontradas++;
+                document.getElementById('score-memorama').textContent = '🃏 Parejas: ' + parejasEncontradas + ' / 8';
+                cartaSeleccionada1 = null;
+                cartaSeleccionada2 = null;
+                memoramaBloqueado = false;
+                renderizarMemorama();
+                if (parejasEncontradas === 8) {
+                    setTimeout(function() {
+                        alert('🎉 ¡Felicidades! ¡Encontraste todas las parejas!');
+                    }, 300);
+                }
+            }, 600);
+        } else {
+            // No es pareja
+            setTimeout(function() {
+                cartaSeleccionada1.revelada = false;
+                cartaSeleccionada2.revelada = false;
+                cartaSeleccionada1 = null;
+                cartaSeleccionada2 = null;
+                memoramaBloqueado = false;
+                renderizarMemorama();
+            }, 900);
+        }
+    }
+}
+
+// ============ SECCION 6: MERCADO ============
+var mercadoChivos = 3;
+var mercadoCompras = [];
+
+function comprarItem(id, precio, nombre) {
+    var fb = document.getElementById('fb-mercado');
+    if (mercadoChivos >= precio) {
+        mercadoChivos -= precio;
+        mercadoCompras.push(nombre);
+        actualizarMercadoUI();
+        fb.className = 'feedback correcto';
+        fb.textContent = '✅ ¡Compraste ' + nombre + ' por ' + precio + ' chivo(s)! Te quedan ' + mercadoChivos + '.';
+    } else {
+        fb.className = 'feedback incorrecto';
+        fb.textContent = '❌ No tienes suficientes chivos. Necesitas ' + precio + ' y solo tienes ' + mercadoChivos + '.';
+    }
+    setTimeout(function() { fb.className = 'feedback'; }, 2500);
+}
+
+function actualizarMercadoUI() {
+    document.getElementById('mercado-chivos').textContent = mercadoChivos;
+    document.getElementById('mercado-chivos-display').textContent = mercadoChivos + ' chivos';
+    var lista = document.getElementById('mercado-lista');
+    if (mercadoCompras.length === 0) {
+        lista.innerHTML = '<li style="opacity:0.5;">Aún no has comprado nada</li>';
+    } else {
+        lista.innerHTML = mercadoCompras.map(function(c) { return '<li>🛍️ ' + c + '</li>'; }).join('');
+    }
+}
+
+function reiniciarMercado() {
+    mercadoChivos = 3;
+    mercadoCompras = [];
+    actualizarMercadoUI();
+    document.getElementById('fb-mercado').className = 'feedback';
+}
+
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

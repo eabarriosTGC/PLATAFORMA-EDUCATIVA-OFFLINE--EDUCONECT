@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CIEN-302 Animales Wayuu | EduConect Rural</title>
+<style>
+:root {
+  --arena: #F4D03F;
+  --desierto: #E67E22;
+  --cielo: #85C1E9;
+  --verde: #27AE60;
+  --rojo: #E74C3C;
+  --morado: #8E44AD;
+  --noche: #2C3E50;
+  --texto: #2D3047;
+  --blanco: #FFFFFF;
+  --sombra: 0 10px 30px rgba(0,0,0,0.15);
+  --card-radius: 20px;
+}
+*{margin:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI','Comic Sans MS',sans-serif;
+  background:linear-gradient(180deg,#FDEBD0 0%,#F9E79F 30%,#A9DFBF 70%,#85C1E9 100%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* --- SCREEN SYSTEM --- */
+.pantalla{display:none;min-height:100vh;padding:20px;animation:fadeIn 0.5s}
+.pantalla.activa{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* --- HEADER BAR --- */
+.header{
+  background:rgba(255,255,255,0.9);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  padding:12px 24px;
+  margin-bottom:20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  flex-wrap:wrap;
+  gap:10px;
+}
+.header .logo{
+  font-weight:800;
+  font-size:1.1rem;
+  color:var(--texto);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.progress-bar{
+  flex:1;max-width:300px;min-width:150px;
+  height:10px;
+  background:#DDD;
+  border-radius:5px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--desierto),var(--verde));
+  border-radius:5px;
+  transition:width 0.5s;
+}
+.puntos-badge{
+  background:var(--arena);
+  color:var(--texto);
+  padding:6px 14px;
+  border-radius:20px;
+  font-weight:700;
+  font-size:0.9rem;
+}
+
+/* --- BUTTONS --- */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:14px 32px;
+  border:none;
+  border-radius:30px;
+  font-size:1.1rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.3s;
+  text-decoration:none;
+}
+.btn:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,0.2)}
+.btn:active{transform:translateY(0)}
+.btn-primario{background:var(--desierto);color:white}
+.btn-secundario{background:var(--verde);color:white}
+.btn-arena{background:var(--arena);color:var(--texto)}
+.btn-morado{background:var(--morado);color:white}
+.btn-noche{background:var(--noche);color:white}
+
+/* --- PANTALLA 1: BIENVENIDA --- */
+.bienvenida-container{
+  max-width:700px;
+  margin:40px auto;
+  text-align:center;
+}
+.bienvenida-card{
+  background:white;
+  border-radius:30px;
+  padding:50px 40px;
+  box-shadow:var(--sombra);
+}
+.bienvenida-card .pastor-svg{margin-bottom:20px}
+.bienvenida-card h1{color:var(--desierto);font-size:2.2rem;margin-bottom:10px}
+.bienvenida-card .subtitulo{color:#7F8C8D;font-size:1.1rem;margin-bottom:30px;line-height:1.6}
+.bienvenida-card .llamado{
+  background:linear-gradient(135deg,#FFF3E0,#FFE0B2);
+  border-left:5px solid var(--desierto);
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:30px;
+  font-size:1.15rem;
+  color:var(--texto);
+  line-height:1.7;
+}
+.animales-preview{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  margin-bottom:30px;
+  flex-wrap:wrap;
+}
+.animal-mini{
+  background:#F5F5F5;
+  border-radius:16px;
+  padding:10px;
+  text-align:center;
+  font-size:2.5rem;
+  transition:transform 0.3s;
+  cursor:pointer;
+}
+.animal-mini:hover{transform:scale(1.2)}
+
+/* --- PANTALLA 2: LECCIÓN --- */
+.leccion-container{max-width:800px;margin:0 auto}
+.leccion-card{
+  background:white;
+  border-radius:24px;
+  padding:30px;
+  box-shadow:var(--sombra);
+  margin-bottom:20px;
+}
+.leccion-card h2{
+  color:var(--desierto);
+  font-size:1.6rem;
+  margin-bottom:15px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.leccion-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:15px;
+  margin-top:15px;
+}
+.animal-card{
+  background:linear-gradient(135deg,#FFFDE7,#FFF8E1);
+  border-radius:16px;
+  padding:15px;
+  text-align:center;
+  transition:all 0.3s;
+  border:3px solid transparent;
+  cursor:pointer;
+}
+.animal-card:hover{border-color:var(--desierto);transform:translateY(-5px);box-shadow:0 8px 20px rgba(0,0,0,0.1)}
+.animal-card .animal-svg{margin-bottom:10px}
+.animal-card .animal-nombre{font-weight:700;font-size:1rem;color:var(--texto)}
+.animal-card .animal-wayuu{color:var(--desierto);font-weight:600;font-size:0.85rem}
+.animal-card .animal-badge{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:10px;
+  font-size:0.7rem;
+  font-weight:600;
+  margin-top:5px;
+}
+.badge-domestico{background:#D5F5E3;color:#1E8449}
+.badge-salvaje{background:#FADBD8;color:#C0392B}
+.badge-adaptacion{background:#D6EAF8;color:#2471A3}
+
+.adaptacion-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+  margin-top:10px;
+}
+.adaptacion-chip{
+  background:#EBF5FB;
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+  font-weight:600;
+  font-size:0.9rem;
+  color:var(--texto);
+  transition:transform 0.3s;
+}
+.adaptacion-chip:hover{transform:scale(1.05)}
+.adaptacion-chip .icono{font-size:2rem;display:block;margin-bottom:5px}
+
+.tts-speaker{
+  position:absolute;
+  top:8px;
+  right:8px;
+  background:none;
+  border:2px solid var(--desierto);
+  color:var(--desierto);
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  cursor:pointer;
+  font-size:0.9rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.3s;
+}
+.tts-speaker:hover{background:var(--desierto);color:white}
+
+/* --- PANTALLA 3: MEMORAMA --- */
+.memorama-container{max-width:750px;margin:0 auto;text-align:center}
+.memorama-container h2{color:var(--desierto);font-size:1.6rem;margin-bottom:8px}
+.memorama-container .instruccion{color:#7F8C8D;margin-bottom:20px}
+.memorama-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  max-width:620px;
+  margin:0 auto 20px;
+}
+.mem-card{
+  aspect-ratio:1;
+  border-radius:16px;
+  cursor:pointer;
+  transition:transform 0.4s;
+  transform-style:preserve-3d;
+  position:relative;
+  min-height:120px;
+}
+.mem-card.volteada{transform:rotateY(180deg)}
+.mem-card.emparejada{
+  transform:rotateY(180deg);
+  animation:emparejarPulse 0.6s;
+}
+@keyframes emparejarPulse{
+  0%,100%{box-shadow:0 0 0 rgba(39,174,96,0)}
+  50%{box-shadow:0 0 30px rgba(39,174,96,0.8)}
+}
+.mem-card-front,.mem-card-back{
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backface-visibility:hidden;
+  font-weight:700;
+}
+.mem-card-back{
+  background:linear-gradient(135deg,var(--desierto),var(--arena));
+  color:white;
+  font-size:2rem;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+.mem-card-front{
+  background:white;
+  transform:rotateY(180deg);
+  border:3px solid var(--arena);
+  display:flex;
+  flex-direction:column;
+  padding:8px;
+  font-size:0.8rem;
+  gap:4px;
+}
+.mem-card-front .mem-imagen{font-size:2.5rem}
+.mem-card-front .mem-palabra{color:var(--desierto);font-weight:800}
+
+.memorama-stats{
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin-top:15px;
+  flex-wrap:wrap;
+}
+.stat{
+  background:white;
+  border-radius:12px;
+  padding:10px 20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.stat .valor{font-size:1.5rem;font-weight:800;color:var(--desierto)}
+.stat .etiqueta{font-size:0.8rem;color:#999}
+
+/* --- PANTALLA 4: DIURNO / NOCTURNO --- */
+.clasifica-container{max-width:850px;margin:0 auto;text-align:center}
+.clasifica-container h2{color:var(--desierto);font-size:1.6rem;margin-bottom:5px}
+.clasifica-container .instruccion{color:#7F8C8D;margin-bottom:15px}
+
+.zonas-drag{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+.zona{
+  flex:1;
+  min-width:250px;
+  min-height:200px;
+  border-radius:20px;
+  padding:15px;
+  transition:all 0.3s;
+}
+.zona.drop-hover{
+  transform:scale(1.03);
+  box-shadow:0 0 30px rgba(0,0,0,0.2);
+}
+.zona-diurno{
+  background:linear-gradient(180deg,#FFF9C4,#FFF176);
+  border:3px dashed var(--desierto);
+}
+.zona-nocturno{
+  background:linear-gradient(180deg,#1A237E,#283593);
+  border:3px dashed #7986CB;
+}
+.zona h3{font-size:1.2rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;justify-content:center}
+.zona-diurno h3{color:var(--desierto)}
+.zona-nocturno h3{color:white}
+
+.animales-pool{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+  margin-bottom:20px;
+  min-height:60px;
+  background:rgba(255,255,255,0.6);
+  border-radius:16px;
+  padding:15px;
+}
+.animal-drag{
+  background:white;
+  border-radius:14px;
+  padding:10px 14px;
+  cursor:grab;
+  user-select:none;
+  font-weight:600;
+  font-size:0.9rem;
+  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border:3px solid transparent;
+}
+.animal-drag:active{cursor:grabbing;opacity:0.8}
+.animal-drag.colocado{
+  background:#D5F5E3;
+  border-color:var(--verde);
+  cursor:default;
+}
+.animal-drag.colocado::after{content:' ✓';color:var(--verde);font-weight:bold}
+.animal-drag.incorrecto{
+  animation:shake 0.5s;
+  border-color:var(--rojo);
+  background:#FDEDEC;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+
+.clasifica-controles{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+/* --- PANTALLA 5: FINAL --- */
+.final-container{max-width:600px;margin:40px auto;text-align:center}
+.final-card{
+  background:white;
+  border-radius:30px;
+  padding:50px 40px;
+  box-shadow:var(--sombra);
+}
+.final-card .celebra-svg{margin-bottom:20px}
+.final-card h1{font-size:2.2rem;margin-bottom:10px}
+.final-card .logro-titulo{font-size:1.3rem;color:var(--desierto);margin-bottom:20px}
+.final-card .estrellas{font-size:3rem;margin-bottom:20px}
+.final-card .resumen{
+  background:#F8F9FA;
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:25px;
+  text-align:left;
+}
+.resumen .fila{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEE}
+.resumen .fila:last-child{border-bottom:none}
+.resumen .fila .etiqueta-r{color:#888}
+.resumen .fila .valor-r{font-weight:700;color:var(--texto)}
+
+.confeti{position:fixed;pointer-events:none;animation:caer 3s ease-out forwards;font-size:2rem;z-index:100}
+@keyframes caer{
+  0%{transform:translateY(-10vh) rotate(0deg);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+/* --- SHARED --- */
+.text-center{text-align:center}
+.mt-20{margin-top:20px}
+.mb-20{margin-bottom:20px}
+.flex-center{display:flex;align-items:center;justify-content:center;gap:10px}
+.navegacion{display:flex;justify-content:space-between;align-items:center;max-width:800px;margin:0 auto;padding:10px 0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+
+<!-- ==================== PANTALLA 1: BIENVENIDA ==================== -->
+<section class="pantalla activa" id="p1" aria-label="Bienvenida">
+<div class="bienvenida-container">
+  <div class="bienvenida-card">
+    <svg class="pastor-svg" width="200" height="180" viewBox="0 0 200 180" aria-label="Pastor wayuu">
+      <circle cx="100" cy="115" r="55" fill="#FFF3E0" stroke="#E67E22" stroke-width="2"/>
+      <line x1="100" y1="60" x2="100" y2="55" stroke="#2D3047" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="100" cy="45" r="22" fill="#D4A574" stroke="#2D3047" stroke-width="2"/>
+      <circle cx="90" cy="40" r="3" fill="#2D3047"/>
+      <circle cx="110" cy="40" r="3" fill="#2D3047"/>
+      <path d="M92 48 Q100 55 108 48" fill="none" stroke="#2D3047" stroke-width="2" stroke-linecap="round"/>
+      <rect x="70" y="75" width="60" height="40" rx="5" fill="#E67E22" stroke="#2D3047" stroke-width="2"/>
+      <rect x="75" y="78" width="15" height="8" rx="2" fill="#F4D03F"/>
+      <rect x="95" y="78" width="15" height="8" rx="2" fill="#27AE60"/>
+      <rect x="115" y="78" width="10" height="8" rx="2" fill="#E74C3C"/>
+      <ellipse cx="100" cy="90" rx="8" ry="20" fill="#D4A574"/>
+      <circle cx="60" cy="80" r="15" fill="#D4A574" stroke="#2D3047" stroke-width="2"/>
+      <rect x="50" y="62" width="20" height="20" rx="6" fill="#8B4513" stroke="#2D3047" stroke-width="2"/>
+      <circle cx="150" cy="95" r="18" fill="#F5DEB3" stroke="#2D3047" stroke-width="2"/>
+      <circle cx="148" cy="93" r="3" fill="#2D3047"/>
+      <line x1="145" y1="98" x2="155" y2="98" stroke="#2D3047" stroke-width="2"/>
+      <ellipse cx="155" cy="100" rx="5" ry="3" fill="#2D3047"/>
+      <ellipse cx="100" cy="108" rx="12" ry="2" fill="#2D3047" opacity="0.3"/>
+      <path d="M60 80 Q40 90 45 110" fill="none" stroke="#2D3047" stroke-width="2"/>
+      <text x="70" y="148" font-size="12" fill="#666">"¡Püchimaajaa!"</text>
+      <text x="130" y="170" font-size="13" fill="#E67E22" font-weight="bold">— El pastor wayuu</text>
+    </svg>
+    <h1>🐐 CIEN-302:<br>Animales Wayuu</h1>
+    <p class="subtitulo">Grado 2° &nbsp;|&nbsp; Ciencias Naturales<br>Clasificación de animales · Wayuunaiki</p>
+    <div class="llamado">
+      <strong>"¡El pastor wayuu te necesita!</strong><br>
+      Sus animales se han mezclado en el desierto guajiro.<br>
+      Ayúdalo a clasificarlos y a cuidar su rebaño."
+    </div>
+    <div class="animales-preview">
+      <div class="animal-mini" title="Chivo">🐐</div>
+      <div class="animal-mini" title="Iguana">🦎</div>
+      <div class="animal-mini" title="Flamenco">🦩</div>
+      <div class="animal-mini" title="Zorro">🦊</div>
+      <div class="animal-mini" title="Conejo">🐇</div>
+      <div class="animal-mini" title="Perro">🐕</div>
+    </div>
+    <button class="btn btn-primario" onclick="irPantalla('p2')" aria-label="Comenzar">
+      🌵 ¡A clasificar! &nbsp;▶
+    </button>
+  </div>
+</div>
+</section>
+
+<!-- ==================== PANTALLA 2: LECCIÓN ==================== -->
+<section class="pantalla" id="p2" aria-label="Lección">
+<div class="navegacion">
+  <button class="btn btn-secundario" onclick="irPantalla('p1')">◀ Atrás</button>
+  <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+  <span class="puntos-badge">⭐ 0 pts</span>
+</div>
+<div class="leccion-container">
+  <!-- SLIDE 1: DOMÉSTICOS -->
+  <div class="leccion-card slide-leccion" id="slide-domesticos">
+    <h2>🏠 Animales Domésticos <span style="font-size:0.7rem;font-weight:400;color:#999">— Cercanos al pastor</span></h2>
+    <p style="color:#666;margin-bottom:10px">Los animales domésticos viven con las familias wayuu. El <strong>pastoreo de chivos</strong> es la actividad más importante.</p>
+    <div class="leccion-grid">
+      <div class="animal-card" onclick="hablar('ka\'ulaa', 'El chivo se llama ka\'ulaa en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="50" cy="50" rx="25" ry="22" fill="#E8D5B7" stroke="#333" stroke-width="2"/><ellipse cx="30" cy="28" rx="12" ry="8" fill="#C9A96E"/><circle cx="32" cy="26" r="3" fill="#333"/><ellipse cx="65" cy="28" rx="10" ry="6" fill="#D4B896"/><path d="M45 70 L40 80 L60 80 L55 70" fill="#D4B896" stroke="#333" stroke-width="1.5"/><path d="M20 40 Q15 35 18 30" stroke="#333" stroke-width="2" fill="none"/><text x="25" y="85" font-size="10" fill="#333" font-weight="bold">🐐</text></svg>
+        <div class="animal-nombre">Chivo</div>
+        <div class="animal-wayuu">Ka'ulaa</div>
+        <span class="animal-badge badge-domestico">Doméstico</span>
+      </div>
+      <div class="animal-card" onclick="hablar('aneerü', 'La cabra se llama aneerü en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="50" cy="48" rx="28" ry="20" fill="#F5E6CC" stroke="#333" stroke-width="2"/><ellipse cx="28" cy="25" rx="14" ry="10" fill="#E0C9A8"/><circle cx="30" cy="23" r="3" fill="#333"/><ellipse cx="70" cy="25" rx="12" ry="8" fill="#D4B896"/><path d="M42 68 L38 80 L62 80 L58 68" fill="#E0C9A8" stroke="#333" stroke-width="1.5"/><path d="M22 38 Q15 30 18 25" stroke="#333" stroke-width="2" fill="none"/><ellipse cx="55" cy="58" rx="10" ry="6" fill="#F5A0B6"/><text x="30" y="85" font-size="10" fill="#333" font-weight="bold">🐐</text></svg>
+        <div class="animal-nombre">Cabra</div>
+        <div class="animal-wayuu">Aneerü</div>
+        <span class="animal-badge badge-domestico">Doméstico</span>
+      </div>
+      <div class="animal-card" onclick="hablar('sü\'ülü', 'El cerdo se llama sü\'ülü en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="50" cy="50" rx="28" ry="22" fill="#F5C6D0" stroke="#333" stroke-width="2"/><circle cx="42" cy="38" r="4" fill="#333"/><circle cx="60" cy="38" r="4" fill="#333"/><ellipse cx="51" cy="46" rx="8" ry="6" fill="#E8A0B0"/><circle cx="49" cy="44" r="2" fill="#333"/><circle cx="53" cy="44" r="2" fill="#333"/><ellipse cx="75" cy="52" rx="10" ry="6" fill="#F0A0B0" stroke="#333" stroke-width="1.5"/><rect x="35" y="68" width="8" height="14" rx="4" fill="#D4A0A8"/><rect x="57" y="68" width="8" height="14" rx="4" fill="#D4A0A8"/><path d="M85 56 Q92 58 90 52" stroke="#333" stroke-width="1.5" fill="none"/><text x="28" y="85" font-size="10" fill="#333" font-weight="bold">🐷</text></svg>
+        <div class="animal-nombre">Cerdo</div>
+        <div class="animal-wayuu">Sü'ülü</div>
+        <span class="animal-badge badge-domestico">Doméstico</span>
+      </div>
+      <div class="animal-card" onclick="hablar('érü', 'El perro se llama érü en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="55" cy="52" rx="24" ry="18" fill="#C5A076" stroke="#333" stroke-width="2"/><ellipse cx="35" cy="35" rx="14" ry="12" fill="#D4B896"/><circle cx="37" cy="33" r="3" fill="#333"/><circle cx="46" cy="33" r="3" fill="#333"/><ellipse cx="42" cy="40" rx="6" ry="4" fill="#333"/><path d="M28 42 Q22 38 24 32" stroke="#333" stroke-width="2" fill="none"/><ellipse cx="74" cy="55" rx="10" ry="5" fill="#C5A076"/><rect x="30" y="68" width="8" height="14" rx="4" fill="#A08060"/><rect x="45" y="68" width="8" height="14" rx="4" fill="#A08060"/><rect x="60" y="68" width="8" height="14" rx="4" fill="#A08060"/><text x="25" y="85" font-size="10" fill="#333" font-weight="bold">🐕</text></svg>
+        <div class="animal-nombre">Perro</div>
+        <div class="animal-wayuu">Érü</div>
+        <span class="animal-badge badge-domestico">Doméstico</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SALVAJES -->
+  <div class="leccion-card slide-leccion" id="slide-salvajes" style="margin-top:10px">
+    <h2>🏜️ Animales Salvajes <span style="font-size:0.7rem;font-weight:400;color:#999">— Libres en el desierto</span></h2>
+    <p style="color:#666;margin-bottom:10px">Estos animales viven libres en el desierto de La Guajira. Cazan, se esconden y sobreviven sin ayuda de las personas.</p>
+    <div class="leccion-grid">
+      <div class="animal-card" onclick="hablar('maka', 'La iguana se llama maka en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="50" cy="45" rx="30" ry="15" fill="#5D8A3C" stroke="#333" stroke-width="2"/><ellipse cx="30" cy="30" rx="10" ry="7" fill="#6B9E45"/><circle cx="32" cy="29" r="2.5" fill="#FFD700"/><path d="M25 40 L18 36 L15 42" fill="#6B9E45" stroke="#333" stroke-width="1.5"/><path d="M30 55 L22 68 L28 66 L25 78 L35 68 L40 78 L38 66 L45 70" fill="#5D8A3C" stroke="#333" stroke-width="1.5"/><path d="M50 50 L68 48 L85 50" stroke="#333" stroke-width="2" fill="none"/><circle cx="45" cy="42" r="1.5" fill="#333"/><text x="20" y="85" font-size="10" fill="#333" font-weight="bold">🦎</text></svg>
+        <div class="animal-nombre">Iguana</div>
+        <div class="animal-wayuu">Maka</div>
+        <span class="animal-badge badge-salvaje">Salvaje</span>
+      </div>
+      <div class="animal-card" onclick="hablar('tukira', 'El flamenco se llama tukira en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="55" cy="50" rx="18" ry="16" fill="#F48FB1" stroke="#333" stroke-width="2"/><circle cx="42" cy="35" r="7" fill="#F8BBD0"/><circle cx="44" cy="34" r="2" fill="#333"/><path d="M38 40 Q30 42 25 35" stroke="#333" stroke-width="2" fill="none"/><path d="M55 36 Q70 25 80 28 L78 32 Q68 30 58 40" fill="none" stroke="#E91E63" stroke-width="2"/><rect x="52" y="62" width="3" height="20" rx="1.5" fill="#E91E63"/><rect x="58" y="62" width="3" height="20" rx="1.5" fill="#E91E63"/><ellipse cx="56" cy="82" rx="6" ry="2" fill="#333"/><text x="22" y="85" font-size="10" fill="#333" font-weight="bold">🦩</text></svg>
+        <div class="animal-nombre">Flamenco</div>
+        <div class="animal-wayuu">Tukira</div>
+        <span class="animal-badge badge-salvaje">Salvaje</span>
+      </div>
+      <div class="animal-card" onclick="hablar('wa\'üü', 'El zorro se llama wa\'üü en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="50" cy="52" rx="24" ry="16" fill="#E67E22" stroke="#333" stroke-width="2"/><ellipse cx="35" cy="35" rx="14" ry="12" fill="#F5B041"/><circle cx="32" cy="33" r="3" fill="#333"/><circle cx="43" cy="33" r="3" fill="#333"/><ellipse cx="38" cy="40" rx="6" ry="4" fill="#333"/><path d="M28 30 L20 20 L22 28" fill="#F5B041" stroke="#333" stroke-width="1.5"/><path d="M35 30 L32 18 L38 26" fill="#F5B041" stroke="#333" stroke-width="1.5"/><ellipse cx="72" cy="52" rx="14" ry="8" fill="#E67E22"/><ellipse cx="80" cy="50" rx="6" ry="3" fill="white"/><rect x="32" y="66" width="6" height="14" rx="3" fill="#D35400"/><rect x="48" y="66" width="6" height="14" rx="3" fill="#D35400"/><rect x="58" y="66" width="6" height="14" rx="3" fill="#D35400"/><text x="22" y="85" font-size="10" fill="#333" font-weight="bold">🦊</text></svg>
+        <div class="animal-nombre">Zorro</div>
+        <div class="animal-wayuu">Wa'üü</div>
+        <span class="animal-badge badge-salvaje">Salvaje</span>
+      </div>
+      <div class="animal-card" onclick="hablar('masewa', 'El conejo se llama masewa en wayuunaiki')">
+        <svg width="100" height="90" viewBox="0 0 100 90"><ellipse cx="48" cy="50" rx="22" ry="18" fill="#E8D5B7" stroke="#333" stroke-width="2"/><ellipse cx="38" cy="28" rx="10" ry="14" fill="#F5DEB3"/><ellipse cx="32" cy="22" rx="4" ry="8" fill="#E8C8A0"/><circle cx="40" cy="30" r="3" fill="#333"/><circle cx="34" cy="30" r="3" fill="#333"/><ellipse cx="37" cy="36" rx="3" ry="2" fill="#F0A0A0"/><ellipse cx="44" cy="58" rx="12" ry="8" fill="#F5DEB3" stroke="#333" stroke-width="1.5"/><ellipse cx="75" cy="55" rx="8" ry="6" fill="white"/><path d="M33 22 Q25 10 20 15" stroke="#333" stroke-width="2" fill="none"/><path d="M42 22 Q50 10 55 15" stroke="#333" stroke-width="2" fill="none"/><text x="22" y="85" font-size="10" fill="#333" font-weight="bold">🐇</text></svg>
+        <div class="animal-nombre">Conejo</div>
+        <div class="animal-wayuu">Masewa</div>
+        <span class="animal-badge badge-salvaje">Salvaje</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: ADAPTACIONES -->
+  <div class="leccion-card slide-leccion" id="slide-adaptaciones" style="margin-top:10px">
+    <h2>🌵 Adaptaciones al desierto <span style="font-size:0.7rem;font-weight:400;color:#999">— ¿Cómo sobreviven?</span></h2>
+    <p style="color:#666;margin-bottom:10px">El desierto guajiro es seco y caluroso de día, frío de noche. ¡Los animales tienen superpoderes para vivir allí!</p>
+    <div class="adaptacion-grid">
+      <div class="adaptacion-chip"><span class="icono">🦎</span>Color arena<br><small>Camuflaje para esconderse</small></div>
+      <div class="adaptacion-chip"><span class="icono">🧥</span>Pelo corto<br><small>No guarda calor; fresco</small></div>
+      <div class="adaptacion-chip"><span class="icono">🦵</span>Patas largas<br><small>Separan cuerpo del suelo caliente</small></div>
+      <div class="adaptacion-chip"><span class="icono">👂</span>Orejas grandes<br><small>Sueltan calor como ventilador</small></div>
+      <div class="adaptacion-chip"><span class="icono">💧</span>Poca agua<br><small>Sobreviven con muy poca agua</small></div>
+      <div class="adaptacion-chip"><span class="icono">🌙</span>Nocturnos<br><small>Salen de noche, más fresco</small></div>
+    </div>
+    <p style="margin-top:15px;color:#888;font-style:italic;font-size:0.9rem">💡 El chivo wayuu es experto en encontrar agua y comida en el desierto. ¡Por eso es tan importante para el pastor!</p>
+  </div>
+
+  <div class="text-center mt-20">
+    <button class="btn btn-primario" onclick="irPantalla('p3')">
+      🃏 ¡Vamos al Memorama! &nbsp;▶
+    </button>
+  </div>
+</div>
+</section>
+
+<!-- ==================== PANTALLA 3: MEMORAMA ==================== -->
+<section class="pantalla" id="p3" aria-label="Memorama Wayuu">
+<div class="navegacion">
+  <button class="btn btn-secundario" onclick="irPantalla('p2')">◀ Atrás</button>
+  <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+  <span class="puntos-badge" id="memPuntos">⭐ 0 pts</span>
+</div>
+<div class="memorama-container">
+  <h2>🃏 Memorama Wayuu</h2>
+  <p class="instruccion">Empareja cada animal con su nombre en <strong>wayuunaiki</strong>. ¡Voltea dos cartas!</p>
+  <div class="memorama-grid" id="memGrid"></div>
+  <div class="memorama-stats">
+    <div class="stat"><div class="valor" id="memIntentos">0</div><div class="etiqueta">Intentos</div></div>
+    <div class="stat"><div class="valor" id="memAciertos">0/6</div><div class="etiqueta">Aciertos</div></div>
+    <button class="btn btn-arena" onclick="reiniciarMemorama()">🔄 Reiniciar</button>
+  </div>
+</div>
+</section>
+
+<!-- ==================== PANTALLA 4: DIURNO/NOCTURNO ==================== -->
+<section class="pantalla" id="p4" aria-label="Clasificar día y noche">
+<div class="navegacion">
+  <button class="btn btn-secundario" onclick="irPantalla('p3')">◀ Atrás</button>
+  <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+  <span class="puntos-badge" id="clasPuntos">⭐ 0 pts</span>
+</div>
+<div class="clasifica-container">
+  <h2>🌞 ¿De día o de noche? 🌜</h2>
+  <p class="instruccion">Arrastra cada animal a la zona correcta: <strong>diurno</strong> (activo de día) o <strong>nocturno</strong> (activo de noche)</p>
+
+  <div class="zonas-drag">
+    <div class="zona zona-diurno" id="zonaDiurno"
+         ondragover="event.preventDefault()" ondragenter="zonaEnter(this)" ondragleave="zonaLeave(this)" ondrop="soltarEnZona(event,'diurno')">
+      <h3>🌞 Diurnos</h3>
+      <div class="animales-pool" id="poolDiurno" style="min-height:80px;background:transparent;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:5px"></div>
+    </div>
+    <div class="zona zona-nocturno" id="zonaNocturno"
+         ondragover="event.preventDefault()" ondragenter="zonaEnter(this)" ondragleave="zonaLeave(this)" ondrop="soltarEnZona(event,'nocturno')">
+      <h3>🌜 Nocturnos</h3>
+      <div class="animales-pool" id="poolNocturno" style="min-height:80px;background:transparent;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:5px"></div>
+    </div>
+  </div>
+
+  <div class="animales-pool" id="poolClasificar"></div>
+
+  <div class="clasifica-controles">
+    <span class="stat"><span class="valor" id="clasAciertos">0/10</span><span class="etiqueta">Aciertos</span></span>
+    <button class="btn btn-arena" onclick="reiniciarClasificacion()">🔄 Reiniciar</button>
+    <button class="btn btn-primario" id="btnVerResultado" onclick="verResultado()" disabled>✅ Ver resultado</button>
+  </div>
+</div>
+</section>
+
+<!-- ==================== PANTALLA 5: FINAL ==================== -->
+<section class="pantalla" id="p5" aria-label="Resultado final">
+<div class="final-container">
+  <div class="final-card">
+    <svg class="celebra-svg" width="160" height="140" viewBox="0 0 160 140" aria-label="Celebración">
+      <text x="80" y="50" text-anchor="middle" font-size="50">🏆</text>
+      <circle cx="40" cy="90" r="20" fill="#F4D03F" opacity="0.6"/>
+      <circle cx="80" cy="75" r="15" fill="#E74C3C" opacity="0.5"/>
+      <circle cx="120" cy="90" r="18" fill="#27AE60" opacity="0.6"/>
+      <rect x="20" y="115" width="120" height="8" rx="4" fill="#DDD"/>
+      <rect x="20" y="115" width="120" height="8" rx="4" fill="#F4D03F" id="barraFinal" style="transition:width 1s"/>
+    </svg>
+    <h1 id="finalTitulo">¡Lo lograste!</h1>
+    <p class="logro-titulo" id="finalLogro">Pastor experto</p>
+    <div class="estrellas" id="finalEstrellas">⭐⭐⭐</div>
+    <div class="resumen" id="finalResumen"></div>
+    <button class="btn btn-primario" onclick="reiniciarTodo()">🔄 Jugar de nuevo</button>
+    <button class="btn btn-secundario" style="margin-top:10px" onclick="irPantalla('p1')">🏠 Inicio</button>
+  </div>
+</div>
+</section>
+
+<script>
+// ==================== DATA ====================
+const animalesMemorama = [
+  {id:'chivo',emoji:'🐐',wayuu:'Ka\'ulaa',nombre:'Chivo',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="50" cy="50" rx="25" ry="22" fill="#E8D5B7" stroke="#333" stroke-width="2"/><ellipse cx="30" cy="28" rx="12" ry="8" fill="#C9A96E"/><circle cx="32" cy="26" r="3" fill="#333"/><ellipse cx="65" cy="28" rx="10" ry="6" fill="#D4B896"/><path d="M45 70 L40 80 L60 80 L55 70" fill="#D4B896" stroke="#333" stroke-width="1.5"/><path d="M20 40 Q15 35 18 30" stroke="#333" stroke-width="2" fill="none"/></svg>'},
+  {id:'iguana',emoji:'🦎',wayuu:'Maka',nombre:'Iguana',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="50" cy="45" rx="30" ry="15" fill="#5D8A3C" stroke="#333" stroke-width="2"/><ellipse cx="30" cy="30" rx="10" ry="7" fill="#6B9E45"/><circle cx="32" cy="29" r="2.5" fill="#FFD700"/><path d="M30 55 L22 68 L28 66 L25 78 L35 68 L40 78 L38 66 L45 70" fill="#5D8A3C" stroke="#333" stroke-width="1.5"/><circle cx="45" cy="42" r="1.5" fill="#333"/></svg>'},
+  {id:'flamenco',emoji:'🦩',wayuu:'Tukira',nombre:'Flamenco',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="55" cy="50" rx="18" ry="16" fill="#F48FB1" stroke="#333" stroke-width="2"/><circle cx="42" cy="35" r="7" fill="#F8BBD0"/><circle cx="44" cy="34" r="2" fill="#333"/><path d="M38 40 Q30 42 25 35" stroke="#333" stroke-width="2" fill="none"/><rect x="52" y="62" width="3" height="18" rx="1.5" fill="#E91E63"/><rect x="58" y="62" width="3" height="18" rx="1.5" fill="#E91E63"/></svg>'},
+  {id:'zorro',emoji:'🦊',wayuu:'Wa\'üü',nombre:'Zorro',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="50" cy="52" rx="24" ry="16" fill="#E67E22" stroke="#333" stroke-width="2"/><ellipse cx="35" cy="35" rx="14" ry="12" fill="#F5B041"/><circle cx="32" cy="33" r="3" fill="#333"/><circle cx="43" cy="33" r="3" fill="#333"/><ellipse cx="38" cy="40" rx="6" ry="4" fill="#333"/><path d="M35 30 L32 18 L38 26" fill="#F5B041" stroke="#333" stroke-width="1.5"/><ellipse cx="72" cy="52" rx="14" ry="8" fill="#E67E22"/></svg>'},
+  {id:'conejo',emoji:'🐇',wayuu:'Masewa',nombre:'Conejo',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="48" cy="50" rx="22" ry="18" fill="#E8D5B7" stroke="#333" stroke-width="2"/><ellipse cx="32" cy="22" rx="4" ry="8" fill="#E8C8A0"/><ellipse cx="42" cy="22" rx="4" ry="8" fill="#E8C8A0"/><circle cx="40" cy="30" r="3" fill="#333"/><circle cx="34" cy="30" r="3" fill="#333"/><ellipse cx="37" cy="36" rx="3" ry="2" fill="#F0A0A0"/><path d="M33 22 Q25 10 20 15" stroke="#333" stroke-width="2" fill="none"/><path d="M42 22 Q50 10 55 15" stroke="#333" stroke-width="2" fill="none"/></svg>'},
+  {id:'perro',emoji:'🐕',wayuu:'Érü',nombre:'Perro',svg:'<svg width="50" height="50" viewBox="0 0 100 90"><ellipse cx="55" cy="52" rx="24" ry="18" fill="#C5A076" stroke="#333" stroke-width="2"/><ellipse cx="35" cy="35" rx="14" ry="12" fill="#D4B896"/><circle cx="37" cy="33" r="3" fill="#333"/><circle cx="46" cy="33" r="3" fill="#333"/><ellipse cx="42" cy="40" rx="6" ry="4" fill="#333"/><path d="M28 42 Q22 38 24 32" stroke="#333" stroke-width="2" fill="none"/><rect x="30" y="68" width="8" height="14" rx="4" fill="#A08060"/><rect x="45" y="68" width="8" height="14" rx="4" fill="#A08060"/><rect x="60" y="68" width="8" height="14" rx="4" fill="#A08060"/></svg>'}
+];
+
+const animalesClasificar = [
+  {id:'chivo2',emoji:'🐐',nombre:'Chivo',diurno:true},
+  {id:'iguana2',emoji:'🦎',nombre:'Iguana',diurno:true},
+  {id:'flamenco2',emoji:'🦩',nombre:'Flamenco',diurno:true},
+  {id:'zorro2',emoji:'🦊',nombre:'Zorro',diurno:true},
+  {id:'perro2',emoji:'🐕',nombre:'Perro',diurno:true},
+  {id:'murcielago',emoji:'🦇',nombre:'Murciélago',diurno:false},
+  {id:'buho',emoji:'🦉',nombre:'Búho',diurno:false},
+  {id:'zorro_nocturno',emoji:'🦊',nombre:'Zorro gris',diurno:false},
+  {id:'armadillo',emoji:'🦔',nombre:'Armadillo',diurno:false},
+  {id:'conejo2',emoji:'🐇',nombre:'Conejo',diurno:false},
+];
+
+// ==================== NAVEGACIÓN ====================
+let puntuacionTotal = 0;
+let puntuacionMemorama = 0;
+let puntuacionClasificacion = 0;
+
+function irPantalla(id){
+  document.querySelectorAll('.pantalla').forEach(p=>p.classList.remove('activa'));
+  document.getElementById(id).classList.add('activa');
+  if(id==='p3') inicializarMemorama();
+  if(id==='p4') inicializarClasificacion();
+  if(id==='p5') mostrarResultado();
+  window.scrollTo(0,0);
+}
+
+// ==================== TTS ====================
+function hablar(palabra, frase){
+  if(window.speechSynthesis){
+    const u = new SpeechSynthesisUtterance(frase);
+    u.lang='es-CO';
+    u.rate=0.85;
+    u.pitch=1.0;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+}
+
+// ==================== MEMORAMA ====================
+let memCartas=[], memSeleccionadas=[], memBloqueado=false, memIntentos=0, memAciertos=0;
+
+function inicializarMemorama(){
+  memIntentos=0; memAciertos=0; memSeleccionadas=[]; memBloqueado=false;
+  puntuacionMemorama=0;
+  document.getElementById('memIntentos').textContent='0';
+  document.getElementById('memAciertos').textContent='0/6';
+  document.getElementById('memPuntos').textContent='⭐ 0 pts';
+
+  // Crear pares: imagen + palabra
+  let cartas=[];
+  animalesMemorama.forEach((a,i)=>{
+    cartas.push({tipo:'imagen',animal:a,pairId:i});
+    cartas.push({tipo:'palabra',animal:a,pairId:i});
+  });
+  // Shuffle Fisher-Yates
+  for(let i=cartas.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cartas[i],cartas[j]]=[cartas[j],cartas[i]];
+  }
+  memCartas=cartas;
+
+  const grid=document.getElementById('memGrid');
+  grid.innerHTML='';
+  memCartas.forEach((c,idx)=>{
+    const div=document.createElement('div');
+    div.className='mem-card';
+    div.dataset.index=idx;
+    div.innerHTML=`
+      <div class="mem-card-back">❓</div>
+      <div class="mem-card-front">
+        ${c.tipo==='imagen'
+          ? `<div class="mem-imagen">${c.animal.svg}</div><div style="font-size:1.5rem">${c.animal.emoji}</div>`
+          : `<div class="mem-palabra" style="font-size:1.3rem;padding:10px">${c.animal.wayuu}</div><div style="font-size:0.7rem;color:#999">${c.animal.nombre}</div>`
+        }
+      </div>`;
+    div.addEventListener('click',()=>voltearCarta(idx,div));
+    grid.appendChild(div);
+  });
+}
+
+function voltearCarta(idx,div){
+  if(memBloqueado)return;
+  if(div.classList.contains('volteada')||div.classList.contains('emparejada'))return;
+  if(memSeleccionadas.length>=2)return;
+
+  div.classList.add('volteada');
+  memSeleccionadas.push({idx,carta:memCartas[idx],div});
+
+  if(memSeleccionadas.length===2){
+    memIntentos++;
+    document.getElementById('memIntentos').textContent=memIntentos;
+    const [a,b]=memSeleccionadas;
+    if(a.carta.pairId===b.carta.pairId && a.carta.tipo!==b.carta.tipo){
+      // Acierto
+      memAciertos++;
+      document.getElementById('memAciertos').textContent=memAciertos+'/6';
+      puntuacionMemorama=Math.round((memAciertos/6)*100);
+      document.getElementById('memPuntos').textContent='⭐ '+puntuacionMemorama+' pts';
+      a.div.classList.add('emparejada');
+      b.div.classList.add('emparejada');
+      memSeleccionadas=[];
+      hablar('acierto','¡Bien hecho!');
+      if(memAciertos===6){
+        setTimeout(()=>{
+          alert('🎉 ¡Memorama completado! Has emparejado todos los animales con sus nombres en wayuunaiki.');
+          irPantalla('p4');
+        },800);
+      }
+    }else{
+      // Error
+      memBloqueado=true;
+      setTimeout(()=>{
+        a.div.classList.remove('volteada');
+        b.div.classList.remove('volteada');
+        memSeleccionadas=[];
+        memBloqueado=false;
+      },900);
+    }
+  }
+}
+
+function reiniciarMemorama(){
+  inicializarMemorama();
+}
+
+// ==================== CLASIFICACIÓN DIURNO/NOCTURNO ====================
+let clasAciertos=0, clasTotal=10, clasColocados=[];
+
+function inicializarClasificacion(){
+  clasAciertos=0; clasColocados=[];
+  puntuacionClasificacion=0;
+  document.getElementById('clasAciertos').textContent='0/10';
+  document.getElementById('clasPuntos').textContent='⭐ 0 pts';
+  document.getElementById('btnVerResultado').disabled=true;
+  document.getElementById('poolDiurno').innerHTML='';
+  document.getElementById('poolNocturno').innerHTML='';
+
+  // Shuffle animales
+  let pool=[...animalesClasificar];
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+
+  const container=document.getElementById('poolClasificar');
+  container.innerHTML='';
+  pool.forEach(a=>{
+    const chip=document.createElement('div');
+    chip.className='animal-drag';
+    chip.draggable=true;
+    chip.dataset.id=a.id;
+    chip.dataset.diurno=a.diurno;
+    chip.innerHTML=`${a.emoji} ${a.nombre}`;
+    chip.addEventListener('dragstart',dragStart);
+    chip.addEventListener('dragend',dragEnd);
+    container.appendChild(chip);
+  });
+}
+
+let dragData=null;
+function dragStart(e){
+  dragData={id:e.target.dataset.id,diurno:e.target.dataset.diurno==='true',el:e.target};
+  e.dataTransfer.effectAllowed='move';
+  e.target.style.opacity='0.6';
+}
+function dragEnd(e){
+  e.target.style.opacity='1';
+}
+
+function zonaEnter(zona){zona.classList.add('drop-hover')}
+function zonaLeave(zona){zona.classList.remove('drop-hover')}
+
+function soltarEnZona(e,categoria){
+  e.preventDefault();
+  const zona=e.currentTarget;
+  zona.classList.remove('drop-hover');
+  if(!dragData)return;
+
+  const esDiurno=dragData.diurno;
+  const correcto = (categoria==='diurno' && esDiurno) || (categoria==='nocturno' && !esDiurno);
+
+  if(correcto){
+    dragData.el.classList.add('colocado');
+    dragData.el.draggable=false;
+    clasAciertos++;
+    clasColocados.push(dragData.id);
+    puntuacionClasificacion=Math.round((clasAciertos/clasTotal)*100);
+    document.getElementById('clasAciertos').textContent=clasAciertos+'/10';
+    document.getElementById('clasPuntos').textContent='⭐ '+puntuacionClasificacion+' pts';
+
+    if(categoria==='diurno'){
+      document.getElementById('poolDiurno').appendChild(dragData.el);
+    }else{
+      document.getElementById('poolNocturno').appendChild(dragData.el);
+    }
+
+    if(clasAciertos===clasTotal){
+      document.getElementById('btnVerResultado').disabled=false;
+      document.getElementById('btnVerResultado').style.animation='emparejarPulse 1s infinite';
+    }
+  }else{
+    dragData.el.classList.add('incorrecto');
+    setTimeout(()=>dragData.el.classList.remove('incorrecto'),500);
+  }
+
+  dragData=null;
+}
+
+function reiniciarClasificacion(){
+  inicializarClasificacion();
+}
+
+function verResultado(){
+  irPantalla('p5');
+}
+
+// ==================== RESULTADO FINAL ====================
+function mostrarResultado(){
+  const total=Math.round((puntuacionMemorama+puntuacionClasificacion)/2);
+  puntuacionTotal=total;
+
+  const tituloEl=document.getElementById('finalTitulo');
+  const logroEl=document.getElementById('finalLogro');
+  const estrellasEl=document.getElementById('finalEstrellas');
+  const resumenEl=document.getElementById('finalResumen');
+  const barra=document.getElementById('barraFinal');
+
+  let estrellas,logro;
+  if(total>=80){
+    estrellas='⭐⭐⭐';logro='🏆 "Pastor Experto Wayuu"';tituloEl.style.color='#F4D03F';
+  }else if(total>=50){
+    estrellas='⭐⭐';logro='🌟 "Aprendiz de Pastor"';tituloEl.style.color='#E67E22';
+  }else{
+    estrellas='⭐';logro='🌱 "Pastor en entrenamiento"';tituloEl.style.color='#27AE60';
+  }
+
+  if(total>=80){
+    document.getElementById('finalTitulo').textContent='¡Excelente!';
+  }else if(total>=50){
+    document.getElementById('finalTitulo').textContent='¡Buen trabajo!';
+  }else{
+    document.getElementById('finalTitulo').textContent='¡Sigue intentando!';
+  }
+  logroEl.textContent=logro;
+  estrellasEl.innerHTML=estrellas;
+  barra.style.width=(total)+'%';
+
+  resumenEl.innerHTML=`
+    <div class="fila"><span class="etiqueta-r">🧩 Memorama</span><span class="valor-r">${memAciertos}/6 pares</span></div>
+    <div class="fila"><span class="etiqueta-r">🌞 Clasificación</span><span class="valor-r">${clasAciertos}/10 correctos</span></div>
+    <div class="fila"><span class="etiqueta-r">📊 Puntaje total</span><span class="valor-r">${total}%</span></div>
+    <div class="fila"><span class="etiqueta-r">🔤 Palabras wayuunaiki</span><span class="valor-r">6 aprendidas</span></div>
+  `;
+
+  // Confeti si >=80%
+  if(total>=80) lanzarConfeti();
+}
+
+function lanzarConfeti(){
+  const emojis=['🎉','🌟','🐐','🦎','🦩','🌵','🏆','💚','⭐','🎊'];
+  for(let i=0;i<30;i++){
+    setTimeout(()=>{
+      const conf=document.createElement('span');
+      conf.className='confeti';
+      conf.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      conf.style.left=Math.random()*100+'%';
+      conf.style.animationDuration=(2+Math.random()*3)+'s';
+      conf.style.fontSize=(1.5+Math.random()*2.5)+'rem';
+      document.body.appendChild(conf);
+      setTimeout(()=>conf.remove(),3500);
+    },i*80);
+  }
+  hablar('celebracion','¡Felicitaciones! Eres un pastor experto wayuu.');
+}
+
+function reiniciarTodo(){
+  puntuacionTotal=0; puntuacionMemorama=0; puntuacionClasificacion=0;
+  memAciertos=0; memIntentos=0; clasAciertos=0;
+  document.getElementById('btnVerResultado').disabled=true;
+  irPantalla('p1');
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.speechSynthesis) speechSynthesis.getVoices(); // warm up
+});
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

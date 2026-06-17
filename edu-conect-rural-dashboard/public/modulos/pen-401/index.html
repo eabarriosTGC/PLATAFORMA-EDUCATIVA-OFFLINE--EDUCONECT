@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PEN-401: Mente Despierta | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#F3E5F5,#E1BEE7,#CE93D8);min-height:100vh}
+.container{max-width:600px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--morado);text-align:center;font-size:1rem;line-height:1.6;margin-bottom:16px;color:var(--tierra)}
+
+.frase-box{background:white;border-left:8px solid var(--morado);padding:28px 20px;border-radius:16px;font-size:1.3rem;text-align:center;margin:20px 0;font-weight:bold;box-shadow:var(--sombra);min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--texto)}
+.contador{text-align:center;color:#999;font-size:0.85rem;margin-bottom:8px}
+
+.botones{display:flex;gap:14px}
+.btn-decision{flex:1;padding:18px 12px;font-size:1.1rem;font-weight:bold;border:none;border-radius:14px;cursor:pointer;transition:all 0.2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-decision:hover{transform:translateY(-3px)}
+.btn-decision:active{transform:scale(0.96)}
+.btn-decision:disabled{opacity:0.4;cursor:default;transform:none!important}
+.btn-hecho{background:#0984e3;color:white;box-shadow:0 4px 12px rgba(9,132,227,0.4)}
+.btn-hecho:hover{box-shadow:0 6px 20px rgba(9,132,227,0.5)}
+.btn-opinion{background:#fdcb6e;color:var(--tierra);box-shadow:0 4px 12px rgba(253,203,110,0.4)}
+.btn-opinion:hover{box-shadow:0 6px 20px rgba(253,203,110,0.5)}
+
+.feedback-frase{padding:16px;border-radius:14px;margin-top:16px;display:none;animation:fadeIn 0.3s ease-out;text-align:center;font-weight:bold}
+.feedback-frase.visible{display:block}
+.feedback-frase.bien{background:#E8F5E9;border:2px solid var(--verde);color:#2E7D32}
+.feedback-frase.mal{background:#FFEBEE;border:2px solid var(--rojo);color:#C62828}
+
+.resultado{display:none;text-align:center;padding:30px 20px}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:4rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+.consejos-pensamiento{background:white;border-radius:16px;padding:16px;margin-top:16px;border:2px solid var(--wayuu-oro);text-align:left}
+.consejos-pensamiento h4{color:var(--atardecer);margin-bottom:8px}
+.consejos-pensamiento li{margin:6px 0;font-size:0.9rem;color:var(--texto);line-height:1.5}
+
+@media(max-width:400px){
+  .botones{flex-direction:column}
+  .frase-box{font-size:1.1rem;padding:20px 14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🧠 Mente Despierta</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Pensamiento Crítico · Hecho vs Opinión</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    🤔 ¿Es un <strong>Hecho</strong> (se puede comprobar) o una <strong>Opinión</strong> (lo que alguien siente o cree)? Aprender esto te ayuda a no dejarte engañar.
+  </div>
+
+  <div id="mainContent"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var ronda = 0;
+var progresoVal = 0;
+var aciertos = 0;
+
+var frases = [
+  {texto: '"El agua hierve cuando alcanza los 100°C."', tipo: 'hecho', feedback: '¡Correcto! Es un hecho comprobable. Puedes calentar agua y verlo con tus propios ojos.', icono: '🌡️'},
+  {texto: '"El arroz con frijoles es la comida más deliciosa del mundo."', tipo: 'opinion', feedback: '¡Correcto! Es una opinión. A muchas personas les gusta, pero no es algo que se pueda comprobar.', icono: '🍛'},
+  {texto: '"La Guajira es un departamento de Colombia."', tipo: 'hecho', feedback: '¡Correcto! Es un hecho. Puedes verlo en cualquier mapa de Colombia.', icono: '🗺️'},
+  {texto: '"El color rojo es el más bonito de todos."', tipo: 'opinion', feedback: '¡Correcto! Es una opinión. Cada persona tiene sus colores favoritos.', icono: '🔴'},
+  {texto: '"Los cardones almacenan agua en sus tallos."', tipo: 'hecho', feedback: '¡Correcto! Es un hecho científico. Los cactus como el cardón guardan agua para sobrevivir en el desierto.', icono: '🌵'},
+  {texto: '"Estudiar es aburrido."', tipo: 'opinion', feedback: '¡Correcto! Es una opinión. Hay personas que disfrutan aprender cosas nuevas.', icono: '📚'},
+  {texto: '"Colombia limita con Venezuela y Brasil."', tipo: 'hecho', feedback: '¡Correcto! Es un hecho geográfico. Puedes verificarlo en un mapa.', icono: '🇨🇴'},
+  {texto: '"Los chivos son los mejores animales de la granja."', tipo: 'opinion', feedback: '¡Correcto! Es una opinión. Cada persona puede tener su animal favorito.', icono: '🐐'}
+];
+
+function init(){
+  cargarFrase();
+  actualizarProgreso();
+}
+
+function cargarFrase(){
+  if(ronda >= frases.length){
+    mostrarFinal();
+    return;
+  }
+  var f = frases[ronda];
+  var html = '<div class="contador">' + (ronda + 1) + ' / ' + frases.length + '</div>';
+  html += '<div class="frase-box">' + f.icono + ' ' + f.texto + '</div>';
+  html += '<div class="botones">';
+  html += '<button class="btn-decision btn-hecho" onclick="responder(\'hecho\')">📖 Es un Hecho</button>';
+  html += '<button class="btn-decision btn-opinion" onclick="responder(\'opinion\')">💭 Es una Opinión</button>';
+  html += '</div>';
+  html += '<div class="feedback-frase" id="feedbackFrase"></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function responder(tipo){
+  var btns = document.querySelectorAll('.btn-decision');
+  btns.forEach(function(b){ b.disabled = true; });
+  var f = frases[ronda];
+  var fb = document.getElementById('feedbackFrase');
+
+  if(tipo === f.tipo){
+    fb.className = 'feedback-frase visible bien';
+    fb.innerHTML = '✅ ' + f.feedback;
+    aciertos++;
+    progresoVal = Math.min(100, Math.round((aciertos / frases.length) * 100));
+    guardarProgreso();
+    actualizarProgreso();
+    hablar(f.feedback);
+    ronda++;
+    setTimeout(function(){
+      cargarFrase();
+      if(aciertos >= frases.length) setTimeout(mostrarFinal, 500);
+    }, 2500);
+  } else {
+    fb.className = 'feedback-frase visible mal';
+    var explicacion = tipo === 'hecho'
+      ? 'No es un hecho. Pregúntate: "¿Todo el mundo está de acuerdo con esto o se puede demostrar?"'
+      : 'No es una opinión. Esto se puede comprobar con datos o experimentos.';
+    fb.innerHTML = '❌ ' + explicacion + ' Vuelve a intentarlo.';
+    hablar('Piénsalo bien. ' + explicacion);
+    setTimeout(function(){
+      btns.forEach(function(b){ b.disabled = false; });
+      fb.className = 'feedback-frase';
+      fb.innerHTML = '';
+    }, 3000);
+  }
+}
+
+function mostrarFinal(){
+  var html = '<div class="resultado visible">';
+  html += '<div class="emoji-g">💡</div>';
+  html += '<h2>¡Cerebro Brillante!</h2>';
+  html += '<p style="color:var(--tierra);font-size:1.1rem">' + aciertos + ' / ' + frases.length + ' aciertos</p>';
+  if(aciertos >= 6){
+    html += '<div style="margin:15px 0;font-size:3rem">🏅</div>';
+    html += '<p style="font-weight:bold;color:var(--verde)">¡Mente Crítica!</p>';
+    guardarDiario();
+  }
+  html += '<div class="consejos-pensamiento">';
+  html += '<h4>🔍 Recuerda:</h4><ul style="padding-left:20px">';
+  html += '<li>Un <strong>hecho</strong> se puede comprobar (medir, ver, contar)</li>';
+  html += '<li>Una <strong>opinión</strong> expresa lo que alguien siente o cree</li>';
+  html += '<li>En internet hay muchas opiniones disfrazadas de hechos</li>';
+  html += '<li>Siempre pregúntate: "¿Esto se puede demostrar?" antes de creer algo</li>';
+  html += '</ul></div>';
+  html += '<div style="margin-top:15px">';
+  html += '<button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>';
+  html += '<a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>';
+  html += '</div></div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progresoVal + '%';
+  document.getElementById('progresoPct').textContent = progresoVal + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('pen401_progreso', progresoVal); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('pen-401', 'modulo_completado', { puntos: progresoVal, estrellas: Math.min(3, Math.floor(aciertos/3)) }, 'Mente Despierta', '🧠');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

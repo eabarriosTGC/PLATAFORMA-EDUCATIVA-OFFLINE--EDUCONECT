@@ -1,0 +1,132 @@
+/* ========================================
+   MÓDULO: FORMAS EN MI ENTORNO
+   ======================================== */
+
+.instruccion-formas {
+    text-align: center;
+    font-size: 1.3rem;
+    color: var(--color-wayuu-azul);
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 10px;
+}
+
+.instruccion-formas strong {
+    color: var(--color-wayuu-rojo);
+    text-transform: uppercase;
+}
+
+.escena-formas {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#svg-escena {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    background: white;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.objeto-forma {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.objeto-forma:hover {
+    filter: brightness(1.2);
+    stroke-width: 5;
+}
+
+.objeto-forma.encontrado {
+    animation: descubrir-forma 0.6s ease forwards;
+    cursor: default;
+    pointer-events: none;
+}
+
+@keyframes descubrir-forma {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.15); filter: brightness(1.3) drop-shadow(0 0 10px gold); }
+    100% { transform: scale(1); filter: brightness(1.1); stroke: var(--color-exito); stroke-width: 4; }
+}
+
+.objeto-forma.error-click {
+    animation: shake-forma 0.4s ease;
+}
+
+@keyframes shake-forma {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.contador-formas {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-cactus);
+    margin-top: 10px;
+}
+
+.leyenda-formas {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.forma-activa, .forma-inactiva {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.forma-activa {
+    background: var(--color-wayuu-amarillo);
+    color: var(--color-texto);
+    box-shadow: var(--sombra);
+    transform: scale(1.05);
+}
+
+.forma-inactiva {
+    background: #E0E0E0;
+    color: #999;
+}
+
+.forma-inactiva.completada {
+    background: var(--color-exito);
+    color: white;
+}
+
+/* Tooltip de forma */
+.tooltip-forma {
+    position: absolute;
+    background: var(--color-wayuu-rojo);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 100;
+    animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .instruccion-formas { font-size: 1rem; }
+    .leyenda-formas { gap: 8px; }
+    .forma-activa, .forma-inactiva { padding: 6px 12px; font-size: 0.8rem; }
+}

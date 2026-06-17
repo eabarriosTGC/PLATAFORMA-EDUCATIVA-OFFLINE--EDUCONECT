@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATE-205: Estadística y Probabilidad Wayuu | EduConect Rural</title>
+<style>
+:root {
+ --arena: #F4E1C1;
+ --desierto: #E8B86D;
+ --cardon: #5B8C5A;
+ --cielo: #87CEEB;
+ --atardecer: #E07A5F;
+ --tierra: #8B5E3C;
+ --wayuu-oro: #D4A843;
+ --texto: #3D2B1F;
+ --blanco: #FFFDF7;
+ --sombra: 0 4px 20px rgba(0,0,0,0.12);
+ --rojo: #D64045;
+ --verde: #4CAF50;
+ --azul: #4A90D9;
+ --morado: #9B59B6;
+ --naranja: #F4A261;
+ --teal: #2A9D8F;
+ --cafe: #A0522D;
+ --negro: #2C1810;
+ --blanco-chivo: #FAF0E6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:'Segoe UI','Comic Sans MS',sans-serif;
+ background:linear-gradient(180deg,#F4E1C1 0%,#E8B86D 30%,#D4A843 60%,#F4E1C1 100%);
+ min-height:100vh;
+ color:var(--texto);
+}
+body::before{
+ content:'';
+ position:fixed;
+ top:0;left:0;right:0;bottom:0;
+ background:
+  radial-gradient(circle at 80% 15%, #FFD70022 5%, transparent 40%),
+  radial-gradient(circle at 20% 20%, #FFFFFF33 3%, transparent 30%);
+ pointer-events:none;
+ z-index:0;
+}
+
+.container{max-width:900px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+/* Header */
+.header{
+ text-align:center;
+ padding:20px 15px 10px;
+ position:relative;
+}
+.header .sol{
+ font-size:3rem;
+ animation:brillar 2s ease-in-out infinite;
+}
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header h1{
+ font-size:clamp(1.5rem,4vw,2.2rem);
+ color:var(--tierra);
+ text-shadow:2px 2px 0 var(--wayuu-oro);
+ margin:5px 0;
+}
+.header .grado{
+ display:inline-block;
+ background:var(--wayuu-oro);
+ color:var(--blanco);
+ padding:5px 18px;
+ border-radius:20px;
+ font-weight:bold;
+ font-size:0.9rem;
+}
+.header .desierto-deco{
+ font-size:1.2rem;
+ margin:8px 0;
+ letter-spacing:6px;
+ opacity:0.7;
+}
+
+/* Progress */
+.progreso-wrap{
+ background:var(--blanco);
+ border-radius:15px;
+ padding:10px 18px;
+ margin:10px 0 18px;
+ box-shadow:var(--sombra);
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.progreso-label{font-weight:bold;font-size:0.9rem;white-space:nowrap}
+.progreso-bar{
+ flex:1;
+ height:14px;
+ background:#e0d5c5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progreso-fill{
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+ transition:width 0.5s;
+ width:0%;
+}
+.progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.9rem;min-width:36px}
+
+/* Cards */
+.card{
+ background:var(--blanco);
+ border-radius:20px;
+ padding:22px 20px;
+ margin-bottom:18px;
+ box-shadow:var(--sombra);
+ border:2px solid var(--arena);
+ transition:all 0.3s;
+ position:relative;
+ overflow:hidden;
+}
+.card::before{
+ content:'';
+ position:absolute;
+ top:0;left:0;
+ width:5px;
+ height:100%;
+ border-radius:5px 0 0 5px;
+}
+.card.activo::before{background:var(--atardecer)}
+.card.completado::before{background:var(--verde)}
+.card.completado{opacity:0.85}
+.card h2{
+ font-size:1.3rem;
+ margin-bottom:10px;
+ display:flex;
+ align-items:center;
+ gap:8px;
+}
+.card h2 .icono{font-size:1.5rem}
+.etiqueta-check{
+ display:inline-block;
+ background:var(--verde);
+ color:white;
+ padding:3px 10px;
+ border-radius:10px;
+ font-size:0.75rem;
+ margin-left:8px;
+}
+
+/* Buttons */
+.btn{
+ padding:10px 20px;
+ border:none;
+ border-radius:25px;
+ cursor:pointer;
+ font-size:0.95rem;
+ font-weight:bold;
+ transition:all 0.2s;
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{
+ background:var(--atardecer);
+ color:white;
+ box-shadow:0 4px 12px rgba(224,122,95,0.4);
+}
+.btn-primario:disabled{
+ background:#bbb;
+ box-shadow:none;
+ cursor:not-allowed;
+ transform:none;
+}
+.btn-secundario{
+ background:var(--arena);
+ color:var(--texto);
+}
+.btn-exito{
+ background:var(--verde);
+ color:white;
+}
+.btn-peligro{
+ background:var(--rojo);
+ color:white;
+}
+.btn-azul{
+ background:var(--azul);
+ color:white;
+ box-shadow:0 4px 12px rgba(74,144,217,0.4);
+}
+.btn-morado{
+ background:var(--morado);
+ color:white;
+ box-shadow:0 4px 12px rgba(155,89,182,0.4);
+}
+.btn-naranja{
+ background:var(--naranja);
+ color:white;
+}
+
+/* ============ SECTION 1: RAZONES ============ */
+.razon-area{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:30px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.rebano-viz{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:6px;
+ max-width:400px;
+ margin:10px auto;
+}
+.chivo-icono{
+ font-size:2.2rem;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ padding:6px;
+ border-radius:10px;
+ transition:transform 0.3s;
+ cursor:pointer;
+ user-select:none;
+}
+.chivo-icono:hover{transform:scale(1.2)}
+.razon-display{
+ background:linear-gradient(135deg,#FFFDF7,#FFF3E0);
+ border:2px dashed var(--wayuu-oro);
+ border-radius:16px;
+ padding:20px;
+ text-align:center;
+ margin:15px 0;
+}
+.razon-display .razon-num{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+}
+.razon-display .razon-flecha{
+ font-size:1.5rem;
+ color:var(--tierra);
+ margin:5px 0;
+}
+.razon-input-area{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:12px;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.razon-input-area input{
+ width:70px;
+ height:50px;
+ font-size:1.6rem;
+ text-align:center;
+ border:3px dashed var(--wayuu-oro);
+ border-radius:12px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+.razon-input-area input.correcto{border-color:var(--verde);background:#E8F5E9}
+.razon-input-area input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.razon-input-area .razon-sep{font-size:2rem;font-weight:bold;color:var(--tierra)}
+
+/* ============ SECTION 2: PORCENTAJES ============ */
+.porcentaje-area{
+ background:linear-gradient(135deg,#FFFDF7,#E3F2FD);
+ border:2px dashed var(--azul);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.canvas-container{
+ display:flex;
+ justify-content:center;
+ gap:25px;
+ flex-wrap:wrap;
+ align-items:center;
+ margin:15px 0;
+}
+.pie-info{
+ text-align:left;
+ max-width:300px;
+}
+.pie-leyenda{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ margin:6px 0;
+ font-size:0.95rem;
+}
+.pie-color{
+ width:16px;
+ height:16px;
+ border-radius:4px;
+ display:inline-block;
+}
+.porcentaje-quiz{
+ margin:15px 0;
+ padding:15px;
+ background:rgba(255,255,255,0.7);
+ border-radius:12px;
+}
+.porcentaje-quiz input{
+ width:80px;
+ height:45px;
+ font-size:1.4rem;
+ text-align:center;
+ border:3px dashed var(--azul);
+ border-radius:10px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+
+/* ============ SECTION 3: PROBABILIDAD ============ */
+.probabilidad-area{
+ background:linear-gradient(135deg,#FFFDF7,#F3E5F5);
+ border:2px dashed var(--morado);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.urna-chivos{
+ display:flex;
+ justify-content:center;
+ gap:8px;
+ flex-wrap:wrap;
+ margin:15px 0;
+ padding:15px;
+ background:var(--blanco);
+ border-radius:12px;
+ border:2px solid #e0d5c5;
+ min-height:60px;
+ align-items:center;
+}
+.chivo-sorteo{
+ font-size:2.5rem;
+ animation:pulso 0.5s ease-in-out;
+}
+@keyframes pulso{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.simulacion-resultados{
+ display:flex;
+ gap:20px;
+ justify-content:center;
+ flex-wrap:wrap;
+ margin:15px 0;
+}
+.sim-box{
+ background:var(--blanco);
+ border-radius:12px;
+ padding:15px;
+ min-width:120px;
+ text-align:center;
+ border:2px solid #e0d5c5;
+}
+.sim-box .sim-num{
+ font-size:2.5rem;
+ font-weight:bold;
+}
+.sim-box .sim-label{font-size:0.85rem;color:var(--tierra);margin-top:4px}
+
+/* ============ SECTION 4: GRÁFICO DE BARRAS ============ */
+.barras-area{
+ background:linear-gradient(135deg,#FFFDF7,#E8F5E9);
+ border:2px dashed var(--cardon);
+ border-radius:16px;
+ padding:20px;
+ margin:12px 0;
+ text-align:center;
+}
+.barras-controles{
+ display:flex;
+ flex-wrap:wrap;
+ gap:15px;
+ justify-content:center;
+ margin:12px 0;
+}
+.barras-contador{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ background:var(--blanco);
+ padding:8px 14px;
+ border-radius:12px;
+ border:2px solid #e0d5c5;
+}
+.barras-contador button{
+ width:32px;
+ height:32px;
+ border-radius:50%;
+ border:2px solid var(--cardon);
+ background:var(--blanco);
+ font-size:1.2rem;
+ cursor:pointer;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-weight:bold;
+ transition:all 0.2s;
+}
+.barras-contador button:hover{background:var(--cardon);color:white}
+.barras-contador .contador-valor{
+ font-size:1.3rem;
+ font-weight:bold;
+ min-width:30px;
+ text-align:center;
+}
+.barras-contador .contador-etiqueta{
+ font-size:0.9rem;
+ font-weight:bold;
+}
+
+/* ============ SECTION 5: EVALUACION ============ */
+.evaluacion-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+ gap:15px;
+ margin:15px 0;
+}
+.eval-card{
+ background:var(--blanco);
+ border-radius:14px;
+ padding:16px;
+ border:2px solid #e0d5c5;
+ text-align:center;
+ transition:all 0.3s;
+}
+.eval-card.correcta{border-color:var(--verde);background:#E8F5E9}
+.eval-card.incorrecta{border-color:var(--rojo);background:#FFEBEE}
+.eval-card h4{color:var(--tierra);margin-bottom:8px;font-size:1.05rem}
+.eval-card .eval-emoji{font-size:2.5rem;margin-bottom:6px}
+.eval-card .eval-pregunta{font-size:0.95rem;color:var(--texto);margin-bottom:10px}
+.eval-card input{
+ width:80px;
+ height:42px;
+ font-size:1.2rem;
+ text-align:center;
+ border:2px solid #e0d5c5;
+ border-radius:8px;
+ font-weight:bold;
+ outline:none;
+ background:var(--blanco);
+}
+.eval-card input.correcto{border-color:var(--verde);background:#E8F5E9}
+.eval-card input.incorrecto{border-color:var(--rojo);background:#FFEBEE}
+.eval-fb{
+ font-size:0.85rem;
+ font-weight:bold;
+ min-height:22px;
+ margin-top:8px;
+}
+
+/* ============ RESULTADOS ============ */
+.resultados-finales{
+ text-align:center;
+ padding:30px;
+}
+.resultados-finales .estrella{
+ font-size:5rem;
+ animation:brillar 1.5s ease-in-out infinite;
+}
+.resultados-finales .puntaje{
+ font-size:2.5rem;
+ font-weight:bold;
+ color:var(--atardecer);
+ margin:10px 0;
+}
+.resultados-finales .mensaje{
+ font-size:1.2rem;
+ color:var(--tierra);
+ margin:10px 0;
+ line-height:1.6;
+}
+
+/* Toast */
+.toast{
+ position:fixed;
+ top:20px;
+ left:50%;
+ transform:translateX(-50%);
+ padding:12px 30px;
+ border-radius:25px;
+ font-weight:bold;
+ font-size:1rem;
+ z-index:1000;
+ animation:slideDown 0.4s ease-out;
+ box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Feedback inline */
+.feedback-inline{
+ text-align:center;
+ min-height:26px;
+ font-weight:bold;
+ margin-top:8px;
+ font-size:1rem;
+}
+
+/* Responsive */
+@media(max-width:600px){
+ .razon-area{flex-direction:column;gap:15px}
+ .canvas-container{flex-direction:column;align-items:center}
+ .barra-canvas{width:100%!important;height:auto!important}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>📊 Estadística y Probabilidad Wayuu</h1>
+ <span class="grado">5° Grado · Matemáticas</span>
+ <div class="desierto-deco">🐐🌵📈🌵🐐🌵🎲🌵</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 1: RAZONES Y PROPORCIONES -->
+<!-- ============================================= -->
+<section class="card activo" id="seccion1">
+ <h2><span class="icono">🐐</span> 1. Razones y Proporciones en el Rebaño <span class="etiqueta-check" id="check1" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  En la ranchería wayuu, el rebaño es muy importante. Una <strong>razón</strong> compara dos cantidades. 
+  Por ejemplo, si hay 12 chivos negros y 8 chivos blancos, la razón es <strong>12:8</strong>, que se simplifica dividiendo entre 4 y queda <strong>3:2</strong>. 
+  ¡Así como en el trueque, las proporciones nos ayudan a comparar!
+ </p>
+
+ <div class="rebano-viz" id="rebanoViz">
+  <!-- Generated by JS -->
+ </div>
+
+ <div class="razon-display">
+  <p style="color:var(--tierra);font-weight:bold;">📐 Razón original</p>
+  <div class="razon-num" id="razonOriginal">12 : 8</div>
+  <div class="razon-flecha">⬇️ simplificar (dividir entre 4) ⬇️</div>
+  <p style="color:var(--tierra);font-weight:bold;">📐 Razón simplificada</p>
+  <div class="razon-num" id="razonSimplificada" style="color:var(--cardon)">3 : 2</div>
+  <p style="color:#8B7355;margin-top:8px;font-size:0.9rem">
+   💡 Significa: por cada <strong>3 chivos negros</strong> hay <strong>2 chivos blancos</strong>
+  </p>
+ </div>
+
+ <div class="razon-input-area">
+  <span style="font-weight:bold;color:var(--tierra)">Practica: 15 chivos café y 10 blancos → simplifica:</span>
+  <input type="number" id="razonInput1" placeholder="?" min="1">
+  <span class="razon-sep">:</span>
+  <input type="number" id="razonInput2" placeholder="?" min="1">
+  <button class="btn btn-primario" id="btnRazonVerificar">✓ Verificar</button>
+ </div>
+ <div class="feedback-inline" id="razonFeedback"></div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion1Ok" style="display:none">✓ ¡Listo! Siguiente actividad →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 2: PORCENTAJES -->
+<!-- ============================================= -->
+<section class="card" id="seccion2" style="display:none">
+ <h2><span class="icono">🥧</span> 2. Porcentajes en el Rebaño <span class="etiqueta-check" id="check2" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Un <strong>porcentaje</strong> nos dice cuántos hay de cada 100. Si de 20 chivos, 15 son de color café, 
+  entonces el porcentaje de chivos café es: 15 ÷ 20 × 100 = <strong>75%</strong>. 
+  El círculo (gráfico circular) nos ayuda a verlo mejor.
+ </p>
+
+ <div class="porcentaje-area">
+  <div class="canvas-container">
+   <canvas id="pieCanvas" width="260" height="260"></canvas>
+   <div class="pie-info">
+    <h3 style="color:var(--tierra);margin-bottom:8px">🐐 Rebaño de 20 chivos</h3>
+    <div class="pie-leyenda">
+     <span class="pie-color" style="background:var(--cafe)"></span>
+     <strong>15 chivos café (75%)</strong>
+    </div>
+    <div class="pie-leyenda">
+     <span class="pie-color" style="background:var(--negro)"></span>
+     <strong>3 chivos negros (15%)</strong>
+    </div>
+    <div class="pie-leyenda">
+     <span class="pie-color" style="background:var(--blanco-chivo);border:1px solid #ccc"></span>
+     <strong>2 chivos blancos (10%)</strong>
+    </div>
+    <p style="color:#8B7355;font-size:0.85rem;margin-top:8px">
+     💡 75% + 15% + 10% = 100% del rebaño
+    </p>
+   </div>
+  </div>
+
+  <div class="porcentaje-quiz">
+   <h4 style="color:var(--tierra);margin-bottom:10px">🎯 Practica: En un rebaño de 25 chivos, 20 son negros. ¿Qué porcentaje son negros?</h4>
+   <input type="number" id="porcentajeInput" placeholder="?" min="0" max="100">
+   <span style="font-size:1.4rem;font-weight:bold">%</span>
+   <button class="btn btn-azul" id="btnPorcentajeVerificar">✓ Verificar</button>
+   <div class="feedback-inline" id="porcentajeFeedback"></div>
+  </div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion2Ok" style="display:none">✓ ¡Muy bien! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 3: PROBABILIDAD -->
+<!-- ============================================= -->
+<section class="card" id="seccion3" style="display:none">
+ <h2><span class="icono">🎲</span> 3. Probabilidad: ¡Al Azar! <span class="etiqueta-check" id="check3" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  La <strong>probabilidad</strong> nos dice qué tan posible es que algo ocurra. Si en un corral hay 5 chivos negros y 3 chivos blancos 
+  (8 en total) y sacamos uno sin mirar, la probabilidad de sacar un chivo negro es: <strong>5 de 8 = 5/8</strong>. 
+  ¡Prueba con la simulación!
+ </p>
+
+ <div class="probabilidad-area">
+  <h3 style="color:var(--tierra);margin-bottom:8px">🐐 Corral: 5 chivos negros + 3 blancos = 8 total</h3>
+  
+  <div class="urna-chivos" id="urnaChivos">
+   <!-- Generated by JS -->
+  </div>
+
+  <p style="color:var(--tierra);font-weight:bold;font-size:1.1rem">
+   Probabilidad de sacar negro = <span style="color:var(--morado);font-size:1.3rem">5/8</span> · 
+   Probabilidad de sacar blanco = <span style="color:var(--atardecer);font-size:1.3rem">3/8</span>
+  </p>
+
+  <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:15px">
+   <button class="btn btn-morado" id="btnSortearUno">🎲 Sortear 1 chivo</button>
+   <button class="btn btn-azul" id="btnSortearDiez">🎲 Sortear 10 veces</button>
+   <button class="btn btn-peligro" id="btnReiniciarSorteo">🔄 Reiniciar contador</button>
+  </div>
+
+  <div class="simulacion-resultados">
+   <div class="sim-box">
+    <div class="sim-num" style="color:var(--negro)" id="simNegros">0</div>
+    <div class="sim-label">🐐 Negros sacados</div>
+   </div>
+   <div class="sim-box">
+    <div class="sim-num" style="color:var(--atardecer)" id="simBlancos">0</div>
+    <div class="sim-label">🐐 Blancos sacados</div>
+   </div>
+   <div class="sim-box">
+    <div class="sim-num" style="color:var(--azul)" id="simTotal">0</div>
+    <div class="sim-label">📊 Total sorteos</div>
+   </div>
+  </div>
+
+  <div class="feedback-inline" id="probabilidadFeedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion3Ok" style="display:none">✓ ¡Qué probabilidad! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 4: GRÁFICO DE BARRAS INTERACTIVO -->
+<!-- ============================================= -->
+<section class="card" id="seccion4" style="display:none">
+ <h2><span class="icono">📊</span> 4. Gráfico de Barras Interactivo <span class="etiqueta-check" id="check4" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Un <strong>gráfico de barras</strong> nos ayuda a comparar cantidades visualmente. Cada barra representa cuántos chivos 
+  hay de cada color. ¡Usa los botones para cambiar las cantidades y mira cómo crecen las barras!
+ </p>
+
+ <div class="barras-area">
+  <div class="barras-controles">
+   <div class="barras-contador">
+    <span style="color:var(--negro);font-size:1.5rem">🐐</span>
+    <span class="contador-etiqueta">Negros:</span>
+    <button id="btnNegroMenos">−</button>
+    <span class="contador-valor" id="contadorNegros">6</span>
+    <button id="btnNegroMas">+</button>
+   </div>
+   <div class="barras-contador">
+    <span style="color:var(--atardecer);font-size:1.5rem">🐐</span>
+    <span class="contador-etiqueta">Blancos:</span>
+    <button id="btnBlancoMenos">−</button>
+    <span class="contador-valor" id="contadorBlancos">4</span>
+    <button id="btnBlancoMas">+</button>
+   </div>
+   <div class="barras-contador">
+    <span style="color:var(--cafe);font-size:1.5rem">🐐</span>
+    <span class="contador-etiqueta">Cafés:</span>
+    <button id="btnCafeMenos">−</button>
+    <span class="contador-valor" id="contadorCafes">8</span>
+    <button id="btnCafeMas">+</button>
+   </div>
+   <div class="barras-contador">
+    <span style="color:var(--cardon);font-size:1.5rem">🐐</span>
+    <span class="contador-etiqueta">Pintos:</span>
+    <button id="btnPintoMenos">−</button>
+    <span class="contador-valor" id="contadorPintos">3</span>
+    <button id="btnPintoMas">+</button>
+   </div>
+  </div>
+
+  <canvas id="barCanvas" width="500" height="320" style="max-width:100%"></canvas>
+  
+  <div style="margin-top:12px">
+   <p style="color:var(--tierra);font-weight:bold;text-align:center" id="barTotalLabel">Total: 21 chivos</p>
+   <button class="btn btn-secundario" id="btnBarrasReset">🔄 Valores iniciales</button>
+  </div>
+
+  <div class="feedback-inline" id="barrasFeedback"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnSeccion4Ok" style="display:none">✓ ¡Qué gráfico! Siguiente →</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- SECCIÓN 5: EVALUACIÓN -->
+<!-- ============================================= -->
+<section class="card" id="seccion5" style="display:none">
+ <h2><span class="icono">📝</span> 5. Evaluación: Problemas Wayuu <span class="etiqueta-check" id="check5" style="display:none">✓ Completado</span></h2>
+ <p style="color:#8B7355;margin-bottom:10px">
+  Resuelve estos problemas contextualizados con la vida wayuu: <strong>trueque</strong>, <strong>tejidos</strong> y <strong>jagüeyes</strong>. 
+  ¡Demuestra lo que aprendiste sobre razones, porcentajes, probabilidad y gráficos!
+ </p>
+
+ <div class="evaluacion-grid">
+  
+  <!-- Problema 1: Trueque - Razones -->
+  <div class="eval-card" id="evalCard1">
+   <div class="eval-emoji">🎒🐐</div>
+   <h4>🐐 Trueque: Razón</h4>
+   <p class="eval-pregunta">
+    En el trueque, 1 mochila se cambia por 4 chivos y 1 chinchorro por 6 chivos. 
+    ¿Cuál es la <strong>razón simplificada</strong> mochilas : chinchorros en chivos?
+   </p>
+   <input type="number" id="eval1a" placeholder="?" min="1">
+   <span>:</span>
+   <input type="number" id="eval1b" placeholder="?" min="1">
+   <button class="btn btn-primario" onclick="verificarEval1()" style="margin-top:8px;font-size:0.85rem">✓ Revisar</button>
+   <div class="eval-fb" id="evalFb1"></div>
+  </div>
+
+  <!-- Problema 2: Tejidos - Porcentajes -->
+  <div class="eval-card" id="evalCard2">
+   <div class="eval-emoji">🧶</div>
+   <h4>🧶 Tejido: Porcentaje</h4>
+   <p class="eval-pregunta">
+    Una artesana tejió 40 mochilas. 30 son de color rojo (atardecer) y 10 azules (cielo). 
+    ¿Qué <strong>porcentaje</strong> de las mochilas son rojas?
+   </p>
+   <input type="number" id="eval2" placeholder="?" min="0" max="100">
+   <span>%</span>
+   <button class="btn btn-primario" onclick="verificarEval2()" style="margin-top:8px;font-size:0.85rem">✓ Revisar</button>
+   <div class="eval-fb" id="evalFb2"></div>
+  </div>
+
+  <!-- Problema 3: Jagüeyes - Probabilidad -->
+  <div class="eval-card" id="evalCard3">
+   <div class="eval-emoji">💧</div>
+   <h4>💧 Jagüey: Probabilidad</h4>
+   <p class="eval-pregunta">
+    Cerca de un jagüey hay 9 chivos bebiendo: 6 son negros y 3 son blancos. 
+    Si un chivo se va primero, ¿cuál es la probabilidad de que sea <strong>blanco</strong>? (fracción)
+   </p>
+   <input type="number" id="eval3num" placeholder="?" min="1">
+   <span>/</span>
+   <input type="number" id="eval3den" placeholder="?" min="1">
+   <button class="btn btn-primario" onclick="verificarEval3()" style="margin-top:8px;font-size:0.85rem">✓ Revisar</button>
+   <div class="eval-fb" id="evalFb3"></div>
+  </div>
+
+  <!-- Problema 4: Rebaño - Gráfico -->
+  <div class="eval-card" id="evalCard4">
+   <div class="eval-emoji">📊</div>
+   <h4>📊 Rebaño: Gráfico</h4>
+   <p class="eval-pregunta">
+    En un rebaño hay 10 chivos negros, 5 blancos y 5 pintos. 
+    ¿Cuál es el <strong>porcentaje</strong> de chivos negros?
+   </p>
+   <input type="number" id="eval4" placeholder="?" min="0" max="100">
+   <span>%</span>
+   <button class="btn btn-primario" onclick="verificarEval4()" style="margin-top:8px;font-size:0.85rem">✓ Revisar</button>
+   <div class="eval-fb" id="evalFb4"></div>
+  </div>
+
+  <!-- Problema 5: Trueque - Proporción -->
+  <div class="eval-card" id="evalCard5">
+   <div class="eval-emoji">🐐🔄🐔</div>
+   <h4>🐔 Trueque: Proporción</h4>
+   <p class="eval-pregunta">
+    Si 2 chivos se cambian por 10 gallinas, ¿cuántas gallinas se obtienen con <strong>5 chivos</strong>? 
+    (Usa proporción: 2/10 = 5/x)
+   </p>
+   <input type="number" id="eval5" placeholder="?" min="1">
+   <span>gallinas</span>
+   <button class="btn btn-primario" onclick="verificarEval5()" style="margin-top:8px;font-size:0.85rem">✓ Revisar</button>
+   <div class="eval-fb" id="evalFb5"></div>
+  </div>
+
+ </div>
+
+ <div style="text-align:center;margin-top:15px">
+  <p style="font-weight:bold;color:var(--tierra);font-size:1.1rem" id="evalScore">Respuestas correctas: 0 / 5</p>
+  <button class="btn btn-exito" id="btnSeccion5Ok" style="display:none">✓ ¡Terminar módulo! 🎉</button>
+ </div>
+</section>
+
+<!-- ============================================= -->
+<!-- RESULTADOS FINALES -->
+<!-- ============================================= -->
+<section class="card" id="seccionResultados" style="display:none">
+ <div class="resultados-finales" id="resultadosContent">
+  <div class="estrella">🌟</div>
+  <h2>¡Módulo Completado!</h2>
+  <div class="puntaje" id="puntajeFinal"></div>
+  <div class="mensaje" id="mensajeFinal"></div>
+  <p style="color:var(--tierra);margin:15px 0;line-height:1.6">
+   Has explorado la estadística y probabilidad wayuu: razones en el rebaño, porcentajes de chivos, 
+   probabilidad en el corral, gráficos de barras y problemas del trueque. 
+   ¡Eres un estadístico del desierto! 📊🌵🐐
+  </p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+   <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+  </div>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ============ STATE ============
+const state = {
+ seccion1Completa: false,
+ seccion2Completa: false,
+ seccion3Completa: false,
+ seccion4Completa: false,
+ seccion5Completa: false,
+ 
+ // Sección 1
+ razonAciertos: 0,
+ razonMeta: 2,
+ 
+ // Sección 2
+ porcentajeAciertos: 0,
+ porcentajeMeta: 2,
+ 
+ // Sección 3
+ probabilidadNegros: 0,
+ probabilidadBlancos: 0,
+ probabilidadTotal: 0,
+ probabilidadMeta: 20,
+ 
+ // Sección 4
+ barrasData: {negros: 6, blancos: 4, cafes: 8, pintos: 3},
+ 
+ // Sección 5
+ evalCorrectas: 0,
+ evalTotal: 5,
+ evalResueltas: {}
+};
+
+// ============ DOM HELPERS ============
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ============ TOAST ============
+function mostrarToast(msg, tipo){
+ const t = document.createElement('div');
+ t.className = 'toast ' + tipo;
+ t.textContent = msg;
+ document.body.appendChild(t);
+ setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; }, 2000);
+ setTimeout(() => t.remove(), 2500);
+}
+
+// ============ PROGRESS ============
+function actualizarProgreso(){
+ let completadas = 0;
+ if(state.seccion1Completa) completadas++;
+ if(state.seccion2Completa) completadas++;
+ if(state.seccion3Completa) completadas++;
+ if(state.seccion4Completa) completadas++;
+ if(state.seccion5Completa) completadas++;
+ const pct = Math.round((completadas / 5) * 100);
+ $('#progresoFill').style.width = pct + '%';
+ $('#progresoPct').textContent = pct + '%';
+}
+
+// ============ SECCIÓN 1: RAZONES Y PROPORCIONES ============
+function renderRebano(){
+ const area = $('#rebanoViz');
+ area.innerHTML = '';
+ // 12 black goats + 8 white goats
+ const negros = [];
+ const blancos = [];
+ for(let i = 0; i < 12; i++) negros.push('🐐');
+ for(let i = 0; i < 8; i++) blancos.push('🐐');
+ 
+ const todos = [...negros, ...blancos];
+ // Shuffle for visual mix
+ for(let i = todos.length - 1; i > 0; i--){
+  const j = Math.floor(Math.random() * (i + 1));
+  [todos[i], todos[j]] = [todos[j], todos[i]];
+ }
+ 
+ todos.forEach((_, i) => {
+  const span = document.createElement('span');
+  span.className = 'chivo-icono';
+  if(i < 12){
+   span.textContent = '🐐';
+   span.style.background = 'rgba(44,24,16,0.12)';
+   span.title = 'Chivo negro';
+  } else {
+   span.textContent = '🐐';
+   span.style.background = 'rgba(250,240,230,0.6)';
+   span.title = 'Chivo blanco';
+  }
+  area.appendChild(span);
+ });
+}
+
+$('#btnRazonVerificar').addEventListener('click', () => {
+ const v1 = parseInt($('#razonInput1').value);
+ const v2 = parseInt($('#razonInput2').value);
+ const fb = $('#razonFeedback');
+ 
+ // 15:10 simplifies to 3:2 (divide by 5)
+ if(v1 === 3 && v2 === 2){
+  state.razonAciertos++;
+  fb.textContent = '✅ ¡Correcto! 15:10 se simplifica a 3:2 (dividiendo entre 5).';
+  fb.style.color = 'var(--verde)';
+  $('#razonInput1').classList.add('correcto');
+  $('#razonInput1').classList.remove('incorrecto');
+  $('#razonInput2').classList.add('correcto');
+  $('#razonInput2').classList.remove('incorrecto');
+ } else {
+  fb.textContent = '❌ Intenta de nuevo. Divide 15 y 10 por el mismo número (5).';
+  fb.style.color = 'var(--rojo)';
+  $('#razonInput1').classList.add('incorrecto');
+  $('#razonInput1').classList.remove('correcto');
+  $('#razonInput2').classList.add('incorrecto');
+  $('#razonInput2').classList.remove('correcto');
+ }
+ 
+ if(state.razonAciertos >= state.razonMeta){
+  $('#btnSeccion1Ok').style.display = 'inline-block';
+ }
+});
+
+$('#btnSeccion1Ok').addEventListener('click', () => {
+ state.seccion1Completa = true;
+ $('#seccion1').classList.remove('activo');
+ $('#seccion1').classList.add('completado');
+ $('#check1').style.display = 'inline-block';
+ $('#seccion2').style.display = 'block';
+ $('#seccion2').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 1 completada!', 'exito');
+});
+
+// ============ SECCIÓN 2: PORCENTAJES ============
+function dibujarPieChart(){
+ const canvas = $('#pieCanvas');
+ const ctx = canvas.getContext('2d');
+ const w = canvas.width, h = canvas.height;
+ const cx = w / 2, cy = h / 2;
+ const r = Math.min(cx, cy) - 15;
+ 
+ ctx.clearRect(0, 0, w, h);
+ 
+ // Data: cafe 75%, negro 15%, blanco 10%
+ const data = [
+  { label: 'Café', pct: 75, color: '#A0522D' },
+  { label: 'Negro', pct: 15, color: '#2C1810' },
+  { label: 'Blanco', pct: 10, color: '#FAF0E6' }
+ ];
+ 
+ let startAngle = -Math.PI / 2; // Start from top
+ 
+ data.forEach(slice => {
+  const sliceAngle = (slice.pct / 100) * Math.PI * 2;
+  
+  // Draw slice
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+  ctx.closePath();
+  ctx.fillStyle = slice.color;
+  ctx.fill();
+  ctx.strokeStyle = '#FFFDF7';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Label
+  const midAngle = startAngle + sliceAngle / 2;
+  const lx = cx + Math.cos(midAngle) * (r * 0.65);
+  const ly = cy + Math.sin(midAngle) * (r * 0.65);
+  ctx.fillStyle = slice.pct > 20 ? '#FFFDF7' : '#3D2B1F';
+  ctx.font = 'bold 14px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(slice.pct + '%', lx, ly);
+  
+  startAngle += sliceAngle;
+ });
+ 
+ // Center circle
+ ctx.beginPath();
+ ctx.arc(cx, cy, r * 0.2, 0, Math.PI * 2);
+ ctx.fillStyle = '#FFFDF7';
+ ctx.fill();
+ ctx.font = 'bold 11px "Segoe UI", sans-serif';
+ ctx.fillStyle = '#3D2B1F';
+ ctx.fillText('20', cx, cy);
+ 
+ ctx.textAlign = 'start';
+ ctx.textBaseline = 'alphabetic';
+}
+
+$('#btnPorcentajeVerificar').addEventListener('click', () => {
+ const val = parseInt($('#porcentajeInput').value);
+ const fb = $('#porcentajeFeedback');
+ 
+ // 20 of 25 = 80%
+ if(val === 80){
+  state.porcentajeAciertos++;
+  fb.textContent = '✅ ¡Correcto! 20 ÷ 25 × 100 = 80%. ¡Muy bien!';
+  fb.style.color = 'var(--verde)';
+  $('#porcentajeInput').classList.add('correcto');
+  $('#porcentajeInput').classList.remove('incorrecto');
+ } else {
+  fb.textContent = '❌ Calcula: (20 ÷ 25) × 100 = ?.';
+  fb.style.color = 'var(--rojo)';
+  $('#porcentajeInput').classList.add('incorrecto');
+  $('#porcentajeInput').classList.remove('correcto');
+ }
+ 
+ if(state.porcentajeAciertos >= state.porcentajeMeta){
+  $('#btnSeccion2Ok').style.display = 'inline-block';
+ }
+});
+
+$('#btnSeccion2Ok').addEventListener('click', () => {
+ state.seccion2Completa = true;
+ $('#seccion2').classList.remove('activo');
+ $('#seccion2').classList.add('completado');
+ $('#check2').style.display = 'inline-block';
+ $('#seccion3').style.display = 'block';
+ $('#seccion3').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 2 completada!', 'exito');
+});
+
+// ============ SECCIÓN 3: PROBABILIDAD ============
+function renderUrna(){
+ const urna = $('#urnaChivos');
+ urna.innerHTML = '';
+ // 5 negros + 3 blancos
+ const orden = [];
+ for(let i = 0; i < 5; i++) orden.push('negro');
+ for(let i = 0; i < 3; i++) orden.push('blanco');
+ // Shuffle
+ for(let i = orden.length - 1; i > 0; i--){
+  const j = Math.floor(Math.random() * (i + 1));
+  [orden[i], orden[j]] = [orden[j], orden[i]];
+ }
+ 
+ orden.forEach(tipo => {
+  const span = document.createElement('span');
+  span.className = 'chivo-icono';
+  span.textContent = '🐐';
+  span.style.fontSize = '2.5rem';
+  if(tipo === 'negro'){
+   span.style.background = 'rgba(44,24,16,0.15)';
+   span.title = 'Chivo negro';
+  } else {
+   span.style.background = 'rgba(250,240,230,0.6)';
+   span.title = 'Chivo blanco';
+  }
+  urna.appendChild(span);
+ });
+}
+
+function sortearChivo(){
+ // 5 out of 8 chance for black
+ const r = Math.random();
+ const esNegro = r < 5/8;
+ 
+ if(esNegro){
+  state.probabilidadNegros++;
+ } else {
+  state.probabilidadBlancos++;
+ }
+ state.probabilidadTotal++;
+ 
+ actualizarContadorProb();
+ 
+ // Brief highlight animation
+ const urna = $('#urnaChivos');
+ urna.style.borderColor = esNegro ? 'var(--negro)' : 'var(--atardecer)';
+ urna.style.borderWidth = '4px';
+ setTimeout(() => {
+  urna.style.borderColor = '#e0d5c5';
+  urna.style.borderWidth = '2px';
+ }, 400);
+}
+
+function actualizarContadorProb(){
+ $('#simNegros').textContent = state.probabilidadNegros;
+ $('#simBlancos').textContent = state.probabilidadBlancos;
+ $('#simTotal').textContent = state.probabilidadTotal;
+ 
+ if(state.probabilidadTotal > 0){
+  const pctNegro = Math.round((state.probabilidadNegros / state.probabilidadTotal) * 100);
+  const fb = $('#probabilidadFeedback');
+  fb.textContent = '📊 Negro: ' + state.probabilidadNegros + '/' + state.probabilidadTotal + ' = ' + pctNegro + '% (esperado: 62.5%)';
+  fb.style.color = 'var(--morado)';
+ }
+ 
+ if(state.probabilidadTotal >= state.probabilidadMeta){
+  $('#btnSeccion3Ok').style.display = 'inline-block';
+ }
+}
+
+$('#btnSortearUno').addEventListener('click', sortearChivo);
+$('#btnSortearDiez').addEventListener('click', () => {
+ for(let i = 0; i < 10; i++){
+  setTimeout(() => sortearChivo(), i * 150);
+ }
+});
+$('#btnReiniciarSorteo').addEventListener('click', () => {
+ state.probabilidadNegros = 0;
+ state.probabilidadBlancos = 0;
+ state.probabilidadTotal = 0;
+ actualizarContadorProb();
+ $('#probabilidadFeedback').textContent = '';
+ $('#btnSeccion3Ok').style.display = 'none';
+});
+
+$('#btnSeccion3Ok').addEventListener('click', () => {
+ state.seccion3Completa = true;
+ $('#seccion3').classList.remove('activo');
+ $('#seccion3').classList.add('completado');
+ $('#check3').style.display = 'inline-block';
+ $('#seccion4').style.display = 'block';
+ $('#seccion4').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 3 completada!', 'exito');
+});
+
+// ============ SECCIÓN 4: GRÁFICO DE BARRAS ============
+function dibujarBarras(){
+ const canvas = $('#barCanvas');
+ const ctx = canvas.getContext('2d');
+ const w = canvas.width, h = canvas.height;
+ ctx.clearRect(0, 0, w, h);
+ 
+ // Background
+ ctx.fillStyle = '#FFFDF7';
+ ctx.fillRect(0, 0, w, h);
+ 
+ const data = [
+  { label: 'Negros', value: state.barrasData.negros, color: '#2C1810' },
+  { label: 'Blancos', value: state.barrasData.blancos, color: '#E07A5F' },
+  { label: 'Cafés', value: state.barrasData.cafes, color: '#A0522D' },
+  { label: 'Pintos', value: state.barrasData.pintos, color: '#5B8C5A' }
+ ];
+ 
+ const maxVal = Math.max(...data.map(d => d.value), 1);
+ const barWidth = 80;
+ const gap = 30;
+ const totalBarsWidth = data.length * barWidth + (data.length - 1) * gap;
+ const startX = (w - totalBarsWidth) / 2 + 40;
+ const chartBottom = h - 50;
+ const chartHeight = h - 90;
+ 
+ // Grid lines
+ ctx.strokeStyle = '#e0d5c5';
+ ctx.lineWidth = 1;
+ for(let i = 0; i <= 5; i++){
+  const y = chartBottom - (i / 5) * chartHeight;
+  ctx.beginPath();
+  ctx.moveTo(startX - 10, y);
+  ctx.lineTo(startX + totalBarsWidth + 10, y);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#8B7355';
+  ctx.font = '11px "Segoe UI", sans-serif';
+  ctx.textAlign = 'right';
+  const val = Math.round((i / 5) * maxVal);
+  ctx.fillText(val, startX - 14, y + 4);
+ }
+ ctx.textAlign = 'start';
+ 
+ // Bars
+ data.forEach((d, i) => {
+  const x = startX + i * (barWidth + gap);
+  const barH = (d.value / maxVal) * chartHeight;
+  const y = chartBottom - barH;
+  
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.fillRect(x + 3, y + 3, barWidth, barH);
+  
+  // Bar with gradient
+  const gradient = ctx.createLinearGradient(x, y, x, chartBottom);
+  gradient.addColorStop(0, d.color);
+  gradient.addColorStop(1, d.color + '88');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(x, y, barWidth, barH);
+  
+  // Bar border
+  ctx.strokeStyle = d.color;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, barWidth, barH);
+  
+  // Value on top
+  ctx.fillStyle = '#3D2B1F';
+  ctx.font = 'bold 16px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(d.value, x + barWidth / 2, y - 10);
+  
+  // Label below
+  ctx.font = 'bold 14px "Segoe UI", sans-serif';
+  ctx.fillText(d.label, x + barWidth / 2, chartBottom + 25);
+  
+  // Goat emoji
+  ctx.font = '20px sans-serif';
+  ctx.fillText('🐐', x + barWidth / 2, chartBottom + 43);
+ });
+ 
+ ctx.textAlign = 'start';
+ 
+ // Total update
+ const total = state.barrasData.negros + state.barrasData.blancos + state.barrasData.cafes + state.barrasData.pintos;
+ $('#barTotalLabel').textContent = 'Total: ' + total + ' chivos';
+ 
+ // If user has moved bars, show button
+ if(total !== 21){
+  $('#barrasFeedback').textContent = '📊 ¡El gráfico cambió! Compara las barras según las cantidades.';
+  $('#barrasFeedback').style.color = 'var(--azul)';
+  $('#btnSeccion4Ok').style.display = 'inline-block';
+ }
+}
+
+function actualizarContadores(){
+ $('#contadorNegros').textContent = state.barrasData.negros;
+ $('#contadorBlancos').textContent = state.barrasData.blancos;
+ $('#contadorCafes').textContent = state.barrasData.cafes;
+ $('#contadorPintos').textContent = state.barrasData.pintos;
+ dibujarBarras();
+}
+
+// Controllers for bars
+$('#btnNegroMas').addEventListener('click', () => { state.barrasData.negros = Math.min(state.barrasData.negros + 1, 15); actualizarContadores(); });
+$('#btnNegroMenos').addEventListener('click', () => { state.barrasData.negros = Math.max(state.barrasData.negros - 1, 0); actualizarContadores(); });
+$('#btnBlancoMas').addEventListener('click', () => { state.barrasData.blancos = Math.min(state.barrasData.blancos + 1, 15); actualizarContadores(); });
+$('#btnBlancoMenos').addEventListener('click', () => { state.barrasData.blancos = Math.max(state.barrasData.blancos - 1, 0); actualizarContadores(); });
+$('#btnCafeMas').addEventListener('click', () => { state.barrasData.cafes = Math.min(state.barrasData.cafes + 1, 15); actualizarContadores(); });
+$('#btnCafeMenos').addEventListener('click', () => { state.barrasData.cafes = Math.max(state.barrasData.cafes - 1, 0); actualizarContadores(); });
+$('#btnPintoMas').addEventListener('click', () => { state.barrasData.pintos = Math.min(state.barrasData.pintos + 1, 15); actualizarContadores(); });
+$('#btnPintoMenos').addEventListener('click', () => { state.barrasData.pintos = Math.max(state.barrasData.pintos - 1, 0); actualizarContadores(); });
+
+$('#btnBarrasReset').addEventListener('click', () => {
+ state.barrasData = {negros: 6, blancos: 4, cafes: 8, pintos: 3};
+ actualizarContadores();
+ $('#barrasFeedback').textContent = '';
+ $('#btnSeccion4Ok').style.display = 'none';
+});
+
+$('#btnSeccion4Ok').addEventListener('click', () => {
+ state.seccion4Completa = true;
+ $('#seccion4').classList.remove('activo');
+ $('#seccion4').classList.add('completado');
+ $('#check4').style.display = 'inline-block';
+ $('#seccion5').style.display = 'block';
+ $('#seccion5').scrollIntoView({behavior:'smooth'});
+ actualizarProgreso();
+ mostrarToast('✅ ¡Sección 4 completada!', 'exito');
+});
+
+// ============ SECCIÓN 5: EVALUACIÓN ============
+function verificarEval1(){
+ const a = parseInt($('#eval1a').value);
+ const b = parseInt($('#eval1b').value);
+ // 4:6 simplifies to 2:3
+ const fb = $('#evalFb1');
+ const card = $('#evalCard1');
+ if(a === 2 && b === 3){
+  fb.textContent = '✅ ¡Correcto! 4:6 simplificado = 2:3';
+  fb.style.color = 'var(--verde)';
+  $('#eval1a').classList.add('correcto');
+  $('#eval1b').classList.add('correcto');
+  card.classList.add('correcta');
+  marcarResuelta(1);
+ } else {
+  fb.textContent = '❌ 4:6 dividido entre 2 = 2:3';
+  fb.style.color = 'var(--rojo)';
+  card.classList.add('incorrecta');
+  setTimeout(() => card.classList.remove('incorrecta'), 1500);
+ }
+}
+
+function verificarEval2(){
+ const val = parseInt($('#eval2').value);
+ const fb = $('#evalFb2');
+ const card = $('#evalCard2');
+ // 30/40 = 75%
+ if(val === 75){
+  fb.textContent = '✅ ¡Correcto! 30÷40×100 = 75%';
+  fb.style.color = 'var(--verde)';
+  $('#eval2').classList.add('correcto');
+  card.classList.add('correcta');
+  marcarResuelta(2);
+ } else {
+  fb.textContent = '❌ (30 ÷ 40) × 100 = 75%';
+  fb.style.color = 'var(--rojo)';
+  card.classList.add('incorrecta');
+  setTimeout(() => card.classList.remove('incorrecta'), 1500);
+ }
+}
+
+function verificarEval3(){
+ const num = parseInt($('#eval3num').value);
+ const den = parseInt($('#eval3den').value);
+ const fb = $('#evalFb3');
+ const card = $('#evalCard3');
+ // 3 blancos out of 9 total = 3/9 = 1/3
+ if((num === 3 && den === 9) || (num === 1 && den === 3)){
+  fb.textContent = '✅ ¡Correcto! 3 blancos de 9 en total = 3/9 = 1/3';
+  fb.style.color = 'var(--verde)';
+  $('#eval3num').classList.add('correcto');
+  $('#eval3den').classList.add('correcto');
+  card.classList.add('correcta');
+  marcarResuelta(3);
+ } else {
+  fb.textContent = '❌ Hay 3 blancos de 9 total: probabilidad = 3/9';
+  fb.style.color = 'var(--rojo)';
+  card.classList.add('incorrecta');
+  setTimeout(() => card.classList.remove('incorrecta'), 1500);
+ }
+}
+
+function verificarEval4(){
+ const val = parseInt($('#eval4').value);
+ const fb = $('#evalFb4');
+ const card = $('#evalCard4');
+ // 10 out of 20 = 50%
+ if(val === 50){
+  fb.textContent = '✅ ¡Correcto! 10 de 20 chivos = 50%';
+  fb.style.color = 'var(--verde)';
+  $('#eval4').classList.add('correcto');
+  card.classList.add('correcta');
+  marcarResuelta(4);
+ } else {
+  fb.textContent = '❌ 10 de 20 total = 50%';
+  fb.style.color = 'var(--rojo)';
+  card.classList.add('incorrecta');
+  setTimeout(() => card.classList.remove('incorrecta'), 1500);
+ }
+}
+
+function verificarEval5(){
+ const val = parseInt($('#eval5').value);
+ const fb = $('#evalFb5');
+ const card = $('#evalCard5');
+ // 2 chivos = 10 gallinas. 5 chivos = x. x = (5×10)/2 = 25
+ if(val === 25){
+  fb.textContent = '✅ ¡Correcto! 5 chivos × (10÷2) = 25 gallinas';
+  fb.style.color = 'var(--verde)';
+  $('#eval5').classList.add('correcto');
+  card.classList.add('correcta');
+  marcarResuelta(5);
+ } else {
+  fb.textContent = '❌ Proporción: 2/10 = 5/x → x = 25';
+  fb.style.color = 'var(--rojo)';
+  card.classList.add('incorrecta');
+  setTimeout(() => card.classList.remove('incorrecta'), 1500);
+ }
+}
+
+function marcarResuelta(num){
+ if(state.evalResueltas[num]) return;
+ state.evalResueltas[num] = true;
+ state.evalCorrectas++;
+ $('#evalScore').textContent = 'Respuestas correctas: ' + state.evalCorrectas + ' / 5';
+ 
+ if(state.evalCorrectas >= state.evalTotal){
+  $('#btnSeccion5Ok').style.display = 'inline-block';
+ }
+}
+
+$('#btnSeccion5Ok').addEventListener('click', () => {
+ state.seccion5Completa = true;
+ $('#seccion5').classList.remove('activo');
+ $('#seccion5').classList.add('completado');
+ $('#check5').style.display = 'inline-block';
+ mostrarResultados();
+});
+
+// ============ RESULTADOS ============
+function mostrarResultados(){
+ $('#seccion5').classList.remove('activo');
+ $('#seccionResultados').style.display = 'block';
+ $('#seccionResultados').scrollIntoView({behavior:'smooth'});
+
+ const totalSecciones = 5;
+ const completadas = (state.seccion1Completa ? 1 : 0) + (state.seccion2Completa ? 1 : 0) + (state.seccion3Completa ? 1 : 0) + (state.seccion4Completa ? 1 : 0) + (state.seccion5Completa ? 1 : 0);
+ const pct = Math.round((completadas / totalSecciones) * 100);
+
+ $('#puntajeFinal').textContent = pct + '% Completado';
+
+ let mensaje = '';
+ if(pct >= 100){
+  mensaje = '🏆 ¡Excelente! Eres un maestro de la estadística y probabilidad wayuu. Sabes calcular razones en el rebaño, porcentajes de chivos, probabilidad en el corral, interpretar gráficos de barras y resolver problemas del trueque. ¡Como un verdadero sabio guajiro!';
+ } else if(pct >= 80){
+  mensaje = '🌟 ¡Muy bien! Has aprendido mucho sobre estadística wayuu. Sigue practicando las secciones que te faltan.';
+ } else if(pct >= 60){
+  mensaje = '👍 ¡Buen trabajo! Has avanzado en estadística y probabilidad. Repite las secciones pendientes para completar el módulo.';
+ } else {
+  mensaje = '🌱 Vas comenzando tu camino en la estadística wayuu. ¡No te rindas! Cada razón, porcentaje y probabilidad te acerca más.';
+ }
+ $('#mensajeFinal').textContent = mensaje;
+
+ // Confetti
+ const emojis = ['🐐','📊','🎲','🥧','🌵','🛖','✨','🌟','💎','🧶','💧','🎒'];
+ for(let i = 0; i < 30; i++){
+  setTimeout(() => {
+   const e = document.createElement('span');
+   e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+   e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+   e.style.left = Math.random() * 90 + '%';
+   e.style.top = '-50px';
+   document.body.appendChild(e);
+   setTimeout(() => e.remove(), 2600);
+  }, i * 90);
+ }
+
+ if(!document.getElementById('animCaer')){
+  const style = document.createElement('style');
+  style.id = 'animCaer';
+  style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+  document.head.appendChild(style);
+ }
+
+ actualizarProgreso();
+}
+
+// ============ INITIALIZATION ============
+function init(){
+ renderRebano();
+ dibujarPieChart();
+ renderUrna();
+ actualizarContadores();
+ actualizarProgreso();
+}
+
+init();
+
+})();
+</script>
+
+<script src="../comun/volver.js"></script>
+</body>
+</html>

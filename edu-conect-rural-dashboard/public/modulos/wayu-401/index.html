@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WAYU-401: Wayuunaiki Básico | EduConect Rural</title>
+  <style>
+    /* ===== VARIABLES Y RESET ===== */
+    :root {
+      --arena: #F4E1C1;
+      --desierto: #E8B86D;
+      --cardon: #5B8C5A;
+      --cielo: #87CEEB;
+      --atardecer: #E07A5F;
+      --tierra: #8B5E3C;
+      --wayuu-oro: #D4A843;
+      --texto: #3D2B1F;
+      --blanco: #FFFDF7;
+      --sombra: 0 4px 20px rgba(0,0,0,0.12);
+      --rojo: #D64045;
+      --verde: #4CAF50;
+      --azul: #4A90D9;
+      --morado: #9B59B6;
+      --naranja: #F4A236;
+      --tejido-rojo: #C73A3A;
+      --tejido-turquesa: #3AA8C7;
+      --tejido-naranja: #E8A340;
+      --radius: 20px;
+      --transition: 0.3s ease;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI','Comic Sans MS','Noto Sans',system-ui,sans-serif;
+      background:linear-gradient(180deg, #F4E1C1 0%, #E8B86D 25%, #D4A843 50%, #E8B86D 75%, #F4E1C1 100%);
+      min-height:100vh;
+      color:var(--texto);
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    /* Fondo decorativo: patrones de tejido wayuu */
+    body::before{
+      content:'';
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(212,168,67,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 85% 60%, rgba(199,58,58,0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(58,168,199,0.12) 0%, transparent 45%),
+        radial-gradient(circle at 25% 90%, rgba(232,163,64,0.1) 0%, transparent 35%),
+        radial-gradient(circle at 70% 15%, rgba(91,140,90,0.1) 0%, transparent 40%);
+      pointer-events:none;z-index:0;
+    }
+
+    .container{max-width:860px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+    /* ===== HEADER ===== */
+    .header{
+      text-align:center;
+      padding:20px 15px 10px;
+      position:relative;
+    }
+    .header .sol{
+      font-size:3.5rem;
+      animation:girarSol 20s linear infinite;
+      display:inline-block;
+    }
+    @keyframes girarSol{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    .header h1{
+      font-size:2rem;
+      color:var(--texto);
+      margin:5px 0;
+      text-shadow:1px 1px 0 rgba(255,255,255,0.6);
+    }
+    .header .grado{
+      display:inline-block;
+      background:var(--wayuu-oro);
+      color:var(--blanco);
+      padding:4px 18px;
+      border-radius:20px;
+      font-size:0.95rem;
+      font-weight:bold;
+      margin-top:4px;
+    }
+    .header .desierto-deco{
+      font-size:1.3rem;
+      letter-spacing:6px;
+      margin-top:6px;
+      opacity:0.7;
+    }
+
+    /* ===== HUD - BARRA PROGRESO ===== */
+    .hud-wrap{
+      background:var(--blanco);
+      border-radius:var(--radius);
+      padding:10px 18px;
+      margin:8px 0 16px;
+      box-shadow:var(--sombra);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      border:2px solid var(--arena);
+    }
+    .hud-estrellas{font-size:1.3rem;font-weight:bold;display:flex;align-items:center;gap:4px}
+    .hud-puntos{font-weight:bold;color:var(--wayuu-oro);font-size:1rem}
+    .hud-divider{width:2px;height:24px;background:var(--arena);border-radius:2px}
+    .progreso-wrap{flex:1;min-width:120px;display:flex;align-items:center;gap:8px}
+    .progreso-label{font-weight:bold;font-size:0.8rem;white-space:nowrap;color:var(--tierra)}
+    .progreso-bar{flex:1;height:14px;background:#e0d5c5;border-radius:10px;overflow:hidden}
+    .progreso-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));transition:width 0.5s ease;width:0%}
+    .progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.85rem;min-width:40px;text-align:right}
+
+    /* ===== CARDS / SECCIONES ===== */
+    .card{
+      background:var(--blanco);
+      border-radius:var(--radius);
+      padding:24px 20px;
+      margin-bottom:18px;
+      box-shadow:var(--sombra);
+      border:2px solid var(--arena);
+      transition:transform 0.2s, opacity 0.3s;
+      position:relative;
+      overflow:hidden;
+      display:none;
+    }
+    .card.activo{display:block}
+    .card::before{
+      content:'';
+      position:absolute;top:0;left:0;
+      width:5px;height:100%;
+      border-radius:5px 0 0 5px;
+    }
+    .card.activo::before{background:var(--atardecer)}
+    .card.completado::before{background:var(--verde)}
+    .card.completado{opacity:0.88}
+    .card h2{
+      font-size:1.5rem;
+      color:var(--texto);
+      margin-bottom:10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .card h2 .icono-titulo{font-size:2rem}
+    .etiqueta-check{
+      font-size:0.85rem;
+      background:var(--verde);
+      color:white;
+      padding:2px 12px;
+      border-radius:14px;
+      font-weight:bold;
+    }
+
+    /* ===== BOTONES ===== */
+    .btn{
+      display:inline-block;
+      padding:12px 28px;
+      border-radius:30px;
+      font-size:1rem;
+      font-weight:bold;
+      cursor:pointer;
+      border:none;
+      transition:transform 0.2s,box-shadow 0.2s;
+      text-decoration:none;
+      font-family:inherit;
+      box-shadow:0 3px 12px rgba(0,0,0,0.12);
+      touch-action:manipulation;
+    }
+    .btn:hover{transform:scale(1.05)}
+    .btn:active{transform:scale(0.96)}
+    .btn-primario{background:var(--atardecer);color:white}
+    .btn-exito{background:var(--verde);color:white}
+    .btn-azul{background:var(--azul);color:white}
+    .btn-dorado{background:var(--wayuu-oro);color:var(--texto)}
+    .btn-morado{background:var(--morado);color:white}
+    .btn-tierra{background:var(--tierra);color:white}
+    .btn-outline{
+      background:transparent;
+      border:2px solid var(--atardecer);
+      color:var(--atardecer);
+      box-shadow:none;
+    }
+
+    /* ===== TTS BUTTON ===== */
+    .btn-tts{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:20px;
+      font-size:0.85rem;
+      font-weight:bold;
+      cursor:pointer;
+      border:none;
+      background:var(--azul);
+      color:white;
+      transition:transform 0.2s,background 0.2s;
+      font-family:inherit;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      touch-action:manipulation;
+    }
+    .btn-tts:hover{background:#3a7bc8;transform:scale(1.05)}
+    .btn-tts:active{transform:scale(0.94)}
+    .btn-tts.speaking{background:var(--naranja);animation:pulse 0.6s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,162,54,0.5)}50%{box-shadow:0 0 0 10px rgba(244,162,54,0)}}
+
+    /* ===== GRID DE VOCABULARIO ===== */
+    .vocab-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:12px;
+      margin:15px 0;
+    }
+    .vocab-item{
+      background:linear-gradient(135deg,var(--arena),var(--blanco));
+      border-radius:16px;
+      padding:16px;
+      text-align:center;
+      border:2px solid var(--desierto);
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .vocab-item:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,0.12)}
+    .vocab-item .palabra-wayuu{
+      font-size:1.4rem;
+      font-weight:bold;
+      color:var(--atardecer);
+      display:block;
+      margin-bottom:4px;
+    }
+    .vocab-item .traduccion{
+      font-size:1rem;
+      color:var(--tierra);
+      margin-bottom:8px;
+    }
+    .vocab-item .emoji-vocab{
+      font-size:2rem;
+      display:block;
+      margin-bottom:4px;
+    }
+
+    /* ===== SVG CONTEO ===== */
+    .conteo-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+      gap:10px;
+      margin:14px 0;
+    }
+    .conteo-item{
+      background:var(--blanco);
+      border-radius:14px;
+      padding:10px;
+      text-align:center;
+      border:2px solid var(--arena);
+      transition:transform 0.2s;
+    }
+    .conteo-item:hover{transform:scale(1.04)}
+    .conteo-item .svg-conteo{margin-bottom:4px}
+    .conteo-item .num-wayuu{font-weight:bold;color:var(--atardecer);font-size:1.1rem}
+    .conteo-item .num-esp{color:var(--tierra);font-size:0.9rem}
+
+    /* ===== MEMORAMA ===== */
+    .memorama-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin:14px 0;
+      max-width:600px;
+      margin-left:auto;margin-right:auto;
+    }
+    @media(max-width:500px){.memorama-grid{grid-template-columns:repeat(3,1fr)}}
+    .memo-card{
+      aspect-ratio:1/1.25;
+      perspective:800px;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .memo-card-inner{
+      position:relative;
+      width:100%;height:100%;
+      transition:transform 0.5s;
+      transform-style:preserve-3d;
+    }
+    .memo-card.flipped .memo-card-inner{transform:rotateY(180deg)}
+    .memo-card.matched .memo-card-inner{transform:rotateY(180deg)}
+    .memo-card.matched .memo-card-front{background:var(--verde);border-color:var(--verde)}
+    .memo-face{
+      position:absolute;width:100%;height:100%;
+      backface-visibility:hidden;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+      font-size:0.95rem;
+      border:3px solid var(--desierto);
+      text-align:center;
+      padding:8px;
+    }
+    .memo-card-back{
+      background:linear-gradient(135deg,var(--tejido-rojo),var(--tejido-naranja),var(--tejido-turquesa));
+      color:white;
+      font-size:2rem;
+    }
+    .memo-card-front{
+      background:var(--blanco);
+      transform:rotateY(180deg);
+      color:var(--texto);
+    }
+    .memo-card.matched{cursor:default;pointer-events:none}
+    .memo-card.matched .memo-card-front{
+      background:#d4edda;
+      border-color:var(--verde);
+      color:var(--verde);
+      font-size:1.1rem;
+    }
+
+    /* ===== ESCUCHA Y ELIGE ===== */
+    .escucha-card{
+      background:linear-gradient(135deg,#e8f4f8,var(--blanco));
+      border-radius:var(--radius);
+      padding:20px;
+      text-align:center;
+      border:2px solid var(--tejido-turquesa);
+      margin:10px 0;
+    }
+    .escucha-card .ronda-info{
+      font-weight:bold;
+      color:var(--tierra);
+      margin-bottom:8px;
+    }
+    .escucha-btn-repro{
+      font-size:3.5rem;
+      cursor:pointer;
+      background:none;
+      border:none;
+      transition:transform 0.2s;
+      touch-action:manipulation;
+    }
+    .escucha-btn-repro:hover{transform:scale(1.15)}
+    .escucha-btn-repro.playing{animation:pulseSound 0.5s infinite}
+    @keyframes pulseSound{0%,100%{opacity:1}50%{opacity:0.5}}
+    .opciones-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin:12px 0;
+      max-width:500px;
+      margin-left:auto;margin-right:auto;
+    }
+    @media(max-width:420px){.opciones-grid{grid-template-columns:1fr}}
+    .opcion-btn{
+      padding:14px 16px;
+      border-radius:16px;
+      font-size:1rem;
+      font-weight:bold;
+      cursor:pointer;
+      border:3px solid var(--arena);
+      background:var(--blanco);
+      color:var(--texto);
+      transition:all 0.2s;
+      font-family:inherit;
+      touch-action:manipulation;
+    }
+    .opcion-btn:hover{background:var(--arena);transform:scale(1.03)}
+    .opcion-btn.correcta{background:var(--verde);color:white;border-color:var(--verde);animation:popAnswer 0.4s}
+    .opcion-btn.incorrecta{background:var(--rojo);color:white;border-color:var(--rojo);animation:shake 0.4s}
+    .opcion-btn:disabled{cursor:default;opacity:0.7}
+    @keyframes popAnswer{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+    /* ===== DIPLOMA ===== */
+    .diploma{
+      background:linear-gradient(135deg,#FFFDF7,#FFF8E1,#FFFDF7);
+      border:6px double var(--wayuu-oro);
+      border-radius:var(--radius);
+      padding:30px 25px;
+      text-align:center;
+      position:relative;
+      box-shadow:0 10px 40px rgba(0,0,0,0.15);
+    }
+    .diploma::before{
+      content:'';
+      position:absolute;
+      top:10px;left:10px;right:10px;bottom:10px;
+      border:2px solid rgba(212,168,67,0.3);
+      border-radius:14px;
+      pointer-events:none;
+    }
+    .diploma .sello{
+      font-size:5rem;
+      display:block;
+      margin:10px 0;
+    }
+    .diploma h2{font-size:2rem;color:var(--wayuu-oro);margin:8px 0}
+    .diploma .nombre-diploma{
+      font-size:1.4rem;
+      color:var(--texto);
+      font-style:italic;
+      margin:10px 0;
+      padding:6px 0;
+      border-top:1px dashed var(--desierto);
+      border-bottom:1px dashed var(--desierto);
+    }
+    .diploma .firma{
+      margin-top:20px;
+      font-size:0.85rem;
+      color:var(--tierra);
+    }
+    .diploma .estrellas-diploma{
+      font-size:2rem;
+      letter-spacing:6px;
+      margin:10px 0;
+    }
+
+    /* ===== TOAST ===== */
+    .toast{
+      position:fixed;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:12px 30px;
+      border-radius:25px;
+      font-weight:bold;
+      z-index:1000;
+      animation:slideDown 0.4s ease-out;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2);
+      pointer-events:none;
+    }
+    .toast.exito{background:var(--verde);color:white}
+    .toast.error{background:var(--rojo);color:white}
+    .toast.info{background:var(--azul);color:white}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+    /* ===== CONFETTI ===== */
+    @keyframes caer{
+      0%{transform:translateY(-60px) rotate(0deg);opacity:1}
+      90%{opacity:1}
+      100%{transform:translateY(105vh) rotate(720deg);opacity:0}
+    }
+
+    /* ===== SVG DECORATIVOS ===== */
+    .svg-animales{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .svg-animales svg{width:40px;height:40px}
+
+    /* ===== SECCIÓN CONTEXTO ===== */
+    .info-box{
+      background:linear-gradient(135deg,#fff8e1,var(--blanco));
+      border-left:5px solid var(--wayuu-oro);
+      padding:14px 18px;
+      border-radius:0 14px 14px 0;
+      margin:10px 0;
+      font-size:0.95rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:600px){
+      .header h1{font-size:1.5rem}
+      .vocab-grid{grid-template-columns:1fr 1fr}
+      .conteo-grid{grid-template-columns:repeat(3,1fr)}
+      .card{padding:16px 12px}
+      .card h2{font-size:1.2rem}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="sol">☀️</div>
+    <h1>🗣️ Wayuunaiki Básico</h1>
+    <span class="grado">Grados 1°-3° · Etnoeducación Wayuu</span>
+    <div class="desierto-deco">🌵🐐🦎🌵👜🧶🌵</div>
+  </div>
+
+  <!-- ===== HUD ===== -->
+  <div class="hud-wrap">
+    <div class="hud-estrellas">⭐ <span id="hudEstrellas">0</span>/6</div>
+    <div class="hud-divider"></div>
+    <div class="hud-puntos">🪙 <span id="hudPuntos">0</span> pts</div>
+    <div class="hud-divider"></div>
+    <div class="progreso-wrap">
+      <span class="progreso-label">📊 Progreso</span>
+      <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+      <span class="progreso-pct" id="progresoPct">0%</span>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 1: BIENVENIDA -->
+  <!-- ================================================================ -->
+  <section class="card activo" id="wayu401-seccion1">
+    <h2><span class="icono-titulo">👋</span> ¡Joutai! (¡Hola!)
+      <span class="etiqueta-check" id="wayu401-check1" style="display:none">✓ Completado</span>
+    </h2>
+    <div style="text-align:center;font-size:3.5rem;margin:10px 0">🌅🐐🏜️</div>
+    <p style="font-size:1.1rem;line-height:1.6;margin:10px 0">
+      ¡Bienvenido! Hoy vas a aprender <strong>wayuunaiki</strong>, la lengua del pueblo
+      <strong>wayuu</strong>. Es una lengua arawak que hablan más de 400,000 personas
+      en Colombia y Venezuela.
+    </p>
+    <div class="info-box">
+      <strong>🕊️ ¿Sabías que...?</strong><br>
+      El wayuunaiki es una de las lenguas indígenas más habladas de América Latina.
+      Los wayuu la han transmitido de generación en generación a través de la tradición oral.
+      ¡Aprender wayuunaiki es ayudar a preservar una cultura milenaria!
+    </div>
+    <p style="font-size:1rem;line-height:1.5;margin:10px 0">
+      En este módulo aprenderás:
+    </p>
+    <ul style="font-size:1rem;line-height:2;padding-left:20px;margin:8px 0">
+      <li>🗣️ <strong>Saludos</strong> — Cómo saludar en wayuunaiki</li>
+      <li>🔢 <strong>Números del 1 al 10</strong> — Contar como los wayuu</li>
+      <li>👨‍👩‍👧‍👦 <strong>La familia</strong> — Palabras para los seres queridos</li>
+      <li>🎮 <strong>Dos juegos</strong> — Memorama y Escucha y elige</li>
+    </ul>
+    <p style="font-size:0.9rem;color:var(--tierra);font-style:italic">
+      "Joutai" significa "Hola" en wayuunaiki. ¡Vamos a empezar!
+    </p>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primario" id="wayu401-btnBienvenida" onclick="wayu401_completarSeccion(1)">
+        🚀 ¡Comenzar a aprender! →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 2: LECCIÓN 1 - SALUDOS -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion2">
+    <h2><span class="icono-titulo">🗣️</span> Lección 1: Saludos en Wayuunaiki
+      <span class="etiqueta-check" id="wayu401-check2" style="display:none">✓ Completado</span>
+    </h2>
+    <p style="margin-bottom:12px">
+      En wayuunaiki, la forma de saludar cambia según la hora del día. ¡Así como en español!
+      Presiona el botón 🔊 para escuchar la pronunciación.
+    </p>
+    <div class="vocab-grid">
+      <div class="vocab-item">
+        <span class="emoji-vocab">👋</span>
+        <span class="palabra-wayuu">Joutai</span>
+        <span class="traduccion">Hola</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Joutai')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">🌅</span>
+        <span class="palabra-wayuu">Anayawatshi</span>
+        <span class="traduccion">Buenos días</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Anayawatshi')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">☀️</span>
+        <span class="palabra-wayuu">Alikawatshi</span>
+        <span class="traduccion">Buenas tardes</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Alikawatshi')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">🌙</span>
+        <span class="palabra-wayuu">Aipa</span>
+        <span class="traduccion">Buenas noches</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Aipa')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">👋</span>
+        <span class="palabra-wayuu">Püsia waya</span>
+        <span class="traduccion">Hasta luego</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Püsia waya')">🔊 Escuchar</button>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>💡 Dato cultural:</strong> Los wayuu se saludan con gran respeto.
+      Cuando visitas una ranchería, es costumbre esperar a que te inviten a pasar.
+      El saludo es la primera muestra de cortesía en la cultura wayuu.
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-exito" id="wayu401-btn2Ok" style="display:none" onclick="wayu401_irASeccion('wayu401-seccion3')">
+        ✓ ¡Aprendí los saludos! Siguiente →
+      </button>
+      <button class="btn btn-outline" id="wayu401-btn2Practicar" onclick="wayu401_completarSeccion(2)" style="display:inline-block">
+        ✓ Marcar como completado
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 3: LECCIÓN 2 - NÚMEROS -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion3">
+    <h2><span class="icono-titulo">🔢</span> Lección 2: Números del 1 al 10
+      <span class="etiqueta-check" id="wayu401-check3" style="display:none">✓ Completado</span>
+    </h2>
+    <p style="margin-bottom:12px">
+      ¡A contar en wayuunaiki! Los wayuu han contado sus chivos, mochilas y estrellas
+      por siglos usando estas palabras. Cada número tiene un dibujo que te ayuda a recordar.
+    </p>
+    <div class="conteo-grid">
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="30" cy="25" r="12" fill="#E07A5F"/><text x="30" y="30" text-anchor="middle" fill="white" font-size="14" font-weight="bold">1</text></svg></div>
+        <div class="num-wayuu">Wane</div>
+        <div class="num-esp">uno</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Wane')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="22" cy="20" r="10" fill="#D4A843"/><circle cx="38" cy="30" r="10" fill="#D4A843"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">2</text></svg></div>
+        <div class="num-wayuu">Piama</div>
+        <div class="num-esp">dos</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Piama')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="20" cy="18" r="8" fill="#3AA8C7"/><circle cx="40" cy="18" r="8" fill="#3AA8C7"/><circle cx="30" cy="35" r="8" fill="#3AA8C7"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">3</text></svg></div>
+        <div class="num-wayuu">Apünüin</div>
+        <div class="num-esp">tres</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Apünüin')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><rect x="12" y="12" width="16" height="16" rx="4" fill="#C73A3A"/><rect x="32" y="12" width="16" height="16" rx="4" fill="#C73A3A"/><rect x="12" y="32" width="16" height="14" rx="4" fill="#C73A3A"/><rect x="32" y="32" width="16" height="14" rx="4" fill="#C73A3A"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">4</text></svg></div>
+        <div class="num-wayuu">Pienchi</div>
+        <div class="num-esp">cuatro</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Pienchi')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="30" cy="15" r="7" fill="#E8A340"/><circle cx="15" cy="30" r="7" fill="#E8A340"/><circle cx="45" cy="30" r="7" fill="#E8A340"/><circle cx="22" cy="42" r="7" fill="#E8A340"/><circle cx="38" cy="42" r="7" fill="#E8A340"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">5</text></svg></div>
+        <div class="num-wayuu">Jarai</div>
+        <div class="num-esp">cinco</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Jarai')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="20" cy="14" r="6" fill="#9B59B6"/><circle cx="40" cy="14" r="6" fill="#9B59B6"/><circle cx="15" cy="30" r="6" fill="#9B59B6"/><circle cx="45" cy="30" r="6" fill="#9B59B6"/><circle cx="20" cy="44" r="6" fill="#9B59B6"/><circle cx="40" cy="44" r="6" fill="#9B59B6"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">6</text></svg></div>
+        <div class="num-wayuu">Aipirua</div>
+        <div class="num-esp">seis</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Aipirua')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><polygon points="30,8 8,22 8,40 30,48 52,40 52,22" fill="#4A90D9" opacity="0.7"/><text x="30" y="35" text-anchor="middle" fill="white" font-size="14" font-weight="bold">7</text></svg></div>
+        <div class="num-wayuu">Akaratüin</div>
+        <div class="num-esp">siete</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Akaratüin')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><rect x="8" y="8" width="18" height="18" rx="9" fill="#E07A5F"/><rect x="34" y="8" width="18" height="18" rx="9" fill="#E07A5F"/><rect x="8" y="30" width="18" height="16" rx="8" fill="#E07A5F"/><rect x="34" y="30" width="18" height="16" rx="8" fill="#E07A5F"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">8</text></svg></div>
+        <div class="num-wayuu">Mekisat</div>
+        <div class="num-esp">ocho</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Mekisat')">🔊</button>
+      </div>
+      <div class="conteo-item">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="15" cy="12" r="7" fill="#D4A843"/><circle cx="30" cy="12" r="7" fill="#D4A843"/><circle cx="45" cy="12" r="7" fill="#D4A843"/><circle cx="15" cy="30" r="7" fill="#D4A843"/><circle cx="30" cy="30" r="7" fill="#D4A843"/><circle cx="45" cy="30" r="7" fill="#D4A843"/><circle cx="15" cy="44" r="7" fill="#D4A843"/><circle cx="30" cy="44" r="7" fill="#D4A843"/><circle cx="45" cy="44" r="7" fill="#D4A843"/><text x="30" y="48" text-anchor="middle" fill="#5B8C5A" font-size="12" font-weight="bold">9</text></svg></div>
+        <div class="num-wayuu">Mekietsat</div>
+        <div class="num-esp">nueve</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Mekietsat')">🔊</button>
+      </div>
+      <div class="conteo-item" style="grid-column: span 2;max-width:200px;justify-self:center">
+        <div class="svg-conteo"><svg width="60" height="50" viewBox="0 0 60 50"><circle cx="30" cy="25" r="20" fill="#F4A236"/><text x="30" y="31" text-anchor="middle" fill="white" font-size="16" font-weight="bold">10</text></svg></div>
+        <div class="num-wayuu">Poloo</div>
+        <div class="num-esp">diez</div>
+        <button class="btn-tts" style="font-size:0.7rem;padding:4px 10px" onclick="wayu401_hablar('Poloo')">🔊</button>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>💡 Dato cultural:</strong> Los pastores wayuu cuentan sus chivos usando estas
+      palabras. Si un wayuu dice "Wane, Piama, Apünüin..." está contando cuántos animales
+      tiene en su rebaño. ¡El conteo es parte esencial de la vida en el desierto!
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-exito" id="wayu401-btn3Ok" style="display:none" onclick="wayu401_irASeccion('wayu401-seccion4')">
+        ✓ ¡Ya sé contar en wayuunaiki! Siguiente →
+      </button>
+      <button class="btn btn-outline" id="wayu401-btn3Practicar" onclick="wayu401_completarSeccion(3)" style="display:inline-block">
+        ✓ Marcar como completado
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 4: LECCIÓN 3 - FAMILIA -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion4">
+    <h2><span class="icono-titulo">👨‍👩‍👧‍👦</span> Lección 3: La Familia
+      <span class="etiqueta-check" id="wayu401-check4" style="display:none">✓ Completado</span>
+    </h2>
+    <p style="margin-bottom:12px">
+      En la cultura wayuu, la familia es el centro de todo. El clan (e'iruku) se hereda
+      por la línea materna. Aprende cómo llamar a tus seres queridos en wayuunaiki:
+    </p>
+    <div class="vocab-grid">
+      <div class="vocab-item">
+        <span class="emoji-vocab">👩</span>
+        <span class="palabra-wayuu">Tüü</span>
+        <span class="traduccion">Mamá</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Tüü')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">👨</span>
+        <span class="palabra-wayuu">Lapü</span>
+        <span class="traduccion">Papá</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Lapü')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">🧒👧</span>
+        <span class="palabra-wayuu">Tawala</span>
+        <span class="traduccion">Hermano / Hermana</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Tawala')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">👵</span>
+        <span class="palabra-wayuu">Oushü</span>
+        <span class="traduccion">Abuela</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Oushü')">🔊 Escuchar</button>
+      </div>
+      <div class="vocab-item">
+        <span class="emoji-vocab">👴</span>
+        <span class="palabra-wayuu">Alatushü</span>
+        <span class="traduccion">Abuelo</span>
+        <button class="btn-tts" onclick="wayu401_hablar('Alatushü')">🔊 Escuchar</button>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong>💡 Dato cultural:</strong> La abuela materna (Oushü) es una figura
+      muy importante en la cultura wayuu. Ella es quien enseña a tejer mochilas,
+      a preparar alimentos tradicionales y transmite las historias ancestrales a los nietos.
+      ¡El respeto a los mayores es fundamental!
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-exito" id="wayu401-btn4Ok" style="display:none" onclick="wayu401_irASeccion('wayu401-seccion5')">
+        ✓ ¡Aprendí la familia en wayuunaiki! Siguiente →
+      </button>
+      <button class="btn btn-outline" id="wayu401-btn4Practicar" onclick="wayu401_completarSeccion(4)" style="display:inline-block">
+        ✓ Marcar como completado
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 5: JUEGO 1 - MEMORAMA -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion5">
+    <h2><span class="icono-titulo">🧠</span> Juego 1: Memorama Wayuunaiki
+      <span class="etiqueta-check" id="wayu401-check5" style="display:none">✓ Completado</span>
+    </h2>
+    <p style="margin-bottom:10px;text-align:center">
+      Encuentra los pares: une la palabra en <strong>español</strong> con su
+      traducción en <strong>wayuunaiki</strong>. ¡Toca dos cartas para voltearlas!
+    </p>
+    <p style="text-align:center;font-size:0.9rem;color:var(--tierra)">
+      Pares encontrados: <strong id="wayu401-paresMemo">0</strong>/<strong>8</strong>
+      &nbsp;|&nbsp; Intentos: <strong id="wayu401-intentosMemo">0</strong>
+    </p>
+    <div class="memorama-grid" id="wayu401-memoramaGrid"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-azul" onclick="wayu401_reiniciarMemorama()">🔄 Reiniciar juego</button>
+      <button class="btn btn-exito" id="wayu401-btn5Ok" style="display:none" onclick="wayu401_irASeccion('wayu401-seccion6')">
+        ✓ ¡Memorama completo! Siguiente →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 6: JUEGO 2 - ESCUCHA Y ELIGE -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion6">
+    <h2><span class="icono-titulo">👂</span> Juego 2: Escucha y Elige
+      <span class="etiqueta-check" id="wayu401-check6" style="display:none">✓ Completado</span>
+    </h2>
+    <div class="escucha-card" id="wayu401-escuchaCard">
+      <p class="ronda-info" id="wayu401-rondaInfo">Ronda <span id="wayu401-rondaNum">1</span> de 10</p>
+      <p style="font-size:0.95rem;color:var(--tierra);margin-bottom:6px">Presiona el botón para escuchar la palabra en wayuunaiki:</p>
+      <button class="escucha-btn-repro" id="wayu401-btnReproducir" onclick="wayu401_reproducirPalabra()" title="Escuchar palabra">🔊</button>
+      <p style="font-size:0.8rem;color:var(--tierra);margin-top:4px" id="wayu401-escuchaPista">Presiona para escuchar</p>
+      <p style="font-size:1rem;margin-top:6px">¿Qué significa en español?</p>
+      <div class="opciones-grid" id="wayu401-opcionesGrid"></div>
+    </div>
+    <p style="text-align:center;font-size:0.9rem;color:var(--tierra)">
+      Aciertos: <strong id="wayu401-aciertosEscucha">0</strong>/10
+    </p>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-azul" id="wayu401-btnReiniciarEscucha" onclick="wayu401_reiniciarEscucha()" style="display:none">🔄 Intentar de nuevo</button>
+      <button class="btn btn-exito" id="wayu401-btn6Ok" style="display:none" onclick="wayu401_irASeccion('wayu401-seccion7')">
+        ✓ ¡Juego completado! Ver diploma →
+      </button>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PANTALLA 7: DIPLOMA FINAL -->
+  <!-- ================================================================ -->
+  <section class="card" id="wayu401-seccion7">
+    <div class="diploma">
+      <div class="sello">📜</div>
+      <h2>¡Anayawatshi!</h2>
+      <p style="font-size:1.1rem;color:var(--tierra);margin:8px 0">
+        Por haber completado todas las lecciones y juegos, te otorgamos el título de:
+      </p>
+      <div class="nombre-diploma">
+        🗣️ Hablante de Wayuunaiki — Nivel 1
+      </div>
+      <div class="estrellas-diploma" id="wayu401-estrellasDiploma">⭐⭐⭐⭐⭐⭐</div>
+      <p style="font-size:1rem;color:var(--texto);margin:10px 0">
+        ¡Felicidades! Ahora conoces los saludos, los números del 1 al 10, y las palabras
+        de la familia en wayuunaiki. Has ayudado a preservar una lengua milenaria del
+        pueblo wayuu.
+      </p>
+      <p style="font-size:0.9rem;color:var(--tierra);font-style:italic;margin:8px 0">
+        "Püsia waya" — ¡Hasta luego en tu próximo aprendizaje!
+      </p>
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn btn-primario" onclick="wayu401_lanzarConfeti()">🎉 ¡Celebrar!</button>
+        <button class="btn btn-dorado" onclick="wayu401_irASeccion('wayu401-seccion1')">🔄 Volver al inicio</button>
+      </div>
+      <div class="firma">
+        🌵 EduConect Rural · Módulo WAYU-401 · Etnoeducación Wayuu
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================================
+// WAYU-401: Wayuunaiki Básico — JavaScript inline (100% autocontenido)
+// =====================================================================
+(function(){
+  'use strict';
+
+  // ===== ESTADO GLOBAL =====
+  var state = {
+    puntos: 0,
+    estrellas: 0,
+    secciones: [true, false, false, false, false, false, false], // 1=bienvenida ya visitada
+    memoramaPares: 0,
+    memoramaIntentos: 0,
+    memoramaCartasVolteadas: [],
+    memoramaBloqueado: false,
+    escuchaRonda: 0,
+    escuchaAciertos: 0,
+    escuchaRespondido: false
+  };
+
+  // Datos para memorama: 8 pares español-wayuunaiki
+  var paresMemorama = [
+    {esp:'Hola',              way:'Joutai',       emoji:'👋'},
+    {esp:'Buenos días',       way:'Anayawatshi',  emoji:'🌅'},
+    {esp:'Buenas tardes',     way:'Alikawatshi',  emoji:'☀️'},
+    {esp:'Buenas noches',     way:'Aipa',          emoji:'🌙'},
+    {esp:'Mamá',              way:'Tüü',           emoji:'👩'},
+    {esp:'Papá',              way:'Lapü',          emoji:'👨'},
+    {esp:'Abuela',            way:'Oushü',         emoji:'👵'},
+    {esp:'Abuelo',            way:'Alatushü',      emoji:'👴'}
+  ];
+
+  // Datos para escucha y elige: 10 rondas
+  var preguntasEscucha = [
+    {way:'Joutai',          correcta:'Hola',            distractores:['Buenas noches','Adiós','Abuela']},
+    {way:'Anayawatshi',     correcta:'Buenos días',     distractores:['Buenas tardes','Hola','Buenas noches']},
+    {way:'Aipa',            correcta:'Buenas noches',   distractores:['Buenos días','Hasta luego','Abuelo']},
+    {way:'Püsia waya',      correcta:'Hasta luego',     distractores:['Hola','Buenas noches','Mamá']},
+    {way:'Wane',            correcta:'Uno',             distractores:['Dos','Tres','Cinco']},
+    {way:'Jarai',           correcta:'Cinco',           distractores:['Cuatro','Seis','Diez']},
+    {way:'Poloo',           correcta:'Diez',            distractores:['Ocho','Nueve','Siete']},
+    {way:'Tüü',             correcta:'Mamá',            distractores:['Papá','Abuela','Hermano']},
+    {way:'Oushü',           correcta:'Abuela',          distractores:['Abuelo','Mamá','Hermana']},
+    {way:'Tawala',          correcta:'Hermano / Hermana', distractores:['Papá','Abuelo','Mamá']}
+  ];
+
+  // ===== HELPERS =====
+  function $(sel){return document.querySelector(sel);}
+  function $$(sel){return document.querySelectorAll(sel);}
+
+  // ===== PROGRESO =====
+  function wayu401_actualizarProgreso(){
+    var completadas = 0;
+    for(var i=0;i<state.secciones.length;i++){
+      if(state.secciones[i]) completadas++;
+    }
+    var total = state.secciones.length;
+    var pct = Math.round((completadas / total) * 100);
+    $('#progresoFill').style.width = pct + '%';
+    $('#progresoPct').textContent = pct + '%';
+    $('#hudPuntos').textContent = state.puntos + ' pts';
+    $('#hudEstrellas').textContent = state.estrellas + '/6';
+
+    // Guardar en localStorage
+    try{
+      localStorage.setItem('wayu401_progreso', JSON.stringify({
+        secciones: state.secciones,
+        puntos: state.puntos,
+        estrellas: state.estrellas
+      }));
+    }catch(e){}
+  }
+
+  // ===== TTS =====
+  function wayu401_hablar(texto, velocidad){
+    if(!('speechSynthesis' in window)){
+      wayu401_mostrarToast('Tu navegador no soporta voz. Pide ayuda a un adulto.', 'error');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-ES';
+    utterance.rate = velocidad || 0.75;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
+
+    // Intentar voz femenina en español
+    var voices = window.speechSynthesis.getVoices();
+    if(voices.length === 0){
+      window.speechSynthesis.onvoiceschanged = function(){
+        voices = window.speechSynthesis.getVoices();
+        var voz = voices.find(function(v){return v.lang.indexOf('es')===0 && v.name.indexOf('Female')>=0;}) ||
+                  voices.find(function(v){return v.lang.indexOf('es')===0;});
+        if(voz) utterance.voice = voz;
+        window.speechSynthesis.speak(utterance);
+      };
+    } else {
+      var voz = voices.find(function(v){return v.lang.indexOf('es')===0 && v.name.indexOf('Female')>=0;}) ||
+                voices.find(function(v){return v.lang.indexOf('es')===0;});
+      if(voz) utterance.voice = voz;
+    }
+    window.speechSynthesis.speak(utterance);
+
+    // Feedback visual en botones TTS
+    utterance.onstart = function(){
+      $$('.btn-tts').forEach(function(b){b.classList.remove('speaking');});
+    };
+    utterance.onend = function(){
+      $$('.btn-tts').forEach(function(b){b.classList.remove('speaking');});
+    };
+
+    // Marcar el botón que se presionó
+    setTimeout(function(){
+      var btns = $$('.btn-tts');
+      btns.forEach(function(b){
+        if(b.textContent.indexOf('Escuchar')>=0 || b.textContent.trim()==='🔊'){
+          b.classList.add('speaking');
+          setTimeout(function(){b.classList.remove('speaking');}, 2000);
+        }
+      });
+    }, 50);
+  }
+
+  // ===== TOAST =====
+  function wayu401_mostrarToast(msg, tipo){
+    var t = document.createElement('div');
+    t.className = 'toast ' + (tipo || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function(){t.remove();}, 300);
+    }, 2500);
+  }
+
+  // ===== CONFETTI =====
+  function wayu401_lanzarConfeti(){
+    var emojis = ['🌵','🐐','⭐','🌟','🧶','👜','🌅','🦎','🎉','💫'];
+    for(var i=0;i<30;i++){
+      setTimeout(function(){
+        var e = document.createElement('span');
+        e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        e.style.cssText = 'position:fixed;font-size:2.2rem;pointer-events:none;z-index:999;animation:caer 3s ease-out forwards;';
+        e.style.left = Math.random()*90 + '%';
+        e.style.top = '-60px';
+        e.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+        document.body.appendChild(e);
+        setTimeout(function(){e.remove();}, 3100);
+      }, i*80);
+    }
+  }
+
+  // ===== NAVEGACION ENTRE SECCIONES =====
+  function wayu401_irASeccion(id){
+    $$('.card').forEach(function(c){
+      c.style.display = 'none';
+      c.classList.remove('activo');
+    });
+    var target = $(document.getElementById(id) ? '#'+id : id);
+    if(target){
+      target.style.display = 'block';
+      target.classList.add('activo');
+      target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    // Si vamos a la sección del memorama, inicializarlo
+    if(id === 'wayu401-seccion5'){
+      wayu401_iniciarMemorama();
+    }
+    // Si vamos a la sección de escucha, inicializarla
+    if(id === 'wayu401-seccion6'){
+      wayu401_iniciarEscucha();
+    }
+    // Si vamos al diploma, prepararlo
+    if(id === 'wayu401-seccion7'){
+      var estrellasGanadas = state.estrellas;
+      var estrellasStr = '';
+      for(var s=0;s<6;s++){
+        estrellasStr += s<estrellasGanadas ? '⭐' : '☆';
+      }
+      $('#wayu401-estrellasDiploma').textContent = estrellasStr;
+      if(state.estrellas >= 6){
+        $('#wayu401-estrellasDiploma').textContent = '⭐⭐⭐⭐⭐⭐';
+      }
+      wayu401_lanzarConfeti();
+    }
+  }
+
+  // ===== COMPLETAR SECCIÓN =====
+  function wayu401_completarSeccion(num){
+    if(state.secciones[num]){
+      wayu401_irASeccion('wayu401-seccion' + (num+1));
+      return;
+    }
+    state.secciones[num] = true;
+    state.puntos += 10;
+    state.estrellas = Math.min(6, state.estrellas + 1);
+
+    var checkEl = $('#wayu401-check'+num);
+    if(checkEl) checkEl.style.display = 'inline-block';
+
+    var btnEl = $('#wayu401-btn'+num+'Ok');
+    if(btnEl) btnEl.style.display = 'inline-block';
+
+    // Ocultar botón "marcar completado" si existe
+    var btnPracticar = $('#wayu401-btn'+num+'Practicar');
+    if(btnPracticar) btnPracticar.style.display = 'none';
+
+    var cardEl = $('#wayu401-seccion'+num);
+    if(cardEl) cardEl.classList.add('completado');
+
+    wayu401_actualizarProgreso();
+    wayu401_mostrarToast('⭐ ¡Sección completada! +10 puntos', 'exito');
+
+    // Auto-avanzar después de breve pausa (excepto en juegos)
+    if(num < 4){
+      setTimeout(function(){
+        wayu401_irASeccion('wayu401-seccion' + (num+1));
+      }, 1200);
+    }
+  }
+
+  // ===== MEMORAMA =====
+  function wayu401_iniciarMemorama(){
+    state.memoramaPares = 0;
+    state.memoramaIntentos = 0;
+    state.memoramaCartasVolteadas = [];
+    state.memoramaBloqueado = false;
+
+    $('#wayu401-paresMemo').textContent = '0';
+    $('#wayu401-intentosMemo').textContent = '0';
+    $('#wayu401-btn5Ok').style.display = 'none';
+
+    // Crear array de cartas: para cada par, una carta español y una wayuunaiki
+    var cartas = [];
+    for(var i=0;i<paresMemorama.length;i++){
+      cartas.push({
+        id: i,
+        tipo: 'esp',
+        texto: paresMemorama[i].esp,
+        emoji: paresMemorama[i].emoji,
+        parejaId: i
+      });
+      cartas.push({
+        id: i,
+        tipo: 'way',
+        texto: paresMemorama[i].way,
+        emoji: paresMemorama[i].emoji,
+        parejaId: i
+      });
+    }
+    // Barajar
+    for(var j=cartas.length-1;j>0;j--){
+      var k = Math.floor(Math.random()*(j+1));
+      var temp = cartas[j];
+      cartas[j] = cartas[k];
+      cartas[k] = temp;
+    }
+
+    // Construir HTML
+    var grid = $('#wayu401-memoramaGrid');
+    var html = '';
+    for(var m=0;m<cartas.length;m++){
+      var c = cartas[m];
+      var claseExtra = c.tipo === 'way' ? ' way-card' : ' esp-card';
+      html += '<div class="memo-card" data-pareja="'+c.parejaId+'" data-tipo="'+c.tipo+'" data-index="'+m+'" onclick="wayu401_voltearCarta(this)">';
+      html += '<div class="memo-card-inner">';
+      html += '<div class="memo-face memo-card-back">'+c.emoji+'</div>';
+      html += '<div class="memo-face memo-card-front'+claseExtra+'">'+c.texto+'</div>';
+      html += '</div></div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function wayu401_voltearCarta(carta){
+    if(state.memoramaBloqueado) return;
+    if(carta.classList.contains('flipped') || carta.classList.contains('matched')) return;
+    if(state.memoramaCartasVolteadas.length >= 2) return;
+
+    carta.classList.add('flipped');
+    state.memoramaCartasVolteadas.push(carta);
+
+    if(state.memoramaCartasVolteadas.length === 2){
+      state.memoramaIntentos++;
+      $('#wayu401-intentosMemo').textContent = state.memoramaIntentos;
+      wayu401_verificarPareja();
+    }
+  }
+
+  function wayu401_verificarPareja(){
+    state.memoramaBloqueado = true;
+    var c1 = state.memoramaCartasVolteadas[0];
+    var c2 = state.memoramaCartasVolteadas[1];
+
+    var pareja1 = c1.getAttribute('data-pareja');
+    var pareja2 = c2.getAttribute('data-pareja');
+    var tipo1 = c1.getAttribute('data-tipo');
+    var tipo2 = c2.getAttribute('data-tipo');
+
+    if(pareja1 === pareja2 && tipo1 !== tipo2){
+      // ¡Par correcto!
+      setTimeout(function(){
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+        state.memoramaPares++;
+        state.puntos += 5;
+        $('#wayu401-paresMemo').textContent = state.memoramaPares;
+        wayu401_actualizarProgreso();
+        wayu401_mostrarToast('✅ ¡Par encontrado! +5 puntos', 'exito');
+
+        state.memoramaCartasVolteadas = [];
+        state.memoramaBloqueado = false;
+
+        if(state.memoramaPares >= 8){
+          setTimeout(function(){
+            state.estrellas = Math.min(6, state.estrellas + 1);
+            state.puntos += 30;
+            wayu401_actualizarProgreso();
+            wayu401_mostrarToast('🏆 ¡Memorama completo! +1 estrella +30 puntos', 'exito');
+            wayu401_lanzarConfeti();
+            $('#wayu401-check5').style.display = 'inline-block';
+            $('#wayu401-seccion5').classList.add('completado');
+            state.secciones[4] = true;
+            $('#wayu401-btn5Ok').style.display = 'inline-block';
+          }, 600);
+        }
+      }, 500);
+    } else {
+      // No es par
+      setTimeout(function(){
+        c1.classList.remove('flipped');
+        c2.classList.remove('flipped');
+        state.memoramaCartasVolteadas = [];
+        state.memoramaBloqueado = false;
+      }, 800);
+    }
+  }
+
+  function wayu401_reiniciarMemorama(){
+    wayu401_iniciarMemorama();
+    wayu401_mostrarToast('🔄 Memorama reiniciado', 'info');
+  }
+
+  // ===== ESCUCHA Y ELIGE =====
+  function wayu401_iniciarEscucha(){
+    state.escuchaRonda = 0;
+    state.escuchaAciertos = 0;
+    state.escuchaRespondido = false;
+    $('#wayu401-aciertosEscucha').textContent = '0';
+    $('#wayu401-btn6Ok').style.display = 'none';
+    $('#wayu401-btnReiniciarEscucha').style.display = 'none';
+    // Barajar preguntas
+    for(var j=preguntasEscucha.length-1;j>0;j--){
+      var k=Math.floor(Math.random()*(j+1));
+      var tmp=preguntasEscucha[j];
+      preguntasEscucha[j]=preguntasEscucha[k];
+      preguntasEscucha[k]=tmp;
+    }
+    wayu401_siguienteRonda();
+  }
+
+  function wayu401_siguienteRonda(){
+    if(state.escuchaRonda >= 10){
+      // Juego terminado
+      wayu401_finalizarEscucha();
+      return;
+    }
+    state.escuchaRespondido = false;
+    state.escuchaRonda++;
+    var pregunta = preguntasEscucha[state.escuchaRonda - 1];
+
+    $('#wayu401-rondaNum').textContent = state.escuchaRonda;
+    $('#wayu401-escuchaPista').textContent = 'Presiona 🔊 para escuchar';
+    $('#wayu401-btnReproducir').classList.remove('playing');
+
+    // Crear opciones (correcta + 3 distractores, barajadas)
+    var opciones = [pregunta.correcta].concat(pregunta.distractores);
+    for(var j=opciones.length-1;j>0;j--){
+      var k=Math.floor(Math.random()*(j+1));
+      var tmp=opciones[j];
+      opciones[j]=opciones[k];
+      opciones[k]=tmp;
+    }
+
+    var html='';
+    for(var m=0;m<opciones.length;m++){
+      html += '<button class="opcion-btn" onclick="wayu401_responderEscucha(this,\''+
+        opciones[m].replace(/'/g,"\\'")+'\',\''+
+        pregunta.correcta.replace(/'/g,"\\'")+'\')">'+opciones[m]+'</button>';
+    }
+    $('#wayu401-opcionesGrid').innerHTML = html;
+
+    // Guardar estado actual
+    state._preguntaActual = pregunta;
+  }
+
+  function wayu401_reproducirPalabra(){
+    if(!state._preguntaActual) return;
+    var btn = $('#wayu401-btnReproducir');
+    btn.classList.add('playing');
+    $('#wayu401-escuchaPista').textContent = 'Escuchando... 🔊';
+    wayu401_hablar(state._preguntaActual.way, 0.7);
+    setTimeout(function(){
+      btn.classList.remove('playing');
+      $('#wayu401-escuchaPista').textContent = '¿Qué significa en español?';
+    }, 2500);
+  }
+
+  function wayu401_responderEscucha(btn, seleccion, correcta){
+    if(state.escuchaRespondido) return;
+    state.escuchaRespondido = true;
+
+    // Deshabilitar todos los botones
+    var btns = $$('#wayu401-opcionesGrid .opcion-btn');
+    btns.forEach(function(b){b.disabled=true;});
+
+    if(seleccion === correcta){
+      btn.classList.add('correcta');
+      state.escuchaAciertos++;
+      state.puntos += 10;
+      wayu401_actualizarProgreso();
+      $('#wayu401-aciertosEscucha').textContent = state.escuchaAciertos;
+      wayu401_mostrarToast('✅ ¡Correcto! +10 puntos', 'exito');
+    } else {
+      btn.classList.add('incorrecta');
+      // Mostrar la correcta
+      btns.forEach(function(b){
+        if(b.textContent === correcta) b.classList.add('correcta');
+      });
+      wayu401_mostrarToast('❌ La respuesta era: ' + correcta, 'error');
+    }
+
+    // Siguiente ronda después de pausa
+    setTimeout(function(){
+      wayu401_siguienteRonda();
+    }, 1800);
+  }
+
+  function wayu401_finalizarEscucha(){
+    var pct = Math.round((state.escuchaAciertos/10)*100);
+    var mensaje = '🎯 Resultado: ' + state.escuchaAciertos + '/10 aciertos (' + pct + '%)';
+    wayu401_mostrarToast(mensaje, 'info');
+
+    $('#wayu401-rondaInfo').textContent = '¡Juego terminado!';
+    $('#wayu401-escuchaPista').textContent = mensaje;
+    $('#wayu401-btnReproducir').style.display = 'none';
+    $('#wayu401-opcionesGrid').innerHTML = '';
+
+    if(state.escuchaAciertos >= 6){
+      state.estrellas = Math.min(6, state.estrellas + 1);
+      state.puntos += 20;
+      wayu401_mostrarToast('🏆 ¡Desbloqueaste una estrella! +20 puntos', 'exito');
+      wayu401_lanzarConfeti();
+    }
+
+    wayu401_actualizarProgreso();
+    $('#wayu401-check6').style.display = 'inline-block';
+    $('#wayu401-seccion6').classList.add('completado');
+    state.secciones[5] = true;
+    $('#wayu401-btn6Ok').style.display = 'inline-block';
+    $('#wayu401-btnReiniciarEscucha').style.display = 'inline-block';
+  }
+
+  function wayu401_reiniciarEscucha(){
+    wayu401_iniciarEscucha();
+    wayu401_mostrarToast('🔄 Juego reiniciado', 'info');
+    $('#wayu401-btnReproducir').style.display = '';
+    $('#wayu401-btn6Ok').style.display = 'none';
+    $('#wayu401-btnReiniciarEscucha').style.display = 'none';
+  }
+
+  // ===== INICIALIZACIÓN =====
+  function wayu401_init(){
+    // Cargar progreso guardado
+    try{
+      var saved = localStorage.getItem('wayu401_progreso');
+      if(saved){
+        var data = JSON.parse(saved);
+        if(data.secciones) state.secciones = data.secciones;
+        if(data.puntos) state.puntos = data.puntos;
+        if(data.estrellas) state.estrellas = data.estrellas;
+      }
+    }catch(e){}
+
+    // Restaurar checks y botones según estado guardado
+    for(var i=0;i<state.secciones.length;i++){
+      if(state.secciones[i]){
+        var checkEl = $('#wayu401-check'+(i+1));
+        if(checkEl) checkEl.style.display = 'inline-block';
+        var btnEl = $('#wayu401-btn'+(i+1)+'Ok');
+        if(btnEl) btnEl.style.display = 'inline-block';
+        var btnPracticar = $('#wayu401-btn'+(i+1)+'Practicar');
+        if(btnPracticar) btnPracticar.style.display = 'none';
+        var cardEl = $('#wayu401-seccion'+(i+1));
+        if(cardEl) cardEl.classList.add('completado');
+      }
+    }
+
+    wayu401_actualizarProgreso();
+
+    // Precargar voces
+    if('speechSynthesis' in window){
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = function(){
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }
+
+  // Arrancar
+  wayu401_init();
+
+  // Exponer funciones al scope global para onclick inline
+  window.wayu401_hablar = wayu401_hablar;
+  window.wayu401_irASeccion = wayu401_irASeccion;
+  window.wayu401_completarSeccion = wayu401_completarSeccion;
+  window.wayu401_voltearCarta = wayu401_voltearCarta;
+  window.wayu401_reiniciarMemorama = wayu401_reiniciarMemorama;
+  window.wayu401_reproducirPalabra = wayu401_reproducirPalabra;
+  window.wayu401_responderEscucha = wayu401_responderEscucha;
+  window.wayu401_reiniciarEscucha = wayu401_reiniciarEscucha;
+  window.wayu401_lanzarConfeti = wayu401_lanzarConfeti;
+  window.wayu401_mostrarToast = wayu401_mostrarToast;
+})();
+</script>
+
+</body>
+</html>

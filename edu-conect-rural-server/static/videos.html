@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#D4322F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/app-icon.svg" type="image/svg+xml">
+<title>Videos Offline — EduConect Rural</title>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'})}</script>
+<!-- ===== Plyr CSS (inline, offline) ===== -->
+<style>
+:root{
+  --plyr-color-main:#c45a3c;
+  --plyr-video-background:#000;
+  --plyr-control-icon-size:18px;
+  --plyr-control-spacing:10px;
+  --plyr-control-padding:8px;
+  --plyr-range-thumb-height:14px;
+  --plyr-range-thumb-active-shadow-width:3px;
+  --plyr-range-track-height:5px;
+  --plyr-captions-background:rgba(0,0,0,.8);
+}
+@keyframes plyr-progress{to{background-position:25px 0}}
+@keyframes plyr-popup{0%{opacity:.5;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes plyr-fade-in{from{opacity:0}to{opacity:1}}
+.plyr{position:relative;max-width:100%;min-width:200px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;direction:ltr;font-variant-numeric:tabular-nums;touch-action:manipulation;border-radius:12px;overflow:hidden}
+.plyr *,.plyr ::after,.plyr ::before{box-sizing:border-box}
+.plyr audio,.plyr video{width:100%;height:auto;vertical-align:middle;border-radius:12px}
+.plyr video::-webkit-media-text-track-container{display:none}
+.plyr__captions{animation:plyr-fade-in .3s ease;bottom:auto;color:#fff;display:none;font-size:14px;left:0;padding:10px;position:absolute;text-align:center;top:0;transition:transform .4s ease-in-out;width:100%}
+.plyr__captions .plyr__caption{background:var(--plyr-captions-background);border-radius:2px;display:inline-block;line-height:185%;padding:.2em .5em;white-space:pre-wrap}
+.plyr__captions .plyr__caption div{display:inline}
+.plyr__captions span:empty{display:none}
+.plyr--captions-active .plyr__captions{display:block}
+.plyr--fullscreen-active .plyr__captions{font-size:21px}
+.plyr__control{background:0 0;border:0;border-radius:4px;color:inherit;cursor:pointer;flex-shrink:0;overflow:visible;padding:var(--plyr-control-padding);position:relative;transition:all .2s ease}
+.plyr__control svg{display:block;fill:currentColor;height:var(--plyr-control-icon-size);pointer-events:none;width:var(--plyr-control-icon-size)}
+.plyr__control:focus{outline:2px solid var(--plyr-color-main);outline-offset:2px}
+.plyr__control.plyr__tab-focus{outline:2px solid var(--plyr-color-main);outline-offset:2px}
+.plyr__control[aria-pressed=true] svg{fill:var(--plyr-color-main)}
+.plyr__controls{align-items:center;background:linear-gradient(transparent,rgba(0,0,0,.75));border-bottom-left-radius:12px;border-bottom-right-radius:12px;bottom:0;color:#fff;display:flex;flex-wrap:wrap;justify-content:flex-end;left:0;padding:calc(var(--plyr-control-spacing)*2) var(--plyr-control-spacing) var(--plyr-control-spacing);position:absolute;right:0;transition:opacity .4s ease-in-out,transform .4s ease-in-out;z-index:3}
+.plyr__controls .plyr__controls__item.plyr__progress__container{flex:1;min-width:0}
+.plyr__controls .plyr__controls__item:first-child{margin-left:0}
+.plyr__controls .plyr__controls__item.plyr__time{padding:0 5px}
+.plyr__controls .plyr__controls__item.plyr__progress__container{padding-left:2px}
+.plyr__controls .plyr__controls__item.plyr__time+.plyr__time,.plyr__controls .plyr__controls__item.plyr__time:first-child{padding-left:0}
+.plyr__controls:empty{display:none}
+.plyr--hide-controls .plyr__controls{opacity:0;pointer-events:none;transform:translateY(100%)}
+.plyr--video .plyr__control.plyr__tab-focus,.plyr--video .plyr__control:hover,.plyr--video .plyr__control[aria-expanded=true]{background:var(--plyr-color-main);color:#fff}
+.plyr__menu{display:flex;position:relative}
+.plyr__menu__container{animation:plyr-popup .2s ease;background:#2a2a2a;border-radius:8px;bottom:100%;color:#ccc;font-size:15px;margin-bottom:10px;position:absolute;right:-3px;text-align:left;white-space:nowrap;z-index:10}
+.plyr__menu__container>div{overflow:hidden;transition:height .35s cubic-bezier(.4,0,.2,1);overflow:visible!important;height:auto!important}
+.plyr__menu__container::after{border:4px solid transparent;border-top-color:#2a2a2a;content:'';position:absolute;right:14px;top:100%}
+.plyr__menu__container [role=menu]{padding:8px}
+.plyr__menu__container [role=menuitem],.plyr__menu__container [role=menuitemradio]{margin-top:2px}
+.plyr__menu__container [role=menuitem]:first-child,.plyr__menu__container [role=menuitemradio]:first-child{margin-top:0}
+.plyr__menu__container .plyr__control{align-items:center;color:#ccc;display:flex;font-size:14px;padding:6px 12px;width:100%}
+.plyr__menu__container .plyr__control::after{border:2px solid transparent;border-radius:2px;content:'';display:block;height:4px;margin-left:auto;width:4px}
+.plyr__menu__container .plyr__control[aria-checked=true]{color:#fff}
+.plyr__menu__container .plyr__control[aria-checked=true]::after{background:currentColor;border-color:currentColor}
+.plyr__menu__container .plyr__control[aria-checked=true] svg{fill:#fff}
+.plyr__menu__container .plyr__control[role=menuitemradio] svg{display:none}
+.plyr__menu__container .plyr__control[role=menuitemradio][aria-checked=true] svg{display:block}
+.plyr--fullui .plyr__menu__container .plyr__control[aria-checked=true]{background:var(--plyr-color-main);color:#fff}
+.plyr__progress{bottom:0;left:0;margin-right:10px;position:relative;display:flex;flex:1;align-items:center}
+.plyr__progress input[type=range]{cursor:pointer;flex:1;height:20px;margin:0;position:relative;z-index:2;opacity:0}
+.plyr__progress__buffer{-webkit-appearance:none;background:rgba(255,255,255,.25);border-radius:100px;height:var(--plyr-range-track-height);left:0;position:absolute;top:50%;transform:translateY(-50%);width:100%}
+.plyr--fullui .plyr__progress__buffer{background:rgba(255,255,255,.15)}
+.plyr__progress__buffer::-webkit-progress-bar{background:transparent}
+.plyr__progress__buffer::-webkit-progress-value{background:currentColor;border-radius:100px;min-width:var(--plyr-range-track-height);transition:width .2s ease}
+.plyr__progress__buffer::-moz-progress-bar{background:currentColor;border-radius:100px;min-width:var(--plyr-range-track-height);transition:width .2s ease}
+.plyr__progress__buffer::-ms-fill{border-radius:100px;transition:width .2s ease}
+.plyr--fullui .plyr__progress__buffer{box-shadow:0 1px 1px rgba(0,0,0,.15);height:4px}
+.plyr__tooltip{background:#2a2a2a;border-radius:5px;bottom:100%;color:#fff;font-size:13px;font-weight:500;left:50%;line-height:1.3;margin-bottom:10px;opacity:0;padding:6px 10px;pointer-events:none;position:absolute;transform:translate(-50%,10px);transition:all .2s ease;white-space:nowrap;z-index:2}
+.plyr__tooltip::after{border:4px solid transparent;border-top-color:#2a2a2a;content:'';height:0;left:50%;position:absolute;top:100%;transform:translateX(-50%);width:0}
+.plyr .plyr__tooltip{display:none}
+.plyr .plyr__control:hover .plyr__tooltip,.plyr .plyr__control.plyr__tab-focus .plyr__tooltip{display:block;opacity:1;transform:translate(-50%,0)}
+.plyr__time{font-size:13px;font-weight:500}
+.plyr__time+.plyr__time::before{content:'/';margin-right:8px}
+.plyr__volume{align-items:center;display:flex;max-width:110px;min-width:60px;position:relative;width:20%}
+.plyr__volume input[type=range]{cursor:pointer;flex:1;height:20px;margin:0;opacity:0;position:relative;z-index:2;width:100%}
+.plyr--is-ios .plyr__volume{display:none!important}
+.plyr--is-ios.plyr--vimeo .plyr__volume{display:block!important}
+.plyr [data-plyr=airplay],.plyr [data-plyr=captions],.plyr [data-plyr=fullscreen],.plyr [data-plyr=settings]{margin-left:auto}
+.plyr__sr-only{clip:rect(1px,1px,1px,1px);overflow:hidden;border:0;height:1px;width:1px;padding:0;position:absolute!important}
+/* Custom range styling */
+.plyr input[type=range]{-webkit-appearance:none;background:transparent;border:0;border-radius:26px;color:var(--plyr-color-main);display:block;height:var(--plyr-range-thumb-height);margin:0;padding:0;transition:box-shadow .3s ease;width:100%}
+.plyr input[type=range]::-webkit-slider-runnable-track{background:rgba(255,255,255,.25);border:0;border-radius:2px;height:var(--plyr-range-track-height);width:100%;-webkit-transition:box-shadow .3s ease;transition:box-shadow .3s ease;-webkit-user-select:none;user-select:none}
+.plyr input[type=range]::-webkit-slider-thumb{background:#fff;border:0;border-radius:100%;box-shadow:0 1px 1px rgba(0,0,0,.15),0 0 0 1px rgba(47,52,61,.2);height:var(--plyr-range-thumb-height);position:relative;-webkit-transition:all .2s ease;transition:all .2s ease;width:var(--plyr-range-thumb-height);-webkit-appearance:none;margin-top:calc((var(--plyr-range-track-height) - var(--plyr-range-thumb-height))/2)}
+.plyr input[type=range]::-moz-range-track{background:rgba(255,255,255,.25);border:0;border-radius:2px;height:var(--plyr-range-track-height);width:100%;-moz-transition:box-shadow .3s ease;transition:box-shadow .3s ease;user-select:none}
+.plyr input[type=range]::-moz-range-thumb{background:#fff;border:0;border-radius:100%;box-shadow:0 1px 1px rgba(0,0,0,.15),0 0 0 1px rgba(47,52,61,.2);height:var(--plyr-range-thumb-height);width:var(--plyr-range-thumb-height)}
+.plyr input[type=range]::-ms-track{color:transparent;background:transparent;border:0;height:var(--plyr-range-track-height)}
+.plyr input[type=range]::-ms-fill-upper{background:transparent;border:0;border-radius:2px;height:var(--plyr-range-track-height)}
+.plyr input[type=range]::-ms-fill-lower{background:transparent;border:0;border-radius:2px;height:var(--plyr-range-track-height)}
+.plyr input[type=range]::-ms-thumb{background:#fff;border:0;border-radius:100%;box-shadow:0 1px 1px rgba(0,0,0,.15),0 0 0 1px rgba(47,52,61,.2);height:var(--plyr-range-thumb-height);width:var(--plyr-range-thumb-height);margin-top:0}
+.plyr input[type=range]::-ms-tooltip{display:none}
+</style>
+<style>
+/* ===== EduConect Rural Theme ===== */
+:root{
+  --bg:#FFFAF2;
+  --bg-card:#ffffff;
+  --txt:#2C1810;
+  --txt-secondary:#6b5d4f;
+  --txt-muted:#8a7a6a;
+  --primary:#D4322F;
+  --primary-hover:#d4694a;
+  --primary-light:#fdf0eb;
+  --secondary:#2D9D4E;
+  --secondary-light:#f2f7f3;
+  --accent:#4a8ba4;
+  --sand-100:#f0e6d0;
+  --sand-200:#e0d0b0;
+  --sand-500:#c4956a;
+  --sand-900:#4a2c17;
+  --gray-200:#e8e8e8;
+  --gray-600:#666;
+  --shadow:0 2px 12px rgba(74,44,23,0.08);
+  --shadow-lg:0 12px 40px rgba(74,44,23,0.12);
+  --radius:12px;
+  --radius-lg:20px;
+  --transition:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  line-height:1.6;
+  min-height:100vh;
+}
+/* Dark mode */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1a2e;
+    --bg-card:#232340;
+    --txt:#e8e0d0;
+    --txt-secondary:#b0a898;
+    --txt-muted:#7a7262;
+    --primary-light:#2a1a10;
+    --secondary-light:#1a2a1e;
+    --sand-100:#2a2a3e;
+    --sand-200:#3a3a4e;
+    --gray-200:#3a3a4e;
+    --shadow:0 2px 12px rgba(0,0,0,0.3);
+    --shadow-lg:0 12px 40px rgba(0,0,0,0.4);
+  }
+  .nav{background:rgba(26,26,46,0.85)!important;border-bottom-color:rgba(255,255,255,0.06)!important}
+  .nav-links a{color:#b0a898!important}
+  .nav-links a:hover{background:rgba(255,255,255,0.05)!important;color:#e8e0d0!important}
+  .search-box input{background:#2a2a3e;border-color:#3a3a4e;color:#e8e0d0}
+  #url-input{background:#2a2a3e;border-color:#3a3a4e;color:#e8e0d0}
+  .video-card{background:var(--bg-card)}
+  .video-info h3{color:#e8e0d0}
+  .video-info p{color:#b0a898}
+  .modal-content{background:var(--bg-card);color:#e8e0d0}
+  .admin-section{background:var(--bg-card)}
+  .admin-section h2{color:#e8e0d0}
+  .status-item{background:rgba(255,255,255,0.03)}
+  .stats-grid .stat-card{background:var(--bg-card)}
+  .nav-logo{color:#e8e0d0!important}
+}
+/* ===== Nav ===== */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(253,248,240,0.85);
+  -webkit-backdrop-filter:blur(20px);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,0,0,0.06);
+  padding:0 24px;
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  height:64px;
+}
+.nav-logo{font-weight:700;font-size:1.25rem;color:var(--sand-900);letter-spacing:-0.02em;display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo .icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--sand-500));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;flex-shrink:0}
+.nav-links{display:flex;gap:8px;align-items:center}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--gray-600);text-decoration:none;padding:8px 16px;border-radius:8px;transition:var(--transition)}
+.nav-links a:hover{color:var(--sand-900);background:var(--sand-100)}
+.nav-cta{background:var(--primary);color:#fff!important}
+.nav-cta:hover{background:var(--primary-hover)!important;color:#fff!important}
+/* ===== Layout ===== */
+.container{max-width:1200px;margin:0 auto;padding:24px}
+.page-header{margin-bottom:32px}
+.page-header h1{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;letter-spacing:-.02em;color:var(--txt)}
+.page-header p{color:var(--txt-secondary);margin-top:4px;font-size:.95rem}
+.page-header .header-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+/* ===== Stats Grid ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--bg-card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center;transition:var(--transition)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.stat-card .stat-icon{font-size:1.8rem;margin-bottom:8px}
+.stat-card .stat-number{font-size:1.8rem;font-weight:800;color:var(--primary)}
+.stat-card .stat-label{font-size:.8rem;color:var(--txt-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+/* ===== Filter bar ===== */
+.filter-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+.filter-bar .search-box{display:flex;flex:1;min-width:200px;position:relative}
+.filter-bar .search-box input{flex:1;padding:12px 16px;border:2px solid var(--sand-200);border-radius:var(--radius);font-size:.95rem;background:var(--bg-card);outline:none;transition:border-color .2s;color:var(--txt)}
+.filter-bar .search-box input:focus{border-color:var(--primary)}
+.filter-bar select{padding:12px 16px;border:2px solid var(--sand-200);border-radius:var(--radius);background:var(--bg-card);color:var(--txt);font-size:.9rem;outline:none;cursor:pointer;min-width:120px}
+.filter-bar select:focus{border-color:var(--primary)}
+/* ===== Video Grid ===== */
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.video-card{
+  background:var(--bg-card);border-radius:var(--radius-lg);
+  overflow:hidden;box-shadow:var(--shadow);cursor:pointer;
+  transition:var(--transition);position:relative;
+}
+.video-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.video-thumb{
+  width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.video-thumb .play-icon{
+  width:60px;height:60px;background:rgba(196,90,60,0.9);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;color:#fff;transition:var(--transition);
+  z-index:2;position:absolute;
+}
+.video-card:hover .play-icon{transform:scale(1.1);background:var(--primary)}
+.video-thumb .duration{
+  position:absolute;bottom:8px;right:8px;
+  background:rgba(0,0,0,.75);color:#fff;padding:2px 8px;
+  border-radius:4px;font-size:.8rem;font-weight:600;z-index:2;
+}
+.video-thumb .format-badge{
+  position:absolute;top:8px;right:8px;
+  background:rgba(90,122,98,0.9);color:#fff;padding:2px 8px;
+  border-radius:4px;font-size:.7rem;font-weight:600;z-index:2;
+  text-transform:uppercase;
+}
+.video-info{padding:16px}
+.video-info h3{font-size:1rem;font-weight:600;margin-bottom:4px;color:var(--txt);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.video-info p{font-size:.85rem;color:var(--txt-secondary)}
+.video-info .video-meta{display:flex;gap:12px;margin-top:8px;font-size:.8rem;color:var(--txt-muted)}
+.video-info .video-meta span{display:flex;align-items:center;gap:4px}
+.empty-state{text-align:center;padding:80px 20px;color:var(--txt-muted)}
+.empty-state .empty-icon{font-size:4rem;margin-bottom:16px}
+.empty-state h3{font-size:1.3rem;color:var(--txt);margin-bottom:8px}
+/* ===== Admin Section ===== */
+.admin-section{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+.admin-section h2{font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--txt);display:flex;align-items:center;gap:8px}
+.admin-section h2 .badge{font-size:.7rem;background:var(--primary);color:#fff;padding:2px 8px;border-radius:999px;font-weight:600}
+.download-form{display:flex;flex-direction:column;gap:12px}
+.download-form .form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.download-form .form-row.grow{flex:1}
+#url-input{flex:1;min-width:200px;padding:14px 16px;border:2px solid var(--sand-200);border-radius:var(--radius);font-size:.95rem;background:var(--bg-card);outline:none;transition:border-color .2s;color:var(--txt)}
+#url-input:focus{border-color:var(--primary)}
+#quality-select{padding:14px 16px;border:2px solid var(--sand-200);border-radius:var(--radius);background:var(--bg-card);color:var(--txt);font-size:.9rem;outline:none;cursor:pointer}
+#quality-select:focus{border-color:var(--primary)}
+.btn{
+  padding:14px 24px;border:none;border-radius:var(--radius);
+  font-size:.95rem;font-weight:600;cursor:pointer;
+  transition:var(--transition);display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;
+}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:var(--secondary);color:#fff}
+.btn-secondary:hover{background:#4a6a52;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-sm{padding:8px 14px;font-size:.85rem}
+.btn-danger{background:#c0392b;color:#fff}
+.btn-danger:hover{background:#a93226}
+/* ===== Progress Bar ===== */
+.progress-container{display:none;margin-top:12px}
+.progress-container.active{display:block}
+.progress-bar-wrap{background:var(--gray-200);border-radius:999px;height:8px;overflow:hidden;position:relative}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:999px;transition:width .5s ease;width:0%}
+.progress-text{display:flex;justify-content:space-between;margin-top:6px;font-size:.8rem;color:var(--txt-secondary)}
+.progress-text .status{font-weight:600}
+.progress-text .status.done{color:var(--secondary)}
+.progress-text .status.error{color:#c0392b}
+.progress-text .status.downloading{color:var(--primary)}
+/* ===== Download Log ===== */
+.download-log{margin-top:12px;max-height:200px;overflow-y:auto;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:.8rem;background:rgba(0,0,0,0.03);border-radius:8px;padding:12px;display:none;line-height:1.5}
+.download-log.active{display:block}
+.download-log .log-line{color:var(--txt-muted)}
+.download-log .log-line.info{color:var(--accent)}
+.download-log .log-line.success{color:var(--secondary)}
+.download-log .log-line.error{color:#c0392b}
+/* ===== Status indicators ===== */
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.status-item{background:rgba(255,255,255,0.5);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px}
+.status-item .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.status-dot.green{background:#27ae60}
+.status-dot.yellow{background:#f39c12}
+.status-dot.red{background:#c0392b}
+.status-item .status-label{font-size:.85rem;color:var(--txt-muted)}
+.status-item .status-value{font-size:1rem;font-weight:600;color:var(--txt)}
+/* ===== Modal ===== */
+.modal-overlay{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.85);z-index:1000;
+  align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn .2s;
+}
+.modal-overlay.active{display:flex}
+.modal-content{
+  background:var(--bg-card);border-radius:var(--radius-lg);
+  max-width:960px;width:100%;max-height:90vh;
+  overflow:hidden;box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;
+  animation:slideUp .3s ease;
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--sand-200);
+}
+.modal-header h3{font-size:1.1rem;font-weight:700;color:var(--txt)}
+.modal-close{
+  background:none;border:none;font-size:1.5rem;cursor:pointer;
+  color:var(--txt-muted);padding:4px 8px;border-radius:6px;transition:var(--transition);
+}
+.modal-close:hover{background:var(--sand-100);color:var(--txt)}
+.modal-body{padding:0;flex:1;overflow-y:auto}
+.modal-body .plyr{max-height:70vh}
+.modal-body video{width:100%;max-height:70vh;display:block}
+.modal-info{padding:16px 20px}
+.modal-info h4{font-size:1.1rem;margin-bottom:4px;color:var(--txt)}
+.modal-info .meta{font-size:.85rem;color:var(--txt-secondary)}
+/* ===== Tabs ===== */
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--bg-card);border-radius:var(--radius);padding:4px;box-shadow:var(--shadow);overflow-x:auto}
+.tab-btn{padding:10px 20px;border:none;background:transparent;border-radius:8px;font-size:.9rem;font-weight:500;cursor:pointer;color:var(--txt-secondary);transition:var(--transition);white-space:nowrap}
+.tab-btn.active{background:var(--primary);color:#fff}
+.tab-btn:hover:not(.active){background:var(--sand-100)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* ===== Animations ===== */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-spinner{width:24px;height:24px;border:3px solid var(--sand-200);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .container{padding:16px}
+  .video-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .status-grid{grid-template-columns:1fr}
+  .nav-links a.nav-hide-mobile{display:none}
+  .download-form .form-row{flex-direction:column}
+  #url-input{width:100%}
+  #quality-select{width:100%}
+  .btn{justify-content:center;width:100%}
+  .filter-bar{flex-direction:column}
+  .filter-bar .search-box{width:100%}
+  .filter-bar select{width:100%}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr}
+  .page-header h1{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+<!-- ===== Navigation ===== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <span class="icon">📚</span>
+      EduConect
+    </a>
+    <div class="nav-links">
+      <a href="/">Inicio</a>
+      <a href="/diccionario/">Diccionario</a>
+      <a href="/videos/" class="nav-cta">🎬 Videos</a>
+      <span class="nav-hide-mobile" style="font-size:.875rem;font-weight:500;color:var(--txt-muted);padding:8px 16px;border-radius:8px;cursor:default">Wikipedia (sin datos)</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- ===== Header ===== -->
+  <div class="page-header">
+    <h1>📺 Videos Offline</h1>
+    <p>Galería de video educativa — todos los videos se reproducen sin conexión a Internet</p>
+    <div class="header-actions">
+      <span class="btn btn-primary" onclick="openAdminPanel()">⬇️ Descargar video</span>
+      <span class="btn btn-outline" onclick="refreshGallery()">🔄 Refrescar</span>
+    </div>
+  </div>
+
+  <!-- ===== Stats ===== -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-number" id="totalVideos">0</div><div class="stat-label">Videos</div></div>
+    <div class="stat-card"><div class="stat-icon">💾</div><div class="stat-number" id="totalSize">0 MB</div><div class="stat-label">Espacio usado</div></div>
+    <div class="stat-card"><div class="stat-icon">📥</div><div class="stat-number" id="totalDownloads">0</div><div class="stat-label">Descargas hoy</div></div>
+    <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" id="serverStatus">—</div><div class="stat-label">Servidor</div></div>
+  </div>
+
+  <!-- ===== Admin Panel (collapsible) ===== -->
+  <div class="admin-section" id="adminPanel" style="display:none">
+    <h2>⬇️ Descargar video de YouTube <span class="badge">Admin</span></h2>
+    <div class="download-form">
+      <div class="form-row grow">
+        <input type="text" id="url-input" placeholder="Pegá la URL de YouTube aquí... (ej: https://youtube.com/watch?v=...)" />
+        <select id="quality-select">
+          <option value="360">360p — Ahorra espacio (recomendado)</option>
+          <option value="480">480p — Buena calidad</option>
+          <option value="best">Mejor calidad — mucho espacio</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <button class="btn btn-primary" id="downloadBtn" onclick="startDownload()">📥 Descargar</button>
+        <button class="btn btn-outline" onclick="closeAdminPanel()">✕ Cerrar</button>
+      </div>
+    </div>
+    <!-- Progress -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text">
+        <span class="status" id="progressStatus">Preparando descarga...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="download-log" id="downloadLog"></div>
+    </div>
+  </div>
+
+  <!-- ===== Tabs: Gallery + Downloads ===== -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('gallery',this)">🎬 Galería</button>
+    <button class="tab-btn" onclick="switchTab('downloads',this)">📥 Descargas</button>
+    <button class="tab-btn" onclick="switchTab('manage',this)">⚙️ Gestionar</button>
+  </div>
+
+  <!-- ===== Tab: Gallery ===== -->
+  <div class="tab-content active" id="tab-gallery">
+    <div class="filter-bar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar videos..." oninput="filterVideos()" />
+      </div>
+      <select id="sortSelect" onchange="filterVideos()">
+        <option value="name">Nombre A-Z</option>
+        <option value="name-desc">Nombre Z-A</option>
+        <option value="newest">Más reciente</option>
+        <option value="oldest">Más antiguo</option>
+        <option value="size">Tamaño ↓</option>
+      </select>
+    </div>
+    <div class="video-grid" id="videoGrid"></div>
+  </div>
+
+  <!-- ===== Tab: Downloads ===== -->
+  <div class="tab-content" id="tab-downloads">
+    <div id="downloadHistory">
+      <div class="empty-state">
+        <div class="empty-icon">📥</div>
+        <h3>Sin descargas aún</h3>
+        <p>Usá el panel de arriba para descargar videos de YouTube.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab: Manage ===== -->
+  <div class="tab-content" id="tab-manage">
+    <div class="status-grid" id="statusGrid">
+      <div class="status-item">
+        <div class="status-dot green"></div>
+        <div><div class="status-label">yt-dlp</div><div class="status-value">Disponible</div></div>
+      </div>
+      <div class="status-item">
+        <div class="status-dot green"></div>
+        <div><div class="status-label">ffmpeg</div><div class="status-value">Disponible</div></div>
+      </div>
+      <div class="status-item">
+        <div class="status-dot green"></div>
+        <div><div class="status-label">Directorio videos</div><div class="status-value">data/videos/</div></div>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-outline btn-sm" onclick="convertAll()">🔄 Optimizar todos para RPi</button>
+      <button class="btn btn-danger btn-sm" style="margin-left:8px" onclick="if(confirm('¿Eliminar TODOS los videos?'))deleteAll()">🗑️ Eliminar todos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Video Player Modal ===== -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Reproduciendo</h3>
+      <button class="modal-close" onclick="closePlayer()">✕</button>
+    </div>
+    <div class="modal-body">
+      <video id="player" controls playsinline preload="metadata"></video>
+      <div class="modal-info">
+        <h4 id="modalInfoTitle"></h4>
+        <p class="meta">
+          <span id="modalSize"></span>
+          <span id="modalType" style="margin-left:12px"></span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Plyr JS (inline, offline) ===== -->
+<script>
+// ===== Plyr Core (minimal inline player controller) =====
+(function(){'use strict';
+class Plyr{
+  constructor(el,opts){
+    if(typeof el==='string')el=document.querySelector(el);
+    if(!el||!el.tagName||!['VIDEO','AUDIO'].includes(el.tagName))return;
+    this.media=el;this.options=Object.assign({},opts);
+    this.elements={container:null,controls:null};
+    this._build();
+    this._bind();
+  }
+  _build(){
+    const m=this.media;
+    const wrapper=document.createElement('div');
+    wrapper.className='plyr plyr--video plyr--fullui';
+    wrapper.style.position='relative';
+    m.parentNode.insertBefore(wrapper,m);
+    wrapper.appendChild(m);
+    this.elements.container=wrapper;
+    // Controls
+    const c=document.createElement('div');c.className='plyr__controls';
+    c.innerHTML=
+      '<button class="plyr__control" data-plyr="play" aria-label="Reproducir"><svg viewBox="0 0 18 18"><polygon points="5,3 5,15 15,9" fill="currentColor"/></svg></button>'+
+      '<div class="plyr__time plyr__time--current">0:00</div>'+
+      '<div class="plyr__progress__container"><div class="plyr__progress">'+
+      '<input type="range" min="0" max="1" step="any" value="0" aria-label="Progreso">'+
+      '<progress class="plyr__progress__buffer" value="0" max="1">0%</progress></div></div>'+
+      '<div class="plyr__time plyr__time--duration">0:00</div>'+
+      '<div class="plyr__volume"><input type="range" min="0" max="1" step=".05" value="1" aria-label="Volumen"></div>'+
+      '<button class="plyr__control" data-plyr="fullscreen" aria-label="Pantalla completa"><svg viewBox="0 0 18 18"><path d="M4,4h4V2H2v6h2V4z M14,4v4h2V2h-6v2H14z M4,14H2v-4H0v6h6v-2H4z M14,14h-2v2h6v-6h-2V14z" fill="currentColor"/></svg></button>';
+    m.parentNode.appendChild(c);
+    this.elements.controls=c;
+    // References
+    this.elements.playBtn=c.querySelector('[data-plyr="play"]');
+    this.elements.currentTime=c.querySelector('.plyr__time--current');
+    this.elements.duration=c.querySelector('.plyr__time--duration');
+    this.elements.progress=c.querySelector('.plyr__progress input');
+    this.elements.buffer=c.querySelector('.plyr__progress__buffer');
+    this.elements.volume=c.querySelector('.plyr__volume input');
+    this.elements.fsBtn=c.querySelector('[data-plyr="fullscreen"]');
+    m.removeAttribute('controls');
+  }
+  _bind(){
+    const m=this.media;
+    // Play
+    this.elements.playBtn.addEventListener('click',()=>{m.paused?m.play():m.pause()});
+    m.addEventListener('play',()=>{this.elements.playBtn.innerHTML='<svg viewBox="0 0 18 18"><rect x="5" y="3" width="3" height="12" fill="currentColor"/><rect x="10" y="3" width="3" height="12" fill="currentColor"/></svg>'});
+    m.addEventListener('pause',()=>{this.elements.playBtn.innerHTML='<svg viewBox="0 0 18 18"><polygon points="5,3 5,15 15,9" fill="currentColor"/></svg>'});
+    // Time
+    m.addEventListener('loadedmetadata',()=>{this.elements.duration.textContent=this._fmt(m.duration)});
+    m.addEventListener('timeupdate',()=>{
+      this.elements.currentTime.textContent=this._fmt(m.currentTime);
+      if(m.duration)this.elements.progress.value=m.currentTime/m.duration;
+    });
+    // Progress seek
+    this.elements.progress.addEventListener('input',()=>{if(m.duration)m.currentTime=parseFloat(this.elements.progress.value)*m.duration});
+    // Buffer
+    m.addEventListener('progress',()=>{
+      if(m.buffered&&m.buffered.length&&m.duration){
+        this.elements.buffer.value=m.buffered.end(m.buffered.length-1)/m.duration;
+      }
+    });
+    // Volume
+    this.elements.volume.addEventListener('input',()=>{m.volume=parseFloat(this.elements.volume.value);m.muted=m.volume===0});
+    // Fullscreen
+    this.elements.fsBtn.addEventListener('click',()=>{
+      const el=this.elements.container;
+      if(!document.fullscreenElement){el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen?el.webkitRequestFullscreen():null}
+      else{document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen?document.webkitExitFullscreen():null}
+    });
+    // Keyboard
+    m.addEventListener('click',()=>{m.paused?m.play():m.pause()});
+    // Hide controls on inactivity
+    let timer;
+    const show=()=>{this.elements.container.classList.remove('plyr--hide-controls');clearTimeout(timer);timer=setTimeout(()=>{if(!m.paused)this.elements.container.classList.add('plyr--hide-controls')},3000)};
+    this.elements.container.addEventListener('mousemove',show);
+    this.elements.container.addEventListener('mouseenter',show);
+    this.elements.container.addEventListener('mouseleave',()=>{if(!m.paused)this.elements.container.classList.add('plyr--hide-controls')});
+    show();
+  }
+  _fmt(s){const m=Math.floor(s/60);const sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec}
+}
+window.Plyr=Plyr;
+})();
+</script>
+
+<script>
+// ===== EduConect Videos App =====
+const STATE={videos:[],downloads:[],player:null,downloading:false};
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded',()=>{
+  refreshGallery();
+  checkTools();
+  loadDownloadHistory();
+});
+
+// ===== API calls =====
+async function apiGet(endpoint){
+  const r=await fetch(endpoint);if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+async function apiPost(endpoint,body){
+  const r=await fetch(endpoint,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+
+// ===== Gallery =====
+async function refreshGallery(){
+  try{
+    const data=await apiGet('/api/videos');
+    STATE.videos=data.videos||[];
+    renderGallery();
+    updateStats();
+  }catch(e){
+    document.getElementById('videoGrid').innerHTML=
+      `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error al cargar videos</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function renderGallery(){
+  const grid=document.getElementById('videoGrid');
+  const videos=getFilteredVideos();
+  if(videos.length===0){
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🎬</div><h3>No hay videos</h3><p>Descargá videos educativos desde YouTube usando el panel de administración.</p></div>`;
+    return;
+  }
+  grid.innerHTML=videos.map(v=>{
+    const size=formatSize(v.size);
+    const duration=v.duration||'—';
+    const type=v.type||'mp4';
+    const title=v.title||v.id||'Video';
+    return `<div class="video-card" onclick="playVideo('${v.file||v.url}','${escapeHtml(title)}','${size}','${type}')">
+      <div class="video-thumb">
+        <span class="play-icon">▶</span>
+        <span class="duration">${duration}</span>
+        <span class="format-badge">${type}</span>
+      </div>
+      <div class="video-info">
+        <h3>${escapeHtml(title)}</h3>
+        <p>${size}</p>
+        <div class="video-meta">
+          <span>📁 ${type.toUpperCase()}</span>
+          <span>📅 —</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterVideos(){
+  renderGallery();
+}
+
+function getFilteredVideos(){
+  let v=[...STATE.videos];
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  if(q)v=v.filter(x=>(x.title||x.id||'').toLowerCase().includes(q));
+  const sort=document.getElementById('sortSelect').value;
+  v.sort((a,b)=>{
+    const ta=(a.title||a.id||'').toLowerCase();
+    const tb=(b.title||b.id||'').toLowerCase();
+    switch(sort){
+      case 'name':return ta.localeCompare(tb);
+      case 'name-desc':return tb.localeCompare(ta);
+      case 'size':return (b.size||0)-(a.size||0);
+      case 'newest':return (b.mtime||0)-(a.mtime||0);
+      default:return ta.localeCompare(tb);
+    }
+  });
+  return v;
+}
+
+function updateStats(){
+  const v=STATE.videos;
+  document.getElementById('totalVideos').textContent=v.length;
+  const totalSize=v.reduce((s,x)=>s+(x.size||0),0);
+  document.getElementById('totalSize').textContent=formatSize(totalSize);
+  document.getElementById('serverStatus').textContent='✅ Servidor Local';
+}
+
+// ===== Player Modal =====
+function playVideo(file,title,size,type){
+  const url=file.startsWith('/')?file:'/videos/'+file;
+  const modal=document.getElementById('playerModal');
+  const video=document.getElementById('player');
+  video.src=url;
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalInfoTitle').textContent=title;
+  document.getElementById('modalSize').textContent=size;
+  document.getElementById('modalType').textContent=(type||'mp4').toUpperCase();
+  modal.classList.add('active');
+  video.load();
+  // Initialize player controls
+  if(STATE.player&&STATE.player.media)STATE.player.media.pause();
+  setTimeout(()=>{
+    STATE.player=new Plyr(video);
+    video.play().catch(()=>{});
+  },100);
+  // Close on overlay click
+  modal.onclick=(e)=>{if(e.target===modal)closePlayer()};
+  // Keyboard escape
+  document.addEventListener('keydown',_modalEsc);
+}
+
+function closePlayer(){
+  document.getElementById('playerModal').classList.remove('active');
+  if(STATE.player&&STATE.player.media){STATE.player.media.pause();STATE.player.media.src=''}
+  document.removeEventListener('keydown',_modalEsc);
+}
+function _modalEsc(e){if(e.key==='Escape')closePlayer()}
+
+// ===== Admin Panel =====
+function openAdminPanel(){
+  document.getElementById('adminPanel').style.display='block';
+  document.getElementById('adminPanel').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('url-input').focus();
+}
+function closeAdminPanel(){
+  document.getElementById('adminPanel').style.display='none';
+}
+
+async function startDownload(){
+  const url=document.getElementById('url-input').value.trim();
+  if(!url){alert('Por favor, pegá una URL de YouTube');return}
+  if(STATE.downloading){alert('Ya hay una descarga en progreso');return}
+
+  const quality=document.getElementById('quality-select').value;
+  const btn=document.getElementById('downloadBtn');
+  const log=document.getElementById('downloadLog');
+  const pc=document.getElementById('progressContainer');
+  const fill=document.getElementById('progressFill');
+  const status=document.getElementById('progressStatus');
+  const pct=document.getElementById('progressPercent');
+
+  STATE.downloading=true;btn.disabled=true;
+  pc.classList.add('active');log.classList.add('active');
+  log.innerHTML='';fill.style.width='0%';
+  status.textContent='Iniciando descarga...';status.className='status downloading';
+
+  addLogLine('info',`Iniciando descarga: ${url}`);
+  addLogLine('info',`Calidad: ${quality}p`);
+
+  try{
+    // Simulate progress for feedback
+    let progress=0;
+    const interval=setInterval(()=>{
+      progress=Math.min(progress+Math.random()*5,90);
+      fill.style.width=progress+'%';
+      pct.textContent=Math.round(progress)+'%';
+    },800);
+
+    const result=await apiPost('/api/videos/descargar',{url,quality});
+
+    clearInterval(interval);
+    fill.style.width='100%';pct.textContent='100%';
+    status.textContent='✅ Descarga completada';status.className='status done';
+
+    addLogLine('success',`Video descargado: ${result.file||result.title||'desconocido'}`);
+
+    if(result.file){
+      addLogLine('info','Optimizando para Raspberry Pi...');
+      try{
+        const conv=await apiPost('/api/videos/convertir',{filename:result.file});
+        addLogLine('success',`Optimización completada: ${conv.file||result.file}`);
+      }catch(e2){
+        addLogLine('error',`Optimización: ${e2.message}`);
+      }
+    }
+
+    addLogLine('success','✅ Proceso completado');
+    refreshGallery();
+    addDownloadToHistory(url,quality,new Date().toISOString(),'completado');
+  }catch(e){
+    fill.style.width='100%';fill.style.background='#c0392b';
+    status.textContent='❌ Error: '+e.message;status.className='status error';
+    addLogLine('error','Error: '+e.message);
+    addDownloadToHistory(url,quality,new Date().toISOString(),'error: '+e.message);
+  }finally{
+    STATE.downloading=false;btn.disabled=false;
+    document.getElementById('url-input').value='';
+  }
+}
+
+function addLogLine(type,msg){
+  const log=document.getElementById('downloadLog');
+  const line=document.createElement('div');
+  line.className='log-line '+type;
+  line.textContent='▸ '+msg;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ===== Download History =====
+function addDownloadToHistory(url,quality,date,status){
+  const h=JSON.parse(localStorage.getItem('educonect_downloads')||'[]');
+  h.unshift({url,quality,date,status});
+  if(h.length>50)h.length=50;
+  localStorage.setItem('educonect_downloads',JSON.stringify(h));
+  loadDownloadHistory();
+}
+function loadDownloadHistory(){
+  const h=JSON.parse(localStorage.getItem('educonect_downloads')||'[]');
+  STATE.downloads=h;
+  const container=document.getElementById('downloadHistory');
+  if(h.length===0){
+    container.innerHTML=`<div class="empty-state"><div class="empty-icon">📥</div><h3>Sin descargas aún</h3><p>Usá el panel de arriba para descargar videos de YouTube.</p></div>`;
+    return;
+  }
+  container.innerHTML='<h3 style="margin-bottom:12px;font-size:1rem;color:var(--txt)">Historial de descargas</h3>'+
+    h.map((d,i)=>`<div class="video-card" style="cursor:default;margin-bottom:8px;border-radius:var(--radius);padding:12px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:1.5rem">${d.status==='completado'?'✅':'❌'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.9rem;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(d.url)}</div>
+        <div style="font-size:.8rem;color:var(--txt-muted)">${d.quality}p · ${new Date(d.date).toLocaleString('es-ES')}</div>
+      </div>
+      <span style="font-size:.8rem;color:${d.status==='completado'?'var(--secondary)':'#c0392b'};font-weight:600">${d.status}</span>
+    </div>`).join('');
+}
+
+// ===== Manage =====
+async function checkTools(){
+  // These are visual indicators - we assume tools are available
+  // Real check would need a backend endpoint
+}
+async function convertAll(){
+  if(STATE.videos.length===0){alert('No hay videos para optimizar');return}
+  if(!confirm(`¿Optimizar ${STATE.videos.length} videos para Raspberry Pi?`))return;
+  let ok=0,fail=0;
+  for(const v of STATE.videos){
+    try{
+      await apiPost('/api/videos/convertir',{filename:v.file||v.url.replace('/videos/','')});
+      ok++;
+    }catch(e){fail++;}
+  }
+  alert(`✅ ${ok} optimizados, ❌ ${fail} errores`);
+  refreshGallery();
+}
+async function deleteAll(){
+  // This would need a DELETE endpoint - for now just UI
+  alert('Función de eliminar todos requiere endpoint DELETE /api/videos/*');
+}
+
+// ===== Tabs =====
+function switchTab(tabId,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== Utilities =====
+function formatSize(bytes){
+  if(!bytes||bytes===0)return '—';
+  const units=['B','KB','MB','GB'];
+  let i=0;let size=bytes;
+  while(size>=1024&&i<units.length-1){size/=1024;i++}
+  return size.toFixed(i>0?1:0)+' '+units[i];
+}
+function escapeHtml(s){
+  const d=document.createElement('div');d.textContent=s;return d.innerHTML;
+}
+</script>
+</body>
+</html>

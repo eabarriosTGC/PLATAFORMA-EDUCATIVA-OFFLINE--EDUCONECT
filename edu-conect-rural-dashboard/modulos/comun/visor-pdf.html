@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor PDF</title>
+<script src="pdfjs/pdf.min.js"></script>
+<style>
+:root {
+  --wayuu-red: #8B1A1A;
+  --wayuu-orange: #D4762A;
+  --wayuu-yellow: #E8B84B;
+  --wayuu-green: #2D6B47;
+  --wayuu-blue: #1A4A6B;
+  --wayuu-brown: #5C3A1E;
+  --bg: #F5F0E8;
+  --text: #2C1810;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.toolbar {
+  background: linear-gradient(135deg, var(--wayuu-red), var(--wayuu-brown));
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolbar button {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toolbar button:hover {
+  background: rgba(255,255,255,0.3);
+  border-color: var(--wayuu-yellow);
+  transform: scale(1.05);
+}
+.toolbar button:active { transform: scale(0.95); }
+.toolbar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+.toolbar .page-indicator {
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.toolbar .page-input {
+  width: 60px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+.toolbar .page-input:focus {
+  outline: none;
+  border-color: var(--wayuu-yellow);
+  background: rgba(255,255,255,0.25);
+}
+.toolbar .separator {
+  width: 2px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  margin: 0 4px;
+}
+.progress-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 200;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.progress-bar-container.active { opacity: 1; }
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--wayuu-yellow), var(--wayuu-orange));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+#viewer-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px;
+  scroll-behavior: smooth;
+}
+.page-wrapper {
+  margin-bottom: 16px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  max-width: 100%;
+}
+.page-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 6px;
+}
+.loading-msg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--wayuu-brown);
+  font-size: 18px;
+}
+.loading-msg .spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid var(--wayuu-yellow);
+  border-top-color: var(--wayuu-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 600px) {
+  .toolbar { padding: 8px 8px; gap: 6px; }
+  .toolbar button { padding: 8px 12px; font-size: 16px; min-width: 42px; min-height: 42px; }
+  .toolbar .separator { display: none; }
+  #viewer-container { padding: 10px 4px; }
+  .page-wrapper { margin-bottom: 10px; }
+}
+@media (min-width: 1200px) {
+  .page-wrapper { max-width: 90%; }
+}
+</style>
+</head>
+<body>
+<div class="progress-bar-container" id="progressBarContainer">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-group">
+    <button id="prevBtn" title="Página anterior">◀</button>
+    <input type="number" class="page-input" id="pageInput" value="1" min="1">
+    <span class="page-indicator">/ <span id="totalPages">0</span></span>
+    <button id="nextBtn" title="Página siguiente">▶</button>
+  </div>
+  <div class="separator"></div>
+  <div class="toolbar-group">
+    <button id="zoomOutBtn" title="Alejar">🔍−</button>
+    <button id="zoomInBtn" title="Acercar">🔍+</button>
+    <button id="fitWidthBtn" title="Ajustar al ancho">⊞</button>
+  </div>
+</div>
+
+<div id="viewer-container"></div>
+
+<div class="loading-msg" id="loadingMsg">
+  <div class="spinner"></div>
+  <div>Cargando PDF...</div>
+</div>
+
+<script>
+(async function() {
+  const params = new URLSearchParams(location.search);
+  const filePath = params.get('file');
+  if (!filePath) {
+    document.getElementById('loadingMsg').innerHTML = '<div style="color:var(--wayuu-red);font-size:20px;">⚠️ Error: No se especificó archivo PDF.<br>Usa ?file=ruta/al/archivo.pdf</div>';
+    return;
+  }
+
+  const container = document.getElementById('viewer-container');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const progressBar = document.getElementById('progressBar');
+  const progressContainer = document.getElementById('progressBarContainer');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageInput = document.getElementById('pageInput');
+  const totalPagesEl = document.getElementById('totalPages');
+  const zoomInBtn = document.getElementById('zoomInBtn');
+  const zoomOutBtn = document.getElementById('zoomOutBtn');
+  const fitWidthBtn = document.getElementById('fitWidthBtn');
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.min.js';
+
+  let pdfDoc = null;
+  let currentScale = 1.2;
+  let renderedPages = new Map();
+  let totalPages = 0;
+  let currentPage = 1;
+  let isRendering = false;
+  let renderQueue = [];
+
+  function updateProgress(pct) {
+    progressContainer.classList.add('active');
+    progressBar.style.width = pct + '%';
+    if (pct >= 100) {
+      setTimeout(() => progressContainer.classList.remove('active'), 600);
+    }
+  }
+
+  function updateNavButtons() {
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+  }
+
+  function renderPage(pageNum) {
+    if (renderedPages.has(pageNum)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      renderQueue.push({ pageNum, resolve, reject });
+      processQueue();
+    });
+  }
+
+  let processing = false;
+  function processQueue() {
+    if (processing || renderQueue.length === 0) return;
+    processing = true;
+    const job = renderQueue.shift();
+    doRenderPage(job.pageNum).then(job.resolve).catch(job.reject).finally(() => {
+      processing = false;
+      processQueue();
+    });
+  }
+
+  async function doRenderPage(pageNum) {
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: currentScale });
+    const wrapper = document.createElement('div');
+    wrapper.className = 'page-wrapper';
+    wrapper.id = 'page-' + pageNum;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+
+    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    renderedPages.set(pageNum, { wrapper, canvas, viewport, page });
+    updateProgress(Math.round((renderedPages.size / totalPages) * 100));
+    page.cleanup();
+  }
+
+  function scrollToPage(pageNum) {
+    const el = document.getElementById('page-' + pageNum);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function getCurrentVisiblePage() {
+    const wrappers = container.querySelectorAll('.page-wrapper');
+    let best = 1;
+    let bestDist = Infinity;
+    const containerRect = container.getBoundingClientRect();
+    wrappers.forEach(w => {
+      const rect = w.getBoundingClientRect();
+      const dist = Math.abs(rect.top - containerRect.top);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = parseInt(w.id.replace('page-', ''));
+      }
+    });
+    return best;
+  }
+
+  async function loadPDF() {
+    try {
+      loadingMsg.style.display = 'block';
+      pdfDoc = await pdfjsLib.getDocument({
+        url: filePath,
+        useWorkerFetch: false,
+        useSystemFonts: true,
+        disableRange: false,
+        disableStream: false,
+      }).promise;
+      totalPages = pdfDoc.numPages;
+      totalPagesEl.textContent = totalPages;
+      pageInput.max = totalPages;
+      loadingMsg.style.display = 'none';
+
+      for (let i = 1; i <= totalPages; i++) {
+        await renderPage(i);
+      }
+
+      updateNavButtons();
+      scrollToPage(1);
+    } catch (err) {
+      loadingMsg.innerHTML = '<div style="color:var(--wayuu-red);font-size:18px;">⚠️ Error al cargar PDF:<br>' + err.message + '</div>';
+      console.error(err);
+    }
+  }
+
+  async function reRenderAll() {
+    container.innerHTML = '';
+    renderedPages.clear();
+    for (let i = 1; i <= totalPages; i++) {
+      await renderPage(i);
+    }
+    scrollToPage(currentPage);
+  }
+
+  pageInput.addEventListener('change', function() {
+    let p = parseInt(this.value);
+    if (isNaN(p) || p < 1) p = 1;
+    if (p > totalPages) p = totalPages;
+    this.value = p;
+    currentPage = p;
+    scrollToPage(p);
+    updateNavButtons();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      pageInput.value = currentPage;
+      scrollToPage(currentPage);
+      updateNavButtons();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      pageInput.value = currentPage;
+      scrollToPage(currentPage);
+      updateNavButtons();
+    }
+  });
+
+  container.addEventListener('scroll', () => {
+    const visible = getCurrentVisiblePage();
+    if (visible !== currentPage) {
+      currentPage = visible;
+      pageInput.value = currentPage;
+      updateNavButtons();
+    }
+  });
+
+  zoomInBtn.addEventListener('click', async () => {
+    currentScale = Math.min(currentScale + 0.2, 3.0);
+    await reRenderAll();
+    scrollToPage(currentPage);
+  });
+
+  zoomOutBtn.addEventListener('click', async () => {
+    currentScale = Math.max(currentScale - 0.2, 0.4);
+    await reRenderAll();
+    scrollToPage(currentPage);
+  });
+
+  fitWidthBtn.addEventListener('click', async () => {
+    const vp = await pdfDoc.getPage(1).then(p => p.getViewport({ scale: 1 }));
+    const containerWidth = container.clientWidth - 40;
+    currentScale = containerWidth / vp.width;
+    currentScale = Math.round(currentScale * 100) / 100;
+    await reRenderAll();
+    scrollToPage(currentPage);
+  });
+
+  await loadPDF();
+})();
+</script>
+</body>
+</html>

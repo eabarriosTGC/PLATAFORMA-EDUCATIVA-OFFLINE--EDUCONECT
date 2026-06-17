@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SAL-401: Manos Limpias, Cuerpo Sano | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#E3F2FD,#BBDEFB,#90CAF9);min-height:100vh}
+.container{max-width:700px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+.header .sub{color:var(--tierra-clara);font-size:0.9rem}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--azul);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:20px;color:var(--tierra)}
+
+.manos-display{text-align:center;font-size:5rem;margin:20px 0;min-height:6rem;transition:transform 0.3s}
+.manos-display.clean{animation:popIn 0.5s ease-out}
+
+.pasos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin:20px 0}
+.paso-btn{background:white;border:3px solid #ddd;border-radius:20px;padding:18px 12px;cursor:pointer;transition:all 0.3s;text-align:center;font-family:inherit;position:relative;touch-action:manipulation}
+.paso-btn:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.1)}
+.paso-btn .icono{font-size:2.8rem;display:block;margin-bottom:6px}
+.paso-btn .nombre{font-size:0.9rem;font-weight:bold;color:var(--tierra)}
+.paso-btn.activo{border-color:var(--azul);background:#E3F2FD;transform:scale(1.05)}
+.paso-btn.completado{border-color:var(--verde);background:#E8F5E9;cursor:default;opacity:0.85}
+.paso-btn.completado::after{content:'✅';position:absolute;top:-8px;right:-8px;font-size:1.2rem}
+.paso-btn.shake{animation:shake 0.4s ease-out}
+.paso-btn.usado{opacity:0.5;pointer-events:none}
+
+.feedback{text-align:center;font-size:1.2rem;min-height:3rem;padding:12px;font-weight:bold}
+.feedback.exito{color:var(--verde)}
+.feedback.error{color:var(--rojo)}
+
+.resultado{text-align:center;padding:30px 20px;display:none}
+.resultado.visible{display:block}
+.resultado .emoji-g{font-size:5rem}
+.resultado h2{color:var(--tierra);margin:10px 0}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.3)}to{opacity:1;transform:scale(1)}}
+
+@media(max-width:600px){
+  .pasos-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .paso-btn{padding:14px 8px}
+  .paso-btn .icono{font-size:2.2rem}
+  .manos-display{font-size:4rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🩺 Manos Limpias, Cuerpo Sano</h1>
+    <div class="sub">Salud e Higiene · Prevención de enfermedades</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion" id="instruccion">
+    🦠 Tus manos tienen bacterias invisibles. Toca los pasos en el <strong>orden correcto</strong> para lavarlas bien.
+  </div>
+
+  <div class="manos-display" id="manosDisplay">🦠🤲🦠</div>
+
+  <div class="pasos-grid" id="pasosGrid"></div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="resultado" id="resultado">
+    <div class="emoji-g">✨🙌✨</div>
+    <h2>¡Manos Limpias!</h2>
+    <p style="color:var(--tierra);font-size:1.1rem">Sin bacterias, no hay enfermedades. Recuerda lavarte las manos antes de comer y después de ir al baño.</p>
+    <div style="margin-top:15px;font-size:2rem">🏅</div>
+    <p style="font-weight:bold;color:var(--verde);margin-top:8px">¡Eres un Guardián de la Salud!</p>
+    <div style="margin-top:15px">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>
+      <a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var pasos = [
+  {id:1, icono:'💧', nombre:'Mojar', desc:'Mójate las manos con agua'},
+  {id:2, icono:'🧼', nombre:'Enjabonar', desc:'Aplica jabón y haz espuma'},
+  {id:3, icono:'🤲', nombre:'Frotar', desc:'Frota entre dedos, palmas y uñas'},
+  {id:4, icono:'🚿', nombre:'Enjuagar', desc:'Enjuaga con agua limpia'},
+  {id:5, icono:'🧴', nombre:'Secar', desc:'Seca con una toalla limpia'}
+];
+
+var pasoEsperado = 1;
+var pasoActual = 0;
+var progreso = 0;
+
+function init(){
+  renderizarPasos();
+  actualizarProgreso();
+}
+
+function renderizarPasos(){
+  var grid = document.getElementById('pasosGrid');
+  grid.innerHTML = '';
+
+  var desordenados = pasos.slice().sort(function(){ return Math.random() - 0.5; });
+
+  desordenados.forEach(function(paso){
+    var btn = document.createElement('button');
+    btn.className = 'paso-btn';
+    btn.dataset.id = paso.id;
+    btn.innerHTML = '<span class="icono">' + paso.icono + '</span><span class="nombre">' + paso.nombre + '</span>';
+    btn.addEventListener('click', function(){ verificarPaso(paso, this); });
+    grid.appendChild(btn);
+  });
+}
+
+function verificarPaso(paso, btn){
+  if(btn.classList.contains('completado') || btn.classList.contains('usado')) return;
+
+  if(paso.id === pasoEsperado){
+    btn.classList.remove('activo');
+    btn.classList.add('completado');
+    btn.classList.add('usado');
+
+    pasoActual++;
+    pasoEsperado++;
+
+    progreso += 20;
+    actualizarProgreso();
+    guardarProgreso();
+
+    var estados = ['💧🤲💧', '🧼🤲🧼', '🫧👏🫧', '💦🤲💦', '✨🙌✨'];
+    document.getElementById('manosDisplay').textContent = estados[pasoActual - 1] || '✨🙌✨';
+
+    if(pasoActual >= pasos.length){
+      document.getElementById('instruccion').innerHTML = '🎉 <strong>¡Manos limpias!</strong> Sin bacterias no hay dolor de barriga ni enfermedades.';
+      mostrarFeedback('✅ ¡Excelente! Completaste todos los pasos', 'exito');
+      hablar('¡Felicidades! Has aprendido a lavarte las manos correctamente. Sin bacterias no hay enfermedades.');
+      document.getElementById('manosDisplay').classList.add('clean');
+      document.getElementById('resultado').classList.add('visible');
+      guardarDiario();
+    } else {
+      var sig = pasos.find(function(p){ return p.id === pasoEsperado; });
+      mostrarFeedback('✅ ' + paso.nombre + ' — ' + paso.desc, 'exito');
+      hablar('Muy bien, paso completado. ' + paso.desc + '. Ahora el siguiente paso: ' + sig.nombre);
+      document.getElementById('instruccion').innerHTML = '👍 <strong>Siguiente:</strong> <span style="color:var(--azul)">' + sig.icono + ' ' + sig.nombre + '</span> — ' + sig.desc;
+    }
+  } else {
+    btn.classList.add('shake');
+    setTimeout(function(){ btn.classList.remove('shake'); }, 500);
+    mostrarFeedback('❌ Ese no es el paso correcto. Piensa bien qué debes hacer primero.', 'error');
+    hablar('Ese no es el paso correcto. Primero debes ' + pasos.find(function(p){ return p.id === pasoEsperado; }).nombre.toLowerCase() + '.');
+  }
+}
+
+function mostrarFeedback(msg, tipo){
+  var fb = document.getElementById('feedback');
+  fb.textContent = msg;
+  fb.className = 'feedback ' + tipo;
+  clearTimeout(fb._timeout);
+  fb._timeout = setTimeout(function(){ fb.textContent = ''; fb.className = 'feedback'; }, 3500);
+}
+
+function actualizarProgreso(){
+  var pct = Math.min(100, progreso);
+  document.getElementById('progresoFill').style.width = pct + '%';
+  document.getElementById('progresoPct').textContent = pct + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('sal401_progreso', progreso); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('sal-401', 'modulo_completado', { puntos: 100, estrellas: 3 }, 'Manos Limpias, Cuerpo Sano', '🩺');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

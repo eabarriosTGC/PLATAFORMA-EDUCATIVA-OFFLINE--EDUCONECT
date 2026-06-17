@@ -1,0 +1,29 @@
+# Rust
+edu-conect-rural-server/target/
+edu-conect-rural-server/data/
+
+# Node
+edu-conect-rural-dashboard/node_modules/
+edu-conect-rural-dashboard/.next/
+edu-conect-rural-dashboard/out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local state
+.atl/
+.pi/
+.~lock*
+
+# Temp files
+*.zip
+*.pdf
+*.zim
+*.db
+*.db-wal
+*.db-shm

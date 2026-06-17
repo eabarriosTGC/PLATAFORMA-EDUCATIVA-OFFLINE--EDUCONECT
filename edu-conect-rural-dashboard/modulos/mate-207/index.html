@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>MATE-207: Tienda Artesanal | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root {
+  --tienda: #D4A843;
+  --lana: #F48FB1;
+  --tinte: #7E57C2;
+  --cuenta: #26C6DA;
+  --producto: #66BB6A;
+  --billete: #4CAF50;
+  --moneda: #FFD700;
+}
+.tienda-header{display:flex;align-items:center;gap:15px;margin-bottom:15px;flex-wrap:wrap}
+.tienda-info{flex:1;min-width:200px}
+.tienda-nombre{font-size:1.3rem;font-weight:bold;color:var(--tierra);display:flex;align-items:center;gap:8px}
+.tienda-budget{
+  background:var(--wayuu-oro);
+  color:var(--tierra);
+  padding:8px 18px;
+  border-radius:15px;
+  font-weight:bold;
+  font-size:1.2rem;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 3px 10px rgba(212,168,67,0.4);
+  animation:pulse 2s ease-in-out infinite;
+}
+.inventario{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0;
+}
+.inv-item{
+  background:var(--blanco);
+  border:2px solid var(--arena);
+  border-radius:12px;
+  padding:8px 12px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-weight:bold;
+  font-size:0.9rem;
+  transition:all 0.3s;
+}
+.inv-item .inv-cant{
+  background:var(--arena);
+  border-radius:8px;
+  padding:1px 8px;
+  font-size:0.85rem;
+  color:var(--tierra);
+}
+.inv-item .inv-emoji{font-size:1.3rem}
+
+.tienda-vitrina{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:15px 0;
+  padding:15px;
+  background:linear-gradient(135deg,var(--arena),#FFF8E1);
+  border-radius:16px;
+  border:2px solid var(--wayuu-oro);
+}
+.producto-card{
+  text-align:center;
+  padding:10px 15px;
+  background:var(--blanco);
+  border-radius:12px;
+  border:2px solid #e0d5c5;
+  min-width:100px;
+  transition:all 0.3s;
+}
+.producto-card:hover{border-color:var(--wayuu-oro);transform:scale(1.03)}
+.producto-card .prod-emoji{font-size:2.5rem;margin-bottom:4px}
+.producto-card .prod-nombre{font-weight:bold;font-size:0.85rem;color:var(--tierra)}
+.producto-card .prod-precio{font-size:0.8rem;color:var(--atardecer);font-weight:bold}
+.producto-card .prod-receta{font-size:0.7rem;color:#999;margin-top:2px}
+
+.caja-registradora{
+  background:linear-gradient(135deg,#5D4037,#3E2723);
+  border-radius:16px;
+  padding:15px;
+  margin:12px 0;
+  color:white;
+  text-align:center;
+  border:3px solid var(--wayuu-oro);
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+}
+.caja-registradora .caja-pantalla{
+  background: #1a1a1a;
+  border-radius:8px;
+  padding:12px 18px;
+  margin:8px auto;
+  max-width:300px;
+  font-family:'Courier New',monospace;
+  font-size:1.4rem;
+  color:#7FFF00;
+  border:2px solid #333;
+  text-align:right;
+  letter-spacing:2px;
+}
+.caja-registradora .caja-label{font-size:0.85rem;opacity:0.8;margin-bottom:4px}
+.caja-registradora .caja-total{font-size:1.8rem;font-weight:bold;color:var(--wayuu-oro);margin:6px 0}
+.caja-reg-cinta{
+  font-family:'Courier New',monospace;
+  font-size:0.8rem;
+  color:#aaa;
+  margin-top:6px;
+  border-top:1px dashed #555;
+  padding-top:6px;
+  max-height:50px;
+  overflow:hidden;
+}
+
+.nivel-badge-completo{
+  background:var(--verde);
+  color:white;
+  padding:4px 12px;
+  border-radius:12px;
+  font-size:0.8rem;
+  font-weight:bold;
+}
+
+.desafio-area{
+  background:var(--blanco);
+  border-radius:16px;
+  padding:18px;
+  margin:12px 0;
+  border:2px solid var(--arena);
+  min-height:120px;
+}
+.desafio-pregunta{
+  font-size:1.1rem;
+  color:var(--texto);
+  margin-bottom:12px;
+  line-height:1.6;
+}
+.desafio-pregunta strong{color:var(--atardecer)}
+.desafio-input{
+  width:120px;
+  height:48px;
+  font-size:1.5rem;
+  text-align:center;
+  border:3px dashed var(--wayuu-oro);
+  border-radius:12px;
+  font-weight:bold;
+  outline:none;
+  background:var(--blanco);
+  font-family:var(--fuente);
+  margin-right:8px;
+}
+.desafio-input:focus{border-color:var(--atardecer);box-shadow:0 0 8px rgba(224,122,95,0.3)}
+.desafio-input.correcto{border-color:var(--verde);background:#E8F5E9;border-style:solid}
+.desafio-input.incorrecto{border-color:var(--rojo);background:#FFEBEE;border-style:solid}
+.desafio-input:disabled{opacity:0.6}
+.desafio-feedback{
+  text-align:center;
+  min-height:30px;
+  font-weight:bold;
+  font-size:1rem;
+  margin-top:8px;
+}
+.desafio-num{
+  font-size:0.9rem;
+  color:var(--tierra-clara);
+  margin-bottom:6px;
+  font-weight:bold;
+}
+.desafio-fila{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.vitrina-materials{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin:12px 0;
+  padding:12px;
+  background:var(--blanco);
+  border-radius:12px;
+  border:2px solid #e0d5c5;
+}
+.mat-item{
+  text-align:center;
+  min-width:80px;
+  padding:8px;
+  border-radius:10px;
+  transition:all 0.3s;
+}
+.mat-item .mat-emoji{font-size:2rem}
+.mat-item .mat-nombre{font-weight:bold;font-size:0.8rem;color:var(--tierra)}
+.mat-item .mat-precio{font-size:0.75rem;color:var(--atardecer);font-weight:bold}
+.mat-item .mat-cant{font-size:0.8rem;color:var(--azul);font-weight:bold}
+
+.estrellas-nivel{
+  display:flex;
+  gap:4px;
+  justify-content:center;
+  margin:8px 0;
+}
+.estrellas-nivel .estrella{font-size:1.6rem}
+
+.pasos-nivel{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:8px 0;
+}
+.paso-dot{
+  width:28px;height:28px;
+  border-radius:50%;
+  background:#e0d5c5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.8rem;
+  font-weight:bold;
+  transition:all 0.3s;
+}
+.paso-dot.activo{background:var(--atardecer);color:white;transform:scale(1.15)}
+.paso-dot.completado{background:var(--verde);color:white}
+
+.resultado-nivel{
+  background:var(--blanco);
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  border:2px solid var(--arena);
+  margin:12px 0;
+}
+.resultado-nivel .rn-emoji{font-size:3rem}
+.resultado-nivel .rn-titulo{font-weight:bold;font-size:1.1rem;color:var(--tierra);margin:6px 0}
+.resultado-nivel .rn-ganancia{font-size:1.5rem;color:var(--verde);font-weight:bold}
+.resultado-nivel .rn-estrellas{font-size:1.5rem;margin:6px 0}
+
+.cuenta-pasos{
+  display:flex;
+  justify-content:center;
+  gap:5px;
+  margin:6px 0;
+}
+.cuenta-btn{
+  width:36px;height:36px;
+  border-radius:50%;
+  border:2px solid var(--arena-oscura);
+  background:var(--blanco);
+  font-size:1.2rem;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;
+  transition:all 0.2s;
+}
+.cuenta-btn:hover{background:var(--arena);border-color:var(--wayuu-oro)}
+
+.cambio-moneda{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:8px 0;
+}
+.cambio-moneda .moneda-billete{
+  font-size:2.2rem;
+  animation:flotar 2s ease-in-out infinite;
+}
+
+.caja-abierta{
+  animation:popIn 0.4s ease-out;
+}
+
+@media(max-width:600px){
+  .tienda-header{flex-direction:column;text-align:center}
+  .tienda-budget{font-size:1rem;padding:6px 14px}
+  .inventario{justify-content:center}
+  .producto-card{min-width:80px}
+  .producto-card .prod-emoji{font-size:2rem}
+  .desafio-input{width:100px;height:42px;font-size:1.3rem}
+  .vitrina-materials{gap:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+ <div class="sol">☀️</div>
+ <h1>🧶 Tienda Artesanal Wayuu</h1>
+ <span class="grado">5° Grado · Matemáticas · MATE-207</span>
+ <div class="deco-line">🧶🎨📿🎒🛏️🟤</div>
+</div>
+
+<div class="progreso-wrap">
+ <span class="progreso-label">📊 Progreso</span>
+ <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+ <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 1: BIENVENIDA                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card activo" id="pantalla1">
+ <h2><span class="icono">🏪</span> Bienvenido a tu Tienda Artesanal</h2>
+ <div class="bienvenida-wrap">
+  <div class="icono-grande">🧶</div>
+  <p class="frase">¡Administra tu propia tienda de artesanías Wayuu!</p>
+  <p style="color:var(--tierra-clara);margin:8px 0;line-height:1.6">
+   En La Guajira, las artesanas wayuu tejen hermosas mochilas, pulseras, chinchorros y mantas usando lana, tintes naturales y cuentas de colores.
+   En este juego, tú serás el dueño de una tienda artesanal. <strong>Compra materiales, teje productos y véndelos</strong> en el mercado.
+   ¡Usa las matemáticas para calcular precios, ganancias y vueltas!
+  </p>
+
+  <div class="vitrina-materials">
+   <div class="mat-item"><div class="mat-emoji">🧶</div><div class="mat-nombre">Lana</div></div>
+   <div class="mat-item"><div class="mat-emoji">🎨</div><div class="mat-nombre">Tintes</div></div>
+   <div class="mat-item"><div class="mat-emoji">📿</div><div class="mat-nombre">Cuentas</div></div>
+   <div class="mat-item"><div class="mat-emoji">🎒</div><div class="mat-nombre">Mochilas</div></div>
+   <div class="mat-item"><div class="mat-emoji">🫳</div><div class="mat-nombre">Pulseras</div></div>
+   <div class="mat-item"><div class="mat-emoji">🛏️</div><div class="mat-nombre">Chinchorros</div></div>
+  </div>
+
+  <div class="tienda-vitrina" style="font-size:0.9rem;color:var(--tierra)">
+   <span><strong>🎯 3 Niveles:</strong></span>
+   <span>🌟 Aprendiz (suma/resta)</span>
+   <span>🌟🌟 Tejedor (multiplicación)</span>
+   <span>🌟🌟🌟 Maestro (ganancias y descuentos)</span>
+  </div>
+
+  <button class="btn btn-primario" id="btnIniciar" style="margin-top:15px;font-size:1.1rem;padding:12px 30px">
+   🚀 ¡Abrir mi tienda!
+  </button>
+  <button class="tts-btn" onclick="hablar('Bienvenido a la Tienda Artesanal Wayuu. Administra tu tienda, compra materiales, teje productos y véndelos en el mercado. Usa las matemáticas para calcular precios y ganancias.')" style="vertical-align:middle;margin-left:10px">🔊</button>
+ </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 2: NIVEL 1 - APRENDIZ                  -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla2" style="display:none">
+ <h2><span class="icono">🌟</span> Nivel 1: Aprendiz <span class="etiqueta-check" id="checkN1" style="display:none">✓ Completado</span></h2>
+ <p style="color:var(--tierra-clara);margin-bottom:10px;font-size:0.9rem">
+  🧶 <strong>Suma y resta</strong> con precios en miles de pesos. Ayuda a manejar tu tienda artesanal.
+ </p>
+
+ <div class="pasos-nivel" id="pasosN1">
+  <div class="paso-dot activo" data-paso="0">1</div>
+  <div class="paso-dot" data-paso="1">2</div>
+  <div class="paso-dot" data-paso="2">3</div>
+  <div class="paso-dot" data-paso="3">4</div>
+  <div class="paso-dot" data-paso="4">5</div>
+  <div class="paso-dot" data-paso="5">6</div>
+ </div>
+
+ <div class="tienda-header">
+  <div class="tienda-info">
+   <div class="tienda-nombre">🏪 Tienda Artesanal</div>
+   <div class="inventario" id="invN1">
+    <span class="inv-item">🧶 Lana <span class="inv-cant" id="invN1Lana">0</span></span>
+    <span class="inv-item">🎨 Tintes <span class="inv-cant" id="invN1Tintes">0</span></span>
+    <span class="inv-item">📿 Cuentas <span class="inv-cant" id="invN1Cuentas">0</span></span>
+   </div>
+  </div>
+  <div class="tienda-budget" id="budgetN1">💰 $ 30.000</div>
+ </div>
+
+ <div class="tienda-vitrina" id="vitrinaN1">
+  <div class="producto-card"><div class="prod-emoji">🫳</div><div class="prod-nombre">Pulsera</div><div class="prod-precio">$15.000</div><div class="prod-receta">1🧶+1📿</div></div>
+  <div class="producto-card"><div class="prod-emoji">🎒</div><div class="prod-nombre">Mochila</div><div class="prod-precio">$25.000</div><div class="prod-receta">2🧶+1🎨</div></div>
+ </div>
+
+ <div class="caja-registradora" id="cajaN1">
+  <div class="caja-label">🧾 Caja Registradora</div>
+  <div class="caja-pantalla" id="cajaDisplayN1">$ 0</div>
+  <div class="caja-reg-cinta" id="cajaCintaN1">⋮ listo para operar ⋮</div>
+ </div>
+
+ <div class="desafio-area" id="desafioN1">
+  <div class="desafio-num" id="desafioNumN1">Pregunta 1 de 6</div>
+  <div class="desafio-pregunta" id="preguntaN1">Cargando...</div>
+  <div class="desafio-fila">
+   <span style="font-weight:bold;color:var(--tierra)">$</span>
+   <input type="number" class="desafio-input" id="inputN1" placeholder="0" min="0">
+   <button class="btn btn-primario" id="btnRespN1">✓ Responder</button>
+  </div>
+  <div class="desafio-feedback" id="fbN1"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnN1Ok" style="display:none">
+   🌟 ¡Nivel completo! Siguiente nivel →
+  </button>
+ </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 3: NIVEL 2 - TEJEDOR                   -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla3" style="display:none">
+ <h2><span class="icono">🌟🌟</span> Nivel 2: Tejedor <span class="etiqueta-check" id="checkN2" style="display:none">✓ Completado</span></h2>
+ <p style="color:var(--tierra-clara);margin-bottom:10px;font-size:0.9rem">
+  🧶 <strong>Multiplicación</strong>: compra múltiples unidades de materiales y calcula costos totales.
+ </p>
+
+ <div class="pasos-nivel" id="pasosN2">
+  <div class="paso-dot activo" data-paso="0">1</div>
+  <div class="paso-dot" data-paso="1">2</div>
+  <div class="paso-dot" data-paso="2">3</div>
+  <div class="paso-dot" data-paso="3">4</div>
+  <div class="paso-dot" data-paso="4">5</div>
+  <div class="paso-dot" data-paso="5">6</div>
+ </div>
+
+ <div class="tienda-header">
+  <div class="tienda-info">
+   <div class="tienda-nombre">🏪 Tienda Artesanal</div>
+   <div class="inventario" id="invN2">
+    <span class="inv-item">🧶 Lana <span class="inv-cant" id="invN2Lana">0</span></span>
+    <span class="inv-item">🎨 Tintes <span class="inv-cant" id="invN2Tintes">0</span></span>
+    <span class="inv-item">📿 Cuentas <span class="inv-cant" id="invN2Cuentas">0</span></span>
+   </div>
+  </div>
+  <div class="tienda-budget" id="budgetN2">💰 $ 80.000</div>
+ </div>
+
+ <div class="tienda-vitrina" id="vitrinaN2">
+  <div class="producto-card"><div class="prod-emoji">🎒</div><div class="prod-nombre">Mochila</div><div class="prod-precio">$30.000</div><div class="prod-receta">2🧶+1📿</div></div>
+  <div class="producto-card"><div class="prod-emoji">🛏️</div><div class="prod-nombre">Chinchorro</div><div class="prod-precio">$45.000</div><div class="prod-receta">2🧶+2🎨</div></div>
+  <div class="producto-card"><div class="prod-emoji">🟤</div><div class="prod-nombre">Manta</div><div class="prod-precio">$55.000</div><div class="prod-receta">3🧶+2🎨</div></div>
+ </div>
+
+ <div class="caja-registradora" id="cajaN2">
+  <div class="caja-label">🧾 Caja Registradora</div>
+  <div class="caja-pantalla" id="cajaDisplayN2">$ 0</div>
+  <div class="caja-reg-cinta" id="cajaCintaN2">⋮ listo para operar ⋮</div>
+ </div>
+
+ <div class="desafio-area" id="desafioN2">
+  <div class="desafio-num" id="desafioNumN2">Pregunta 1 de 6</div>
+  <div class="desafio-pregunta" id="preguntaN2">Cargando...</div>
+  <div class="desafio-fila">
+   <span style="font-weight:bold;color:var(--tierra)">$</span>
+   <input type="number" class="desafio-input" id="inputN2" placeholder="0" min="0">
+   <button class="btn btn-primario" id="btnRespN2">✓ Responder</button>
+  </div>
+  <div class="desafio-feedback" id="fbN2"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnN2Ok" style="display:none">
+   🌟🌟 ¡Nivel completo! Siguiente nivel →
+  </button>
+ </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 4: NIVEL 3 - MAESTRO                   -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla4" style="display:none">
+ <h2><span class="icono">🌟🌟🌟</span> Nivel 3: Maestro Artesano <span class="etiqueta-check" id="checkN3" style="display:none">✓ Completado</span></h2>
+ <p style="color:var(--tierra-clara);margin-bottom:10px;font-size:0.9rem">
+  🧶 <strong>Ganancias, descuentos y cambio</strong>: calcula ganancias, aplica descuentos y da vueltas.
+ </p>
+
+ <div class="pasos-nivel" id="pasosN3">
+  <div class="paso-dot activo" data-paso="0">1</div>
+  <div class="paso-dot" data-paso="1">2</div>
+  <div class="paso-dot" data-paso="2">3</div>
+  <div class="paso-dot" data-paso="3">4</div>
+  <div class="paso-dot" data-paso="4">5</div>
+  <div class="paso-dot" data-paso="5">6</div>
+ </div>
+
+ <div class="tienda-header">
+  <div class="tienda-info">
+   <div class="tienda-nombre">🏪 Tienda Artesanal</div>
+   <div class="inventario" id="invN3">
+    <span class="inv-item">🧶 Lana <span class="inv-cant" id="invN3Lana">0</span></span>
+    <span class="inv-item">🎨 Tintes <span class="inv-cant" id="invN3Tintes">0</span></span>
+    <span class="inv-item">📿 Cuentas <span class="inv-cant" id="invN3Cuentas">0</span></span>
+   </div>
+  </div>
+  <div class="tienda-budget" id="budgetN3">💰 $ 120.000</div>
+ </div>
+
+ <div class="tienda-vitrina" id="vitrinaN3">
+  <div class="producto-card"><div class="prod-emoji">🎒</div><div class="prod-nombre">Mochila</div><div class="prod-precio">$50.000</div><div class="prod-receta">Ganancia: $25.000</div></div>
+  <div class="producto-card"><div class="prod-emoji">🛏️</div><div class="prod-nombre">Chinchorro</div><div class="prod-precio">$70.000</div><div class="prod-receta">Paga con $100.000</div></div>
+  <div class="producto-card"><div class="prod-emoji">🟤</div><div class="prod-nombre">Manta</div><div class="prod-precio">$90.000</div><div class="prod-receta">Ganancia: $50.000</div></div>
+ </div>
+
+ <div class="caja-registradora" id="cajaN3">
+  <div class="caja-label">🧾 Caja Registradora</div>
+  <div class="caja-pantalla" id="cajaDisplayN3">$ 0</div>
+  <div class="caja-reg-cinta" id="cajaCintaN3">⋮ listo para operar ⋮</div>
+ </div>
+
+ <div class="desafio-area" id="desafioN3">
+  <div class="desafio-num" id="desafioNumN3">Pregunta 1 de 6</div>
+  <div class="desafio-pregunta" id="preguntaN3">Cargando...</div>
+  <div class="desafio-fila">
+   <span style="font-weight:bold;color:var(--tierra)">$</span>
+   <input type="number" class="desafio-input" id="inputN3" placeholder="0" min="0">
+   <button class="btn btn-primario" id="btnRespN3">✓ Responder</button>
+  </div>
+  <div class="desafio-feedback" id="fbN3"></div>
+ </div>
+
+ <div style="text-align:center;margin-top:10px">
+  <button class="btn btn-exito" id="btnN3Ok" style="display:none">
+   🏆 ¡Maestro artesano! Ver resultados →
+  </button>
+ </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PANTALLA 5: RESULTADOS                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section class="card" id="pantalla5" style="display:none">
+ <h2><span class="icono">🏆</span> Resultados Finales</h2>
+ <div class="resultados-finales">
+  <div class="estrella" id="estrellaFinal">🏆</div>
+  <div class="puntaje" id="puntajeFinal">0%</div>
+  <p class="mensaje" id="mensajeFinal" style="max-width:500px;margin:10px auto">
+   ¡Completa los 3 niveles para ver tu resultado!
+  </p>
+
+  <div class="resultado-nivel" id="resN1">
+   <div class="rn-emoji">🌟</div>
+   <div class="rn-titulo">Nivel 1: Aprendiz</div>
+   <div class="rn-ganancia" id="rnGan1">💰 $ 0</div>
+   <div class="rn-estrellas" id="rnStars1">⭐ - -</div>
+  </div>
+  <div class="resultado-nivel" id="resN2">
+   <div class="rn-emoji">🌟🌟</div>
+   <div class="rn-titulo">Nivel 2: Tejedor</div>
+   <div class="rn-ganancia" id="rnGan2">💰 $ 0</div>
+   <div class="rn-estrellas" id="rnStars2">⭐ - -</div>
+  </div>
+  <div class="resultado-nivel" id="resN3">
+   <div class="rn-emoji">🌟🌟🌟</div>
+   <div class="rn-titulo">Nivel 3: Maestro</div>
+   <div class="rn-ganancia" id="rnGan3">💰 $ 0</div>
+   <div class="rn-estrellas" id="rnStars3">⭐ - -</div>
+  </div>
+
+  <div class="tienda-vitrina" style="margin:20px 0">
+   <p style="font-size:1.1rem;font-weight:bold;color:var(--tierra)">
+    🧶 Gracias por administrar la Tienda Artesanal Wayuu
+   </p>
+   <p style="color:var(--tierra-clara);font-size:0.9rem;margin-top:6px">
+    Las artesanías wayuu son famosas en todo el mundo por sus colores vibrantes y su tejido tradicional. Cada mochila, pulsera o chinchorro cuenta una historia de la cultura wayuu de La Guajira.
+   </p>
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px">
+   <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+   <a href="/modulos/" class="btn btn-secundario" style="text-decoration:none">← Volver a módulos</a>
+  </div>
+ </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+'use strict';
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function formatearPesos(n){
+ return '$ ' + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// ═══════════ TTS ═══════════
+function hablar(texto){
+ if('speechSynthesis' in window){
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'es-ES';
+  u.rate = 0.9;
+  u.pitch = 1.05;
+  window.speechSynthesis.speak(u);
+ }
+}
+window.hablar = hablar;
+
+// ═══════════ TOAST ═══════════
+function mostrarToast(msg, tipo){
+ const t = document.createElement('div');
+ t.className = 'toast ' + tipo;
+ t.textContent = msg;
+ document.body.appendChild(t);
+ setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';},2500);
+ setTimeout(()=>t.remove(),2800);
+}
+
+// ═══════════ STATE ═══════════
+const NIVELES = [
+ {
+  budget: 30000,
+  materiales: {lana:0, tintes:0, cuentas:0},
+  preguntas: [
+   {txt:'🧶 Compras 1 madeja de <strong>lana</strong> por $5.000. ¿Cuánto dinero te queda en la tienda?', resp:25000, fn:(s)=>{s.budget-=5000;s.materiales.lana+=1;}},
+   {txt:'📿 Compras 1 paquete de <strong>cuentas</strong> por $3.000 y 1 <strong>tintes naturales</strong> por $8.000. ¿Cuánto gastaste en total en esta compra?', resp:11000, fn:(s)=>{s.budget-=11000;s.materiales.cuentas+=1;s.materiales.tintes+=1;}},
+   {txt:'🎒 Tejes 1 <strong>pulsera</strong> (usas 1 lana + 1 cuentas) y la vendes por $15.000. ¿Cuánto dinero tienes ahora?', resp:29000, fn:(s)=>{s.budget+=15000;s.materiales.lana--;s.materiales.cuentas--;}},
+   {txt:'🧶 Compras <strong>2 madejas de lana</strong> a $5.000 cada una. ¿Cuánto pagaste por las 2?', resp:10000, fn:(s)=>{s.budget-=10000;s.materiales.lana+=2;}},
+   {txt:'🎒 Tejes 1 <strong>mochila</strong> (usa 2 lana + 1 tintes) y la vendes por $25.000. ¿Cuánto dinero tienes ahora?', resp:44000, fn:(s)=>{s.budget+=25000;s.materiales.lana-=2;s.materiales.tintes--;}},
+   {txt:'💰 Tu presupuesto inicial era $30.000. Ahora tienes $44.000. ¿Cuánta <strong>ganancia total</strong> obtuviste?', resp:14000, fn:(s)=>{}}
+  ],
+ },
+ {
+  budget: 80000,
+  materiales: {lana:0, tintes:0, cuentas:0},
+  preguntas: [
+   {txt:'🧶 Compras <strong>3 madejas de lana</strong> a $8.000 cada una. ¿Cuánto pagaste en total por la lana? (3 × $8.000)', resp:24000, fn:(s)=>{s.budget-=24000;s.materiales.lana+=3;}},
+   {txt:'📿 Compras <strong>5 paquetes de cuentas</strong> a $5.000 cada uno. ¿Cuánto pagaste? (5 × $5.000)', resp:25000, fn:(s)=>{s.budget-=25000;s.materiales.cuentas+=5;}},
+   {txt:'🎒 Vendes 1 <strong>mochila</strong> en $30.000. Después de comprar materiales, te quedaban $31.000. ¿Cuánto tienes ahora?', resp:61000, fn:(s)=>{s.budget+=30000;}},
+   {txt:'🎨 Compras <strong>2 tintes naturales</strong> a $10.000 cada uno. ¿Cuánto pagaste? (2 × $10.000)', resp:20000, fn:(s)=>{s.budget-=20000;s.materiales.tintes+=2;}},
+   {txt:'🛏️ Vendes 1 <strong>chinchorro</strong> (hamaca) en $45.000. Te quedaban $41.000. ¿Cuánto tienes ahora?', resp:86000, fn:(s)=>{s.budget+=45000;}},
+   {txt:'💰 Tu presupuesto inicial era $80.000. Ahora tienes $86.000. ¿Cuánta <strong>ganancia total</strong> obtuviste?', resp:6000, fn:(s)=>{}}
+  ],
+ },
+ {
+  budget: 120000,
+  materiales: {lana:0, tintes:0, cuentas:0},
+  preguntas: [
+   {txt:'🧶 Compras <strong>2 lana</strong> a $15.000 c/u. Tienes <strong>10% descuento</strong>. Precio normal: $30.000. Descuento: 10% = $3.000. ¿Cuánto pagas?', resp:27000, fn:(s)=>{s.budget-=27000;s.materiales.lana+=2;}},
+   {txt:'🎒 Vendes 1 <strong>mochila</strong> en $50.000. Los materiales te costaron $25.000. ¿Cuál es tu <strong>ganancia</strong>? ($50.000 - $25.000)', resp:25000, fn:(s)=>{s.budget+=50000;}},
+   {txt:'🛏️ Un cliente compra un <strong>chinchorro</strong> de $70.000 y paga con $100.000. ¿Cuánto <strong>cambio</strong> le devuelves? ($100.000 - $70.000)', resp:30000, fn:(s)=>{s.budget+=70000;}},
+   {txt:'📿 Compras <strong>3 cuentas</strong> a $10.000 c/u con <strong>20% descuento</strong>. Normal: $30.000. 20% desc = $6.000. ¿Total a pagar?', resp:24000, fn:(s)=>{s.budget-=24000;s.materiales.cuentas+=3;}},
+   {txt:'🟤 Vendes 1 <strong>manta</strong> en $90.000. Los materiales costaron $40.000. ¿Cuál es tu <strong>ganancia</strong>? ($90.000 - $40.000)', resp:50000, fn:(s)=>{s.budget+=90000;}},
+   {txt:'💰 Vendiste por <strong>$210.000</strong> (mochila $50.000 + chinchorro $70.000 + manta $90.000) y gastaste <strong>$51.000</strong> en materiales. ¿Cuál es tu <strong>ganancia total</strong>? ($210.000 - $51.000)', resp:159000, fn:(s)=>{}}
+  ],
+ }
+];
+
+// ═══════════ GAME STATE ═══════════
+const state = {
+ nivelActual: 0,
+ nivelIdx: [0,0,0], // current question index per level
+ correctas: [0,0,0],
+ completado: [false,false,false],
+ budgetFinal: [0,0,0],
+};
+
+// ═══════════ PROGRESS ═══════════
+function actualizarProgreso(){
+ let c = state.completado.filter(Boolean).length;
+ $('#progresoFill').style.width = (c/3*100)+'%';
+ $('#progresoPct').textContent = Math.round(c/3*100)+'%';
+}
+
+// ═══════════ NAVIGATION ═══════════
+function irAPantalla(n){
+ for(let i=1;i<=5;i++){
+  const el = $('#pantalla'+i);
+  if(el){el.style.display='none';el.classList.remove('activo');}
+ }
+ const t = $('#pantalla'+n);
+ if(t){t.style.display='block';t.classList.add('activo');t.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+
+// ═══════════ RENDER HELPERS ═══════════
+function actualizarUI(nivel){
+ const n = nivel-1;
+ const s = NIVELES[n];
+ const pre = 'invN'+(n+1);
+ $('#'+pre+'Lana').textContent = s.materiales.lana;
+ $('#'+pre+'Tintes').textContent = s.materiales.tintes;
+ $('#'+pre+'Cuentas').textContent = s.materiales.cuentas;
+ $('#budgetN'+(n+1)).textContent = '💰 '+formatearPesos(s.budget);
+ const caja = $('#cajaN'+(n+1));
+ caja.classList.add('caja-abierta');
+}
+
+function actualizarCaja(nivel, monto, accion){
+ const disp = $('#cajaDisplayN'+nivel);
+ const cinta = $('#cajaCintaN'+nivel);
+ if(!disp) return;
+ const signo = accion==='ingreso'?'+':(accion==='egreso'?'-':'');
+ disp.textContent = signo+' '+formatearPesos(Math.abs(monto));
+ disp.style.animation = 'none';
+ setTimeout(()=>disp.style.animation='popIn 0.3s ease-out',10);
+ if(accion==='ingreso'){
+  cinta.textContent = '🧾 +'+formatearPesos(monto)+' │ Total: '+formatearPesos(NIVELES[nivel-1].budget);
+ } else if(accion==='egreso'){
+  cinta.textContent = '🧾 -'+formatearPesos(monto)+' │ Total: '+formatearPesos(NIVELES[nivel-1].budget);
+ } else {
+  cinta.textContent = '⋮ '+formatearPesos(monto)+' ⋮';
+ }
+}
+
+function actualizarPasos(nivel){
+ const idx = state.nivelIdx[nivel-1];
+ const pasos = document.querySelectorAll('#pasosN'+nivel+' .paso-dot');
+ pasos.forEach((d,i)=>{
+  d.classList.remove('activo','completado');
+  if(i<idx) d.classList.add('completado');
+  else if(i===idx) d.classList.add('activo');
+ });
+}
+
+// ═══════════ LEVEL LOGIC ═══════════
+function cargarPregunta(nivel){
+ const n = nivel-1;
+ const s = NIVELES[n];
+ const idx = state.nivelIdx[n];
+ const p = s.preguntas[idx];
+ if(!p) return;
+
+ $('#desafioNumN'+nivel).textContent = 'Pregunta '+(idx+1)+' de '+s.preguntas.length;
+ $('#preguntaN'+nivel).innerHTML = p.txt;
+
+ // Update inventory display
+ actualizarUI(nivel);
+ actualizarPasos(nivel);
+
+ // Clear input
+ const inp = $('#inputN'+nivel);
+ inp.value = '';
+ inp.className = 'desafio-input';
+ inp.disabled = false;
+ $('#fbN'+nivel).textContent = '';
+ $('#fbN'+nivel).style.color = '';
+ $('#btnRespN'+nivel).disabled = false;
+
+
+
+ inp.focus();
+}
+
+function verificarRespuesta(nivel){
+ const n = nivel-1;
+ const idx = state.nivelIdx[n];
+ const p = NIVELES[n].preguntas[idx];
+ if(!p) return;
+
+ const inp = $('#inputN'+nivel);
+ const val = parseInt(inp.value);
+ const fb = $('#fbN'+nivel);
+
+ if(val === p.resp){
+  inp.className = 'desafio-input correcto';
+  inp.disabled = true;
+  fb.textContent = '✅ ¡Correcto!';
+  fb.style.color = 'var(--verde)';
+  $('#btnRespN'+nivel).disabled = true;
+
+  state.correctas[n]++;
+
+  // Apply state change
+  if(p.fn) p.fn(NIVELES[n]);
+
+  // Show transaction on cash register
+  const s = NIVELES[n];
+  if(idx===0 && n===0){
+   actualizarCaja(nivel, 5000, 'egreso');
+  } else if(idx===1 && n===0){
+   actualizarCaja(nivel, 11000, 'egreso');
+  } else if(idx===2 && n===0){
+   actualizarCaja(nivel, 15000, 'ingreso');
+  } else if(idx===3 && n===0){
+   actualizarCaja(nivel, 10000, 'egreso');
+  } else if(idx===4 && n===0){
+   actualizarCaja(nivel, 25000, 'ingreso');
+  } else if(idx===5 && n===0){
+   actualizarCaja(nivel, s.budget, 'info');
+  } else if(n===1){
+   if(idx===0) actualizarCaja(nivel, 24000, 'egreso');
+   else if(idx===1) actualizarCaja(nivel, 25000, 'egreso');
+   else if(idx===2) actualizarCaja(nivel, 30000, 'ingreso');
+   else if(idx===3) actualizarCaja(nivel, 20000, 'egreso');
+   else if(idx===4) actualizarCaja(nivel, 45000, 'ingreso');
+   else if(idx===5) actualizarCaja(nivel, s.budget, 'info');
+  } else if(n===2){
+   if(idx===0) actualizarCaja(nivel, 27000, 'egreso');
+   else if(idx===1) actualizarCaja(nivel, 50000, 'ingreso');
+   else if(idx===2) actualizarCaja(nivel, 70000, 'ingreso');
+   else if(idx===3) actualizarCaja(nivel, 24000, 'egreso');
+   else if(idx===4) actualizarCaja(nivel, 90000, 'ingreso');
+   else if(idx===5) actualizarCaja(nivel, s.budget, 'info');
+  }
+
+  actualizarUI(nivel);
+
+  // Add hint audio
+  const audioText = p.txt.replace(/<[^>]*>/g,'');
+  hablar('¡Correcto! '+audioText);
+
+  // Check if level complete
+  if(idx+1 >= s.preguntas.length){
+   // Level complete
+   state.completado[n] = true;
+   state.budgetFinal[n] = s.budget;
+   $('#checkN'+(n+1)).style.display = 'inline-block';
+   $('#pantalla'+(n+1)).classList.add('completado');
+   $('#btnN'+(n+1)+'Ok').style.display = 'inline-block';
+   actualizarProgreso();
+   mostrarToast('🌟 ¡Nivel '+(n+1)+' completado!','exito');
+   hablar('¡Felicidades! Has completado el nivel '+(n+1));
+  } else {
+   mostrarToast('✅ ¡Respuesta correcta!','exito');
+   // Move to next question after delay
+   setTimeout(()=>{
+    state.nivelIdx[n]++;
+    cargarPregunta(nivel);
+   }, 1200);
+  }
+ } else {
+  inp.className = 'desafio-input incorrecto';
+  fb.textContent = '❌ Intenta de nuevo. Revisa los números.';
+  fb.style.color = 'var(--rojo)';
+  setTimeout(()=>{
+   inp.className = 'desafio-input';
+   inp.value = '';
+   inp.focus();
+  }, 800);
+  hablar('Incorrecto. Intenta de nuevo.');
+ }
+}
+
+// ═══════════ LEVEL COMPLETE NAV ═══════════
+function irAlNivel(n){
+ irAPantalla(n+1);
+ state.nivelIdx[n-1] = 0;
+ state.correctas[n-1] = 0;
+ state.completado[n-1] = false;
+ // Reset materiales and budget
+ const s = NIVELES[n-1];
+ if(n===1){
+  s.materiales = {lana:0, tintes:0, cuentas:0};
+  s.budget = 30000;
+ } else if(n===2){
+  s.materiales = {lana:0, tintes:0, cuentas:0};
+  s.budget = 80000;
+ } else if(n===3){
+  s.materiales = {lana:0, tintes:0, cuentas:0};
+  s.budget = 120000;
+ }
+ actualizarUI(n);
+ actualizarPasos(n);
+ cargarPregunta(n);
+}
+
+// ═══════════ EVENT BINDING ═══════════
+
+// Welcome
+$('#btnIniciar').addEventListener('click', ()=>{
+ irAPantalla(2);
+ setTimeout(()=>{
+  if(!state.nivelIdx[0] && !state.completado[0]){
+   cargarPregunta(1);
+  } else {
+   cargarPregunta(1);
+  }
+ }, 300);
+ mostrarToast('🌟 Nivel 1: Aprendiz - Suma y resta','info');
+});
+
+// Answer buttons
+for(let i=1;i<=3;i++){
+ $('#btnRespN'+i).addEventListener('click', ()=>verificarRespuesta(i));
+ $('#inputN'+i).addEventListener('keydown', (e)=>{
+  if(e.key==='Enter') verificarRespuesta(i);
+ });
+}
+
+// Level complete next buttons
+$('#btnN1Ok').addEventListener('click', ()=>{
+ irAPantalla(3);
+ setTimeout(()=>{
+  const s2 = NIVELES[1];
+  s2.materiales = {lana:0, tintes:0, cuentas:0};
+  s2.budget = 80000;
+  state.nivelIdx[1] = 0;
+  actualizarUI(2);
+  actualizarPasos(2);
+  cargarPregunta(2);
+ }, 300);
+ mostrarToast('🌟🌟 Nivel 2: Tejedor - Multiplicación','info');
+ hablar('Nivel 2: Tejedor. Practica la multiplicación comprando múltiples materiales.');
+});
+
+$('#btnN2Ok').addEventListener('click', ()=>{
+ irAPantalla(4);
+ setTimeout(()=>{
+  const s3 = NIVELES[2];
+  s3.materiales = {lana:0, tintes:0, cuentas:0};
+  s3.budget = 120000;
+  state.nivelIdx[2] = 0;
+  actualizarUI(3);
+  actualizarPasos(3);
+  cargarPregunta(3);
+ }, 300);
+ mostrarToast('🌟🌟🌟 Nivel 3: Maestro - Ganancias y descuentos','info');
+ hablar('Nivel 3: Maestro Artesano. Calcula ganancias, descuentos y vueltas.');
+});
+
+$('#btnN3Ok').addEventListener('click', ()=>{
+ irAPantalla(5);
+ mostrarResultados();
+});
+
+// ═══════════ RESULTS ═══════════
+function mostrarResultados(){
+ function estrellas(n){
+  const c = state.correctas[n];
+  let s = '';
+  if(c>=6) s='⭐⭐⭐';
+  else if(c>=4) s='⭐⭐';
+  else if(c>=2) s='⭐';
+  else s='- - -';
+  return s;
+ }
+
+ const g1 = state.budgetFinal[0] ? state.budgetFinal[0]-30000 : 0;
+ const g2 = state.budgetFinal[1] ? state.budgetFinal[1]-80000 : 0;
+ const g3 = state.budgetFinal[2] ? state.budgetFinal[2]-120000 : 0;
+ const gananciaTotal = g1+g2+g3;
+
+ $('#rnGan1').textContent = '💰 '+formatearPesos(g1);
+ $('#rnGan2').textContent = '💰 '+formatearPesos(g2);
+ $('#rnGan3').textContent = '💰 '+formatearPesos(g3);
+
+ $('#rnStars1').textContent = state.completado[0] ? estrellas(0) : '- - -';
+ $('#rnStars2').textContent = state.completado[1] ? estrellas(1) : '- - -';
+ $('#rnStars3').textContent = state.completado[2] ? estrellas(2) : '- - -';
+
+ const totalEstrellas = state.correctas.reduce((a,b,i)=>a+(state.completado[i]?Math.min(Math.ceil(b/2),3):0),0);
+ const pct = Math.round(state.completado.filter(Boolean).length/3*100);
+
+ $('#puntajeFinal').textContent = pct+'% Completado · 💰 '+formatearPesos(gananciaTotal)+' ganancia';
+
+ let msg = '';
+ if(totalEstrellas>=8){
+  msg = '🏆 ¡Excelente! Eres un verdadero Maestro Artesano Wayuu. Administraste tu tienda con habilidad, calculaste precios, multiplicaste materiales, aplicaste descuentos y dist cambio exacto. ¡La tienda artesanal prosperó gracias a ti!';
+ } else if(totalEstrellas>=5){
+  msg = '🌟 ¡Muy bien! Has aprendido a manejar la tienda artesanal wayuu. Sigue practicando para mejorar tus ganancias y conseguir más estrellas.';
+ } else if(totalEstrellas>=3){
+  msg = '👍 Buen comienzo. Ya sabes sumar y restar en la tienda. Vuelve a intentar los niveles para practicar multiplicación, descuentos y cambio.';
+ } else {
+  msg = '🌱 Cada gran artesano empieza aprendiendo lo básico. ¡Vuelve a intentarlo y verás cómo mejoras!';
+ }
+ $('#mensajeFinal').textContent = msg;
+
+ // Confetti
+ const emojis = ['🧶','🎒','📿','🛏️','🟤','🫳','🎨','💰','⭐','🌟','💎','🏆'];
+ for(let i=0;i<30;i++){
+  setTimeout(()=>{
+   const e = document.createElement('span');
+   e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+   e.style.cssText = 'position:fixed;font-size:2rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+   e.style.left = Math.random()*90+'%';
+   e.style.top = '-50px';
+   document.body.appendChild(e);
+   setTimeout(()=>e.remove(),2600);
+  }, i*90);
+ }
+ if(!document.getElementById('animCaer')){
+  const st = document.createElement('style');
+  st.id = 'animCaer';
+  st.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+  document.head.appendChild(st);
+ }
+
+ actualizarProgreso();
+ hablar('¡Módulo completado! Has ganado '+totalEstrellas+' estrellas y '+formatearPesos(gananciaTotal)+' en ganancias.');
+}
+
+// ═══════════ INIT ═══════════
+function init(){
+ actualizarProgreso();
+}
+
+init();
+
+})();
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

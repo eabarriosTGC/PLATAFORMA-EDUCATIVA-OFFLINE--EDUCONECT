@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CIEN-306: Ciclo del Agua en La Guajira | EduConect Rural</title>
+<style>
+:root {
+  --arena: #F4E1C1;
+  --desierto: #E8B86D;
+  --cardon: #5B8C5A;
+  --cielo: #87CEEB;
+  --atardecer: #E07A5F;
+  --tierra: #8B5E3C;
+  --wayuu-oro: #D4A843;
+  --texto: #3D2B1F;
+  --blanco: #FFFDF7;
+  --sombra: 0 4px 20px rgba(0,0,0,0.12);
+  --rojo: #D64045;
+  --verde: #4CAF50;
+  --azul: #4A90D9;
+  --morado: #9B59B6;
+  --jaguey: #26A69A;
+  --mar: #0288D1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:#2a1f14;
+  min-height:100vh;
+  color:var(--texto);
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.canvas-container{
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  z-index:1;
+}
+.canvas-container canvas{display:block}
+
+/* Loading */
+#loading{
+  position:fixed;
+  top:0;left:0;
+  width:100vw;height:100vh;
+  background:linear-gradient(180deg,#E8B86D,#D4A843,#2a1f14);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  color:white;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+#loading .icono{font-size:5rem;margin-bottom:16px;animation:brillar 1.5s ease-in-out infinite}
+#loading h2{font-size:1.4rem}
+#loading .dots{font-size:2rem;letter-spacing:6px;margin-top:8px;animation:pulse 1.5s ease-in-out infinite}
+
+/* Error */
+#error-info{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:#fff0f0;
+  border:3px solid var(--rojo);
+  border-radius:20px;
+  padding:30px;
+  z-index:200;
+  max-width:500px;
+  text-align:center;
+  display:none;
+  font-family:system-ui,sans-serif;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3);
+}
+#error-info.visible{display:block}
+#error-info h2{color:var(--rojo);margin-bottom:10px}
+#error-info pre{
+  background:#2a1f14;
+  color:#ff9999;
+  padding:12px;
+  border-radius:8px;
+  font-size:0.75rem;
+  text-align:left;
+  overflow-x:auto;
+  margin-top:10px;
+  max-height:200px;
+  overflow-y:auto;
+}
+
+/* Overlay UI */
+#overlay{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  pointer-events:none;
+  z-index:10;
+  display:none;
+}
+#overlay.visible{display:block}
+
+/* Header overlay */
+#header-overlay{
+  position:absolute;
+  top:0;left:0;right:0;
+  text-align:center;
+  padding:12px 15px 8px;
+  background:linear-gradient(180deg,rgba(42,31,20,0.85) 0%,transparent 100%);
+  pointer-events:auto;
+}
+#header-overlay h1{
+  font-size:clamp(1rem,3vw,1.5rem);
+  color:#FFD4A3;
+  text-shadow:0 2px 8px rgba(0,0,0,0.5);
+  margin-bottom:2px;
+}
+#header-overlay .grado{
+  display:inline-block;
+  background:var(--wayuu-oro);
+  color:var(--blanco);
+  padding:3px 14px;
+  border-radius:20px;
+  font-weight:bold;
+  font-size:0.75rem;
+}
+
+/* Progress bar overlay */
+#progreso-overlay{
+  position:absolute;
+  top:65px;left:50%;
+  transform:translateX(-50%);
+  background:rgba(253,247,235,0.92);
+  border-radius:12px;
+  padding:6px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  pointer-events:auto;
+  min-width:200px;
+  max-width:90%;
+  backdrop-filter:blur(4px);
+}
+#progreso-overlay .progreso-label{font-weight:bold;font-size:0.75rem;white-space:nowrap;color:var(--tierra)}
+#progreso-overlay .progreso-bar{
+  flex:1;
+  height:10px;
+  background:#e0d5c5;
+  border-radius:8px;
+  overflow:hidden;
+  min-width:60px;
+}
+#progreso-overlay .progreso-fill{
+  height:100%;
+  border-radius:8px;
+  background:linear-gradient(90deg,var(--wayuu-oro),var(--atardecer));
+  transition:width 0.5s;
+  width:0%;
+}
+#progreso-overlay .progreso-pct{font-weight:bold;color:var(--atardecer);font-size:0.8rem;min-width:30px}
+
+/* Stage info panel */
+#stage-panel{
+  position:absolute;
+  bottom:90px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(253,247,235,0.95);
+  border-radius:16px;
+  padding:14px 20px;
+  z-index:10;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  max-width:420px;
+  width:90%;
+  border:2px solid var(--wayuu-oro);
+  backdrop-filter:blur(4px);
+  pointer-events:auto;
+  text-align:center;
+  animation:popIn 0.3s ease-out;
+}
+#stage-panel h3{color:var(--atardecer);font-size:1.1rem;margin-bottom:2px}
+#stage-panel .stage-sub{font-size:0.8rem;color:var(--tierra);font-style:italic;margin-bottom:6px}
+#stage-panel p{font-size:0.85rem;line-height:1.5;color:var(--texto);margin:6px 0}
+#stage-panel .stage-actions{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-top:8px;
+  flex-wrap:wrap;
+}
+
+/* Navigation buttons */
+#nav-buttons{
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:8px;
+  z-index:10;
+  pointer-events:auto;
+}
+.nav-btn{
+  background:rgba(253,247,235,0.9);
+  border:2px solid var(--wayuu-oro);
+  border-radius:25px;
+  padding:8px 16px;
+  font-size:0.8rem;
+  font-weight:bold;
+  cursor:pointer;
+  color:var(--texto);
+  font-family:system-ui;
+  transition:all 0.2s;
+  white-space:nowrap;
+  pointer-events:auto;
+}
+.nav-btn:hover{background:var(--wayuu-oro);color:white;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.nav-btn:active{transform:translateY(0)}
+.nav-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.nav-btn.activo{background:var(--atardecer);color:white;border-color:var(--atardecer)}
+
+/* Hint */
+#hint{
+  position:absolute;
+  bottom:58px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(45,27,15,0.8);
+  color:#FFD4A3;
+  padding:5px 16px;
+  border-radius:20px;
+  font-size:0.7rem;
+  pointer-events:none;
+  transition:opacity 1s;
+  white-space:nowrap;
+}
+
+/* Pantalla overlay screen (start/final) */
+.pantalla-overlay{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  z-index:20;
+  background:rgba(42,31,20,0.7);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  backdrop-filter:blur(4px);
+}
+.pantalla-overlay .card{
+  background:var(--blanco);
+  border-radius:20px;
+  padding:30px 25px;
+  max-width:520px;
+  width:100%;
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  border:2px solid var(--wayuu-oro);
+  text-align:center;
+  animation:popIn 0.4s ease-out;
+  pointer-events:auto;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.pantalla-overlay .card h2{
+  font-size:1.3rem;
+  color:var(--atardecer);
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.pantalla-overlay .card p{
+  font-size:0.95rem;
+  line-height:1.6;
+  color:var(--texto);
+  margin:8px 0;
+}
+.pantalla-overlay .card .icono-grande{font-size:4rem;margin-bottom:10px;animation:brillar 2s ease-in-out infinite}
+
+/* Results */
+.resultados-finales{text-align:center;padding:10px}
+.resultados-finales .estrella{font-size:4rem;animation:brillar 1.5s ease-in-out infinite}
+.resultados-finales .puntaje{font-size:2rem;font-weight:bold;color:var(--atardecer);margin:8px 0}
+.resultados-finales .mensaje{font-size:1rem;color:var(--tierra);margin:8px 0;line-height:1.5}
+.resultados-finales .resumen-etapas{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  margin:15px 0;
+}
+.resumen-etapa{
+  background:var(--blanco);
+  border-radius:12px;
+  padding:10px 14px;
+  text-align:center;
+  min-width:80px;
+  border:2px solid var(--arena);
+  box-shadow:var(--sombra);
+}
+.resumen-etapa .re-emoji{font-size:2rem}
+.resumen-etapa .re-nombre{font-weight:bold;color:var(--cardon);font-size:0.85rem;margin-top:3px}
+
+/* Common */
+.btn{
+  padding:10px 20px;
+  border:none;
+  border-radius:25px;
+  cursor:pointer;
+  font-size:0.9rem;
+  font-weight:bold;
+  transition:all 0.2s;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:system-ui;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:scale(0.96)}
+.btn-primario{background:var(--atardecer);color:white;box-shadow:0 4px 12px rgba(224,122,95,0.4)}
+.btn-secundario{background:var(--arena);color:var(--texto)}
+.btn-exito{background:var(--verde);color:white;box-shadow:0 4px 12px rgba(76,175,80,0.4)}
+.btn-azul{background:var(--azul);color:white;box-shadow:0 4px 12px rgba(74,144,217,0.4)}
+
+.tts-btn{
+  background:var(--azul);
+  color:white;
+  border:none;
+  border-radius:50%;
+  width:36px;
+  height:36px;
+  font-size:1rem;
+  cursor:pointer;
+  transition:all 0.2s;
+  box-shadow:0 2px 8px rgba(74,144,217,0.3);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.tts-btn:hover{transform:scale(1.1)}
+.tts-btn.hablando{background:var(--atardecer);animation:brillar 0.8s ease-in-out infinite}
+
+.toast{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 25px;
+  border-radius:25px;
+  font-weight:bold;
+  font-size:0.95rem;
+  z-index:1000;
+  animation:slideDown 0.4s ease-out;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);
+  text-align:center;
+  max-width:90vw;
+}
+.toast.exito{background:var(--verde);color:white}
+.toast.error{background:var(--rojo);color:white}
+.toast.info{background:var(--azul);color:white}
+
+@keyframes brillar{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes pulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.8) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+@media(max-width:600px){
+  #stage-panel{bottom:80px;padding:12px 14px;max-width:95%}
+  #stage-panel h3{font-size:0.95rem}
+  #stage-panel p{font-size:0.8rem}
+  .nav-btn{padding:6px 12px;font-size:0.7rem}
+  #header-overlay h1{font-size:1rem}
+  #progreso-overlay{top:55px;padding:5px 10px;min-width:150px}
+  #progreso-overlay .progreso-label{font-size:0.65rem}
+  .pantalla-overlay .card{padding:20px 16px}
+  .pantalla-overlay .card h2{font-size:1.1rem}
+  #hint{font-size:0.6rem;white-space:normal;max-width:90%}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="icono">💧</div>
+  <h2>Cargando el Ciclo del Agua en 3D...</h2>
+  <div class="dots">●●●</div>
+</div>
+
+<div id="error-info">
+  <h2>⚠️ Error al cargar la escena 3D</h2>
+  <p>No se pudo inicializar el mundo 3D del Ciclo del Agua.</p>
+  <pre id="error-detail"></pre>
+  <p style="margin-top:12px;font-size:0.8rem;">
+    Asegúrate de que <code>../comun/three.min.js</code> existe.<br>
+    Recarga la página e inténtalo de nuevo.
+  </p>
+</div>
+
+<div id="mundo3d" class="canvas-container"></div>
+
+<!-- Overlay UI (appears when scene is loaded) -->
+<div id="overlay">
+  <div id="header-overlay">
+    <h1>💧 Ciclo del Agua en La Guajira</h1>
+    <span class="grado">5° Grado · Ciencias Naturales · CIEN-306</span>
+  </div>
+
+  <div id="progreso-overlay">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div id="stage-panel">
+    <h3 id="stageTitle">🌊 Evaporación</h3>
+    <div class="stage-sub" id="stageSub">Wüinpümüin · El agua se evapora</div>
+    <p id="stageDesc">El sol calienta el agua de los jagüeyes y el mar, transformándola en vapor que sube al cielo.</p>
+    <div class="stage-actions">
+      <button class="tts-btn" id="ttsBtn">🔊</button>
+    </div>
+  </div>
+
+  <div id="hint">🖱️ Arrastra las nubes · Haz clic para llover · Navega las etapas</div>
+
+  <div id="nav-buttons">
+    <button class="nav-btn" id="btnPrev" disabled>◀ Anterior</button>
+    <button class="nav-btn" id="btnEvaporacion" data-stage="0">☀️ Evap.</button>
+    <button class="nav-btn" id="btnCondensacion" data-stage="1">☁️ Cond.</button>
+    <button class="nav-btn" id="btnPrecipitacion" data-stage="2">🌧️ Precip.</button>
+    <button class="nav-btn" id="btnRecoleccion" data-stage="3">💧 Recol.</button>
+    <button class="nav-btn" id="btnNext">Siguiente ▶</button>
+  </div>
+</div>
+
+<!-- Pantalla 1: Bienvenida -->
+<div class="pantalla-overlay" id="pantalla1">
+  <div class="card">
+    <div class="icono-grande">💧</div>
+    <h2>💧 Ciclo del Agua en La Guajira</h2>
+    <p>
+      El agua es vida, especialmente en el desierto de La Guajira. Los <strong>jagüeyes</strong> (reservorios de agua) y el mar Caribe alimentan el ciclo del agua que da vida a toda la región.
+    </p>
+    <p style="font-size:0.85rem;color:var(--tierra);background:var(--arena);padding:10px;border-radius:12px;margin:10px 0;">
+      🌊 <strong>Las 4 etapas:</strong><br>
+      ☀️ <strong>Evaporación</strong> → El sol calienta el agua y sube como vapor<br>
+      ☁️ <strong>Condensación</strong> → El vapor se enfría y forma nubes<br>
+      🌧️ <strong>Precipitación</strong> → Las nubes sueltan el agua como lluvia<br>
+      💧 <strong>Recolección</strong> → El agua vuelve a los jagüeyes y al mar
+    </p>
+    <p style="font-size:0.85rem;color:var(--tierra-clara);">
+      En la cultura wayuu, <strong>Juyá</strong> (la lluvia) es un espíritu sagrado que llena los jagüeyes y permite la vida. <strong>Mma</strong> (la tierra) recibe el agua con gratitud.
+    </p>
+    <button class="btn btn-primario" id="btnIniciar" style="margin-top:12px;font-size:1rem;padding:12px 28px">
+      🌊 ¡Empezar aventura!
+    </button>
+  </div>
+</div>
+
+<!-- Pantalla 5: Final -->
+<div class="pantalla-overlay" id="pantalla5" style="display:none">
+  <div class="card">
+    <h2>🏆 Resultados</h2>
+    <div class="resultados-finales">
+      <div class="estrella" id="estrellaFinal">🏆</div>
+      <div class="puntaje" id="puntajeFinal">100%</div>
+      <p class="mensaje" id="mensajeFinal">
+        ¡Excelente! Has completado el ciclo del agua en La Guajira.
+      </p>
+
+      <div class="resumen-etapas">
+        <div class="resumen-etapa"><div class="re-emoji">☀️</div><div class="re-nombre">Evaporación</div></div>
+        <div class="resumen-etapa"><div class="re-emoji">☁️</div><div class="re-nombre">Condensación</div></div>
+        <div class="resumen-etapa"><div class="re-emoji">🌧️</div><div class="re-nombre">Precipitación</div></div>
+        <div class="resumen-etapa"><div class="re-emoji">💧</div><div class="re-nombre">Recolección</div></div>
+      </div>
+
+      <div class="estrellas" id="estrellasFinal" style="margin:12px 0">
+        <span class="estrella" id="star1">☆</span>
+        <span class="estrella" id="star2">☆</span>
+        <span class="estrella" id="star3">☆</span>
+      </div>
+
+      <p style="color:var(--tierra);font-size:0.85rem;line-height:1.5;margin-top:8px;">
+        🌍 <strong>Sabías qué...</strong> Los wayuu le rezan a <strong>Juyá</strong>, el espíritu de la lluvia, pidiendo que llenen los jagüeyes. Cada gota de lluvia es un regalo sagrado en el desierto guajiro.
+      </p>
+
+      <div style="margin-top:15px">
+        <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+        <a href="/modulos/" class="btn btn-secundario" style="text-decoration:none">← Volver a módulos</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../comun/three.min.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  try {
+
+  if(typeof THREE === 'undefined'){
+    throw new Error('Three.js no está cargado. Verifica que ../comun/three.min.js existe.');
+  }
+
+  var loadingEl = document.getElementById('loading');
+  var errorEl = document.getElementById('error-info');
+  var errorDetail = document.getElementById('error-detail');
+  var overlay = document.getElementById('overlay');
+  var container = document.getElementById('mundo3d');
+  var stagePanel = document.getElementById('stage-panel');
+  var stageTitle = document.getElementById('stageTitle');
+  var stageSub = document.getElementById('stageSub');
+  var stageDesc = document.getElementById('stageDesc');
+  var ttsBtn = document.getElementById('ttsBtn');
+  var hintEl = document.getElementById('hint');
+  var progresoFill = document.getElementById('progresoFill');
+  var progresoPct = document.getElementById('progresoPct');
+
+  // ==================== STATE ====================
+  var state = {
+    currentStage: 0,
+    stagesCompleted: [false, false, false, false],
+    stageStars: [0, 0, 0, 0],
+    totalClicks: 0,
+    rainTriggered: false,
+    gameStarted: false,
+    userInteracted: false
+  };
+
+  var stageData = [
+    {
+      id: 0,
+      name: 'Evaporación',
+      wayuu: 'Wüinpümüin (agua que sube)',
+      emoji: '☀️',
+      desc: 'El caliente sol de La Guajira calienta el agua de los jagüeyes y el mar Caribe. El agua se transforma en vapor invisible que asciende hacia el cielo. Los wayuu dicen que el agua sube a visitar a Juyá, el espíritu de la lluvia.',
+      tts: 'Evaporación: el sol calienta el agua de los jagüeyes y el mar. El agua se evapora y sube como vapor al cielo. En wayuunaiki se dice wüinpümüin, el agua que sube.'
+    },
+    {
+      id: 1,
+      name: 'Condensación',
+      wayuu: 'Wüinpalaa (agua que se junta)',
+      emoji: '☁️',
+      desc: 'El vapor de agua sube a la atmósfera, donde hace más frío. El vapor se enfría y se convierte en pequeñas gotitas de agua que se juntan formando las nubes. ¡Así nacen las nubes que vemos en el cielo guajiro!',
+      tts: 'Condensación: el vapor de agua sube y se enfría en el cielo. Se convierte en pequeñas gotitas que forman las nubes. En wayuunaiki se dice wüinpalaa, el agua que se junta.'
+    },
+    {
+      id: 2,
+      name: 'Precipitación',
+      wayuu: 'Juyá (la lluvia)',
+      emoji: '🌧️',
+      desc: 'Cuando las nubes se llenan de muchas gotitas de agua, estas se vuelven pesadas y caen como lluvia. ¡Haz clic en las nubes para que llueva! Los wayuu celebran cuando Juyá envía la lluvia para llenar los jagüeyes.',
+      tts: 'Precipitación: las nubes se llenan de gotitas de agua, se vuelven pesadas y caen como lluvia. Los wayuu la llaman Juyá, el espíritu de la lluvia que bendice la tierra.'
+    },
+    {
+      id: 3,
+      name: 'Recolección',
+      wayuu: 'Wüin mülo'u (agua recogida)',
+      emoji: '💧',
+      desc: 'La lluvia cae sobre la tierra y llena los jagüeyes, los arroyos y el mar. El agua recogida en los jagüeyes es la fuente de vida para las comunidades wayuu, sus chivos y las plantas del desierto. ¡El ciclo comienza de nuevo!',
+      tts: 'Recolección: la lluvia llena los jagüeyes, arroyos y el mar. El agua recogida da vida a las comunidades wayuu, sus animales y plantas. En wayuunaiki se dice wüin mülo\'u, el agua recogida.'
+    }
+  ];
+
+  // ==================== TTS ====================
+  function hablar(texto){
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.85;
+      utterance.pitch = 1.05;
+      utterance.onstart = function(){ ttsBtn.classList.add('hablando'); };
+      utterance.onend = function(){ ttsBtn.classList.remove('hablando'); };
+      utterance.onerror = function(){ ttsBtn.classList.remove('hablando'); };
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // ==================== TOAST ====================
+  function mostrarToast(mensaje, tipo){
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + tipo;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(function(){
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(function(){ toast.remove(); }, 300);
+    }, 2500);
+  }
+
+  // ==================== PROGRESS ====================
+  function actualizarProgreso(){
+    var completadas = state.stagesCompleted.filter(Boolean).length;
+    var total = 4;
+    var pct = Math.round((completadas / total) * 100);
+    progresoFill.style.width = pct + '%';
+    progresoPct.textContent = pct + '%';
+  }
+
+  // ==================== SCENE SETUP ====================
+  var scene = new THREE.Scene();
+
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(new THREE.Color(0x1a2a3a));
+  container.appendChild(renderer.domElement);
+
+  var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 150);
+  camera.position.set(14, 10, 18);
+  camera.lookAt(0, 0, 0);
+
+  scene.fog = new THREE.FogExp2(0x8ab4d4, 0.0015);
+
+  var ambientLight = new THREE.AmbientLight(0xffe8c0, 0.6);
+  scene.add(ambientLight);
+
+  var sunLight = new THREE.DirectionalLight(0xfff5e0, 0.9);
+  sunLight.position.set(30, 25, 10);
+  scene.add(sunLight);
+
+  var hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x8B5E3C, 0.5);
+  scene.add(hemiLight);
+
+  // ==================== SKY ====================
+  var skyGeo = new THREE.SphereGeometry(70, 32, 16);
+  var skyColors = [];
+  var skyPos = skyGeo.attributes.position.array;
+  for(var si = 0; si < skyPos.length; si += 3){
+    var sy = skyPos[si + 1];
+    var st = Math.max(0, (sy + 70) / 130);
+    if(st < 0.3){
+      skyColors.push(0.82, 0.70, 0.55);
+    } else if(st < 0.55){
+      var mix = (st - 0.3) / 0.25;
+      skyColors.push(0.53 + mix * 0.2, 0.73 + mix * 0.1, 0.87 - mix * 0.1);
+    } else {
+      skyColors.push(0.55, 0.78, 0.90);
+    }
+  }
+  skyGeo.setAttribute('color', new THREE.Float32BufferAttribute(skyColors, 3));
+  var skyMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.BackSide });
+  var sky = new THREE.Mesh(skyGeo, skyMat);
+  scene.add(sky);
+
+  // ==================== SUN DISC ====================
+  var sunGeo = new THREE.SphereGeometry(1.5, 16, 16);
+  var sunMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+  var sunMesh = new THREE.Mesh(sunGeo, sunMat);
+  sunMesh.position.set(18, 18, -10);
+  scene.add(sunMesh);
+
+  // Glow
+  var glowGeo = new THREE.SphereGeometry(2.2, 16, 16);
+  var glowMat = new THREE.MeshBasicMaterial({ color: 0xFFA500, transparent: true, opacity: 0.25 });
+  var glowMesh = new THREE.Mesh(glowGeo, glowMat);
+  glowMesh.position.copy(sunMesh.position);
+  scene.add(glowMesh);
+
+  // ==================== TERRAIN ====================
+  function getTerrainHeight(x, z){
+    var h = 0;
+    h += Math.sin(x * 0.08) * 0.5;
+    h += Math.cos(z * 0.07) * 0.4;
+    h += Math.sin(x * 0.2 + z * 0.15) * 0.25;
+    h += Math.sin(x * 0.04) * Math.cos(z * 0.06) * 0.6;
+    h += Math.sin((x + z) * 0.05) * 0.35;
+    return h;
+  }
+
+  var terrainGeo = new THREE.PlaneGeometry(80, 80, 60, 60);
+  terrainGeo.rotateX(-Math.PI / 2);
+  var tp = terrainGeo.attributes.position.array;
+  for(var ti = 0; ti < tp.length; ti += 3){
+    var tx = tp[ti];
+    var tz = tp[ti + 2];
+    tp[ti + 1] = getTerrainHeight(tx, tz);
+  }
+  terrainGeo.attributes.position.needsUpdate = true;
+  terrainGeo.computeVertexNormals();
+
+  var terrainMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+  var terrain = new THREE.Mesh(terrainGeo, terrainMat);
+  terrain.receiveShadow = true;
+  scene.add(terrain);
+
+  // ==================== JAGÜEYES (Water ponds) ====================
+  var jagueyes = [];
+  var jagueyPositions = [
+    { x: -2, z: 3.5 },
+    { x: 5, z: -2 },
+    { x: -5, z: -3 },
+    { x: 2.5, z: -5.5 }
+  ];
+
+  function createJaguey(xPos, zPos){
+    var group = new THREE.Group();
+
+    var waterGeo = new THREE.CircleGeometry(0.9, 32);
+    waterGeo.rotateX(-Math.PI / 2);
+    var waterMat = new THREE.MeshLambertMaterial({
+      color: 0x3399cc,
+      transparent: true,
+      opacity: 0.7
+    });
+    var water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.set(0, 0.03, 0);
+    group.add(water);
+
+    var ringGeo = new THREE.RingGeometry(0.85, 1.0, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    var ringMat = new THREE.MeshLambertMaterial({ color: 0x6b5b3a });
+    var ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.set(0, 0.04, 0);
+    group.add(ring);
+
+    var stoneMat = new THREE.MeshLambertMaterial({ color: 0x8a7a6a });
+    for(var s = 0; s < 12; s++){
+      var angle = (s / 12) * Math.PI * 2;
+      var sr = 0.95 + Math.random() * 0.3;
+      var stone = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.04 + Math.random() * 0.06, 0),
+        stoneMat
+      );
+      stone.position.set(
+        Math.cos(angle) * sr,
+        0.03,
+        Math.sin(angle) * sr
+      );
+      group.add(stone);
+    }
+
+    group.position.set(xPos, getTerrainHeight(xPos, zPos), zPos);
+    return group;
+  }
+
+  jagueyPositions.forEach(function(p){
+    var j = createJaguey(p.x, p.z);
+    scene.add(j);
+    jagueyes.push(j);
+  });
+
+  // ==================== EVAPORATION PARTICLES ====================
+  var evaporationParticles = [];
+  var evapGeo = new THREE.BufferGeometry();
+  var evapCount = 200;
+  var evapPositions = new Float32Array(evapCount * 3);
+  var evapVelocities = [];
+  var evapSizes = new Float32Array(evapCount);
+
+  for(var ep = 0; ep < evapCount; ep++){
+    ep = ep;
+    var srcIdx = Math.floor(Math.random() * jagueyPositions.length);
+    var src = jagueyPositions[srcIdx];
+    evapPositions[ep * 3] = src.x + (Math.random() - 0.5) * 1.2;
+    evapPositions[ep * 3 + 1] = 0.1 + Math.random() * 0.2;
+    evapPositions[ep * 3 + 2] = src.z + (Math.random() - 0.5) * 1.2;
+    evapVelocities.push({
+      vy: 0.3 + Math.random() * 0.5,
+      vx: (Math.random() - 0.5) * 0.15,
+      vz: (Math.random() - 0.5) * 0.15,
+      srcIdx: srcIdx,
+      life: Math.random()
+    });
+    evapSizes[ep] = 0.04 + Math.random() * 0.05;
+  }
+  evapGeo.setAttribute('position', new THREE.BufferAttribute(evapPositions, 3));
+  evapGeo.setAttribute('size', new THREE.BufferAttribute(evapSizes, 1));
+
+  var evapMat = new THREE.PointsMaterial({
+    color: 0x88ccff,
+    size: 0.08,
+    transparent: true,
+    opacity: 0.35,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  var evapPoints = new THREE.Points(evapGeo, evapMat);
+  scene.add(evapPoints);
+  evaporationParticles.push(evapPoints);
+
+  // ==================== CLOUDS ====================
+  var clouds = [];
+  var cloudMeshes = [];
+  var cloudData = [];
+
+  function createCloud(x, y, z){
+    var group = new THREE.Group();
+    var cloudMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.85
+    });
+    var cloudDark = new THREE.MeshLambertMaterial({
+      color: 0xdddddd,
+      transparent: true,
+      opacity: 0.7
+    });
+
+    var spheres = [
+      { x: 0, y: 0, z: 0, r: 1.2, m: cloudMat },
+      { x: 1.1, y: 0.2, z: 0.3, r: 0.9, m: cloudDark },
+      { x: -1.0, y: 0.15, z: -0.2, r: 0.85, m: cloudDark },
+      { x: 0.5, y: 0.5, z: -0.5, r: 0.7, m: cloudMat },
+      { x: -0.6, y: 0.45, z: 0.6, r: 0.75, m: cloudMat },
+      { x: 0.2, y: -0.15, z: 1.0, r: 0.65, m: cloudDark },
+      { x: -0.3, y: -0.1, z: -1.1, r: 0.7, m: cloudDark }
+    ];
+
+    spheres.forEach(function(s){
+      var geo = new THREE.SphereGeometry(s.r, 10, 10);
+      var mesh = new THREE.Mesh(geo, s.m);
+      mesh.position.set(s.x, s.y, s.z);
+      mesh.scale.y = 0.55;
+      group.add(mesh);
+    });
+
+    group.position.set(x, y, z);
+    group.scale.setScalar(0.8 + Math.random() * 0.4);
+    group.userData = {
+      isCloud: true,
+      originalPos: new THREE.Vector3(x, y, z),
+      dragging: false,
+      dragOffset: new THREE.Vector3(),
+      rainActive: false
+    };
+    return group;
+  }
+
+  var cloudPositions = [
+    { x: -3, y: 5.5, z: 2 },
+    { x: 4, y: 6, z: 1 },
+    { x: 1, y: 7, z: -3 },
+    { x: -4, y: 5, z: -4 },
+    { x: 6, y: 6.5, z: -1 }
+  ];
+
+  cloudPositions.forEach(function(p){
+    var cloud = createCloud(p.x, p.y, p.z);
+    scene.add(cloud);
+    clouds.push(cloud);
+    cloudMeshes.push(cloud);
+    cloudData.push({
+      mesh: cloud,
+      rainParticles: null,
+      rainActive: false,
+      rainTimer: null
+    });
+  });
+
+  // ==================== RAIN PARTICLES ====================
+  var rainSystems = [];
+
+  function createRainSystem(cloudObj, x, z){
+    var rainCount = 300;
+    var rainGeo = new THREE.BufferGeometry();
+    var rainPos = new Float32Array(rainCount * 3);
+    var rainVel = [];
+
+    for(var rp = 0; rp < rainCount; rp++){
+      rainPos[rp * 3] = (Math.random() - 0.5) * 5;
+      rainPos[rp * 3 + 1] = Math.random() * 6 - 1;
+      rainPos[rp * 3 + 2] = (Math.random() - 0.5) * 5;
+      rainVel.push({
+        vy: -(1.5 + Math.random() * 1.5),
+        vx: (Math.random() - 0.5) * 0.3,
+        vz: (Math.random() - 0.5) * 0.3
+      });
+    }
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+
+    var rainMat = new THREE.PointsMaterial({
+      color: 0x88ccff,
+      size: 0.06,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    var rainPoints = new THREE.Points(rainGeo, rainMat);
+    rainPoints.position.set(x, getTerrainHeight(x, 0) + 6, z);
+    rainPoints.visible = false;
+    scene.add(rainPoints);
+
+    return {
+      points: rainPoints,
+      velocities: rainVel,
+      geo: rainGeo,
+      active: false,
+      cloudX: x,
+      cloudZ: z
+    };
+  }
+
+  // Initialize rain systems for each cloud
+  cloudData.forEach(function(cd){
+    var rs = createRainSystem(cd.mesh, cd.mesh.position.x, cd.mesh.position.z);
+    rainSystems.push(rs);
+    cd.rainSystem = rs;
+  });
+
+  // ==================== CACTI (Cardones) ====================
+  function createCardon(x, z, h){
+    var g = new THREE.Group();
+    var cMat = new THREE.MeshLambertMaterial({ color: 0x3d6b35 });
+
+    var trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.1, h, 7),
+      cMat
+    );
+    trunk.position.y = h / 2;
+    g.add(trunk);
+
+    for(var b = 0; b < 3; b++){
+      var bAngle = (b / 3) * Math.PI * 2 + Math.random() * 0.3;
+      var bHeight = h * 0.45 + Math.random() * h * 0.3;
+      var bLen = h * 0.2 + Math.random() * h * 0.25;
+      var branch = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.04, bLen, 5),
+        cMat
+      );
+      branch.position.set(
+        Math.cos(bAngle) * 0.08,
+        bHeight,
+        Math.sin(bAngle) * 0.08
+      );
+      branch.rotation.z = Math.cos(bAngle) * 0.5;
+      branch.rotation.x = -Math.sin(bAngle) * 0.5;
+      g.add(branch);
+    }
+
+    g.position.set(x, getTerrainHeight(x, z), z);
+    return g;
+  }
+
+  var cardonPositions = [
+    [4, -4, 2.0], [6, 3, 2.5], [-3, 5, 2.2], [-5, -2, 2.8],
+    [7, -3, 2.3], [-6, 4, 2.6], [3, 6, 2.1], [-2, -5, 2.4],
+    [8, 1, 2.0], [-7, -1, 2.5]
+  ];
+  cardonPositions.forEach(function(cp){
+    scene.add(createCardon(cp[0], cp[1], cp[2]));
+  });
+
+  // ==================== SMALL ROCKS ====================
+  var rockMat = new THREE.MeshLambertMaterial({ color: 0x9a8a7a });
+  for(var rk = 0; rk < 30; rk++){
+    var rkx = (Math.random() - 0.5) * 30;
+    var rkz = (Math.random() - 0.5) * 30;
+    var rks = 0.05 + Math.random() * 0.15;
+    var rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(rks, 0),
+      rockMat
+    );
+    rock.position.set(rkx, getTerrainHeight(rkx, rkz) + rks * 0.3, rkz);
+    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    scene.add(rock);
+  }
+
+  // ==================== CAMERA CONTROLS ====================
+  var target = new THREE.Vector3(0, 0.5, 0);
+  var spherical = new THREE.Spherical();
+  spherical.setFromVector3(
+    new THREE.Vector3().copy(camera.position).sub(target)
+  );
+  var isMouseDown = false;
+  var lastMouse = { x: 0, y: 0 };
+  var lastTouchData = { x: 0, y: 0, d: 0 };
+
+  function updateCamera(){
+    camera.position.setFromSpherical(spherical).add(target);
+    camera.lookAt(target);
+  }
+
+  renderer.domElement.addEventListener('mousedown', function(e){
+    isMouseDown = true;
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+  });
+
+  window.addEventListener('mousemove', function(e){
+    if(!isMouseDown) return;
+    var dx = e.clientX - lastMouse.x;
+    var dy = e.clientY - lastMouse.y;
+    spherical.theta -= dx * 0.005;
+    spherical.phi -= dy * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI * 0.45, spherical.phi));
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+    updateCamera();
+  });
+
+  window.addEventListener('mouseup', function(){
+    isMouseDown = false;
+  });
+
+  renderer.domElement.addEventListener('wheel', function(e){
+    e.preventDefault();
+    spherical.radius *= e.deltaY > 0 ? 1.06 : 0.94;
+    spherical.radius = Math.max(5, Math.min(60, spherical.radius));
+    updateCamera();
+  }, { passive: false });
+
+  renderer.domElement.addEventListener('touchstart', function(e){
+    if(e.touches.length === 1){
+      lastTouchData.x = e.touches[0].clientX;
+      lastTouchData.y = e.touches[0].clientY;
+      isMouseDown = true;
+    } else if(e.touches.length === 2){
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchData.d = Math.sqrt(dx * dx + dy * dy);
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if(e.touches.length === 1 && isMouseDown){
+      var tx = e.touches[0].clientX - lastTouchData.x;
+      var ty = e.touches[0].clientY - lastTouchData.y;
+      spherical.theta -= tx * 0.005;
+      spherical.phi -= ty * 0.005;
+      spherical.phi = Math.max(0.1, Math.min(Math.PI * 0.45, spherical.phi));
+      lastTouchData.x = e.touches[0].clientX;
+      lastTouchData.y = e.touches[0].clientY;
+      updateCamera();
+    } else if(e.touches.length === 2){
+      var dx2 = e.touches[0].clientX - e.touches[1].clientX;
+      var dy2 = e.touches[0].clientY - e.touches[1].clientY;
+      var d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+      spherical.radius *= lastTouchData.d / d2;
+      spherical.radius = Math.max(5, Math.min(60, spherical.radius));
+      lastTouchData.d = d2;
+      updateCamera();
+    }
+  }, { passive: false });
+
+  renderer.domElement.addEventListener('touchend', function(){
+    isMouseDown = false;
+  });
+
+  // ==================== RAYCASTER & CLOUD INTERACTION ====================
+  var raycaster = new THREE.Raycaster();
+  raycaster.far = 60;
+  var mouse = new THREE.Vector2();
+
+  var isDragging = false;
+  var selectedCloud = null;
+  var dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  var dragOffset = new THREE.Vector3();
+  var intersectPoint = new THREE.Vector3();
+
+  renderer.domElement.addEventListener('mousedown', function(e){
+    if(state.currentStage < 1) return;
+
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    var cloudTargets = [];
+    clouds.forEach(function(cloud){
+      cloud.traverse(function(child){
+        if(child.isMesh) cloudTargets.push(child);
+      });
+    });
+
+    var intersects = raycaster.intersectObjects(cloudTargets, false);
+    if(intersects.length > 0){
+      var hitObj = intersects[0].object;
+      var parent = hitObj.parent;
+      while(parent && !parent.userData.isCloud){
+        parent = parent.parent;
+      }
+      if(parent && parent.userData.isCloud){
+        isDragging = true;
+        selectedCloud = parent;
+        dragPlane.set(new THREE.Vector3(0, 1, 0), -parent.position.y);
+        raycaster.ray.intersectPlane(dragPlane, intersectPoint);
+        if(intersectPoint){
+          dragOffset.copy(intersectPoint).sub(parent.position);
+          dragOffset.y = 0;
+        }
+        return;
+      }
+    }
+
+    // If not dragging, check for cloud click to make rain (stage 2)
+    if(state.currentStage === 2){
+      var intersect2 = raycaster.intersectObjects(cloudTargets, false);
+      if(intersect2.length > 0){
+        var hitObj2 = intersect2[0].object;
+        var parent2 = hitObj2.parent;
+        while(parent2 && !parent2.userData.isCloud){
+          parent2 = parent2.parent;
+        }
+        if(parent2 && parent2.userData.isCloud){
+          triggerRain(parent2);
+        }
+      }
+    }
+  });
+
+  window.addEventListener('mousemove', function(e){
+    if(!isDragging || !selectedCloud) return;
+
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    var planeY = selectedCloud.position.y;
+    dragPlane.set(new THREE.Vector3(0, 1, 0), -planeY);
+    raycaster.ray.intersectPlane(dragPlane, intersectPoint);
+
+    if(intersectPoint){
+      var newPos = new THREE.Vector3().copy(intersectPoint).sub(dragOffset);
+      newPos.y = planeY;
+      selectedCloud.position.copy(newPos);
+      state.userInteracted = true;
+
+      // Update rain system position if active
+      cloudData.forEach(function(cd){
+        if(cd.mesh === selectedCloud && cd.rainSystem){
+          cd.rainSystem.points.position.x = selectedCloud.position.x;
+          cd.rainSystem.points.position.z = selectedCloud.position.z;
+        }
+      });
+    }
+  });
+
+  window.addEventListener('mouseup', function(){
+    isDragging = false;
+    selectedCloud = null;
+  });
+
+  // Touch support for cloud interaction
+  renderer.domElement.addEventListener('touchstart', function(e){
+    if(state.currentStage < 1 || e.touches.length !== 1) return;
+
+    var touch = e.touches[0];
+    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    var cloudTargets = [];
+    clouds.forEach(function(cloud){
+      cloud.traverse(function(child){
+        if(child.isMesh) cloudTargets.push(child);
+      });
+    });
+
+    var intersects = raycaster.intersectObjects(cloudTargets, false);
+    if(intersects.length > 0){
+      var hitObj = intersects[0].object;
+      var parent = hitObj.parent;
+      while(parent && !parent.userData.isCloud){
+        parent = parent.parent;
+      }
+      if(parent && parent.userData.isCloud){
+        isDragging = true;
+        selectedCloud = parent;
+        dragPlane.set(new THREE.Vector3(0, 1, 0), -parent.position.y);
+        raycaster.ray.intersectPlane(dragPlane, intersectPoint);
+        if(intersectPoint){
+          dragOffset.copy(intersectPoint).sub(parent.position);
+          dragOffset.y = 0;
+        }
+      }
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchmove', function(e){
+    if(!isDragging || !selectedCloud || e.touches.length !== 1) return;
+    e.preventDefault();
+
+    var touch = e.touches[0];
+    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    var planeY = selectedCloud.position.y;
+    dragPlane.set(new THREE.Vector3(0, 1, 0), -planeY);
+    raycaster.ray.intersectPlane(dragPlane, intersectPoint);
+
+    if(intersectPoint){
+      var newPos = new THREE.Vector3().copy(intersectPoint).sub(dragOffset);
+      newPos.y = planeY;
+      selectedCloud.position.copy(newPos);
+      state.userInteracted = true;
+
+      cloudData.forEach(function(cd){
+        if(cd.mesh === selectedCloud && cd.rainSystem){
+          cd.rainSystem.points.position.x = selectedCloud.position.x;
+          cd.rainSystem.points.position.z = selectedCloud.position.z;
+        }
+      });
+    }
+  }, { passive: false });
+
+  renderer.domElement.addEventListener('touchend', function(){
+    isDragging = false;
+    selectedCloud = null;
+  });
+
+  // ==================== RAIN TRIGGER ====================
+  function triggerRain(cloudObj){
+    if(state.currentStage !== 2) return;
+
+    cloudData.forEach(function(cd){
+      if(cd.mesh === cloudObj && !cd.rainActive){
+        cd.rainActive = true;
+        state.rainTriggered = true;
+        state.userInteracted = true;
+        if(cd.rainSystem){
+          cd.rainSystem.active = true;
+          cd.rainSystem.points.visible = true;
+          cd.rainSystem.points.position.x = cloudObj.position.x;
+          cd.rainSystem.points.position.z = cloudObj.position.z;
+        }
+        // Make cloud darker
+        cloudObj.traverse(function(child){
+          if(child.isMesh && child.material){
+            child.material.color.setHex(0x888899);
+            child.material.opacity = 0.9;
+          }
+        });
+
+        if(cd.rainTimer) clearTimeout(cd.rainTimer);
+        cd.rainTimer = setTimeout(function(){
+          cd.rainActive = false;
+          if(cd.rainSystem){
+            cd.rainSystem.active = false;
+            cd.rainSystem.points.visible = false;
+          }
+          cloudObj.traverse(function(child){
+            if(child.isMesh && child.material){
+              child.material.color.setHex(0xffffff);
+              child.material.opacity = 0.85;
+            }
+          });
+        }, 5000);
+
+        mostrarToast('🌧️ ¡Está lloviendo! Juyá envía la lluvia', 'info');
+        if(!state.stagesCompleted[2]){
+          state.stagesCompleted[2] = true;
+          state.stageStars[2] = 1;
+          actualizarProgreso();
+          mostrarToast('✅ ¡Etapa de Precipitación completada!', 'exito');
+          actualizarBotones();
+        }
+      }
+    });
+  }
+
+  // ==================== STAGE MANAGEMENT ====================
+  function setStage(index){
+    state.currentStage = index;
+    var data = stageData[index];
+    stageTitle.textContent = data.emoji + ' ' + data.name;
+    stageSub.textContent = data.wayuu;
+    stageDesc.textContent = data.desc;
+
+    actualizarBotones();
+
+    // Show evaporation particles based on stage
+    evapPoints.visible = (index === 0);
+
+    // Show floating clouds based on stage
+    clouds.forEach(function(c){
+      c.visible = (index >= 1);
+    });
+
+    // Handle stage-specific events
+    if(index === 0){
+      // Evaporación: show particles rising
+      mostrarToast('☀️ El sol calienta el agua... ¡mira el vapor subir!', 'info');
+    } else if(index === 1){
+      // Condensación: clouds appear
+      mostrarToast('☁️ El vapor se enfría y forma nubes. ¡Arrástralas!', 'info');
+    } else if(index === 2){
+      // Precipitación: click clouds to rain
+      mostrarToast('🌧️ ¡Haz clic en las nubes para que llueva!', 'info');
+    } else if(index === 3){
+      // Recolección: show water collecting
+      mostrarToast('💧 El agua vuelve a los jagüeyes. ¡Ciclo completado!', 'info');
+      if(!state.stagesCompleted[3]){
+        state.stagesCompleted[3] = true;
+        state.stageStars[3] = 1;
+        actualizarProgreso();
+        mostrarToast('✅ ¡Etapa de Recolección completada!', 'exito');
+        actualizarBotones();
+      }
+
+      // Check if all stages complete
+      var allDone = state.stagesCompleted.every(Boolean);
+      if(allDone && state.gameStarted){
+        setTimeout(function(){
+          mostrarResultados();
+        }, 2000);
+      }
+    }
+  }
+
+  function actualizarBotones(){
+    document.querySelectorAll('.nav-btn[data-stage]').forEach(function(btn){
+      var stage = parseInt(btn.getAttribute('data-stage'));
+      btn.classList.toggle('activo', stage === state.currentStage);
+    });
+
+    document.getElementById('btnPrev').disabled = (state.currentStage <= 0);
+    document.getElementById('btnNext').disabled = (state.currentStage >= 3);
+  }
+
+  // ==================== NAVIGATION ====================
+  document.getElementById('btnPrev').addEventListener('click', function(){
+    if(state.currentStage > 0){
+      setStage(state.currentStage - 1);
+    }
+  });
+
+  document.getElementById('btnNext').addEventListener('click', function(){
+    if(state.currentStage < 3){
+      // Mark current stage as visited
+      if(!state.stagesCompleted[state.currentStage]){
+        state.stagesCompleted[state.currentStage] = true;
+        state.stageStars[state.currentStage] = 1;
+        actualizarProgreso();
+        mostrarToast('✅ ¡Etapa de ' + stageData[state.currentStage].name + ' completada!', 'exito');
+      }
+      setStage(state.currentStage + 1);
+    }
+  });
+
+  document.querySelectorAll('.nav-btn[data-stage]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var stage = parseInt(this.getAttribute('data-stage'));
+      setStage(stage);
+    });
+  });
+
+  // ==================== TTS ====================
+  ttsBtn.addEventListener('click', function(){
+    var data = stageData[state.currentStage];
+    hablar(data.tts);
+  });
+
+  // ==================== START ====================
+  document.getElementById('btnIniciar').addEventListener('click', function(){
+    document.getElementById('pantalla1').style.display = 'none';
+    overlay.classList.add('visible');
+    state.gameStarted = true;
+    setStage(0);
+    hintEl.style.opacity = '1';
+    setTimeout(function(){
+      hintEl.style.opacity = '0';
+    }, 8000);
+    mostrarToast('☀️ Comienza el ciclo: Evaporación', 'info');
+    hablar(stageData[0].tts);
+  });
+
+  // ==================== RESULTS ====================
+  function mostrarResultados(){
+    var totalStars = state.stageStars.reduce(function(a,b){ return a + b; }, 0);
+    var pct = Math.round((totalStars / 4) * 100);
+
+    document.getElementById('puntajeFinal').textContent = pct + '% (' + totalStars + '/4 etapas)';
+
+    var msg = '';
+    var emoji = '';
+    if(totalStars >= 4){
+      emoji = '🏆';
+      msg = '¡Excelente guardián del agua! Completaste las 4 etapas del ciclo. Entiendes cómo el sol evapora el agua, cómo se forman las nubes, cómo Juyá envía la lluvia y cómo los jagüeyes recolectan el agua para dar vida en La Guajira. ¡Eres un verdadero conocedor del territorio wayuu!';
+    } else if(totalStars >= 3){
+      emoji = '🌟';
+      msg = '¡Muy bien! Completaste la mayoría de las etapas del ciclo del agua. Sigue explorando para entender cómo cada etapa es importante para la vida en el desierto guajiro.';
+    } else if(totalStars >= 2){
+      emoji = '👍';
+      msg = '¡Buen progreso! Conoces parte del ciclo del agua. Repite el módulo para descubrir todas las etapas y entender cómo el agua llega a los jagüeyes.';
+    } else {
+      emoji = '🌱';
+      msg = 'Estás comenzando a descubrir el ciclo del agua en La Guajira. ¡No te rindas! Cada etapa es importante para entender cómo el agua da vida en el desierto.';
+    }
+
+    document.getElementById('estrellaFinal').textContent = emoji;
+    document.getElementById('mensajeFinal').textContent = msg;
+
+    // Stars
+    for(var si = 0; si < 3; si++){
+      var starEl = document.getElementById('star' + (si + 1));
+      if(starEl){
+        if(si < totalStars){
+          starEl.textContent = '⭐';
+          starEl.className = 'estrella activa';
+        } else {
+          starEl.textContent = '☆';
+          starEl.className = 'estrella inactiva';
+        }
+      }
+    }
+
+    document.getElementById('pantalla5').style.display = 'flex';
+
+    // Confetti
+    var confettiEmojis = ['💧','☀️','☁️','🌧️','🌊','🏜️','💦','🌟','✨','🌵','🐐','🌿'];
+    for(var ci = 0; ci < 25; ci++){
+      setTimeout(function(i){
+        return function(){
+          var el = document.createElement('span');
+          el.textContent = confettiEmojis[Math.floor(Math.random() * confettiEmojis.length)];
+          el.style.cssText = 'position:fixed;font-size:1.8rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+          el.style.left = Math.random() * 90 + '%';
+          el.style.top = '-50px';
+          document.body.appendChild(el);
+          setTimeout(function(){ el.remove(); }, 2600);
+        };
+      }(ci), ci * 100);
+    }
+
+    if(!document.getElementById('animCaerConfetti')){
+      var style = document.createElement('style');
+      style.id = 'animCaerConfetti';
+      style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+      document.head.appendChild(style);
+    }
+
+    actualizarProgreso();
+  }
+
+  // ==================== RESIZE ====================
+  window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ==================== HINT ====================
+  var hintTimeout;
+  function resetHintTimer(){
+    hintEl.style.opacity = '1';
+    clearTimeout(hintTimeout);
+    hintTimeout = setTimeout(function(){
+      hintEl.style.opacity = '0';
+    }, 6000);
+  }
+
+  renderer.domElement.addEventListener('mousedown', resetHintTimer);
+  renderer.domElement.addEventListener('wheel', resetHintTimer);
+  renderer.domElement.addEventListener('touchstart', resetHintTimer);
+
+  // ==================== ANIMATION LOOP ====================
+  var clock = new THREE.Clock();
+  var animTime = 0;
+
+  function animate(){
+    requestAnimationFrame(animate);
+
+    var dt = Math.min(clock.getDelta(), 0.1);
+    animTime += dt;
+
+    // Animate evaporation particles
+    if(evapPoints.visible){
+      var evapArr = evapGeo.attributes.position.array;
+      for(var ei = 0; ei < evapCount; ei++){
+        var idx = ei * 3;
+        var vel = evapVelocities[ei];
+        evapArr[idx] += vel.vx * dt * 2;
+        evapArr[idx + 1] += vel.vy * dt * 2;
+        evapArr[idx + 2] += vel.vz * dt * 2;
+
+        // Reset particle when it reaches too high or goes too far
+        if(evapArr[idx + 1] > 5 || Math.abs(evapArr[idx]) > 15 || Math.abs(evapArr[idx + 2]) > 15){
+          vel.life = 0;
+          var src2 = jagueyPositions[vel.srcIdx];
+          evapArr[idx] = src2.x + (Math.random() - 0.5) * 1.2;
+          evapArr[idx + 1] = 0.1 + Math.random() * 0.3;
+          evapArr[idx + 2] = src2.z + (Math.random() - 0.5) * 1.2;
+          vel.life = Math.random();
+        }
+      }
+      evapGeo.attributes.position.needsUpdate = true;
+      evapPoints.material.opacity = 0.2 + Math.sin(animTime * 0.5) * 0.1;
+    }
+
+    // Animate rain particles
+    rainSystems.forEach(function(rs){
+      if(!rs.active) return;
+      var rainArr = rs.geo.attributes.position.array;
+      for(var ri = 0; ri < rainArr.length; ri += 3){
+        var rvIdx = Math.floor(ri / 3);
+        var rv = rs.velocities[rvIdx];
+        rainArr[ri] += rv.vx * dt;
+        rainArr[ri + 1] += rv.vy * dt;
+        rainArr[ri + 2] += rv.vz * dt;
+
+        if(rainArr[ri + 1] < -1){
+          rainArr[ri] = (Math.random() - 0.5) * 5;
+          rainArr[ri + 1] = 4 + Math.random() * 2;
+          rainArr[ri + 2] = (Math.random() - 0.5) * 5;
+        }
+      }
+      rs.geo.attributes.position.needsUpdate = true;
+    });
+
+    // Animate clouds (gentle floating)
+    clouds.forEach(function(c){
+      if(!c.visible) return;
+      var origY = c.userData.originalPos.y;
+      var floatOffset = Math.sin(animTime * 0.3 + c.position.x * 0.5) * 0.15;
+      if(!c.userData.dragging){
+        c.position.y = origY + floatOffset;
+      }
+    });
+
+    // Animate water surfaces (jagueyes)
+    jagueyes.forEach(function(j){
+      j.children.forEach(function(child){
+        if(child.geometry && child.geometry.type === 'CircleGeometry'){
+          child.material.opacity = 0.55 + Math.sin(animTime * 1.2 + j.position.x) * 0.15;
+        }
+      });
+    });
+
+    // Sun rotation
+    sunMesh.rotation.x += dt * 0.05;
+    sunMesh.rotation.y += dt * 0.03;
+
+    renderer.render(scene, camera);
+  }
+
+  // ==================== START ====================
+  loadingEl.style.display = 'none';
+
+  hintEl.textContent = '🖱️ Arrastra para rotar · Rueda para zoom · Arrastra nubes · Clic para llover';
+
+  animate();
+
+  console.log('CIEN-306: Ciclo del Agua en La Guajira cargado exitosamente.');
+
+  } catch(err){
+    document.getElementById('loading').style.display = 'none';
+    errorEl.classList.add('visible');
+    errorDetail.textContent = err.message + '\n\n' + (err.stack || '');
+    console.error('CIEN-306 error:', err);
+  }
+
+})();
+</script>
+<script src="../comun/volver.js"></script>
+</body>
+</html>

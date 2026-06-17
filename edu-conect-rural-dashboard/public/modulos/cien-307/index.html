@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>CIEN-307: Materia y Energía | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+:root {
+  --hielo: #B3E5FC;
+  --agua: #4FC3F7;
+  --vapor: #E1F5FE;
+  --fuego: #FF7043;
+  --sol: #FFD54F;
+  --bija: #D32F2F;
+  --anil: #1565C0;
+  --suelda: #7CB342;
+  --vidrio: #81D4FA;
+  --organico: #66BB6A;
+  --plastico: #FFA726;
+  --papel: #42A5F5;
+  --temp-color: #E53935;
+}
+/* Module-specific */
+.experimento-num{
+  position:absolute;
+  top:12px;right:14px;
+  background:var(--atardecer);
+  color:white;
+  border-radius:20px;
+  padding:3px 14px;
+  font-size:0.75rem;
+  font-weight:bold;
+}
+.wayuu-contexto{
+  background:linear-gradient(135deg,#FFF8E1,#F4E1C1);
+  border-left:4px solid var(--wayuu-oro);
+  border-radius:0 12px 12px 0;
+  padding:10px 14px;
+  margin:12px 0;
+  font-size:0.9rem;
+  color:var(--tierra);
+}
+/* Thermometer */
+.termo-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  margin:15px 0;
+}
+.termo-svg{width:80px;height:220px}
+.termo-controles{display:flex;flex-direction:column;align-items:center;gap:8px}
+.termo-controles .temp-label{font-size:1.8rem;font-weight:bold;color:var(--temp-color)}
+.termo-controles .estado-label{font-size:1.2rem;font-weight:bold;padding:4px 16px;border-radius:12px}
+.estado-label.solido{background:var(--hielo);color:#1565C0}
+.estado-label.liquido{background:var(--agua);color:#01579B}
+.estado-label.gas{background:var(--vapor);color:#7B1FA2}
+.moleculas-wrap{
+  text-align:center;
+  margin:10px 0;
+  min-height:100px;
+}
+.moleculas-svg{width:100%;max-width:280px;height:100px}
+/* Beaker */
+.beaker-wrap{text-align:center;margin:10px 0}
+.beaker-svg{width:100%;max-width:200px;height:160px}
+/* Exp2: Mezclas */
+.ingredientes{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+.ingrediente{
+  width:100px;
+  padding:14px 8px;
+  border-radius:16px;
+  text-align:center;
+  border:3px solid #e0d5c5;
+  background:var(--blanco);
+  cursor:pointer;
+  transition:all 0.3s;
+  font-weight:bold;
+  font-size:0.85rem;
+}
+.ingrediente:hover{transform:scale(1.05);box-shadow:var(--sombra)}
+.ingrediente.seleccionado{border-color:var(--wayuu-oro);background:#FFF8E1}
+.ingrediente .ing-emoji{font-size:2rem;display:block;margin-bottom:4px}
+.ingrediente .ing-color{display:block;width:30px;height:30px;border-radius:50%;margin:6px auto}
+.mezcla-vaso{
+  width:160px;height:160px;
+  margin:12px auto;
+  border-radius:0 0 50% 50%;
+  border:3px solid #8B5E3C;
+  background:var(--blanco);
+  position:relative;
+  overflow:hidden;
+  transition:background 0.5s;
+}
+.mezcla-vaso .vaso-contenido{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  border-radius:0 0 50% 50%;
+  transition:all 0.5s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+}
+.herramientas{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+.herramienta{
+  padding:8px 16px;
+  border:2px solid var(--arena-oscura);
+  border-radius:12px;
+  background:var(--blanco);
+  cursor:pointer;
+  transition:all 0.3s;
+  font-weight:bold;
+  font-size:0.9rem;
+}
+.herramienta:hover{background:var(--arena);border-color:var(--wayuu-oro)}
+.herramienta:disabled{opacity:0.4;cursor:not-allowed}
+/* Exp3: Energía Solar */
+.solar-scene{
+  position:relative;
+  max-width:400px;
+  margin:10px auto;
+  text-align:center;
+}
+.solar-svg{width:100%;max-width:360px;height:260px}
+.angle-control{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin:10px 0;
+}
+.energy-meter{
+  width:100%;max-width:300px;height:24px;
+  background:#e0d5c5;
+  border-radius:12px;
+  overflow:hidden;
+  margin:8px auto;
+}
+.energy-fill{
+  height:100%;
+  background:linear-gradient(90deg,#FFD54F,#FF8C00);
+  transition:width 0.5s;
+  width:0%;
+  border-radius:12px;
+}
+.devices{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+.device{
+  width:90px;
+  padding:12px 6px;
+  border-radius:14px;
+  text-align:center;
+  border:3px solid #e0d5c5;
+  background:var(--blanco);
+  cursor:pointer;
+  transition:all 0.3s;
+  font-weight:bold;
+  font-size:0.8rem;
+}
+.device:hover{transform:scale(1.05);border-color:var(--wayuu-oro)}
+.device.powered{border-color:var(--sol);background:#FFF8E1;box-shadow:0 0 16px rgba(255,213,79,0.5)}
+.device .dev-emoji{font-size:2rem;display:block;margin-bottom:3px}
+/* Exp4: Reciclaje */
+.bins-row{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:14px 0;
+}
+.bin{
+  width:100px;
+  padding:10px 6px;
+  border-radius:14px;
+  text-align:center;
+  border:3px dashed var(--arena-oscura);
+  background:var(--blanco);
+  transition:all 0.3s;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  cursor:pointer;
+}
+.bin:hover{border-color:var(--wayuu-oro);background:#FFF8E1}
+.bin.llena{border-style:solid}
+.bin .bin-emoji{font-size:2rem}
+.bin .bin-titulo{font-weight:bold;font-size:0.8rem;color:var(--tierra);margin-top:4px}
+.bin .bin-contador{font-size:0.7rem;color:var(--atardecer)}
+.bin .bin-items{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:30px;padding:4px}
+.bandeja-residuos{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  margin:12px 0;
+  min-height:50px;
+  padding:12px;
+  background:var(--arena);
+  border-radius:16px;
+  border:2px dashed var(--arena-oscura);
+}
+.residuo-item{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:8px 14px;
+  background:var(--blanco);
+  border:2px solid var(--arena);
+  border-radius:10px;
+  font-size:0.85rem;
+  font-weight:bold;
+  cursor:grab;
+  user-select:none;
+  transition:all 0.3s;
+  touch-action:none;
+}
+.residuo-item:hover{border-color:var(--wayuu-oro);transform:scale(1.05)}
+.residuo-item:active{cursor:grabbing}
+.residuo-item.usado{opacity:0.3;pointer-events:none;background:#ccc}
+.residuo-item.correcta{background:#E8F5E9;border-color:var(--verde)}
+.residuo-item.incorrecta{background:#FFEBEE;border-color:var(--rojo)}
+.residuo-item.arrastrando{opacity:0.6;transform:scale(1.1)}
+/* Quiz */
+.quiz-area{
+  margin:14px 0;
+  padding:16px;
+  background:var(--arena);
+  border-radius:14px;
+  text-align:center;
+}
+.quiz-area .pregunta{
+  font-weight:bold;
+  font-size:1rem;
+  margin-bottom:10px;
+}
+.quiz-opciones{display:flex;flex-direction:column;gap:6px;max-width:400px;margin:0 auto}
+.quiz-opcion{
+  padding:12px 16px;
+  background:var(--blanco);
+  border:2px solid var(--arena-oscura);
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:all 0.2s;
+  font-size:0.95rem;
+  text-align:left;
+  color:var(--texto);
+}
+.quiz-opcion:hover{border-color:var(--wayuu-oro);background:#FFF8E1;transform:translateX(3px)}
+.quiz-opcion.correcta{border-color:var(--verde);background:#E8F5E9}
+.quiz-opcion.incorrecta{border-color:var(--rojo);background:#FFEBEE}
+.quiz-opcion:disabled{cursor:default;transform:none}
+.quiz-feedback{margin-top:10px;font-weight:bold;min-height:24px}
+/* Star display */
+.stars-wrap{display:flex;justify-content:center;gap:8px;margin:8px 0}
+.stars-wrap .star{font-size:2rem;transition:all 0.3s}
+.stars-wrap .star.obtenida{animation:popIn 0.4s ease-out}
+.stars-wrap .star.vacia{opacity:0.2}
+/* Molecule animations */
+.mol{animation:flotar 2s ease-in-out infinite}
+@keyframes flotar{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.solid-grid .mol{animation:none}
+.gas-anim .mol{animation:vibrar 0.5s ease-in-out infinite}
+@keyframes vibrar{0%,100%{transform:translate(0,0)}25%{transform:translate(1px,-2px)}50%{transform:translate(-1px,1px)}75%{transform:translate(2px,-1px)}}
+/* Confetti */
+@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+/* Home Button */
+.home-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 18px;
+  background:var(--blanco);
+  border:2px solid var(--arena);
+  border-radius:var(--radio-btn);
+  color:var(--tierra);
+  text-decoration:none;
+  font-weight:bold;
+  font-size:0.9rem;
+  transition:all 0.2s;
+}
+.home-btn:hover{background:var(--arena);border-color:var(--wayuu-oro);transform:translateX(-3px)}
+@media(max-width:600px){
+  .termo-svg{width:60px;height:160px}
+  .beaker-svg{max-width:150px;height:120px}
+  .solar-svg{max-width:280px;height:200px}
+  .ingrediente{width:85px;padding:10px 6px}
+  .mezcla-vaso{width:120px;height:120px}
+  .bin{width:80px}
+  .device{width:75px;padding:8px 4px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div style="font-size:2.5rem">⚡</div>
+  <h1>🔬 Materia y Energía</h1>
+  <span class="grado">5° Grado · Ciencias Naturales</span>
+  <div class="deco-line">💧🧊♨️🌞🔋♻️</div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progreso-wrap">
+  <span class="progreso-label">📊 Progreso</span>
+  <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+  <span class="progreso-pct" id="progresoPct">0%</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 1: BIENVENIDA                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card activo" id="pantalla1">
+  <h2><span class="icono">🔬</span> Bienvenida</h2>
+  <div style="text-align:center;padding:10px">
+    <div style="font-size:4rem;animation:brillar 2s ease-in-out infinite">⚡</div>
+    <p style="font-size:1.2rem;font-weight:bold;color:var(--tierra);margin:10px 0">
+      ¡Explora la Materia y la Energía con la ciencia wayuu!
+    </p>
+    <p style="color:#8B7355;margin:10px 0">
+      En La Guajira, la materia y la energía están en todas partes: el agua que se congela en las noches frías, los colores del añil y la bija que usan las artesanas, el sol que calienta los paneles solares en las comunidades, y los materiales que se reutilizan para crear nuevas cosas. ¡Acompáñanos en 4 experimentos interactivos!
+    </p>
+    <div style="font-size:3rem;margin:15px 0;letter-spacing:10px">💧🧪☀️♻️</div>
+    <p style="color:var(--tierra);font-size:0.9rem;margin-bottom:10px">
+      <strong>4 experimentos</strong> · Estados del agua · Mezclas · Energía Solar · Reciclaje
+    </p>
+    <button class="btn btn-primario" id="btnIniciar" style="font-size:1.1rem;padding:12px 30px">
+      🚀 ¡Comenzar experimentos!
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 2: EXPERIMENTO 1 - ESTADOS DEL AGUA    -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card" id="pantalla2" style="display:none">
+  <h2><span class="icono">💧</span> 1. Estados del Agua <span class="etiqueta-check" id="check2" style="display:none">✓</span></h2>
+  <span class="experimento-num">Experimento 1</span>
+
+  <div class="wayuu-contexto">
+    🌙 En las noches frías de La Guajira, el agua de los jagüeyes puede congelarse formando hielo. Cuando sale el sol, el agua se evapora y sube al cielo para formar nubes. Juyá, el espíritu de la lluvia, devuelve el agua a la tierra. ¡El agua siempre está cambiando!
+    <button class="tts-btn" onclick="hablar('En las noches frías de La Guajira, el agua de los jagüeyes se congela. Con el sol, se evapora y forma nubes. El agua siempre está cambiando de estado.')" style="width:32px;height:32px;font-size:0.9rem;margin-left:6px">🔊</button>
+  </div>
+
+  <!-- Thermometer -->
+  <div class="termo-wrap">
+    <svg class="termo-svg" viewBox="0 0 60 200">
+      <defs>
+        <linearGradient id="termoGrad" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#E53935"/>
+          <stop offset="50%" stop-color="#FF9800"/>
+          <stop offset="100%" stop-color="#42A5F5"/>
+        </linearGradient>
+      </defs>
+      <!-- bulb -->
+      <circle cx="30" cy="175" r="16" fill="white" stroke="#999" stroke-width="1.5"/>
+      <circle cx="30" cy="175" r="12" id="termoBulbo" fill="#E53935"/>
+      <!-- tube -->
+      <rect x="25" y="30" width="10" height="140" rx="5" fill="white" stroke="#999" stroke-width="1.5"/>
+      <!-- mercury -->
+      <rect x="27" y="160" width="6" height="8" rx="3" id="termoMercury" fill="#E53935" style="transition:all 0.4s"/>
+      <!-- scale -->
+      <text x="42" y="45" font-size="7" fill="#666">100°</text>
+      <text x="42" y="80" font-size="7" fill="#666">50°</text>
+      <text x="42" y="115" font-size="7" fill="#666">0°</text>
+      <text x="42" y="150" font-size="7" fill="#666">-10°</text>
+      <line x1="38" y1="42" x2="42" y2="42" stroke="#999" stroke-width="1"/>
+      <line x1="38" y1="77" x2="42" y2="77" stroke="#999" stroke-width="1"/>
+      <line x1="38" y1="112" x2="42" y2="112" stroke="#999" stroke-width="1"/>
+    </svg>
+    <div class="termo-controles">
+      <span class="temp-label" id="tempDisplay">25°C</span>
+      <span class="estado-label liquido" id="estadoLabel">💧 Líquido</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-danger" id="btnEnfriar" style="padding:6px 16px;font-size:1rem">❄️ Enfriar</button>
+        <button class="btn btn-primario" id="btnCalentar" style="padding:6px 16px;font-size:1rem">🔥 Calentar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beaker / Water visualization -->
+  <div class="beaker-wrap">
+    <svg class="beaker-svg" viewBox="0 0 200 160">
+      <defs>
+        <linearGradient id="beakerGrad" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" id="beakerStop0" stop-color="#4FC3F7"/>
+          <stop offset="100%" id="beakerStop1" stop-color="#B3E5FC"/>
+        </linearGradient>
+      </defs>
+      <!-- beaker outline -->
+      <path d="M40,20 L50,140 Q100,155 150,140 L160,20" fill="none" stroke="#999" stroke-width="2"/>
+      <!-- water/ice/steam -->
+      <path id="beakerContent" d="M50,140 Q100,155 150,140 L150,120 Q100,135 50,120 Z" fill="url(#beakerGrad)" opacity="0.8"/>
+      <!-- molecules inside -->
+      <g id="moleculeGroup"></g>
+    </svg>
+  </div>
+
+  <!-- Molecule arrangement -->
+  <div class="moleculas-wrap">
+    <p style="font-weight:bold;font-size:0.9rem;color:var(--tierra);margin-bottom:4px">🧬 Moléculas de agua (H₂O):</p>
+    <svg class="moleculas-svg" id="molSvg" viewBox="0 0 280 90">
+      <!-- dynamic molecules -->
+    </svg>
+  </div>
+
+  <!-- Quiz -->
+  <div class="quiz-area" id="quiz1">
+    <p class="pregunta">❓ ¿Cómo se llama el proceso cuando el agua pasa de líquido a vapor?</p>
+    <div class="quiz-opciones">
+      <button class="quiz-opcion" data-quiz="1" data-correct="true">💨 Evaporación / Ebullición</button>
+      <button class="quiz-opcion" data-quiz="1" data-correct="false">❄️ Solidificación</button>
+      <button class="quiz-opcion" data-quiz="1" data-correct="false">🧊 Fusión</button>
+    </div>
+    <div class="quiz-feedback" id="quizFeed1"></div>
+  </div>
+  <div class="stars-wrap" id="stars1">
+    <span class="star vacia">⭐</span><span class="star vacia">⭐</span><span class="star vacia">⭐</span>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn btn-exito" id="btnExp1Ok" style="display:none">
+      ✓ Siguiente experimento →
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 3: EXPERIMENTO 2 - MEZCLAS             -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card" id="pantalla3" style="display:none">
+  <h2><span class="icono">🧪</span> 2. Mezclas y Soluciones <span class="etiqueta-check" id="check3" style="display:none">✓</span></h2>
+  <span class="experimento-num">Experimento 2</span>
+
+  <div class="wayuu-contexto">
+    🧶 Las artesanas wayuu usan tintes naturales: el <strong>añil</strong> (azul profundo), la <strong>bija</strong> (rojo anaranjado) y el <strong>suelda con suelda</strong> (verde). Mezclando estos ingredientes con agua, crean los colores para sus tejidos. En la ciencia, a esto lo llamamos mezclas y soluciones.
+    <button class="tts-btn" onclick="hablar('Las artesanas wayuu mezclan añil, bija y suelda con suelda con agua para crear tintes naturales para sus tejidos. En ciencia, esto se llama mezclas y soluciones.')" style="width:32px;height:32px;font-size:0.9rem;margin-left:6px">🔊</button>
+  </div>
+
+  <p style="text-align:center;font-size:0.95rem;color:var(--tierra);margin-bottom:8px">
+    🎯 Elige ingredientes y mézclalos. Luego separa la mezcla con las herramientas.
+  </p>
+
+  <!-- Ingredients -->
+  <div class="ingredientes">
+    <div class="ingrediente" data-ing="anil" style="border-color:var(--anil)">
+      <span class="ing-emoji">💙</span>
+      <span>Añil</span>
+      <span class="ing-color" style="background:var(--anil)"></span>
+    </div>
+    <div class="ingrediente" data-ing="bija" style="border-color:var(--bija)">
+      <span class="ing-emoji">❤️</span>
+      <span>Bija</span>
+      <span class="ing-color" style="background:var(--bija)"></span>
+    </div>
+    <div class="ingrediente" data-ing="suelda" style="border-color:var(--suelda)">
+      <span class="ing-emoji">💚</span>
+      <span>Suelda</span>
+      <span class="ing-color" style="background:var(--suelda)"></span>
+    </div>
+  </div>
+
+  <!-- Mezcla visualization -->
+  <div class="mezcla-vaso" id="mezclaVaso">
+    <div class="vaso-contenido" id="vasoContenido" style="height:0%;background:transparent">
+      <span id="vasoText" style="font-weight:bold;font-size:0.9rem"></span>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:0.9rem;color:var(--tierra);margin:6px 0" id="mezclaTipo">Agrega ingredientes para empezar</p>
+
+  <!-- Tools -->
+  <div class="herramientas">
+    <button class="herramienta" id="btnFiltrar" disabled>🧹 Filtrar</button>
+    <button class="herramienta" id="btnDecantar" disabled>🧪 Decantar</button>
+    <button class="herramienta" id="btnReiniciarMezcla">🔄 Nueva mezcla</button>
+  </div>
+
+  <div id="mezclaFeedback" style="text-align:center;font-weight:bold;min-height:24px;margin:6px 0"></div>
+
+  <!-- Quiz -->
+  <div class="quiz-area" id="quiz2">
+    <p class="pregunta">❓ Cuando mezclas añil en agua, ¿qué tipo de mezcla obtienes?</p>
+    <div class="quiz-opciones">
+      <button class="quiz-opcion" data-quiz="2" data-correct="true">💧 Homogénea (se disuelve uniformemente)</button>
+      <button class="quiz-opcion" data-quiz="2" data-correct="false">🌊 Heterogénea (se ven las partículas)</button>
+      <button class="quiz-opcion" data-quiz="2" data-correct="false">⚗️ No es una mezcla</button>
+    </div>
+    <div class="quiz-feedback" id="quizFeed2"></div>
+  </div>
+  <div class="stars-wrap" id="stars2">
+    <span class="star vacia">⭐</span><span class="star vacia">⭐</span><span class="star vacia">⭐</span>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn btn-exito" id="btnExp2Ok" style="display:none">
+      ✓ Siguiente experimento →
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 4: EXPERIMENTO 3 - ENERGÍA SOLAR       -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card" id="pantalla4" style="display:none">
+  <h2><span class="icono">☀️</span> 3. Energía Solar <span class="etiqueta-check" id="check4" style="display:none">✓</span></h2>
+  <span class="experimento-num">Experimento 3</span>
+
+  <div class="wayuu-contexto">
+    ☀️ La Guajira es uno de los lugares con más sol del mundo. Muchas comunidades wayuu usan paneles solares para tener electricidad. La luz del sol se convierte en energía eléctrica que enciende bombillos, radios y bombea agua. ¡El sol es una fuente inagotable de energía!
+    <button class="tts-btn" onclick="hablar('La Guajira tiene mucho sol. Las comunidades wayuu usan paneles solares para convertir la luz solar en electricidad que enciende bombillos y radios.')" style="width:32px;height:32px;font-size:0.9rem;margin-left:6px">🔊</button>
+  </div>
+
+  <div class="solar-scene">
+    <svg class="solar-svg" viewBox="0 0 360 260">
+      <!-- sky -->
+      <rect x="0" y="0" width="360" height="260" fill="#87CEEB" opacity="0.25"/>
+      <!-- sun -->
+      <circle cx="300" cy="35" r="25" fill="#FFD54F" id="svgSun" style="transition:all 0.5s"/>
+      <g id="sunRays">
+        <line x1="300" y1="0" x2="300" y2="10" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="325" y1="10" x2="318" y2="18" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="330" y1="35" x2="320" y2="35" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="325" y1="60" x2="318" y2="52" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="300" y1="70" x2="300" y2="60" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="275" y1="60" x2="282" y2="52" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="270" y1="35" x2="280" y2="35" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+        <line x1="275" y1="10" x2="282" y2="18" stroke="#FFD54F" stroke-width="3" opacity="0.7"/>
+      </g>
+      <!-- ground -->
+      <rect x="0" y="190" width="360" height="70" fill="#E8B86D"/>
+      <!-- panel pole -->
+      <rect x="175" y="120" width="6" height="75" fill="#666"/>
+      <!-- panel (angle controlled) -->
+      <g id="panelGroup" style="transform-origin:178px 120px;transition:transform 0.5s">
+        <rect x="128" y="85" width="100" height="40" rx="4" fill="#1A237E" stroke="#3949AB" stroke-width="2" id="svgPanel"/>
+        <rect x="133" y="90" width="90" height="30" rx="2" fill="#283593" opacity="0.7"/>
+        <!-- grid lines -->
+        <line x1="133" y1="100" x2="223" y2="100" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+        <line x1="133" y1="110" x2="223" y2="110" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+        <line x1="155" y1="90" x2="155" y2="120" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+        <line x1="175" y1="90" x2="175" y2="120" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+        <line x1="195" y1="90" x2="195" y2="120" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+        <line x1="215" y1="90" x2="215" y2="120" stroke="#5C6BC0" stroke-width="1" opacity="0.5"/>
+      </g>
+      <!-- sunlight arrows -->
+      <g id="sunArrows" opacity="0.5">
+        <line x1="275" y1="40" x2="225" y2="90" stroke="#FFD54F" stroke-width="2" stroke-dasharray="4,3"/>
+        <line x1="285" y1="50" x2="230" y2="95" stroke="#FFD54F" stroke-width="2" stroke-dasharray="4,3"/>
+        <line x1="295" y1="55" x2="240" y2="100" stroke="#FFD54F" stroke-width="2" stroke-dasharray="4,3"/>
+      </g>
+      <!-- wayuu house -->
+      <rect x="20" y="155" width="60" height="35" rx="3" fill="#C9A96E"/>
+      <rect x="22" y="157" width="56" height="8" fill="#8B5E3C"/>
+      <rect x="40" y="165" width="18" height="25" rx="2" fill="#8B5E3C"/>
+      <circle cx="49" cy="178" r="3" fill="#FFD54F" id="houseLight" opacity="0"/>
+    </svg>
+  </div>
+
+  <div class="angle-control">
+    <button class="btn btn-secundario" id="btnAnguloMenos">◀ Menos ángulo</button>
+    <span style="font-weight:bold;min-width:100px;text-align:center" id="anguloDisplay">45°</span>
+    <button class="btn btn-secundario" id="btnAnguloMas">Más ángulo ▶</button>
+  </div>
+
+  <p style="text-align:center;font-weight:bold;font-size:0.95rem">⚡ Energía generada:</p>
+  <div class="energy-meter">
+    <div class="energy-fill" id="energyFill"></div>
+  </div>
+  <p style="text-align:center;color:var(--tierra);font-size:0.9rem" id="energyLabel">0 Watts · Busca el ángulo óptimo</p>
+
+  <p style="text-align:center;font-weight:bold;font-size:0.9rem;margin-top:8px">💡 Dispositivos para encender:</p>
+  <div class="devices">
+    <div class="device" data-device="bombillo" data-watts="40">
+      <span class="dev-emoji">💡</span>
+      <span>Bombillo</span>
+      <span style="font-size:0.7rem;color:var(--atardecer)">40W</span>
+    </div>
+    <div class="device" data-device="radio" data-watts="15">
+      <span class="dev-emoji">📻</span>
+      <span>Radio</span>
+      <span style="font-size:0.7rem;color:var(--atardecer)">15W</span>
+    </div>
+    <div class="device" data-device="bomba" data-watts="80">
+      <span class="dev-emoji">💧</span>
+      <span>Bomba agua</span>
+      <span style="font-size:0.7rem;color:var(--atardecer)">80W</span>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:0.85rem;color:var(--tierra)" id="deviceFeedback">Ajusta el panel para generar energía y enciende los dispositivos</p>
+
+  <!-- Quiz -->
+  <div class="quiz-area" id="quiz3">
+    <p class="pregunta">❓ ¿Qué transformación de energía ocurre en un panel solar?</p>
+    <div class="quiz-opciones">
+      <button class="quiz-opcion" data-quiz="3" data-correct="true">☀️ Luz solar → Electricidad</button>
+      <button class="quiz-opcion" data-quiz="3" data-correct="false">💨 Viento → Electricidad</button>
+      <button class="quiz-opcion" data-quiz="3" data-correct="false">🔥 Calor → Luz</button>
+    </div>
+    <div class="quiz-feedback" id="quizFeed3"></div>
+  </div>
+  <div class="stars-wrap" id="stars3">
+    <span class="star vacia">⭐</span><span class="star vacia">⭐</span><span class="star vacia">⭐</span>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn btn-exito" id="btnExp3Ok" style="display:none">
+      ✓ Siguiente experimento →
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 5: EXPERIMENTO 4 - RECICLAJE           -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card" id="pantalla5" style="display:none">
+  <h2><span class="icono">♻️</span> 4. Reciclaje <span class="etiqueta-check" id="check5" style="display:none">✓</span></h2>
+  <span class="experimento-num">Experimento 4</span>
+
+  <div class="wayuu-contexto">
+    ♻️ En la cultura wayuu, nada se desperdicia. Las vasijas rotas se convierten en macetas, la ropa vieja en retazos para mochilas, y las semillas en collares. Aprender a separar los residuos nos ayuda a cuidar el territorio, como enseñan los ancestros.
+    <button class="tts-btn" onclick="hablar('En la cultura wayuu nada se desperdicia. Las vasijas rotas se reusan, la ropa vieja se convierte en mochilas. Separar residuos ayuda a cuidar el territorio.')" style="width:32px;height:32px;font-size:0.9rem;margin-left:6px">🔊</button>
+  </div>
+
+  <p style="text-align:center;font-size:0.95rem;color:var(--tierra);margin-bottom:10px">
+    🎯 Arrastra cada residuo a la caneca correcta. ¡Separa bien para cuidar el planeta!
+  </p>
+
+  <!-- Bins -->
+  <div class="bins-row" id="binsRow">
+    <div class="bin" data-bin="organico">
+      <span class="bin-emoji">🍌</span>
+      <span class="bin-titulo">Orgánico</span>
+      <span class="bin-contador" id="cntOrganico">0/3</span>
+      <div class="bin-items" id="itemsOrganico"></div>
+    </div>
+    <div class="bin" data-bin="papel">
+      <span class="bin-emoji">📄</span>
+      <span class="bin-titulo">Papel</span>
+      <span class="bin-contador" id="cntPapel">0/2</span>
+      <div class="bin-items" id="itemsPapel"></div>
+    </div>
+    <div class="bin" data-bin="plastico">
+      <span class="bin-emoji">🥤</span>
+      <span class="bin-titulo">Plástico</span>
+      <span class="bin-contador" id="cntPlastico">0/2</span>
+      <div class="bin-items" id="itemsPlastico"></div>
+    </div>
+    <div class="bin" data-bin="vidrio">
+      <span class="bin-emoji">🫙</span>
+      <span class="bin-titulo">Vidrio</span>
+      <span class="bin-contador" id="cntVidrio">0/2</span>
+      <div class="bin-items" id="itemsVidrio"></div>
+    </div>
+  </div>
+
+  <!-- Bandeja -->
+  <div class="bandeja-residuos" id="bandejaResiduos">
+    <span style="font-weight:bold;font-size:0.85rem;color:var(--tierra);width:100%;text-align:center">📦 Residuos por clasificar:</span>
+  </div>
+
+  <div class="clasif-feedback" id="reciclajeFeedback"></div>
+
+  <!-- Quiz -->
+  <div class="quiz-area" id="quiz4">
+    <p class="pregunta">❓ ¿Cuál de estos residuos es biodegradable?</p>
+    <div class="quiz-opciones">
+      <button class="quiz-opcion" data-quiz="4" data-correct="true">🍌 Cáscara de plátano</button>
+      <button class="quiz-opcion" data-quiz="4" data-correct="false">🥤 Bolsa plástica</button>
+      <button class="quiz-opcion" data-quiz="4" data-correct="false">🫙 Botella de vidrio</button>
+    </div>
+    <div class="quiz-feedback" id="quizFeed4"></div>
+  </div>
+  <div class="stars-wrap" id="stars4">
+    <span class="star vacia">⭐</span><span class="star vacia">⭐</span><span class="star vacia">⭐</span>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <button class="btn btn-exito" id="btnExp4Ok" style="display:none">
+      ✓ Ver resultados →
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PANTALLA 6: RESULTADOS                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="card" id="pantalla6" style="display:none">
+  <h2><span class="icono">🏆</span> Resultados</h2>
+  <div style="text-align:center;padding:20px">
+    <div style="font-size:5rem;animation:brillar 2s ease-in-out infinite" id="estrellaFinal">🏆</div>
+    <div style="font-size:2.5rem;font-weight:bold;color:var(--atardecer);margin:10px 0" id="puntajeFinal">0%</div>
+    <p style="font-size:1.2rem;color:var(--tierra);margin:10px 0;line-height:1.5" id="mensajeFinal"></p>
+
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin:20px 0">
+      <div class="resumen-eco" style="border-color:#B3E5FC"><div style="font-size:2.5rem">💧</div><div style="font-weight:bold;color:var(--tierra)">Estados Agua</div><div class="estrellas-final" id="resStars0"></div></div>
+      <div class="resumen-eco" style="border-color:#CE93D8"><div style="font-size:2.5rem">🧪</div><div style="font-weight:bold;color:var(--tierra)">Mezclas</div><div class="estrellas-final" id="resStars1"></div></div>
+      <div class="resumen-eco" style="border-color:#FFD54F"><div style="font-size:2.5rem">☀️</div><div style="font-weight:bold;color:var(--tierra)">Energía Solar</div><div class="estrellas-final" id="resStars2"></div></div>
+      <div class="resumen-eco" style="border-color:#81C784"><div style="font-size:2.5rem">♻️</div><div style="font-weight:bold;color:var(--tierra)">Reciclaje</div><div class="estrellas-final" id="resStars3"></div></div>
+    </div>
+
+    <p style="color:var(--tierra);font-size:0.9rem;max-width:500px;margin:10px auto;line-height:1.6">
+      🌍 <strong>¿Sabías qué?</strong> La materia y la energía están conectadas en la vida wayuu. El sol (Kashi) da energía al agua para evaporarse y formar nubes. Las plantas convierten la luz en alimento. Los materiales se reusan y transforman. ¡Todo es un ciclo! Cuidar la energía y los recursos es cuidar la vida en La Guajira.
+    </p>
+
+    <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primario" onclick="location.reload()">🔄 Repetir módulo</button>
+      <a href="../" class="home-btn">← Volver a módulos</a>
+    </div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+  'use strict';
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  // ============ STATE ============
+  const state = {
+    pantallaActual: 1,
+    // Experiment completion
+    exp1Completo: false,
+    exp2Completo: false,
+    exp3Completo: false,
+    exp4Completo: false,
+    // Stars per experiment (0-3)
+    estrellas: [0, 0, 0, 0],
+    // Quiz answered
+    quizRespondido: [false, false, false, false],
+    // Exp1: Temp
+    temperatura: 25,
+    // Exp2: Mezcla
+    ingredientesMezcla: [],
+    mezclaSeparada: false,
+    // Exp3: Solar
+    angulo: 45,
+    energiaGenerada: 0,
+    dispositivosEncendidos: 0,
+    // Exp4: Reciclaje
+    residuosColocadas: 0,
+    residuosCorrectas: 0,
+    reciclajeCompleto: false,
+  };
+
+  // ============ TTS ============
+  function hablar(texto){
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // ============ TOAST ============
+  function mostrarToast(mensaje, tipo){
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + tipo;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+
+  // ============ PROGRESS ============
+  function actualizarProgreso(){
+    let completadas = 0;
+    if(state.exp1Completo) completadas++;
+    if(state.exp2Completo) completadas++;
+    if(state.exp3Completo) completadas++;
+    if(state.exp4Completo) completadas++;
+    const pct = Math.round((completadas / 4) * 100);
+    $('#progresoFill').style.width = pct + '%';
+    $('#progresoPct').textContent = pct + '%';
+  }
+
+  // ============ NAVIGATION ============
+  function irAPantalla(num){
+    for(let i = 1; i <= 6; i++){
+      const el = $('#pantalla' + i);
+      if(el){ el.style.display = 'none'; el.classList.remove('activo'); }
+    }
+    const target = $('#pantalla' + num);
+    if(target){
+      target.style.display = 'block';
+      target.classList.add('activo');
+      target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    state.pantallaActual = num;
+  }
+
+  // ============ STARS ============
+  function renderEstrellas(expIdx, obtenidas){
+    const wrap = $('#stars' + (expIdx+1));
+    if(!wrap) return;
+    const stars = wrap.querySelectorAll('.star');
+    stars.forEach((s, i) => {
+      s.className = i < obtenidas ? 'star obtenida' : 'star vacia';
+    });
+  }
+
+  // ============ EXP1: ESTADOS DEL AGUA ============
+  function actualizarTermometro(){
+    const t = state.temperatura;
+    const tempEl = $('#tempDisplay');
+    const estadoEl = $('#estadoLabel');
+    const mercury = $('#termoMercury');
+    const bulbo = $('#termoBulbo');
+    const beakerContent = $('#beakerContent');
+    const molSvg = $('#molSvg');
+
+    // Clamp
+    const clamped = Math.max(-10, Math.min(120, t));
+    tempEl.textContent = clamped + '°C';
+
+    // Map temp to mercury height (30-140 range roughly, inverted: hot = low Y)
+    // -10°C → 140, 120°C → 40
+    const mercuryY = 140 - ((clamped + 10) / 130) * 100;
+    if(mercury) mercury.setAttribute('y', mercuryY);
+    if(bulbo){
+      let color = '#42A5F5';
+      if(clamped > 80) color = '#E53935';
+      else if(clamped > 30) color = '#FF9800';
+      bulbo.setAttribute('fill', color);
+    }
+
+    // Estado
+    let estado = 'liquido';
+    let estadoText = '💧 Líquido';
+    if(clamped < 0){
+      estado = 'solido';
+      estadoText = '🧊 Sólido (Hielo)';
+    } else if(clamped > 100){
+      estado = 'gas';
+      estadoText = '♨️ Gas (Vapor)';
+    }
+    estadoEl.className = 'estado-label ' + estado;
+    estadoEl.textContent = estadoText;
+
+    // Beaker content
+    if(beakerContent){
+      if(estado === 'gas'){
+        beakerContent.setAttribute('d', 'M50,40 Q100,60 150,40 L150,20 Q100,40 50,20 Z');
+      } else if(estado === 'solido'){
+        beakerContent.setAttribute('d', 'M50,140 Q100,155 150,140 L150,80 Q100,95 50,80 Z');
+      } else {
+        beakerContent.setAttribute('d', 'M50,140 Q100,155 150,140 L150,110 Q100,125 50,110 Z');
+      }
+      // Update color
+      const stop0 = $('#beakerStop0');
+      const stop1 = $('#beakerStop1');
+      if(stop0 && stop1){
+        if(estado === 'gas'){ stop0.setAttribute('stop-color','#E1F5FE'); stop1.setAttribute('stop-color','#B3E5FC'); }
+        else if(estado === 'solido'){ stop0.setAttribute('stop-color','#B3E5FC'); stop1.setAttribute('stop-color','#E3F2FD'); }
+        else { stop0.setAttribute('stop-color','#4FC3F7'); stop1.setAttribute('stop-color','#B3E5FC'); }
+      }
+    }
+
+    // Molecules
+    renderMoleculas(estado);
+  }
+
+  function renderMoleculas(estado){
+    const svg = $('#molSvg');
+    if(!svg) return;
+    let html = '';
+    const cx = 280 / 2;
+    const cy = 45;
+
+    if(estado === 'solido'){
+      // Tight grid
+      const cols = 5, rows = 2, spacing = 35;
+      const startX = cx - (cols-1)*spacing/2;
+      const startY = cy - (rows-1)*spacing/2;
+      for(let r = 0; r < rows; r++){
+        for(let c = 0; c < cols; c++){
+          const x = startX + c*spacing;
+          const y = startY + r*spacing;
+          html += `<circle cx="${x}" cy="${y}" r="8" fill="#4FC3F7" stroke="#0288D1" stroke-width="1.5" class="mol" style="animation:none"/>`;
+          // H2O label
+          html += `<text x="${x}" y="${y+3}" text-anchor="middle" font-size="5" fill="white" font-weight="bold">H₂O</text>`;
+        }
+      }
+    } else if(estado === 'gas'){
+      // Scattered
+      const posiciones = [[60,30],[100,50],[140,25],[180,55],[220,30],[90,65],[160,15],[200,70],[120,60],[70,45]];
+      posiciones.forEach(([x,y]) => {
+        html += `<circle cx="${x}" cy="${y}" r="8" fill="#B3E5FC" stroke="#4FC3F7" stroke-width="1" opacity="0.7" class="mol gas-anim"/>`;
+        html += `<text x="${x}" y="${y+3}" text-anchor="middle" font-size="5" fill="#1565C0" font-weight="bold">H₂O</text>`;
+      });
+    } else {
+      // Liquid: loose, semi-ordered
+      const posiciones = [[40,35],[80,40],[120,30],[160,45],[200,35],[240,40],[60,55],[100,50],[140,60],[180,55],[220,50],[50,45]];
+      posiciones.forEach(([x,y]) => {
+        html += `<circle cx="${x}" cy="${y}" r="8" fill="#4FC3F7" stroke="#0288D1" stroke-width="1.5" class="mol"/>`;
+        html += `<text x="${x}" y="${y+3}" text-anchor="middle" font-size="5" fill="white" font-weight="bold">H₂O</text>`;
+      });
+    }
+    svg.innerHTML = html;
+  }
+
+  $('#btnCalentar').addEventListener('click', () => {
+    if(state.exp1Completo && state.quizRespondido[0]) return;
+    state.temperatura = Math.min(120, state.temperatura + 10);
+    actualizarTermometro();
+  });
+  $('#btnEnfriar').addEventListener('click', () => {
+    if(state.exp1Completo && state.quizRespondido[0]) return;
+    state.temperatura = Math.max(-10, state.temperatura - 10);
+    actualizarTermometro();
+  });
+
+  // ============ QUIZ SYSTEM ============
+  function setupQuiz(expIdx){
+    const quizEl = $('#quiz' + (expIdx+1));
+    if(!quizEl) return;
+    const opciones = quizEl.querySelectorAll('.quiz-opcion');
+    opciones.forEach(op => {
+      op.addEventListener('click', function(){
+        if(state.quizRespondido[expIdx]) return;
+        state.quizRespondido[expIdx] = true;
+        const correcta = this.dataset.correct === 'true';
+        opciones.forEach(o => o.disabled = true);
+        this.classList.add(correcta ? 'correcta' : 'incorrecta');
+        // Show correct answer
+        if(!correcta){
+          opciones.forEach(o => {
+            if(o.dataset.correct === 'true') o.classList.add('correcta');
+          });
+        }
+        const feed = $('#quizFeed' + (expIdx+1));
+        const msg = correcta
+          ? '✅ ¡Respuesta correcta!'
+          : '❌ Respuesta incorrecta. Revisa la respuesta marcada en verde.';
+        if(feed){
+          feed.textContent = msg;
+          feed.style.color = correcta ? 'var(--verde)' : 'var(--rojo)';
+        }
+
+        // Assign stars: 3 for correct, 2 for incorrect (effort)
+        state.estrellas[expIdx] = correcta ? 3 : 2;
+        renderEstrellas(expIdx, state.estrellas[expIdx]);
+        mostrarToast(msg, correcta ? 'exito' : 'error');
+
+        // Mark experiment complete
+        completarExperimento(expIdx);
+      });
+    });
+  }
+
+  function completarExperimento(expIdx){
+    const keys = ['exp1Completo','exp2Completo','exp3Completo','exp4Completo'];
+    const checkIds = ['check2','check3','check4','check5'];
+    const btnIds = ['btnExp1Ok','btnExp2Ok','btnExp3Ok','btnExp4Ok'];
+    const pantallaIds = [2,3,4,5];
+    const nextPantallas = [3,4,5,6];
+    const toastMsgs = [
+      '💧 ¡Has explorado los estados del agua!',
+      '🧪 ¡Has aprendido sobre mezclas!',
+      '☀️ ¡Energía solar dominada!',
+      '♻️ ¡Reciclaje completado!'
+    ];
+
+    state[keys[expIdx]] = true;
+    const checkEl = $('#' + checkIds[expIdx]);
+    if(checkEl) checkEl.style.display = 'inline-block';
+    const card = $('#pantalla' + pantallaIds[expIdx]);
+    if(card) card.classList.add('completado');
+    const btn = $('#' + btnIds[expIdx]);
+    if(btn){
+      btn.style.display = 'inline-block';
+      btn.textContent = '✓ ' + (expIdx < 3 ? 'Siguiente experimento →' : 'Ver resultados →');
+      btn.onclick = () => {
+        irAPantalla(nextPantallas[expIdx]);
+        if(expIdx === 0) initMezclas();
+        if(expIdx === 1) initSolar();
+        if(expIdx === 2) initReciclaje();
+        if(expIdx === 3) mostrarResultados();
+        if(expIdx < 3) mostrarToast(toastMsgs[expIdx+1], 'info');
+      };
+    }
+    actualizarProgreso();
+  }
+
+  // Init all quizzes
+  for(let i = 0; i < 4; i++) setupQuiz(i);
+
+  // ============ EXP2: MEZCLAS ============
+  const ingredientesData = {
+    anil: { nombre: 'Añil', emoji: '💙', color: '#1565C0', soluble: true },
+    bija: { nombre: 'Bija', emoji: '❤️', color: '#D32F2F', soluble: false },
+    suelda: { nombre: 'Suelda', emoji: '💚', color: '#7CB342', soluble: false }
+  };
+
+  function initMezclas(){
+    state.ingredientesMezcla = [];
+    state.mezclaSeparada = false;
+    $('#check3').style.display = 'none';
+    $('#pantalla3').classList.remove('completado');
+    $('#btnExp2Ok').style.display = 'none';
+    $('#btnFiltrar').disabled = true;
+    $('#btnDecantar').disabled = true;
+    updateMezclaUI();
+    // Reset quiz if needed
+    if(state.quizRespondido[1]){
+      state.quizRespondido[1] = false;
+      state.estrellas[1] = 0;
+      renderEstrellas(1, 0);
+      const quiz = $('#quiz2');
+      quiz.querySelectorAll('.quiz-opcion').forEach(o => { o.disabled = false; o.className = 'quiz-opcion'; });
+      const feed = $('#quizFeed2');
+      if(feed) feed.textContent = '';
+    }
+    mostrarToast('🧪 Elige ingredientes para mezclar', 'info');
+  }
+
+  $$('.ingrediente').forEach(el => {
+    el.addEventListener('click', function(){
+      if(state.exp2Completo) return;
+      const ing = this.dataset.ing;
+      if(state.ingredientesMezcla.includes(ing)){
+        state.ingredientesMezcla = state.ingredientesMezcla.filter(i => i !== ing);
+        this.classList.remove('seleccionado');
+      } else {
+        state.ingredientesMezcla.push(ing);
+        this.classList.add('seleccionado');
+      }
+      state.mezclaSeparada = false;
+      updateMezclaUI();
+    });
+  });
+
+  function updateMezclaUI(){
+    const vaso = $('#vasoContenido');
+    const vasoText = $('#vasoText');
+    const tipoEl = $('#mezclaTipo');
+    const feedback = $('#mezclaFeedback');
+    const cnt = state.ingredientesMezcla.length;
+
+    if(cnt === 0){
+      vaso.style.height = '0%';
+      vaso.style.background = 'transparent';
+      vasoText.textContent = '';
+      tipoEl.textContent = '🧪 Agrega ingredientes al vaso';
+      feedback.textContent = '';
+      $('#btnFiltrar').disabled = true;
+      $('#btnDecantar').disabled = true;
+      return;
+    }
+
+    // Build gradient from selected ingredients
+    const colors = state.ingredientesMezcla.map(i => ingredientesData[i].color);
+    const emojis = state.ingredientesMezcla.map(i => ingredientesData[i].emoji).join(' ');
+    const names = state.ingredientesMezcla.map(i => ingredientesData[i].nombre).join(' + ');
+
+    if(state.mezclaSeparada){
+      vaso.style.height = '10%';
+      vaso.style.background = '#e0d5c5';
+      vasoText.textContent = '🧪 Separado';
+      tipoEl.textContent = '✅ Mezcla separada';
+      return;
+    }
+
+    vaso.style.height = '70%';
+    if(colors.length === 1){
+      vaso.style.background = colors[0];
+    } else {
+      vaso.style.background = 'linear-gradient(180deg,' + colors.join(',') + ')';
+    }
+    vasoText.textContent = emojis;
+    tipoEl.textContent = '🧪 Mezcla: ' + names;
+
+    // Determine if homogeneous or heterogeneous
+    const allSoluble = state.ingredientesMezcla.every(i => ingredientesData[i].soluble);
+    const isHomogenea = allSoluble && cnt > 0;
+
+    if(cnt >= 1){
+      tipoEl.textContent += ' — ' + (isHomogenea ? '💧 Mezcla Homogénea' : '🌊 Mezcla Heterogénea');
+      $('#btnFiltrar').disabled = cnt === 0;
+      $('#btnDecantar').disabled = cnt === 0;
+    }
+  }
+
+  $('#btnFiltrar').addEventListener('click', function(){
+    if(state.mezclaSeparada) return;
+    // Filter works for heterogeneous mixtures with solid particles
+    const hasNoSoluble = state.ingredientesMezcla.some(i => !ingredientesData[i].soluble);
+    if(hasNoSoluble){
+      state.mezclaSeparada = true;
+      updateMezclaUI();
+      $('#mezclaFeedback').textContent = '✅ Filtración exitosa: separaste los sólidos del líquido';
+      $('#mezclaFeedback').style.color = 'var(--verde)';
+      mostrarToast('🧹 ¡Filtración completada!', 'exito');
+    } else {
+      $('#mezclaFeedback').textContent = '🧪 Es una solución homogénea, el filtro no separa los componentes. ¡Prueba la decantación!';
+      $('#mezclaFeedback').style.color = 'var(--azul)';
+    }
+  });
+
+  $('#btnDecantar').addEventListener('click', function(){
+    if(state.mezclaSeparada) return;
+    const hasNoSoluble = state.ingredientesMezcla.some(i => !ingredientesData[i].soluble);
+    if(hasNoSoluble){
+      state.mezclaSeparada = true;
+      updateMezclaUI();
+      $('#mezclaFeedback').textContent = '✅ Decantación: los sólidos se fueron al fondo y separaste el líquido claro';
+      $('#mezclaFeedback').style.color = 'var(--verde)';
+      mostrarToast('🧪 ¡Decantación completada!', 'exito');
+    } else {
+      state.mezclaSeparada = true;
+      updateMezclaUI();
+      $('#mezclaFeedback').textContent = '💧 Es una solución homogénea. Para separarla, habría que evaporar el agua. ¡Aprendiste sobre mezclas!';
+      $('#mezclaFeedback').style.color = 'var(--verde)';
+      mostrarToast('💧 Solución homogénea identificada', 'exito');
+    }
+  });
+
+  $('#btnReiniciarMezcla').addEventListener('click', function(){
+    if(state.exp2Completo && state.quizRespondido[1]) return;
+    initMezclas();
+    $$('.ingrediente').forEach(el => el.classList.remove('seleccionado'));
+  });
+
+  // ============ EXP3: ENERGÍA SOLAR ============
+  function initSolar(){
+    state.angulo = 45;
+    state.energiaGenerada = 0;
+    state.dispositivosEncendidos = 0;
+    $('#check4').style.display = 'none';
+    $('#pantalla4').classList.remove('completado');
+    $('#btnExp3Ok').style.display = 'none';
+    $$('.device').forEach(d => d.classList.remove('powered'));
+    $('#houseLight').setAttribute('opacity', '0');
+    updateSolar();
+    if(state.quizRespondido[2]){
+      state.quizRespondido[2] = false;
+      state.estrellas[2] = 0;
+      renderEstrellas(2, 0);
+      const quiz = $('#quiz3');
+      quiz.querySelectorAll('.quiz-opcion').forEach(o => { o.disabled = false; o.className = 'quiz-opcion'; });
+      const feed = $('#quizFeed3');
+      if(feed) feed.textContent = '';
+    }
+    mostrarToast('☀️ Ajusta el ángulo del panel solar', 'info');
+  }
+
+  function updateSolar(){
+    const panelGroup = $('#panelGroup');
+    const anguloDisplay = $('#anguloDisplay');
+    const energyFill = $('#energyFill');
+    const energyLabel = $('#energyLabel');
+    const sun = $('#svgSun');
+
+    // Optimal angle is around 45-60 degrees for La Guajira (latitude ~12°N)
+    const angle = state.angulo;
+    anguloDisplay.textContent = angle + '°';
+
+    // Rotate panel
+    if(panelGroup) panelGroup.style.transform = 'rotate(' + (angle - 45) + 'deg)';
+
+    // Energy calculation: max at 45-60, less at extremes
+    let efficiency = 0;
+    if(angle >= 10 && angle <= 80){
+      efficiency = 1 - Math.abs(angle - 52) / 52;
+    }
+    efficiency = Math.max(0.05, Math.min(1, efficiency));
+    const maxWatts = 150;
+    const watts = Math.round(maxWatts * efficiency);
+    state.energiaGenerada = watts;
+
+    if(energyFill) energyFill.style.width = (efficiency * 100) + '%';
+    if(energyLabel) energyLabel.textContent = watts + ' Watts · Ángulo: ' + (efficiency > 0.8 ? '⭐ Óptimo!' : efficiency > 0.5 ? '👍 Bueno' : '🔧 Ajusta más');
+
+    // Update sun ray opacity
+    const arrows = $('#sunArrows');
+    if(arrows) arrows.style.opacity = 0.3 + efficiency * 0.7;
+
+    // Check devices
+    checkDevices();
+  }
+
+  function checkDevices(){
+    const watts = state.energiaGenerada;
+    const devFeedback = $('#deviceFeedback');
+    $$('.device').forEach(d => {
+      const needed = parseInt(d.dataset.watts);
+      if(watts >= needed && d.classList.contains('powered')){
+        // stays powered
+      } else if(watts < needed && d.classList.contains('powered')){
+        d.classList.remove('powered');
+        state.dispositivosEncendidos--;
+      }
+    });
+    if(devFeedback){
+      const powered = document.querySelectorAll('.device.powered').length;
+      devFeedback.textContent = '💡 ' + powered + '/3 dispositivos encendidos · Generas ' + watts + 'W';
+    }
+  }
+
+  $$('.device').forEach(d => {
+    d.addEventListener('click', function(){
+      if(state.exp3Completo) return;
+      const needed = parseInt(this.dataset.watts);
+      if(state.energiaGenerada >= needed){
+        if(!this.classList.contains('powered')){
+          this.classList.add('powered');
+          state.dispositivosEncendidos++;
+          mostrarToast('⚡ ' + this.querySelector('span:last-child').textContent + ' encendido!', 'exito');
+          checkDevices();
+          // Light up house if bombillo is on
+          if(this.dataset.device === 'bombillo'){
+            $('#houseLight').setAttribute('opacity', '1');
+          }
+        } else {
+          this.classList.remove('powered');
+          state.dispositivosEncendidos--;
+          checkDevices();
+          if(this.dataset.device === 'bombillo'){
+            $('#houseLight').setAttribute('opacity', '0');
+          }
+        }
+      } else {
+        mostrarToast('⚠️ Necesitas ' + needed + 'W para encender ' + this.querySelector('span:nth-child(2)').textContent + '. ¡Ajusta mejor el panel!', 'error');
+      }
+    });
+  });
+
+  $('#btnAnguloMenos').addEventListener('click', () => {
+    if(state.exp3Completo && state.quizRespondido[2]) return;
+    state.angulo = Math.max(5, state.angulo - 5);
+    updateSolar();
+  });
+
+  $('#btnAnguloMas').addEventListener('click', () => {
+    if(state.exp3Completo && state.quizRespondido[2]) return;
+    state.angulo = Math.min(90, state.angulo + 5);
+    updateSolar();
+  });
+
+  // ============ EXP4: RECICLAJE ============
+  const residuosData = [
+    { id: 'cascara', nombre: 'Cáscara de plátano', emoji: '🍌', bin: 'organico' },
+    { id: 'huesos', nombre: 'Huesos de pescado', emoji: '🐟', bin: 'organico' },
+    { id: 'flores', nombre: 'Flores secas', emoji: '🌸', bin: 'organico' },
+    { id: 'cuaderno', nombre: 'Cuaderno usado', emoji: '📓', bin: 'papel' },
+    { id: 'caja', nombre: 'Caja de cartón', emoji: '📦', bin: 'papel' },
+    { id: 'botella_pet', nombre: 'Botella plástica', emoji: '🧴', bin: 'plastico' },
+    { id: 'bolsa', nombre: 'Bolsa plástica', emoji: '🛍️', bin: 'plastico' },
+    { id: 'frasco', nombre: 'Frasco de vidrio', emoji: '🫙', bin: 'vidrio' },
+    { id: 'botella_vidrio', nombre: 'Botella de vidrio', emoji: '🍾', bin: 'vidrio' },
+  ];
+
+  const binIds = ['organico','papel','plastico','vidrio'];
+  const binTargets = { organico: 3, papel: 2, plastico: 2, vidrio: 2 };
+  let residuosColocadasMap = {};
+
+  function initReciclaje(){
+    state.residuosColocadas = 0;
+    state.residuosCorrectas = 0;
+    state.reciclajeCompleto = false;
+    residuosColocadasMap = {};
+    binIds.forEach(b => { residuosColocadasMap[b] = []; });
+    $('#check5').style.display = 'none';
+    $('#pantalla5').classList.remove('completado');
+    $('#btnExp4Ok').style.display = 'none';
+    $('#reciclajeFeedback').textContent = '';
+
+    // Clear bins
+    binIds.forEach(b => {
+      const itemsEl = $('#items' + b.charAt(0).toUpperCase() + b.slice(1));
+      if(itemsEl) itemsEl.innerHTML = '';
+      const cntEl = $('#cnt' + b.charAt(0).toUpperCase() + b.slice(1));
+      if(cntEl) cntEl.textContent = '0/' + binTargets[b];
+    });
+
+    renderBandejaResiduos();
+
+    if(state.quizRespondido[3]){
+      state.quizRespondido[3] = false;
+      state.estrellas[3] = 0;
+      renderEstrellas(3, 0);
+      const quiz = $('#quiz4');
+      quiz.querySelectorAll('.quiz-opcion').forEach(o => { o.disabled = false; o.className = 'quiz-opcion'; });
+      const feed = $('#quizFeed4');
+      if(feed) feed.textContent = '';
+    }
+    mostrarToast('♻️ Arrastra los residuos a la caneca correcta', 'info');
+  }
+
+  function renderBandejaResiduos(){
+    let html = '<span style="font-weight:bold;font-size:0.85rem;color:var(--tierra);width:100%;text-align:center">📦 Residuos por clasificar (' + (residuosData.length - state.residuosColocadas) + ' restantes):</span>';
+    residuosData.forEach(r => {
+      const yaColocado = Object.values(residuosColocadasMap).flat().includes(r.id);
+      if(!yaColocado){
+        html += '<div class="residuo-item" draggable="true" data-id="' + r.id + '" data-bin="' + r.bin + '">' + r.emoji + ' ' + r.nombre + '</div>';
+      }
+    });
+    if(state.residuosColocadas >= residuosData.length){
+      html += '<span style="font-size:0.9rem;color:var(--verde)">✅ ¡Todos clasificados!</span>';
+    }
+    $('#bandejaResiduos').innerHTML = html;
+
+    // Bind drag & touch
+    document.querySelectorAll('#bandejaResiduos .residuo-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        item.classList.add('arrastrando');
+        e.dataTransfer.setData('text/plain', item.dataset.id);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', () => { item.classList.remove('arrastrando'); });
+      item.addEventListener('touchstart', function(e){
+        this.classList.add('arrastrando');
+        this._touchData = { id: this.dataset.id, bin: this.dataset.bin, el: this };
+      }, {passive: false});
+      item.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive: false});
+      item.addEventListener('touchend', function(e){
+        this.classList.remove('arrastrando');
+        if(!this._touchData) return;
+        const touch = e.changedTouches[0];
+        const elemDebajo = document.elementFromPoint(touch.clientX, touch.clientY);
+        if(elemDebajo){
+          const binEl = elemDebajo.closest('.bin');
+          if(binEl) colocarResiduo(this._touchData.id, binEl.dataset.bin);
+        }
+        this._touchData = null;
+      });
+    });
+
+    // Bind drop on bins
+    document.querySelectorAll('.bin').forEach(bin => {
+      bin.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+      bin.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        if(id) colocarResiduo(id, bin.dataset.bin);
+      });
+    });
+  }
+
+  function colocarResiduo(itemId, binDestino){
+    const item = residuosData.find(r => r.id === itemId);
+    if(!item) return;
+
+    if(residuosColocadasMap[binDestino].length >= binTargets[binDestino]){
+      mostrarToast('⚠️ Esta caneca ya está llena', 'error');
+      return;
+    }
+
+    const yaColocada = Object.entries(residuosColocadasMap).find(([b, ids]) => ids.includes(itemId));
+    if(yaColocada) return;
+
+    const correcto = item.bin === binDestino;
+    residuosColocadasMap[binDestino].push(itemId);
+    state.residuosColocadas++;
+    if(correcto) state.residuosCorrectas++;
+
+    const binCap = binDestino.charAt(0).toUpperCase() + binDestino.slice(1);
+    const itemsEl = $('#items' + binCap);
+    if(itemsEl){
+      const badge = document.createElement('span');
+      badge.className = 'residuo-item usado ' + (correcto ? 'correcta' : 'incorrecta');
+      badge.textContent = item.emoji + ' ' + item.nombre;
+      itemsEl.appendChild(badge);
+    }
+
+    const cntEl = $('#cnt' + binCap);
+    if(cntEl) cntEl.textContent = residuosColocadasMap[binDestino].length + '/' + binTargets[binDestino];
+
+    const feedback = $('#reciclajeFeedback');
+    if(correcto){
+      feedback.textContent = '✅ ¡Correcto! ' + item.nombre + ' va en la caneca de ' + binDestino;
+      feedback.style.color = 'var(--verde)';
+      mostrarToast('✅ ' + item.nombre + ' → ' + binDestino, 'exito');
+    } else {
+      feedback.textContent = '❌ ' + item.nombre + ' NO va en ' + binDestino + '. Pertenece a ' + item.bin + '.';
+      feedback.style.color = 'var(--rojo)';
+      mostrarToast('❌ ¡Ups! ' + item.nombre + ' no es ' + binDestino, 'error');
+      setTimeout(() => {
+        residuosColocadasMap[binDestino] = residuosColocadasMap[binDestino].filter(id => id !== itemId);
+        state.residuosColocadas--;
+        if(!correcto) state.residuosCorrectas--;
+        if(itemsEl && itemsEl.lastChild) itemsEl.removeChild(itemsEl.lastChild);
+        if(cntEl) cntEl.textContent = residuosColocadasMap[binDestino].length + '/' + binTargets[binDestino];
+        renderBandejaResiduos();
+      }, 1500);
+    }
+
+    renderBandejaResiduos();
+
+    if(state.residuosColocadas >= residuosData.length && state.residuosCorrectas === residuosData.length){
+      $('#reciclajeFeedback').textContent = '🎉 ¡Perfecto! Separaste todos los residuos correctamente.';
+      $('#reciclajeFeedback').style.color = 'var(--verde)';
+      mostrarToast('♻️ ¡Reciclaje completado!', 'exito');
+    }
+  }
+
+  // ============ PANTALLA 6: RESULTADOS ============
+  function mostrarResultados(){
+    const total = 4;
+    let completadas = 0;
+    ['exp1Completo','exp2Completo','exp3Completo','exp4Completo'].forEach(k => {
+      if(state[k]) completadas++;
+    });
+    const pct = Math.round((completadas / total) * 100);
+    const totalStars = state.estrellas.reduce((a,b) => a+b, 0);
+    const maxStars = 12;
+    const starPct = Math.round((totalStars / maxStars) * 100);
+    const finalScore = Math.round((pct * 0.5 + starPct * 0.5));
+
+    $('#puntajeFinal').textContent = finalScore + '% · ' + totalStars + '/12 ⭐';
+
+    let emoji = '🌱';
+    let msg = '';
+    if(finalScore >= 90){
+      emoji = '🏆';
+      msg = '¡Eres un científico wayuu! Dominas los estados del agua, las mezclas, la energía solar y el reciclaje. Como enseñan los mayores wayuu: el conocimiento de la materia y la energía es sabiduría ancestral. ¡Sigue explorando y cuidando el territorio!';
+    } else if(finalScore >= 70){
+      emoji = '🌟';
+      msg = '¡Muy bien! Has aprendido cómo la materia cambia de estado, cómo se hacen las mezclas, cómo el sol da energía y cómo reciclar. La ciencia y la sabiduría wayuu van de la mano. ¡Sigue practicando!';
+    } else if(finalScore >= 50){
+      emoji = '👍';
+      msg = '¡Buen trabajo! Conoces bastantes conceptos. Repite los experimentos para entender mejor cómo la materia y la energía se transforman. ¡Cada vez lo harás mejor!';
+    } else {
+      emoji = '🌱';
+      msg = 'Estás empezando a explorar la materia y la energía. No te rindas, cada experimento te enseñará algo nuevo. ¡La ciencia es un viaje maravilloso!';
+    }
+
+    $('#estrellaFinal').textContent = emoji;
+    $('#mensajeFinal').textContent = msg;
+
+    // Show stars per experiment
+    for(let i = 0; i < 4; i++){
+      const el = $('#resStars' + i);
+      if(el){
+        let starsHtml = '';
+        for(let j = 0; j < 3; j++){
+          starsHtml += '<span style="font-size:1.5rem;' + (j < state.estrellas[i] ? '' : 'opacity:0.2;filter:grayscale(1)') + '">⭐</span>';
+        }
+        el.innerHTML = starsHtml;
+      }
+    }
+
+    // Confetti
+    const emojis = ['💧','🧊','♨️','🧪','☀️','⚡','♻️','🌵','💡','📻','💙','❤️','💚','🍌','📄','🥤','🫙','🌟','✨','🔬'];
+    for(let i = 0; i < 30; i++){
+      setTimeout(() => {
+        const e = document.createElement('span');
+        e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        e.style.cssText = 'position:fixed;font-size:1.8rem;pointer-events:none;z-index:999;animation:caer 2.5s ease-out forwards;';
+        e.style.left = Math.random() * 90 + '%';
+        e.style.top = '-50px';
+        document.body.appendChild(e);
+        setTimeout(() => e.remove(), 2600);
+      }, i * 100);
+    }
+
+    if(!document.getElementById('animCaer')){
+      const style = document.createElement('style');
+      style.id = 'animCaer';
+      style.textContent = '@keyframes caer{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}';
+      document.head.appendChild(style);
+    }
+
+    actualizarProgreso();
+  }
+
+  // ============ NAVIGATION EVENTS ============
+  $('#btnIniciar').addEventListener('click', () => {
+    irAPantalla(2);
+    actualizarTermometro();
+    mostrarToast('💧 Explora los estados del agua', 'info');
+  });
+
+  // ============ INIT ============
+  actualizarProgreso();
+  actualizarTermometro();
+  renderMoleculas('liquido');
+
+})();
+</script>
+</body>
+</html>

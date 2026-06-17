@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EMO-401: Siento y Pienso | EduConect Rural</title>
+<link rel="stylesheet" href="../comun/educonect.css">
+<style>
+body{background:linear-gradient(180deg,#F3E5F5,#E1BEE7,#CE93D8);min-height:100vh}
+.container{max-width:650px;margin:0 auto;padding:15px;position:relative;z-index:1}
+
+.header{text-align:center;padding:30px 15px 10px}
+.header h1{font-size:clamp(1.6rem,5vw,2.5rem);color:var(--tierra);text-shadow:2px 2px 0 var(--wayuu-oro)}
+
+.instruccion{background:white;border-radius:16px;padding:16px 20px;box-shadow:var(--sombra);border:2px solid var(--morado);text-align:center;font-size:1.05rem;line-height:1.6;margin-bottom:20px;color:var(--tierra)}
+
+.escenario{background:white;border-radius:20px;padding:24px 20px;box-shadow:var(--sombra);border:2px solid var(--morado);text-align:center;animation:fadeIn 0.4s ease-out}
+.escenario .emoji-g{font-size:5rem;margin-bottom:8px;animation:pulse 2s ease-in-out infinite}
+.escenario .situacion{font-size:1.1rem;color:var(--texto);line-height:1.6;margin-bottom:18px}
+.escenario .contador{color:#999;font-size:0.85rem;margin-bottom:12px}
+
+.opciones{display:flex;flex-direction:column;gap:10px}
+.opcion-btn{width:100%;padding:16px 18px;background:var(--blanco);border:2px solid var(--arena-oscura);border-radius:14px;cursor:pointer;font-size:1rem;font-weight:bold;text-align:left;transition:all 0.3s;font-family:inherit;color:var(--texto);display:flex;align-items:center;gap:10px}
+.opcion-btn:hover{border-color:var(--morado);background:#F3E5F5;transform:translateX(4px)}
+.opcion-btn .letra{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--morado);color:white;font-weight:bold;flex-shrink:0}
+.opcion-btn.correcta{border-color:var(--verde);background:#E8F5E9}
+.opcion-btn.correcta .letra{background:var(--verde)}
+.opcion-btn.incorrecta{border-color:var(--rojo);background:#FFEBEE}
+.opcion-btn.incorrecta .letra{background:var(--rojo)}
+.opcion-btn:disabled{cursor:default;transform:none!important}
+
+.feedback-panel{margin-top:16px;padding:16px;border-radius:14px;display:none;animation:fadeIn 0.3s ease-out}
+.feedback-panel.visible{display:block}
+.feedback-panel.bueno{background:#E8F5E9;border:2px solid var(--verde)}
+.feedback-panel.malo{background:#FFEBEE;border:2px solid var(--rojo)}
+.feedback-panel .fb-icono{font-size:2rem;margin-bottom:4px}
+.feedback-panel .fb-texto{font-weight:bold;color:var(--tierra)}
+.feedback-panel .fb-explica{color:#666;margin-top:4px;font-size:0.9rem}
+
+.puntos-row{display:flex;justify-content:center;gap:10px;margin:12px 0}
+
+.medalla-final{display:none;text-align:center;padding:30px 20px}
+.medalla-final.visible{display:block}
+.medalla-final .emoji-g{font-size:5rem}
+.medalla-final h2{color:var(--tierra);margin:10px 0}
+
+.consejos{background:white;border-radius:16px;padding:16px;margin-top:16px;border:2px solid var(--wayuu-oro);text-align:left}
+.consejos h4{color:var(--atardecer);margin-bottom:8px}
+.consejos li{margin:6px 0;font-size:0.9rem;color:var(--texto)}
+
+@media(max-width:600px){
+  .opcion-btn{padding:12px 14px;font-size:0.9rem}
+  .escenario .emoji-g{font-size:4rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../index.html" class="volver-btn">← Volver</a>
+
+  <div class="header">
+    <h1>🧘 Siento y Pienso</h1>
+    <div class="sub" style="color:var(--tierra-clara)">Inteligencia Emocional · Cómo manejar las emociones</div>
+  </div>
+
+  <div class="progreso-wrap">
+    <span class="progreso-label">📊 Progreso</span>
+    <div class="progreso-bar"><div class="progreso-fill" id="progresoFill"></div></div>
+    <span class="progreso-pct" id="progresoPct">0%</span>
+  </div>
+
+  <div class="instruccion">
+    Todos sentimos emociones fuertes. Lo importante es cómo respondemos. Elige la opción que te ayudaría más.
+  </div>
+
+  <main id="mainContent"></main>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var nivelActual = 0;
+var progreso = 0;
+var aciertos = 0;
+
+var situaciones = [
+  {
+    emoji: '😡',
+    titulo: 'Rabia',
+    situacion: 'Estás jugando y un compañero te quita tu juguete sin permiso. Sientes mucha rabia.',
+    opciones: [
+      { texto: 'Le pego o le grito muy fuerte.', correcto: false, feedback: 'Si gritas o pegas, ambos se enojan más. El problema no se soluciona y pueden lastimarse.', letra: 'A' },
+      { texto: 'Respiro profundo y digo: "Devuélveme eso, lo estaba usando".', correcto: true, feedback: '¡Exacto! Usar las palabras, como hace el Palabrero (Pütchipü\'üi) wayuu, es mejor que usar los puños. Respirar te calma.', letra: 'B' },
+      { texto: 'Me voy a llorar a una esquina sin decir nada.', correcto: false, feedback: 'Está bien sentir tristeza, pero si no dices lo que pasó, nadie podrá ayudarte a resolverlo.', letra: 'C' }
+    ]
+  },
+  {
+    emoji: '😢',
+    titulo: 'Tristeza',
+    situacion: 'Extrañas mucho a alguien de tu familia que está lejos. Sientes un nudo en el pecho.',
+    opciones: [
+      { texto: 'Lloro y busco a un adulto de confianza para contarle y que me abrace.', correcto: true, feedback: '¡Muy bien! Llorar es normal y buscar apoyo te ayuda a sanar. La familia wayuu siempre se apoya.', letra: 'A' },
+      { texto: 'Me escondo y no le digo a nadie.', correcto: false, feedback: 'Guardar la tristeza sola hace que duela más. Hablar con alguien de confianza siempre ayuda.', letra: 'B' },
+      { texto: 'Me enojo con todos y rompo algo.', correcto: false, feedback: 'La tristeza a veces se confunde con rabia. Pero romper cosas no trae a la persona que extrañas.', letra: 'C' }
+    ]
+  },
+  {
+    emoji: '😰',
+    titulo: 'Miedo',
+    situacion: 'Mañana tienes una exposición en la escuela y sientes miedo de hablar frente a todos.',
+    opciones: [
+      { texto: 'Digo que me duele la panza y no voy a la escuela.', correcto: false, feedback: 'Evitar no quita el miedo. Al contrario, mañana será más difícil. Atrévete a intentarlo.', letra: 'A' },
+      { texto: 'Practico lo que voy a decir y respiro profundo antes de hablar.', correcto: true, feedback: '¡Excelente! Practicar te da confianza. Respirar hondo calma el corazón. Los wayuu dicen que el valor se demuestra enfrentando los retos.', letra: 'B' },
+      { texto: 'Hablo muy rápido para terminar pronto.', correcto: false, feedback: 'Hablar rápido no te ayudará a que te entiendan. Mejor practica y respira. Tú puedes.', letra: 'C' }
+    ]
+  },
+  {
+    emoji: '🤗',
+    titulo: 'Alegría',
+    situacion: 'Un amigo logró algo muy importante. Sientes alegría por él pero también un poquito de envidia.',
+    opciones: [
+      { texto: 'Le digo: "¡No es para tanto".', correcto: false, feedback: 'Minimizar su logro puede lastimar su amistad. La envidia es normal, pero no debemos dejar que controle nuestras acciones.', letra: 'A' },
+      { texto: 'Lo felicito de corazón y pienso en mis propias metas.', correcto: true, feedback: '¡Eso es inteligencia emocional! Alegrarse por los demás fortalece la amistad. Tú también tienes talentos únicos.', letra: 'B' },
+      { texto: ' finjo que no me importa.', correcto: false, feedback: ' fingir que no te importa te aleja de tus amigos. Es mejor ser sincero y celebrar juntos.', letra: 'C' }
+    ]
+  }
+];
+
+function init(){
+  renderizarNivel();
+  actualizarProgreso();
+}
+
+function renderizarNivel(){
+  if(nivelActual >= situaciones.length){
+    mostrarFinal();
+    return;
+  }
+
+  var sit = situaciones[nivelActual];
+  var html = '<div class="escenario">';
+  html += '<div class="contador">' + (nivelActual + 1) + ' / ' + situaciones.length + '</div>';
+  html += '<div class="emoji-g">' + sit.emoji + '</div>';
+  html += '<div class="situacion"><strong>' + sit.titulo + ':</strong> ' + sit.situacion + '</div>';
+  html += '<div class="opciones">';
+
+  sit.opciones.forEach(function(opt, idx){
+    html += '<button class="opcion-btn" data-idx="' + idx + '" onclick="handleRespuesta(' + idx + ')">';
+    html += '<span class="letra">' + opt.letra + '</span>';
+    html += opt.texto;
+    html += '</button>';
+  });
+
+  html += '</div>';
+  html += '<div class="feedback-panel" id="feedbackPanel"></div>';
+  html += '</div>';
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function handleRespuesta(idx){
+  var sit = situaciones[nivelActual];
+  var elegida = sit.opciones[idx];
+  var btns = document.querySelectorAll('.opcion-btn');
+  var panel = document.getElementById('feedbackPanel');
+
+  btns.forEach(function(b){ b.disabled = true; });
+
+  btns.forEach(function(b, i){
+    if(i === idx){
+      b.classList.add(elegida.correcto ? 'correcta' : 'incorrecta');
+    } else if(sit.opciones[i].correcto){
+      b.classList.add('correcta');
+    }
+  });
+
+  panel.className = 'feedback-panel visible ' + (elegida.correcto ? 'bueno' : 'malo');
+  panel.innerHTML = '<div class="fb-icono">' + (elegida.correcto ? '✅' : '❌') + '</div>';
+  panel.innerHTML += '<div class="fb-texto">' + (elegida.correcto ? '¡Excelente elección!' : 'Observa esta opción...') + '</div>';
+  panel.innerHTML += '<div class="fb-explica">' + elegida.feedback + '</div>';
+
+  if(elegida.correcto){
+    progreso += 25;
+    aciertos++;
+    guardarProgreso();
+    actualizarProgreso();
+    hablar(elegida.feedback);
+  } else {
+    hablar(elegida.feedback);
+  }
+
+  nivelActual++;
+  setTimeout(function(){
+    renderizarNivel();
+    if(nivelActual >= situaciones.length){
+      progreso = 100;
+      guardarProgreso();
+      actualizarProgreso();
+    }
+  }, 3500);
+}
+
+function mostrarFinal(){
+  var html = '<div class="medalla-final visible">';
+  html += '<div class="emoji-g">❤️</div>';
+  html += '<h2>¡Eres un maestro de tus emociones!</h2>';
+  html += '<p style="color:var(--tierra);font-size:1.1rem">' + aciertos + ' / ' + situaciones.length + ' respuestas correctas</p>';
+
+  if(aciertos >= 3){
+    html += '<div style="margin:15px 0;font-size:3rem">🏅</div>';
+    html += '<p style="font-weight:bold;color:var(--verde)">¡Corazón Sabio!</p>';
+    html += '<p style="color:#666">Entiendes tus emociones y sabes cómo manejarlas.</p>';
+    guardarDiario();
+  }
+
+  html += '<div class="consejos">';
+  html += '<h4>🧘 Recuerda:</h4>';
+  html += '<ul style="padding-left:20px">';
+  html += '<li>Todas las emociones son válidas, lo importante es cómo respondes</li>';
+  html += '<li>Respira profundo antes de reaccionar</li>';
+  html += '<li>Habla con alguien de confianza cuando estés triste o enojado</li>';
+  html += '<li>En la cultura wayuu, el diálogo (Pütchipü\'üi) resuelve los conflictos</li>';
+  html += '</ul>';
+  html += '</div>';
+
+  html += '<div style="margin-top:15px">';
+  html += '<button class="btn btn-primario" onclick="location.reload()">🔄 Repetir</button>';
+  html += '<a href="../index.html" class="btn btn-secundario" style="text-decoration:none">← Volver</a>';
+  html += '</div>';
+  html += '</div>';
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function actualizarProgreso(){
+  document.getElementById('progresoFill').style.width = progreso + '%';
+  document.getElementById('progresoPct').textContent = progreso + '%';
+}
+
+function guardarProgreso(){
+  try { localStorage.setItem('emo401_progreso', progreso); } catch(e){}
+}
+
+function guardarDiario(){
+  try {
+    if(typeof Diario !== 'undefined'){
+      Diario.registrar('emo-401', 'modulo_completado', { puntos: progreso, estrellas: Math.min(3, aciertos) }, 'Siento y Pienso', '🧘');
+    }
+  } catch(e){}
+}
+
+function hablar(texto){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Docker ignore — evitar enviar basura al contexto de build
+# (el contexto se envía al daemon de Docker, lo grande ralentiza)
+
+# Rust
+**/target/
+
+# Node
+**/node_modules/
+**/.next/
+**/out/
+
+# Datos runtime (se montan como volúmenes)
+**/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Archivos planos del root que no se necesitan en el build
+*.zip
+*.pdf
+*.md
+*.zim
+*.db*

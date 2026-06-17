@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  educonect:
+    build: .
+    container_name: educonect-rural
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persistir base de datos
+      - educonect-data:/data
+      # Montar videos o ZIMs desde el host (opcional)
+      - ./data/videos:/data/videos:ro
+      - ./data/contenido/zim:/data/contenido/zim:ro
+      - ./data/biblioteca:/data/biblioteca:ro
+    environment:
+      - JWT_SECRET=cambia...D_PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  educonect-data:

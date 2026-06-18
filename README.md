@@ -550,6 +550,26 @@ rm data/biblioteca/mi_libro.pdf
 
 ---
 
+## ⚔️ ¿En qué se diferencia de otras plataformas?
+
+EduConect Rural no es otra copia de Kolibri, IIAB o Kiwix. Es la **única plataforma educativa offline** con estas características:
+
+| Diferencia Clave | EduConect Rural | Alternativas (IIAB, Kolibri, RACHEL, Kiwix) |
+|---|---|---|
+| **Stack tecnológico** | 🦀 **Rust puro** — 1 binario de ~12 MB, 0 dependencias runtime | 🐍 Python (500 MB+, docenas de archivos, pip, virtualenv) |
+| **Contenido wayuunaiki** | ✅ Diccionario bilingüe + módulos culturales Wayuu | ❌ Ninguna lo tiene |
+| **Instalación** | `./edu-conect-rural-server` y listo | 8-12 pasos (pip, npm, config, migraciones) |
+| **Agregar contenido** | Creás 1 HTML en 1 carpeta — sin internet | Dependen de catálogos externos (Kolibri Studio, Ansible) |
+| **Rendimiento** | Corre en **Pi Zero 512 MB** (~15 MB RAM) | Se cuelgan o requieren 2 GB+ |
+| **API REST** | 40+ endpoints con JSON, JWT, rate limiting | Solo HTML o APIs limitadas |
+| **TTS + Diccionario + PhET** | Todo nativo, sin servicios externos | Cada cosa requiere un servicio aparte |
+| **Contexto local** | Hecho para La Guajira, Colombia | Contenido global genérico (inglés primero) |
+
+> 📖 **Comparativa completa:** [`docs/comparativa-alternativas.md`](docs/comparativa-alternativas.md)
+> Con tablas detalladas de tecnología, rendimiento, contenido y casos de uso.
+
+---
+
 ## 📄 Licencia
 
 **Uso educativo libre.** Creado para comunidades rurales de La Guajira, Colombia.

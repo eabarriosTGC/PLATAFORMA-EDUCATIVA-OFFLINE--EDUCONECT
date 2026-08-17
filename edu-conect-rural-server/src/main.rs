@@ -229,7 +229,7 @@ async fn main() {
             axum::response::Html(r#"<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>PhET — EduConect Rural</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1a1a2e;color:#e0e0e0;}div{text-align:center;padding:2rem;}h1{color:#f4a261;}p{color:#aaa;}</style></head><body><div><h1>🧪 PhET Simulaciones</h1><p>Simulaciones interactivas offline próximamente</p><p style="font-size:0.8rem;">EduConect Rural — La Guajira 🌵</p></div></body></html>"#)
         }))
         .route("/phet", get(|| async { axum::response::Redirect::to("/phet/") }))
-        .nest_service("/modulos", ServeDir::new("../edu-conect-rural-dashboard/modulos").append_index_html_on_directories(true))
+        .nest_service("/modulos", ServeDir::new("modulos").append_index_html_on_directories(true))
         .nest_service("/biblioteca", ServeDir::new("data/biblioteca").append_index_html_on_directories(false))
         .nest_service("/videos", ServeDir::new("data/videos"))
         .route("/api/videos", get(listar_videos))
@@ -994,7 +994,7 @@ struct ModuloInfo {
 
 /// GET /api/modulos — escanea ../edu-conect-rural-dashboard/modulos/ y devuelve metadata
 async fn listar_modulos() -> Json<serde_json::Value> {
-    let modulos_dir = "../edu-conect-rural-dashboard/modulos";
+    let modulos_dir = "modulos";
     let modulos = scan_modulos_dir(modulos_dir, false);
     Json(serde_json::json!({
         "modulos": modulos,
@@ -1004,7 +1004,7 @@ async fn listar_modulos() -> Json<serde_json::Value> {
 
 /// GET /api/multimedia — solo módulos PhET (simulaciones interactivas)
 async fn listar_phet() -> Json<serde_json::Value> {
-    let phet_dir = "../edu-conect-rural-dashboard/modulos/phet";
+    let phet_dir = "modulos/phet";
     let phet = scan_modulos_dir(phet_dir, true);
     Json(serde_json::json!({
         "multimedia": phet,

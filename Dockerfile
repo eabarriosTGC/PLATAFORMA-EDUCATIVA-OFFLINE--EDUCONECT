@@ -4,10 +4,10 @@
 # Dev:        docker compose up
 
 # ── Builder: Rust ──
-FROM rust:1.85-slim-bookworm AS rust-builder
+FROM rust:1.88-slim-bookworm AS rust-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+    pkg-config libssl-dev g++ libzim-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 COPY edu-conect-rural-server/ .
@@ -29,7 +29,7 @@ RUN npm run build 2>/dev/null; echo "Next.js build skipped (optional)"
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl ffmpeg espeak-ng yt-dlp libgomp1 \
+    ca-certificates curl ffmpeg espeak-ng yt-dlp libgomp1 libzim8 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /data/videos /data/contenido/zim /data/biblioteca /data/contenido

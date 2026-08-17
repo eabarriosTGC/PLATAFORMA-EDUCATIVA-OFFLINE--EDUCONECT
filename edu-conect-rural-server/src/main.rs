@@ -992,13 +992,23 @@ struct ModuloInfo {
     etiqueta: String,
 }
 
-/// GET /api/modulos — escanea ../edu-conect-rural-dashboard/modulos/ y devuelve metadata
+/// GET /api/modulos — devuelve todas las experiencias educativas ejecutables
 async fn listar_modulos() -> Json<serde_json::Value> {
-    let modulos_dir = "modulos";
-    let modulos = scan_modulos_dir(modulos_dir, false);
+    let mut modulos = scan_modulos_dir("modulos", false);
+
+    // PhET contiene simulaciones individuales, no representa un módulo por sí mismo.
+    modulos.retain(|modulo| modulo.id != "phet");
+    modulos.extend(scan_modulos_dir("modulos/phet", true));
+
+    modulos.sort_by(|a, b| {
+        a.categoria
+            .cmp(&b.categoria)
+            .then_with(|| a.titulo.cmp(&b.titulo))
+    });
+
     Json(serde_json::json!({
-        "modulos": modulos,
         "total": modulos.len(),
+        "modulos": modulos,
     }))
 }
 

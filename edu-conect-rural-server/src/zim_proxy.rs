@@ -1,6 +1,6 @@
 //! Lector ZIM multi-archivo — Wikipedia + Wikilibros + Vikidia offline.
 //!
-//! Escanea data/contenido/zim/ por archivos .zim, los abre todos,
+//! Escanea el directorio ZIM configurado por archivos .zim, los abre todos,
 //! y expone búsqueda textual + extracción de artículos vía libzim.
 
 use std::collections::HashMap;
@@ -35,8 +35,6 @@ pub struct ZimLibrary {
 /// Referencia compartida thread-safe
 pub type SharedZim = Arc<RwLock<ZimLibrary>>;
 
-const ZIM_DIR: &str = "data/contenido/zim";
-
 /// Valida que un archivo tenga el header ZIM correcto (magic bytes "ZIM\x04")
 fn validar_header_zim(path: &std::path::Path) -> Result<(), String> {
     use std::io::Read;
@@ -59,19 +57,19 @@ fn validar_header_zim(path: &std::path::Path) -> Result<(), String> {
 //  Inicialización
 // ============================================================
 
-/// Escanea data/contenido/zim/ y abre TODOS los .zim encontrados.
+/// Escanea `zim_dir` y abre TODOS los .zim encontrados.
 /// Prioriza Wikipedia > Vikidia > Wikibooks para el default.
-pub async fn inicializar() -> SharedZim {
+pub async fn inicializar(zim_dir: &str) -> SharedZim {
     let library = ZimLibrary {
         zims: HashMap::new(),
         default_key: String::new(),
     };
     let state: SharedZim = Arc::new(RwLock::new(library));
 
-    let dir = PathBuf::from(ZIM_DIR);
+    let dir = PathBuf::from(zim_dir);
     if !dir.exists() {
         let _ = tokio::fs::create_dir_all(&dir).await;
-        warn!("📁 Directorio ZIM creado en {ZIM_DIR}. Coloca archivos .zim allí.");
+        warn!("📁 Directorio ZIM creado en {zim_dir}. Coloca archivos .zim allí.");
         return state;
     }
 
@@ -89,7 +87,7 @@ pub async fn inicializar() -> SharedZim {
     }
 
     if zims.is_empty() {
-        warn!("⚠️  No hay archivos .zim en {ZIM_DIR}.");
+        warn!("⚠️  No hay archivos .zim en {zim_dir}.");
         info!("   Descarga ZIMs desde: https://download.kiwix.org/zim/wikipedia/");
         return state;
     }

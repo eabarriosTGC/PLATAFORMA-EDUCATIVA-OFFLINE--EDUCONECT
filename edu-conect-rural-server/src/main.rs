@@ -31,9 +31,44 @@ use zim_proxy::{SharedZim, buscar_articulos, obtener_articulo, listar_zims, zim_
 struct AppState {
     db: Database,
     frontend_path: String,
+    paths: RuntimePaths,
     zim: SharedZim,
     h264_encoder: &'static str,
     login_limiter: std::sync::Arc<RateLimiter>,
+}
+
+/// Rutas de almacenamiento mutable. Todo deriva de `DATA_DIR`
+/// (en Docker: /data; en dev local: ./data).
+#[derive(Clone, Debug)]
+struct RuntimePaths {
+    data_dir: PathBuf,
+    db: PathBuf,
+    videos: PathBuf,
+    biblioteca: PathBuf,
+    contenido: PathBuf,
+    contenido_zim: PathBuf,
+}
+
+impl RuntimePaths {
+    fn nuevo(data_dir: &str) -> Self {
+        let data_dir = PathBuf::from(data_dir);
+        Self {
+            db: data_dir.join("educonect.db"),
+            videos: data_dir.join("videos"),
+            biblioteca: data_dir.join("biblioteca"),
+            contenido: data_dir.join("contenido"),
+            contenido_zim: data_dir.join("contenido").join("zim"),
+            data_dir,
+        }
+    }
+
+    /// Crea los directorios mutables al arrancar (idempotente).
+    fn ensure_dirs(&self) -> std::io::Result<()> {
+        std::fs::create_dir_all(&self.videos)?;
+        std::fs::create_dir_all(&self.biblioteca)?;
+        std::fs::create_dir_all(&self.contenido_zim)?;
+        Ok(())
+    }
 }
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -139,16 +174,19 @@ async fn main() {
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
         .init();
 
-    let db_path = std::env::var("DB_PATH").unwrap_or_else(|_| "data/educonect.db".into());
+    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "data".into());
+    let paths = RuntimePaths::nuevo(&data_dir);
+    paths.ensure_dirs().expect("Error creando directorios de datos");
+    tracing::info!("📁 Directorio de datos: {}", paths.data_dir.display());
     let frontend_path = std::env::var("FRONTEND_PATH").unwrap_or_else(|_| "../edu-conect-rural-dashboard/out/".into());
     let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8080".into()).parse().expect("LISTEN_ADDR inválida");
 
     let jwt_secret = config::jwt_secret_requerido();
-    let database = Database::open(&db_path, jwt_secret).expect("Error al abrir la base de datos");
+    let database = Database::open(&paths.db.to_string_lossy(), jwt_secret).expect("Error al abrir la base de datos");
 
     // Inicializar lector ZIM (Wikipedia offline puro Rust)
-    let zim = zim_proxy::inicializar().await;
+    let zim = zim_proxy::inicializar(&paths.contenido_zim.to_string_lossy()).await;
 
     // Detectar encoder H.264 soportado por el hardware (Raspberry Pi → h264_v4l2m2m, x86 → libx264)
     let h264_encoder = detect_h264_encoder();
@@ -157,6 +195,7 @@ async fn main() {
     let state = AppState {
         db: database.clone(),
         frontend_path: frontend_path.clone(),
+        paths: paths.clone(),
         zim: zim.clone(),
         h264_encoder,
         login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),
@@ -232,8 +271,8 @@ async fn main() {
         }))
         .route("/phet", get(|| async { axum::response::Redirect::to("/phet/") }))
         .nest_service("/modulos", ServeDir::new("modulos").append_index_html_on_directories(true))
-        .nest_service("/biblioteca", ServeDir::new("data/biblioteca").append_index_html_on_directories(false))
-        .nest_service("/videos", ServeDir::new("data/videos"))
+        .nest_service("/biblioteca", ServeDir::new(&state.paths.biblioteca).append_index_html_on_directories(false))
+        .nest_service("/videos", ServeDir::new(&state.paths.videos))
         .route("/api/videos", get(listar_videos))
         .route("/api/videos/thumbnail/{id}", get(servir_thumbnail))
         .route("/api/videos/descargar", post(handler_descargar_video))
@@ -342,11 +381,12 @@ async fn diccionario_pagina() -> impl IntoResponse {
 
 // ── listar videos locales ─────────────────────────────────────────────
 
-async fn listar_videos() -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn listar_videos(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let videos_dir = state.paths.videos.clone();
     // std::fs::read_dir es bloqueante; lo movemos a un hilo para no saturar el reactor de Tokio
-    let videos: Vec<serde_json::Value> = tokio::task::spawn_blocking(|| -> Result<Vec<serde_json::Value>, String> {
+    let videos: Vec<serde_json::Value> = tokio::task::spawn_blocking(move || -> Result<Vec<serde_json::Value>, String> {
         let mut videos = Vec::new();
-        let dir = std::path::Path::new("data/videos");
+        let dir = videos_dir.as_path();
         if dir.is_dir() {
             if let Ok(entries) = std::fs::read_dir(dir) {
                 for entry in entries.flatten() {
@@ -387,11 +427,12 @@ async fn listar_videos() -> Result<Json<serde_json::Value>, (StatusCode, Json<Ap
 
 /// GET /api/videos/thumbnail/{id} — sirve la miniatura de un video por ID (nombre)
 async fn servir_thumbnail(
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ApiError>)> {
     let id = id.replace('"', "").replace('\'', "").replace("..", "");
-    // Buscar archivo .thumb.jpg con ese nombre base en data/videos
-    let videos_dir = std::path::Path::new("data/videos");
+    // Buscar archivo .thumb.jpg con ese nombre base en el directorio de videos
+    let videos_dir = state.paths.videos.clone();
     if !videos_dir.is_dir() {
         return Err(err_404("No hay directorio de videos"));
     }
@@ -555,6 +596,7 @@ struct DescargarPayload { url: String, quality: Option<String> }
 
 /// POST /api/videos/descargar — descarga un video de YouTube con yt-dlp
 async fn handler_descargar_video(
+    State(state): State<AppState>,
     Json(payload): Json<DescargarPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     if payload.url.trim().is_empty() {
@@ -567,8 +609,8 @@ async fn handler_descargar_video(
         "720" => "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best",
         _ => "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best",
     };
-    let videos_dir = std::path::Path::new("data/videos");
-    tokio::fs::create_dir_all(videos_dir).await.map_err(|e| err_500(&e.to_string()))?;
+    let videos_dir = state.paths.videos.clone();
+    tokio::fs::create_dir_all(&videos_dir).await.map_err(|e| err_500(&e.to_string()))?;
     let output = tokio::task::spawn_blocking(move || -> Result<String, String> {
         let result = std::process::Command::new("yt-dlp")
             .arg("--output").arg(format!("{}/%(title)s.%(ext)s", videos_dir.display()))
@@ -618,10 +660,11 @@ async fn handler_convertir_video(
     State(state): State<AppState>,
     Json(payload): Json<ConvertirPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let input_path = std::path::Path::new("data/videos").join(&payload.filename);
+    let videos_dir = &state.paths.videos;
+    let input_path = videos_dir.join(&payload.filename);
     if !input_path.exists() { return Err(err_404(&format!("Archivo no encontrado: {}", payload.filename))); }
     let output_name = format!("{}_opt.mp4", input_path.file_stem().and_then(|s| s.to_str()).unwrap_or("video"));
-    let output_path = std::path::Path::new("data/videos").join(&output_name);
+    let output_path = videos_dir.join(&output_name);
     let input = input_path.to_string_lossy().to_string();
     let output = output_path.to_string_lossy().to_string();
     let encoder = state.h264_encoder;
@@ -659,9 +702,11 @@ async fn handler_convertir_video(
 
 /// POST /api/videos/generar-thumbnails — genera thumbnails para todos los videos que no tengan uno
 async fn generar_thumbnails_lote(
+    State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let resultado = tokio::task::spawn_blocking(|| -> Result<serde_json::Value, String> {
-        let dir = std::path::Path::new("data/videos");
+    let videos_dir = state.paths.videos.clone();
+    let resultado = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, String> {
+        let dir = videos_dir.as_path();
         if !dir.is_dir() {
             return Ok(serde_json::json!({"generados": 0, "total": 0, "errores": []}));
         }
@@ -736,7 +781,7 @@ struct VideoPayload { titulo: String, canal: Option<String>, duracion: Option<St
 
 async fn contenido_status(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     let n = state.db.listar_cursos().map_err(|e| err_500(&e.to_string()))?.len();
-    Ok(Json(serde_json::json!({"total_cursos": n, "total_videos": state.db.total_videos().unwrap_or(0), "total_archivos": state.db.total_archivos().unwrap_or(0), "espacio_usado_kb": content::dir_size_kb("data/contenido")})))
+    Ok(Json(serde_json::json!({"total_cursos": n, "total_videos": state.db.total_videos().unwrap_or(0), "total_archivos": state.db.total_archivos().unwrap_or(0), "espacio_usado_kb": content::dir_size_kb(&state.paths.contenido)})))
 }
 
 #[allow(dead_code)]
@@ -748,11 +793,11 @@ async fn contenido_upload(State(state): State<AppState>, mut multipart: Multipar
         let data = field.bytes().await.map_err(|e| err_400(&e.to_string()))?;
         let ext = name.rsplit('.').next().unwrap_or("bin").to_lowercase();
         let tipo = match ext.as_str() { "pdf"=>"pdf", "mp4"|"webm"|"avi"|"mov"=>"video", "jpg"|"jpeg"|"png"|"gif"|"svg"|"webp"=>"imagen", "md"|"txt"|"html"=>"nota", _=>"otro" };
-        let dir = PathBuf::from("data/contenido");
+        let dir = state.paths.contenido.clone();
         tokio::fs::create_dir_all(&dir).await.map_err(|e| err_500(&e.to_string()))?;
         let safe = format!("{}_{}", Utc::now().timestamp(), name.replace(' ', "_"));
         tokio::fs::write(dir.join(&safe), &data).await.map_err(|e| err_500(&e.to_string()))?;
-        let ruta = format!("data/contenido/{}", safe);
+        let ruta = format!("{}/{}", dir.display(), safe);
         state.db.insertar_archivo(tipo, &name, &ruta, data.len() as i64, &mime).map_err(|e| err_500(&e.to_string()))?;
         items.push(serde_json::json!({"nombre": name, "ruta": ruta, "tipo": tipo, "tamano": data.len()}));
     }
@@ -954,8 +999,8 @@ a{color:#e94560;}
 <h1>📖 Wikipedia Offline</h1>
 <p>No hay archivos ZIM cargados.</p>
 <h2>Cómo instalar:</h2>
-<pre><code>mkdir -p data/contenido/zim
-wget -P data/contenido/zim/ \
+<pre><code>mkdir -p /data/contenido/zim
+wget -P /data/contenido/zim/ \
   https://download.kiwix.org/zim/wikibooks/wikibooks_es_all_nopic_2025-10.zim
 # Luego reinicia el servidor</code></pre>
 <a class="btn" href="/">← Volver al inicio</a>

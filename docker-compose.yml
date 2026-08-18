@@ -5,12 +5,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Persistir base de datos
+      # Persistir DB y todo el contenido mutable bajo /data
       - educonect-data:/data
-      # Montar videos o ZIMs desde el host (opcional)
-      - ./data/videos:/data/videos:ro
-      - ./data/contenido/zim:/data/contenido/zim:ro
-      - ./data/biblioteca:/data/biblioteca:ro
     environment:
       - "JWT_SECRET=${JWT_SECRET:?Crea un archivo .env con un JWT_SECRET seguro}"
     restart: unless-stopped

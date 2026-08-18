@@ -40,7 +40,7 @@ COPY --from=rust-builder /build/static/ /app/static/
 COPY --from=next-builder /build/out/ /app/frontend/
 COPY edu-conect-rural-dashboard/modulos/ /app/modulos/
 
-ENV DB_PATH=/data/educonect.db \
+ENV DATA_DIR=/data \
     FRONTEND_PATH=/app/frontend/ \
     LISTEN_ADDR=0.0.0.0:8080 \
     RUST_LOG=info

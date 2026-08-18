@@ -33,7 +33,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl ffmpeg espeak-ng yt-dlp libgomp1 libzim8 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /data/videos /data/contenido/zim /data/biblioteca /data/contenido
+RUN groupadd --gid 10001 educonnect \
+    && useradd \
+      --uid 10001 \
+      --gid 10001 \
+      --create-home \
+      --home-dir /home/educonnect \
+      --shell /usr/sbin/nologin \
+      educonnect
+
+# Directorios mutables: el volumen named /data se entrega a educonnect.
+# Para volúmenes nuevos: docker compose run --rm --user 0:0 --entrypoint chown \
+#   educonect -R 10001:10001 /data
+RUN mkdir -p \
+      /data/videos \
+      /data/biblioteca \
+      /data/contenido/zim \
+    && chown -R 10001:10001 /data /home/educonnect
 
 COPY --from=rust-builder /build/target/release/edu-conect-rural-server /app/server
 COPY --from=rust-builder /build/static/ /app/static/
@@ -47,8 +63,11 @@ ENV DATA_DIR=/data \
 
 WORKDIR /app
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
     CMD curl -sf http://localhost:8080/health || exit 1
 
 EXPOSE 8080
+
+# Ejecutar como usuario sin privilegios (docker exec también entra como 10001)
+USER 10001:10001
 ENTRYPOINT ["/app/server"]

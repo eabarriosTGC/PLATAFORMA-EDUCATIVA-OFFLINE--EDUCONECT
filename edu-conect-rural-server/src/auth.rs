@@ -20,8 +20,6 @@ use axum::{
     extract::{FromRequestParts, Request, State},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Json, Response},
-    routing::{get, post},
-    Router,
 };
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -278,23 +276,6 @@ pub async fn estadisticas_handler(
     })))
 }
 
-/// Construye el router admin (YA NO USADO — las rutas se definen en main.rs).
-/// Se mantiene por referencia.
-#[allow(dead_code)]
-pub fn admin_router() -> Router<Database> {
-    // Las rutas protegidas comparten el mismo secret que está en Database
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        "educonect-rural-dev-secret".into()
-    });
-
-    Router::new()
-        // Login — público
-        .route("/admin/login", post(login_handler))
-        // Dashboard — protegido con middleware JWT
-        .route("/admin/dashboard", get(dashboard_handler))
-        .route("/admin/estadisticas", get(estadisticas_handler))
-        .layer(AuthLayer::new(secret))
-}
 
 #[cfg(test)]
 mod tests {

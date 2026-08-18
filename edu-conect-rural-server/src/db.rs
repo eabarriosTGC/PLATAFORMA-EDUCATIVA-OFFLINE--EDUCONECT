@@ -47,7 +47,8 @@ impl Database {
     }
 
     /// Abre (o crea) la base de datos y ejecuta migraciones + seeds.
-    pub fn open(path: &str) -> Result<Self, DbError> {
+    /// `jwt_secret` ya viene validado desde `config::jwt_secret_requerido()`.
+    pub fn open(path: &str, jwt_secret: String) -> Result<Self, DbError> {
         let manager = r2d2_sqlite::SqliteConnectionManager::file(path)
             .with_init(|c: &mut Connection| -> Result<(), rusqlite::Error> {
                 c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")
@@ -55,13 +56,6 @@ impl Database {
         let pool = r2d2::Pool::builder()
             .max_size(8)
             .build(manager)?;
-
-        // ⚠️ IMPORTANTE: en PRODUCCIÓN este valor DEBE venir de la variable de entorno JWT_SECRET.
-        // Aquí solo es un valor por defecto para desarrollo local.
-        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-            tracing::warn!("⚠️  JWT_SECRET no configurado. Usando secreto de DESARROLLO (cambiarlo en producción)");
-            "educonect-rural-dev-secret".into()
-        });
 
         let db = Self { pool, jwt_secret };
         db.ejecutar_migraciones()?;

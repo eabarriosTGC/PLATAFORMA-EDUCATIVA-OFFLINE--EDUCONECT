@@ -1,4 +1,5 @@
 mod auth;
+mod config;
 mod content;
 mod db;
 mod models;
@@ -143,7 +144,8 @@ async fn main() {
     let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8080".into()).parse().expect("LISTEN_ADDR inválida");
 
-    let database = Database::open(&db_path).expect("Error al abrir la base de datos");
+    let jwt_secret = config::jwt_secret_requerido();
+    let database = Database::open(&db_path, jwt_secret).expect("Error al abrir la base de datos");
 
     // Inicializar lector ZIM (Wikipedia offline puro Rust)
     let zim = zim_proxy::inicializar().await;

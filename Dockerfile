@@ -42,8 +42,7 @@ COPY edu-conect-rural-dashboard/modulos/ /app/modulos/
 ENV DB_PATH=/data/educonect.db \
     FRONTEND_PATH=/app/frontend/ \
     LISTEN_ADDR=0.0.0.0:8080 \
-    RUST_LOG=info \
-    JWT_SECRET=cambiar_en_produccion_con_openssl_rand_base64_64
+    RUST_LOG=info
 
 WORKDIR /app
 

@@ -48,46 +48,75 @@ impl Database {
 
     /// Abre (o crea) la base de datos y ejecuta migraciones + seeds.
     /// `jwt_secret` ya viene validado desde `config::jwt_secret_requerido()`.
+    ///
+    /// Orden de arranque (una sola puerta de entrada a SQLite):
+    /// 1. Conexión bootstrap única.
+    /// 2. PRAGMAs persistentes (journal_mode=WAL se fija UNA vez, fuera de transacción).
+    /// 3. Migraciones y seeds con exclusividad sobre la misma conexión.
+    /// 4. Cierre del bootstrap.
+    /// 5. Pool r2d2 definitivo (8 conexiones) con PRAGMAs por conexión.
     pub fn open(path: &str, jwt_secret: String) -> Result<Self, DbError> {
-        let manager = r2d2_sqlite::SqliteConnectionManager::file(path)
-            .with_init(|c: &mut Connection| -> Result<(), rusqlite::Error> {
-                c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")
-            });
-        let pool = r2d2::Pool::builder()
-            .max_size(8)
-            .build(manager)?;
+        // 1-2. Bootstrap: WAL, foreign_keys, busy_timeout y synchronous.
+        let mut bootstrap = Connection::open(path)?;
+        bootstrap.execute_batch(
+            "PRAGMA journal_mode = WAL; \
+             PRAGMA foreign_keys = ON; \
+             PRAGMA busy_timeout = 5000; \
+             PRAGMA synchronous = NORMAL;",
+        )?;
+
+        // 3. Migraciones y seeds con exclusividad.
+        Self::ejecutar_migraciones(&mut bootstrap)?;
+        Self::ejecutar_seeds(&mut bootstrap)?;
+        Self::ejecutar_migraciones_auth(&mut bootstrap)?;
+        Self::ejecutar_migraciones_content(&mut bootstrap)?;
+        Self::ejecutar_migraciones_search(&mut bootstrap)?;
+        Self::reindex_search(&mut bootstrap)?;
+
+        // 4. Cierre del bootstrap antes de crear el pool.
+        drop(bootstrap);
+
+        // 5. Pool definitivo: PRAGMAs por conexión (journal_mode ya quedó fijo).
+        let manager = r2d2_sqlite::SqliteConnectionManager::file(path).with_init(
+            |c: &mut Connection| -> Result<(), rusqlite::Error> {
+                c.execute_batch(
+                    "PRAGMA foreign_keys = ON; \
+                     PRAGMA busy_timeout = 5000; \
+                     PRAGMA synchronous = NORMAL;",
+                )
+            },
+        );
+        let pool = r2d2::Pool::builder().max_size(8).build(manager)?;
 
         let db = Self { pool, jwt_secret };
-        db.ejecutar_migraciones()?;
-        db.ejecutar_seeds()?;
-        db.run_auth_migrations()?;
-        db.run_content_migrations()?;
-        db.run_search_migrations()?;
-        db.reindex_search()?;
         tracing::info!("Base de datos lista: {path} (pool r2d2, max_size=8)");
         Ok(db)
     }
 
     // ── migraciones / seeds ──────────────────────────────────────────
 
-    fn ejecutar_migraciones(&self) -> Result<(), DbError> {
+    /// Migración base, atómica. Los scripts no traen BEGIN/COMMIT propios.
+    fn ejecutar_migraciones(conn: &mut Connection) -> Result<(), DbError> {
         let sql = include_str!("../migrations/001_init.sql");
-        let conn = self.conn()?;
-        conn.execute_batch(sql)?;
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql)?;
+        tx.commit()?;
         tracing::info!("Migraciones ejecutadas");
         Ok(())
     }
 
-    fn ejecutar_seeds(&self) -> Result<(), DbError> {
+    /// Seeds, atómicos en una sola transacción (idempotentes: INSERT OR IGNORE).
+    fn ejecutar_seeds(conn: &mut Connection) -> Result<(), DbError> {
         let sql1 = include_str!("../seeds/001_cursos.sql");
         let sql2 = include_str!("../seeds/002_modulos.sql");
         let sql5 = include_str!("../seeds/005_biblioteca_fts.sql");
         let sql6 = include_str!("../seeds/006_diccionarios.sql");
-        let conn = self.conn()?;
-        conn.execute_batch(sql1)?;
-        conn.execute_batch(sql2)?;
-        conn.execute_batch(sql5)?;
-        conn.execute_batch(sql6)?;
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql1)?;
+        tx.execute_batch(sql2)?;
+        tx.execute_batch(sql5)?;
+        tx.execute_batch(sql6)?;
+        tx.commit()?;
         tracing::info!("Semillas cargadas (cursos + módulos + biblioteca + diccionarios)");
         Ok(())
     }
@@ -231,31 +260,27 @@ impl Database {
     // ── autenticación ────────────────────────────────────────────────
 
     /// Crea la tabla de admins y el admin por defecto si no existe.
-    fn ejecutar_migraciones_auth(&self) -> Result<(), DbError> {
+    fn ejecutar_migraciones_auth(conn: &mut Connection) -> Result<(), DbError> {
         let sql = include_str!("../migrations/002_auth.sql");
-        self.conn()?.execute_batch(sql)?;
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql)?;
 
         // Crear admin por defecto si no hay ninguno
-        let conn = self.conn()?;
-        let count: i64 = conn
+        let count: i64 = tx
             .query_row("SELECT COUNT(*) FROM admin_usuarios", [], |row| row.get(0))
             .unwrap_or(0);
 
         if count == 0 {
             let hash = bcrypt::hash("admin123", 12).expect("Error al hashear password por defecto");
-            conn.execute(
+            tx.execute(
                 "INSERT INTO admin_usuarios (usuario, password_hash) VALUES (?1, ?2)",
                 params!["admin", hash],
             )?;
             tracing::info!("🔑 Admin por defecto creado: admin / admin123");
         }
 
+        tx.commit()?;
         Ok(())
-    }
-
-    /// Ejecuta migraciones de auth (llamado después de las migraciones base).
-    pub fn run_auth_migrations(&self) -> Result<(), DbError> {
-        self.ejecutar_migraciones_auth()
     }
 
     /// Obtiene un admin por nombre de usuario.
@@ -298,9 +323,11 @@ impl Database {
 
     // ── contenido ────────────────────────────────────────────────────
 
-    pub fn run_content_migrations(&self) -> Result<(), DbError> {
+    fn ejecutar_migraciones_content(conn: &mut Connection) -> Result<(), DbError> {
         let sql = include_str!("../migrations/003_content.sql");
-        self.conn()?.execute_batch(sql)?;
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql)?;
+        tx.commit()?;
         tracing::info!("Migraciones de contenido ejecutadas");
         Ok(())
     }
@@ -375,20 +402,23 @@ impl Database {
 
     // ── búsqueda full-text ──────────────────────────────────────────
 
-    pub fn run_search_migrations(&self) -> Result<(), DbError> {
+    fn ejecutar_migraciones_search(conn: &mut Connection) -> Result<(), DbError> {
         let sql = include_str!("../migrations/004_search.sql");
-        self.conn()?.execute_batch(sql)?;
+        let tx = conn.transaction()?;
+        tx.execute_batch(sql)?;
+        tx.commit()?;
         tracing::info!("Índices FTS5 creados");
         Ok(())
     }
 
     /// Re-indexa contenido existente en los índices FTS5
-    pub fn reindex_search(&self) -> Result<(), DbError> {
-        let conn = self.conn()?;
-        conn.execute("INSERT INTO cursos_fts(cursos_fts) VALUES('rebuild')", [])?;
-        conn.execute("INSERT INTO videos_fts(videos_fts) VALUES('rebuild')", [])?;
-        conn.execute("INSERT INTO biblioteca_fts(biblioteca_fts) VALUES('rebuild')", [])?;
-        conn.execute("INSERT INTO diccionario_fts(diccionario_fts) VALUES('rebuild')", [])?;
+    fn reindex_search(conn: &mut Connection) -> Result<(), DbError> {
+        let tx = conn.transaction()?;
+        tx.execute("INSERT INTO cursos_fts(cursos_fts) VALUES('rebuild')", [])?;
+        tx.execute("INSERT INTO videos_fts(videos_fts) VALUES('rebuild')", [])?;
+        tx.execute("INSERT INTO biblioteca_fts(biblioteca_fts) VALUES('rebuild')", [])?;
+        tx.execute("INSERT INTO diccionario_fts(diccionario_fts) VALUES('rebuild')", [])?;
+        tx.commit()?;
         tracing::info!("Índices FTS5 reconstruidos (cursos, videos, biblioteca, diccionario)");
         Ok(())
     }
@@ -796,5 +826,120 @@ mod tests {
         };
         let json = serde_json::to_string(&sr).unwrap();
         assert!(json.contains("\"archivo_path\":\"/ruta/libro.pdf\""));
+    }
+
+    // ── inicialización SQLite (2B): bootstrap único → pool definitivo ──
+
+    fn temp_db(nombre: &str) -> String {
+        let dir = std::env::temp_dir().join(format!(
+            "educonect-2b-{}-{nombre}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("test.db");
+        let s = path.to_string_lossy().to_string();
+        let _ = std::fs::remove_file(&s);
+        let _ = std::fs::remove_file(format!("{s}-wal"));
+        let _ = std::fs::remove_file(format!("{s}-shm"));
+        s
+    }
+
+    fn limpiar_db(path: &str) {
+        let _ = std::fs::remove_file(path);
+        let _ = std::fs::remove_file(format!("{path}-wal"));
+        let _ = std::fs::remove_file(format!("{path}-shm"));
+        if let Some(parent) = std::path::Path::new(path).parent() {
+            let _ = std::fs::remove_dir_all(parent);
+        }
+    }
+
+    fn secret_test() -> String {
+        "s".repeat(40)
+    }
+
+    #[test]
+    fn test_journal_mode_wal_y_pragmas_por_conexion() {
+        let path = temp_db("wal");
+        let db = Database::open(&path, secret_test()).unwrap();
+        let conn = db.pool.get().unwrap();
+
+        let jm: String = conn.query_row("PRAGMA journal_mode", [], |r| r.get(0)).unwrap();
+        assert_eq!(jm, "wal", "journal_mode debe quedar en WAL");
+        let fk: i64 = conn.query_row("PRAGMA foreign_keys", [], |r| r.get(0)).unwrap();
+        assert_eq!(fk, 1, "foreign_keys debe estar ON en cada conexión del pool");
+        let bt: i64 = conn.query_row("PRAGMA busy_timeout", [], |r| r.get(0)).unwrap();
+        assert_eq!(bt, 5000, "busy_timeout debe ser 5000");
+        let sync: i64 = conn.query_row("PRAGMA synchronous", [], |r| r.get(0)).unwrap();
+        assert_eq!(sync, 1, "synchronous debe ser NORMAL (1)");
+
+        drop(conn);
+        drop(db);
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_reabrir_db_conserva_datos_y_seeds_idempotentes() {
+        let path = temp_db("reopen");
+        let db1 = Database::open(&path, secret_test()).unwrap();
+        let cursos1 = db1.listar_cursos().unwrap().len();
+        assert!(cursos1 > 0, "los seeds deben cargar cursos");
+        let admins1 = db1.total_admins().unwrap();
+        drop(db1);
+
+        // Reabrir: migraciones y seeds deben ser idempotentes.
+        let db2 = Database::open(&path, secret_test()).unwrap();
+        let cursos2 = db2.listar_cursos().unwrap().len();
+        assert_eq!(cursos1, cursos2, "reabrir no debe duplicar seeds");
+        assert_eq!(db2.total_admins().unwrap(), admins1, "no debe duplicarse el admin");
+        drop(db2);
+
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_pool_ocho_conexiones_sin_lock_y_escritura_concurrente() {
+        let path = temp_db("pool8");
+        let db = Database::open(&path, secret_test()).unwrap();
+
+        // Tomar las 8 conexiones del pool sin "database is locked".
+        let mut conns: Vec<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>> =
+            Vec::new();
+        for _ in 0..8 {
+            conns.push(db.pool.get().expect("debe haber 8 conexiones disponibles"));
+        }
+
+        // Escrituras concurrentes básicas: 4 conexiones × 10 inserts.
+        let antes: i64 = conns[0]
+            .query_row("SELECT COUNT(*) FROM cursos", [], |r| r.get(0))
+            .unwrap();
+        let handles: Vec<_> = conns
+            .drain(..4)
+            .map(|mut c| {
+                std::thread::spawn(move || {
+                    for i in 0..10 {
+                        c.execute(
+                            "INSERT INTO cursos (titulo, descripcion, categoria) \
+                             VALUES (?1, ?2, ?3)",
+                            params![format!("concurrente-{i}"), "d", "cat"],
+                        )
+                        .unwrap();
+                    }
+                })
+            })
+            .collect();
+        for h in handles {
+            h.join().unwrap();
+        }
+
+        let despues: i64 = db
+            .pool
+            .get()
+            .unwrap()
+            .query_row("SELECT COUNT(*) FROM cursos", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(despues, antes + 40, "deben persistir los 40 inserts concurrentes");
+
+        drop(db);
+        limpiar_db(&path);
     }
 }

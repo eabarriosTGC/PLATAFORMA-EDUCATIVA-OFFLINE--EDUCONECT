@@ -1,0 +1,8 @@
+# Dependencias
+node_modules/
+
+# Reportes y artefactos de Playwright
+reports/
+test-results/
+playwright-report/
+blob-report/

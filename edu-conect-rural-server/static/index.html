@@ -230,14 +230,14 @@
     <div class="hero-icon" aria-hidden="true">🌵</div>
     <h1>EduConect <span class="accent">Rural</span></h1>
     <p class="subtitle">Plataforma Educativa Offline para La Guajira</p>
-    <p class="desc">46 módulos interactivos · Biblioteca digital · Wikipedia offline · Simulaciones PhET · 100% sin internet</p>
+    <p class="desc"><span id="total-modulos-hero">Módulos interactivos</span> · Biblioteca digital · Wikipedia offline · Simulaciones PhET · 100% sin internet</p>
   </section>
 
   <!-- ═══ Feature Cards ═══ -->
   <section class="features">
     <div class="feature-card">
       <div class="feature-icon">📚</div>
-      <span class="feature-label">46 Módulos</span>
+      <span class="feature-label" id="total-modulos-label">Módulos</span>
       <h3>Aprendizaje Interactivo</h3>
       <p>Juegos y lecciones alineados con los DBA del MEN. Desde vocales wayuu hasta tabla periódica 3D.</p>
     </div>
@@ -266,6 +266,25 @@
     <span>© 2026 EduConect Rural · Diseñado para escuelas rurales colombianas 🇨🇴</span>
     <span>Servidor Local · Sin conexión requerida</span>
   </footer>
+
+  <script>
+    // Contador de módulos dinámico: GET /api/modulos es la fuente de verdad.
+    // Fallback honesto: sin número si la API no responde.
+    (async function () {
+      var hero = document.getElementById('total-modulos-hero');
+      var label = document.getElementById('total-modulos-label');
+      if (!hero && !label) return;
+      try {
+        var res = await fetch('/api/modulos', { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) return;
+        var data = await res.json();
+        var total = data && typeof data.total === 'number' ? data.total : null;
+        if (total === null || total < 0) return;
+        if (hero) hero.textContent = total + (total === 1 ? ' módulo interactivo' : ' módulos interactivos');
+        if (label) label.textContent = total + (total === 1 ? ' Módulo' : ' Módulos');
+      } catch (e) { /* API no disponible: se mantiene el texto sin número */ }
+    })();
+  </script>
 
 </body>
 </html>

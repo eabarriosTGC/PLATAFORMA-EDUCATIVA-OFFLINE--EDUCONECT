@@ -24,7 +24,7 @@ body{background:linear-gradient(135deg,#FFE5B4,#FFD1DC,#B5EAD7);min-height:100vh
 </style></head>
 <body>
 <a href="/app/" class="volver">🏠 Volver al Inicio</a>
-<div class="header"><h1>🎨 46 Módulos Educativos</h1><p>Lenguaje · Matemáticas · Ciencias · Sociales · Cultura Wayuu · Nutrición · Salud · Clima · Emociones · Finanzas · Ciudadanía · Inglés · Ciudadanía Digital · Geografía · Arte · Habilidades · Pensamiento Crítico · Música · Deporte · Oficios · Ciencia · Puzzles · 3D</p></div>
+<div class="header"><h1>🎨 <span id="total-modulos">Módulos Educativos</span></h1><p>Lenguaje · Matemáticas · Ciencias · Sociales · Cultura Wayuu · Nutrición · Salud · Clima · Emociones · Finanzas · Ciudadanía · Inglés · Ciudadanía Digital · Geografía · Arte · Habilidades · Pensamiento Crítico · Música · Deporte · Oficios · Ciencia · Puzzles · 3D</p></div>
 
 <div class="seccion"><h2>📖 Lenguaje DBA 1°-5°</h2><div class="galeria">
 <a href="leng-101/" class="tarjeta"><div class="icono">🔤</div><h3>Vocales Mágicas Wayuu</h3><p class="desc">1° Grado. Fonología con wayuunaiki</p><span class="etiqueta nuevo">DBA</span></a>
@@ -147,4 +147,20 @@ body{background:linear-gradient(135deg,#FFE5B4,#FFD1DC,#B5EAD7);min-height:100vh
 </div></div>
 
 <div style="text-align:center;padding:30px;color:#777">EduConect Rural · Aprendizaje offline para La Guajira · Cultura Wayuu 🌵</div>
+<script>
+  // Contador dinámico: GET /api/modulos es la fuente de verdad.
+  // Fallback honesto: sin número si la API no responde.
+  (async function () {
+    var el = document.getElementById('total-modulos');
+    if (!el) return;
+    try {
+      var res = await fetch('/api/modulos', { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) return;
+      var data = await res.json();
+      var total = data && typeof data.total === 'number' ? data.total : null;
+      if (total === null || total < 0) return;
+      el.textContent = total + (total === 1 ? ' Módulo Educativo' : ' Módulos Educativos');
+    } catch (e) { /* API no disponible: se mantiene "Módulos Educativos" sin número */ }
+  })();
+</script>
 </body></html>

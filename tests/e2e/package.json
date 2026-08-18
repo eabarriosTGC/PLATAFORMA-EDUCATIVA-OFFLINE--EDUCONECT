@@ -1,0 +1,15 @@
+{
+  "name": "educonect-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Suite E2E del catálogo de módulos EduConect (servidor real en :8080)",
+  "scripts": {
+    "test": "playwright test",
+    "test:modules": "playwright test module-catalog.spec.js",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

@@ -14,16 +14,17 @@ COPY edu-conect-rural-server/ .
 
 RUN cargo build --release && strip target/release/edu-conect-rural-server
 
-# ── Builder: Next.js (opcional — falla suave) ──
+# ── Builder: Next.js (obligatorio — produce out/ para el runtime) ──
 FROM node:22-slim AS next-builder
 
 WORKDIR /build
 COPY edu-conect-rural-dashboard/package.json ./
-COPY edu-conect-rural-dashboard/package-lock.json* ./
-RUN npm install --ignore-scripts 2>/dev/null || true
+COPY edu-conect-rural-dashboard/package-lock.json ./
+RUN npm ci --ignore-scripts
 
-COPY edu-conect-rural-dashboard/ .
-RUN npm run build 2>/dev/null; echo "Next.js build skipped (optional)"
+COPY edu-conect-rural-dashboard/ ./
+RUN npm run build
+RUN test -f out/index.html
 
 # ── Runtime final ──
 FROM debian:bookworm-slim

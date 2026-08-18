@@ -8,10 +8,14 @@
 //
 // La función auditModule recibe una página NUEVA por llamada (contexto limpio)
 // y ejecuta la secuencia completa: carga escritorio, móvil 390x844, offline
-// (bloqueando requests a hosts externos), y navegación de regreso.
+// (bloqueando requests a origins externos), y navegación de regreso.
 
-const EXTERNAL_RE = /^https?:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)/;
-const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:8080';
+const { createOriginPolicy } = require('./origin-policy');
+
+// Interno = mismo origin que E2E_BASE_URL; externo = cualquier otro origin.
+const policy = createOriginPolicy(process.env.E2E_BASE_URL || 'http://localhost:8080');
+const BASE_URL = policy.baseUrl;
+const { isExternalRequest } = policy;
 
 /**
  * Recoge errores de consola, pageerror, requests fallidos y requests externos
@@ -42,7 +46,7 @@ function attachCollectors(page) {
     }
   });
   page.on('request', (req) => {
-    if (EXTERNAL_RE.test(req.url())) {
+    if (isExternalRequest(req.url())) {
       state.externalRequests.push(req.url());
     }
   });
@@ -135,24 +139,36 @@ async function horizontalOverflowPx(page) {
 }
 
 /**
- * Carga la URL bloqueando requests a cualquier host externo (fuera de localhost).
+ * Carga la URL bloqueando requests a cualquier origin externo
+ * (distinto del origin de E2E_BASE_URL).
  * Devuelve true si la página carga con 200 y sin errores de red.
  */
 async function loadOffline(page, url) {
   let offlineFailed = false;
   const handler = (route) => route.abort();
-  await page.route(EXTERNAL_RE, handler);
+  await page.route((urlObj) => isExternalRequest(urlObj.href), handler);
   try {
     const ok = await loadOk(page, url);
     // Tras la carga, comprueba que ningún recurso crítico falló por el bloqueo.
     const failed = await page.evaluate(() => {
-      return performance.getEntriesByType('resource')
-        .filter((e) => !e.name.startsWith(location.origin))
+      return performance
+        .getEntriesByType('resource')
+        .filter((entry) => {
+          try {
+            const url = new URL(entry.name, location.href);
+            return (
+              (url.protocol === 'http:' || url.protocol === 'https:') &&
+              url.origin !== location.origin
+            );
+          } catch {
+            return false;
+          }
+        })
         .length;
     }).catch(() => 0);
     offlineFailed = !ok || failed > 0;
   } finally {
-    await page.unroute(EXTERNAL_RE, handler);
+    await page.unroute((urlObj) => isExternalRequest(urlObj.href), handler);
   }
   return !offlineFailed;
 }

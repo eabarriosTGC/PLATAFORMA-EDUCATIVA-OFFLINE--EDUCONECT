@@ -5,6 +5,7 @@
   "description": "Suite E2E del catálogo de módulos EduConect (servidor real en :8080)",
   "scripts": {
     "test": "playwright test",
+    "test:unit": "node --test helpers/*.test.js",
     "test:modules": "playwright test module-catalog.spec.js",
     "test:headed": "playwright test --headed",
     "report": "playwright show-report"

@@ -27,6 +27,8 @@ fn setup_test_db(nombre: &str) -> TestState {
 
     let data_dir = std::path::Path::new("data");
     let _ = std::fs::create_dir_all(data_dir);
+    // El bootstrap del admin requiere la variable (mismo valor en todos los tests).
+    std::env::set_var("ADMIN_INITIAL_PASSWORD", "integration-test-password-segura");
     let db_path = format!("data/test_integration_{}_{}.db", std::process::id(), nombre);
     let db = edu_conect_rural_server::db::Database::open(&db_path, "s".repeat(40))
         .expect("Fallo al abrir BD de test");

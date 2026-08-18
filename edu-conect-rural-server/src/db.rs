@@ -40,6 +40,11 @@ pub struct Database {
     pub jwt_secret: String,
 }
 
+/// Contraseñas que jamás se aceptan como inicial (credenciales públicas conocidas).
+const PASSWORDS_INICIALES_CONOCIDAS: &[&str] = &["admin123"];
+/// Longitud mínima para la contraseña inicial del administrador.
+const LONGITUD_MINIMA_PASSWORD: usize = 12;
+
 impl Database {
     /// Helper privado: obtiene una conexión del pool o devuelve error.
     fn conn(&self) -> Result<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>, DbError> {
@@ -48,6 +53,8 @@ impl Database {
 
     /// Abre (o crea) la base de datos y ejecuta migraciones + seeds.
     /// `jwt_secret` ya viene validado desde `config::jwt_secret_requerido()`.
+    /// `ADMIN_INITIAL_PASSWORD` se lee del entorno solo si se necesita
+    /// crear o rotar el administrador inicial.
     ///
     /// Orden de arranque (una sola puerta de entrada a SQLite):
     /// 1. Conexión bootstrap única.
@@ -56,6 +63,17 @@ impl Database {
     /// 4. Cierre del bootstrap.
     /// 5. Pool r2d2 definitivo (8 conexiones) con PRAGMAs por conexión.
     pub fn open(path: &str, jwt_secret: String) -> Result<Self, DbError> {
+        let initial_password = std::env::var("ADMIN_INITIAL_PASSWORD").ok();
+        Self::open_internal(path, jwt_secret, initial_password)
+    }
+
+    /// Núcleo de `open`, testeable sin depender del entorno.
+    /// `initial_password` es `ADMIN_INITIAL_PASSWORD` (None si no está definida).
+    fn open_internal(
+        path: &str,
+        jwt_secret: String,
+        initial_password: Option<String>,
+    ) -> Result<Self, DbError> {
         // 1-2. Bootstrap: WAL, foreign_keys, busy_timeout y synchronous.
         let mut bootstrap = Connection::open(path)?;
         bootstrap.execute_batch(
@@ -68,7 +86,7 @@ impl Database {
         // 3. Migraciones y seeds con exclusividad.
         Self::ejecutar_migraciones(&mut bootstrap)?;
         Self::ejecutar_seeds(&mut bootstrap)?;
-        Self::ejecutar_migraciones_auth(&mut bootstrap)?;
+        Self::ejecutar_migraciones_auth(&mut bootstrap, initial_password)?;
         Self::ejecutar_migraciones_content(&mut bootstrap)?;
         Self::ejecutar_migraciones_search(&mut bootstrap)?;
         Self::reindex_search(&mut bootstrap)?;
@@ -259,28 +277,96 @@ impl Database {
 
     // ── autenticación ────────────────────────────────────────────────
 
-    /// Crea la tabla de admins y el admin por defecto si no existe.
-    fn ejecutar_migraciones_auth(conn: &mut Connection) -> Result<(), DbError> {
+    /// Crea el admin inicial o rota la contraseña heredada `admin123`.
+    ///
+    /// Casos:
+    /// - Sin admins → crea `admin` con `ADMIN_INITIAL_PASSWORD` (obligatoria).
+    /// - Algún admin cuyo hash verifica `admin123` → rota a `ADMIN_INITIAL_PASSWORD`.
+    /// - Admins con otra contraseña → no toca nada.
+    ///
+    /// La contraseña jamás se registra ni se devuelve.
+    fn ejecutar_migraciones_auth(
+        conn: &mut Connection,
+        initial_password: Option<String>,
+    ) -> Result<(), DbError> {
         let sql = include_str!("../migrations/002_auth.sql");
         let tx = conn.transaction()?;
         tx.execute_batch(sql)?;
 
-        // Crear admin por defecto si no hay ninguno
-        let count: i64 = tx
-            .query_row("SELECT COUNT(*) FROM admin_usuarios", [], |row| row.get(0))
-            .unwrap_or(0);
+        // Estado actual de los admins.
+        let mut stmt = tx.prepare("SELECT id, password_hash FROM admin_usuarios ORDER BY id")?;
+        let filas: Vec<(i64, String)> = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        drop(stmt);
 
-        if count == 0 {
-            let hash = bcrypt::hash("admin123", 12).expect("Error al hashear password por defecto");
+        if filas.is_empty() {
+            // Sin admin: crear con la contraseña inicial (exigida).
+            let pwd = Self::initial_password_requerida(initial_password)?;
+            let hash = bcrypt::hash(&pwd, 12).expect("Error al hashear contraseña inicial");
             tx.execute(
                 "INSERT INTO admin_usuarios (usuario, password_hash) VALUES (?1, ?2)",
                 params!["admin", hash],
             )?;
-            tracing::info!("🔑 Admin por defecto creado: admin / admin123");
+            tracing::info!("🔑 Admin inicial creado desde ADMIN_INITIAL_PASSWORD");
+        } else {
+            // Detectar credencial heredada verificando el hash, no solo su existencia.
+            let heredados: Vec<i64> = filas
+                .iter()
+                .filter(|(_, hash)| bcrypt::verify("admin123", hash).unwrap_or(false))
+                .map(|(id, _)| *id)
+                .collect();
+
+            if !heredados.is_empty() {
+                let pwd = Self::initial_password_requerida(initial_password)?;
+                let hash = bcrypt::hash(&pwd, 12).expect("Error al hashear contraseña inicial");
+                for id in &heredados {
+                    tx.execute(
+                        "UPDATE admin_usuarios SET password_hash = ?1 WHERE id = ?2",
+                        params![hash, id],
+                    )?;
+                }
+                tracing::info!(
+                    "🔑 Contraseña heredada (admin123) rotada en {} administrador(es)",
+                    heredados.len()
+                );
+            } else {
+                tracing::info!("🔑 Admin existente con contraseña configurada: no se modifica");
+            }
         }
 
         tx.commit()?;
         Ok(())
+    }
+
+    /// Valida `ADMIN_INITIAL_PASSWORD` (recibida desde el entorno en `open`).
+    /// Rechaza: ausente, vacía, conocida (`admin123`) o menor de 12 caracteres.
+    fn initial_password_requerida(candidata: Option<String>) -> Result<String, DbError> {
+        let pwd = candidata.map(|s| s.trim().to_string()).unwrap_or_default();
+        if pwd.is_empty() {
+            return Err(DbError::Validacion(
+                "ADMIN_INITIAL_PASSWORD no está definida o está vacía. \
+                 Se necesita para crear o migrar el administrador inicial \
+                 (mínimo 12 caracteres)."
+                    .into(),
+            ));
+        }
+        if PASSWORDS_INICIALES_CONOCIDAS.contains(&pwd.as_str()) {
+            return Err(DbError::Validacion(
+                "ADMIN_INITIAL_PASSWORD coincide con una contraseña conocida (admin123). \
+                 Genera una nueva con: openssl rand -base64 24"
+                    .into(),
+            ));
+        }
+        if pwd.len() < LONGITUD_MINIMA_PASSWORD {
+            return Err(DbError::Validacion(format!(
+                "ADMIN_INITIAL_PASSWORD demasiado corta ({} chars, mínimo {}). \
+                 Genera una con: openssl rand -base64 24",
+                pwd.len(),
+                LONGITUD_MINIMA_PASSWORD
+            )));
+        }
+        Ok(pwd)
     }
 
     /// Obtiene un admin por nombre de usuario.
@@ -860,7 +946,7 @@ mod tests {
     #[test]
     fn test_journal_mode_wal_y_pragmas_por_conexion() {
         let path = temp_db("wal");
-        let db = Database::open(&path, secret_test()).unwrap();
+        let db = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
         let conn = db.pool.get().unwrap();
 
         let jm: String = conn.query_row("PRAGMA journal_mode", [], |r| r.get(0)).unwrap();
@@ -880,14 +966,14 @@ mod tests {
     #[test]
     fn test_reabrir_db_conserva_datos_y_seeds_idempotentes() {
         let path = temp_db("reopen");
-        let db1 = Database::open(&path, secret_test()).unwrap();
+        let db1 = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
         let cursos1 = db1.listar_cursos().unwrap().len();
         assert!(cursos1 > 0, "los seeds deben cargar cursos");
         let admins1 = db1.total_admins().unwrap();
         drop(db1);
 
         // Reabrir: migraciones y seeds deben ser idempotentes.
-        let db2 = Database::open(&path, secret_test()).unwrap();
+        let db2 = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
         let cursos2 = db2.listar_cursos().unwrap().len();
         assert_eq!(cursos1, cursos2, "reabrir no debe duplicar seeds");
         assert_eq!(db2.total_admins().unwrap(), admins1, "no debe duplicarse el admin");
@@ -899,7 +985,7 @@ mod tests {
     #[test]
     fn test_pool_ocho_conexiones_sin_lock_y_escritura_concurrente() {
         let path = temp_db("pool8");
-        let db = Database::open(&path, secret_test()).unwrap();
+        let db = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
 
         // Tomar las 8 conexiones del pool sin "database is locked".
         let mut conns: Vec<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>> =
@@ -940,6 +1026,118 @@ mod tests {
         assert_eq!(despues, antes + 40, "deben persistir los 40 inserts concurrentes");
 
         drop(db);
+        limpiar_db(&path);
+    }
+
+    // ── bootstrap del administrador inicial (2D) ─────────────────────
+
+    #[test]
+    fn test_sin_admin_y_sin_variable_rechaza_arranque() {
+        let path = temp_db("noenv");
+        let res = Database::open_internal(&path, secret_test(), None);
+        assert!(res.is_err(), "debe rechazar el arranque sin ADMIN_INITIAL_PASSWORD");
+        let err = res.err().unwrap().to_string();
+        assert!(err.contains("ADMIN_INITIAL_PASSWORD"), "el mensaje debe nombrar la variable: {err}");
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_sin_admin_crea_con_password_valida() {
+        let path = temp_db("crea");
+        let db = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+            .unwrap();
+        assert_eq!(db.total_admins().unwrap(), 1);
+        let admin = db.obtener_admin("admin").unwrap();
+        assert!(bcrypt::verify("clave-segura-de-prueba", &admin.password_hash).unwrap());
+        assert!(!bcrypt::verify("admin123", &admin.password_hash).unwrap());
+        drop(db);
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_password_corta_rechazada() {
+        let path = temp_db("corta");
+        let res = Database::open_internal(&path, secret_test(), Some("corta123".into()));
+        assert!(res.is_err(), "debe rechazar una contraseña de 8 caracteres");
+        let err = res.err().unwrap().to_string();
+        assert!(err.contains("demasiado corta"), "mensaje: {err}");
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_password_admin123_rechazada() {
+        let path = temp_db("admin123");
+        let res = Database::open_internal(&path, secret_test(), Some("admin123".into()));
+        assert!(res.is_err(), "debe rechazar la contraseña conocida admin123");
+        let err = res.err().unwrap().to_string();
+        assert!(err.contains("conocida"), "mensaje: {err}");
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_admin_heredado_admin123_rota_hash() {
+        let path = temp_db("rotar");
+        // Simular el estado legado: crear admin y reescribir su hash a admin123.
+        let db0 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+            .unwrap();
+        let hash_legado = bcrypt::hash("admin123", 12).unwrap();
+        db0.pool
+            .get()
+            .unwrap()
+            .execute(
+                "UPDATE admin_usuarios SET password_hash=?1 WHERE usuario='admin'",
+                params![hash_legado],
+            )
+            .unwrap();
+        drop(db0);
+
+        // Reabrir con la nueva contraseña: debe rotar el hash heredado.
+        let db1 = Database::open_internal(&path, secret_test(), Some("nueva-clave-2d-muy-segura".into()))
+            .unwrap();
+        let admin = db1.obtener_admin("admin").unwrap();
+        assert!(bcrypt::verify("nueva-clave-2d-muy-segura", &admin.password_hash).unwrap());
+        assert!(!bcrypt::verify("admin123", &admin.password_hash).unwrap());
+        drop(db1);
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_admin_seguro_no_se_modifica() {
+        let path = temp_db("seguro");
+        let db0 = Database::open_internal(&path, secret_test(), Some("primera-clave-segura".into()))
+            .unwrap();
+        let hash0 = db0.obtener_admin("admin").unwrap().password_hash;
+        drop(db0);
+
+        // Reabrir con OTRA variable: el admin seguro no se toca.
+        let db1 = Database::open_internal(&path, secret_test(), Some("otra-clave-distinta-2d".into()))
+            .unwrap();
+        let admin = db1.obtener_admin("admin").unwrap();
+        assert_eq!(admin.password_hash, hash0, "no debe modificarse el hash de un admin seguro");
+        assert!(bcrypt::verify("primera-clave-segura", &admin.password_hash).unwrap());
+        drop(db1);
+        limpiar_db(&path);
+    }
+
+    #[test]
+    fn test_bootstrap_admin_idempotente() {
+        let path = temp_db("idem");
+        let db1 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+            .unwrap();
+        let admins1 = db1.total_admins().unwrap();
+        let hash1 = db1.obtener_admin("admin").unwrap().password_hash;
+        drop(db1);
+
+        // Segunda ejecución con la misma variable: no duplica ni modifica.
+        let db2 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+            .unwrap();
+        assert_eq!(db2.total_admins().unwrap(), admins1, "no debe duplicar admins");
+        assert_eq!(
+            db2.obtener_admin("admin").unwrap().password_hash,
+            hash1,
+            "no debe rehashear un admin ya seguro"
+        );
+        drop(db2);
         limpiar_db(&path);
     }
 }

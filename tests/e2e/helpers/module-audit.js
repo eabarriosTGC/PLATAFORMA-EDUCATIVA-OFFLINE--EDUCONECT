@@ -92,7 +92,7 @@ async function countInteractiveControls(page) {
 /**
  * Comprueba si existe un enlace de regreso al catálogo y si navega a él.
  * Acepta los patrones reales del proyecto: '../', '../index.html',
- * '/modulos/', '/modulos' (volver.js inyecta el botón por JS, así que
+ * '/modulos/', '/modulos', '/app/' (volver.js puede inyectar el botón por JS, así que
  * se espera al DOM). Usa el requestContext global (no page.request, que
  * depende del estado de la página). Devuelve 'ok' | 'no-link' | 'broken'.
  */
@@ -109,6 +109,8 @@ async function checkBackNavigation(page, requestCtx, baseUrl) {
             h === '../index.html' ||
             h === '/modulos/' ||
             h === '/modulos' ||
+            h === '/app/' ||
+            h === '/app' ||
             h.endsWith('/modulos/')
           );
         return candidates.length ? candidates[0] : null;
@@ -116,10 +118,8 @@ async function checkBackNavigation(page, requestCtx, baseUrl) {
       .catch(() => null);
     const href = handle ? await handle.jsonValue() : null;
     if (!href) return 'no-link';
-    // Resuelve la URL de destino contra el directorio del módulo.
-    const target = href.startsWith('/')
-      ? `${baseUrl}${href}`
-      : `${baseUrl}/modulos/${href === '../index.html' ? 'index.html' : ''}`;
+    // Resuelve la URL como lo haría el navegador, sin asumir profundidad de carpeta.
+    const target = new URL(href, page.url()).toString();
     const resp = await requestCtx.get(target);
     return resp.status() === 200 ? 'ok' : 'broken';
   } catch (e) {

@@ -66,6 +66,27 @@ fn origin_desde_host(host: &str) -> String {
     format!("http://{host}")
 }
 
+/// Genera el SVG del QR que codifica EXCLUSIVAMENTE `url`.
+/// Rendering local con crate puro Rust (sin CDN, sin red en runtime).
+/// El QR completo funciona sin internet.
+pub fn generar_svg_qr(url: &str) -> Result<String, String> {
+    let code = qrcode::QrCode::new(url.as_bytes())
+        .map_err(|e| format!("error generando el QR: {e}"))?;
+    Ok(code
+        .render::<qrcode::render::svg::Color>()
+        .min_dimensions(280, 280)
+        .build())
+}
+
+/// SVG del QR para una respuesta de red ya resuelta.
+/// `Err` cuando no hay URL → el handler responde 503 (jamás un QR vacío).
+pub fn svg_qr_para(resp: &NetworkResponse) -> Result<String, String> {
+    match &resp.access_url {
+        Some(url) => generar_svg_qr(url),
+        None => Err("sin dirección de red disponible".to_string()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -129,5 +150,38 @@ mod tests {
         let mut keys: Vec<&String> = obj.keys().collect();
         keys.sort();
         assert_eq!(keys, vec!["access_url", "listen_addr", "request_origin", "source"]);
+    }
+
+    // ── QR ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn qr_svg_valido_para_url_configurada() {
+        let resp = construir_respuesta(Some("http://192.168.101.15:8080"), Some("localhost:8080"), LISTEN);
+        let svg = svg_qr_para(&resp).expect("URL configurada debe generar QR");
+        assert!(svg.trim_start().starts_with("<?xml"), "debe empezar con el prologo XML");
+        assert!(svg.contains("<svg xmlns=\"http://www.w3.org/2000/svg\""));
+        assert!(svg.contains("viewBox"));
+        assert!(svg.contains("<path"), "debe contener módulos dibujados");
+        assert!(svg.trim_end().ends_with("</svg>"));
+    }
+
+    #[test]
+    fn qr_fallback_por_host_genera_svg() {
+        let resp = construir_respuesta(None, Some("192.168.101.15:8080"), LISTEN);
+        let svg = svg_qr_para(&resp).expect("fallback por Host debe generar QR");
+        assert!(svg.contains("<path"));
+    }
+
+    #[test]
+    fn qr_sin_url_devuelve_error_para_503() {
+        let resp = construir_respuesta(None, None, LISTEN);
+        assert!(svg_qr_para(&resp).is_err(), "sin URL no debe fabricarse QR");
+    }
+
+    #[test]
+    fn qr_no_puede_generarse_de_datos_vacios_o_rotos() {
+        // URL de más de 2953 bytes excede la capacidad del QR.
+        let larga = format!("http://{}", "a".repeat(3000));
+        assert!(generar_svg_qr(&larga).is_err());
     }
 }

@@ -203,6 +203,29 @@
       padding: 8px 18px;
       font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
     }
+    .network-qr {
+      width: 180px;
+      height: 180px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin: 4px 0;
+    }
+    .network-copy {
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      background: rgba(196,90,44,0.08);
+      border: 1px solid rgba(196,90,44,0.35);
+      border-radius: 999px;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .network-copy:hover { background: rgba(196,90,44,0.16); }
 
     /* ── Footer ── */
     .footer {
@@ -290,7 +313,9 @@
   <!-- ═══ Red local ═══ -->
   <section class="network-section" aria-label="Conexión de otros dispositivos">
     <span class="network-label">Conecta otros dispositivos:</span>
+    <img id="network-qr" class="network-qr" alt="Código QR de la dirección de red" width="200" height="200" hidden>
     <span class="network-url" id="network-url">Consulta la dirección de red en el equipo servidor</span>
+    <button id="network-copy" class="network-copy" type="button" hidden>Copiar dirección</button>
   </section>
 
   <!-- ═══ Footer ═══ -->
@@ -318,20 +343,64 @@
     })();
 
     // Dirección LAN para otros dispositivos: GET /api/network es la fuente de verdad.
-    // Fallback honesto: texto fijo si la API no responde o no hay dirección.
+    // Con dirección: muestra URL, QR local y botón copiar. Sin dirección o sin
+    // API: texto de respaldo honesto.
     (async function () {
       var el = document.getElementById('network-url');
+      var qr = document.getElementById('network-qr');
+      var copy = document.getElementById('network-copy');
       if (!el) return;
+      var url = null;
       try {
         var res = await fetch('/api/network', { headers: { 'Accept': 'application/json' } });
-        if (!res.ok) return;
-        var data = await res.json();
-        if (data && typeof data.access_url === 'string' && data.access_url) {
-          el.textContent = data.access_url;
-          el.title = 'Abre esta dirección desde otro dispositivo en la misma red';
+        if (res.ok) {
+          var data = await res.json();
+          if (data && typeof data.access_url === 'string' && data.access_url) url = data.access_url;
         }
       } catch (e) { /* se mantiene el texto de respaldo */ }
+      if (!url) return;
+
+      el.textContent = url;
+      el.title = 'Abre esta dirección desde otro dispositivo en la misma red';
+
+      if (qr) {
+        qr.src = '/api/network/qr.svg'; // SVG generado por el servidor, sin CDN
+        qr.hidden = false;
+        qr.onerror = function () { qr.hidden = true; };
+      }
+      if (copy) {
+        copy.hidden = false;
+        copy.addEventListener('click', function () {
+          var ok = copiarTexto(url);
+          var previo = copy.textContent;
+          copy.textContent = ok ? '¡Copiada!' : 'No se pudo copiar';
+          setTimeout(function () { copy.textContent = previo; }, 2000);
+        });
+      }
     })();
+
+    // Copia con Clipboard API en contexto seguro; fallback a textarea +
+    // execCommand en http://IP-LAN (no es contexto seguro). Nunca rompe la UI.
+    function copiarTexto(texto) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(texto).catch(function () {});
+        return true;
+      }
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch (e) {
+        return false;
+      }
+    }
   </script>
 
 </body>

@@ -649,6 +649,7 @@ dependencies = [
  "bcrypt",
  "chrono",
  "jsonwebtoken",
+ "qrcode",
  "r2d2",
  "r2d2_sqlite",
  "reqwest",
@@ -1968,6 +1969,12 @@ checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "qrcode"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "166f136dfdb199f98186f3649cf7a0536534a61417a1a30221b492b4fb60ce3f"
 
 [[package]]
 name = "quote"

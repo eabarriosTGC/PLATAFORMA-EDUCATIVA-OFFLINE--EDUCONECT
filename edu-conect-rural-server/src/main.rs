@@ -188,6 +188,42 @@ async fn network_info(State(state): State<AppState>, headers: HeaderMap) -> Json
     ))
 }
 
+/// GET /api/network/qr.svg — QR offline con la dirección LAN.
+/// SVG generado localmente (sin CDN); codifica exclusivamente `access_url`.
+/// `503` si no hay dirección disponible. `no-store`: un QR obsoleto
+/// escaneado es un usuario perdido.
+async fn network_qr(State(state): State<AppState>, headers: HeaderMap) -> Response {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    let resp = network::construir_respuesta(
+        state.public_base_url.as_deref(),
+        host.as_deref(),
+        &state.listen_addr,
+    );
+    match network::svg_qr_para(&resp) {
+        Ok(svg) => (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "image/svg+xml"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            svg,
+        )
+            .into_response(),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            [
+                (header::CONTENT_TYPE, "application/json"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            Json(ApiError { error: "Sin dirección de red disponible".into() }),
+        )
+            .into_response(),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
@@ -235,6 +271,7 @@ async fn main() {
             Json(serde_json::json!({"status": "ok", "version": env!("CARGO_PKG_VERSION")}))
         }))
         .route("/api/network", get(network_info))
+        .route("/api/network/qr.svg", get(network_qr))
         .route("/", get(landing_page))
         .route("/app", get(|| async { axum::response::Redirect::to("/app/") }))
         .route("/app/", get(dashboard_pagina))

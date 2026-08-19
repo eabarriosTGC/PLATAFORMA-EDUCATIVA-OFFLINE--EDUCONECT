@@ -57,10 +57,10 @@
       if (z.slug === defaultSlug) pill.classList.add('active');
       pill.textContent = (z.icon || '📦') + ' ' + z.nombre + ' (' + z.articles + ')';
       pill.setAttribute('data-zim', z.slug);
-      pill.style.cssText = 'padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:0.8rem;transition:all 0.2s;';
+      pill.style.cssText = 'padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card, #fff);color:var(--text);cursor:pointer;font-size:0.8rem;transition:all 0.2s;';
       pill.addEventListener('click', function() {
         currentZim = z.slug;
-        zimSelector.querySelectorAll('.wiki-zim-pill').forEach(function(p) { p.classList.remove('active'); p.style.background='var(--bg-card)'; });
+        zimSelector.querySelectorAll('.wiki-zim-pill').forEach(function(p) { p.classList.remove('active'); p.style.background='var(--card, #fff)'; });
         pill.classList.add('active');
         pill.style.background = 'var(--accent)';
         pill.style.color = '#fff';
@@ -99,8 +99,8 @@
     var html = '';
     results.forEach(function(r) {
       html += '<div class="wiki-result-item" data-path="' + escAttr(r.path) + '" data-zim="' + escAttr(r.zim_slug) + '"'
-        + ' style="padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;transition:background 0.15s;"'
-        + ' onmouseover="this.style.background=\'var(--bg-hover)\'" onmouseout="this.style.background=\'\'">'
+        + ' style="padding:10px 16px;cursor:pointer;background:var(--card, #fff);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;transition:background 0.15s;"'
+        + ' onmouseover="this.style.background=\'rgba(196,90,44,0.08)\'" onmouseout="this.style.background=\'var(--card, #fff)\'">'
         + '<span style="font-size:1.2rem;">📄</span>'
         + '<div style="flex:1;min-width:0;">'
         +   '<div style="font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(r.title) + '</div>'
@@ -160,7 +160,7 @@
       });
 
     var html = '<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">'
-      + '<button id="wiki-back-btn" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.85rem;">← Volver</button>'
+      + '<button id="wiki-back-btn" style="background:var(--card, #fff);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.85rem;">← Volver</button>'
       + '<span style="font-size:0.8rem;color:var(--text-muted);">' + escHtml(article.zim_name) + '</span>'
       + '</div>'
       + '<h2 style="color:var(--accent);margin-bottom:16px;font-size:1.3rem;">' + escHtml(article.title) + '</h2>'

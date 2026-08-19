@@ -247,8 +247,10 @@ async fn main() {
     let jwt_secret = config::jwt_secret_requerido();
     let database = Database::open(&paths.db.to_string_lossy(), jwt_secret).expect("Error al abrir la base de datos");
 
-    // Inicializar lector ZIM (Wikipedia offline puro Rust)
-    let zim = zim_proxy::inicializar(&paths.contenido_zim.to_string_lossy()).await;
+    // Inicializar lector ZIM (Wikipedia offline puro Rust) — dos zonas:
+    // bundled (imagen, solo lectura) + persistente (/data, pisa duplicados)
+    let zim_bundled = config::default_zim_dir();
+    let zim = zim_proxy::inicializar(&zim_bundled, &paths.contenido_zim.to_string_lossy()).await;
 
     // Detectar encoder H.264 soportado por el hardware (Raspberry Pi → h264_v4l2m2m, x86 → libx264)
     let h264_encoder = detect_h264_encoder();

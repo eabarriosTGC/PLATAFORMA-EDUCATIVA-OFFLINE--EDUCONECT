@@ -26,6 +26,30 @@ COPY edu-conect-rural-dashboard/ ./
 RUN npm run build
 RUN test -f out/index.html
 
+# ── Builder: contenido offline (Wikipedia ES Top Mini, julio 2026) ──
+# ZIM fijado por nombre + SHA-256 del Metalink oficial de Kiwix.
+# Reproducible: la imagen nunca cambia de contenido por sí sola.
+FROM debian:bookworm-slim AS content-builder
+
+ARG WIKIPEDIA_ZIM_NAME=wikipedia_es_top_mini_2026-07.zim
+ARG WIKIPEDIA_ZIM_URL=https://download.kiwix.org/zim/wikipedia/wikipedia_es_top_mini_2026-07.zim
+ARG WIKIPEDIA_ZIM_SHA256=742dbed32d1d977de22606d268fe381a2a5eb360ce06bfc60d552be468645784
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /default-content/zim \
+    && curl --fail --location --retry 5 \
+       "${WIKIPEDIA_ZIM_URL}" \
+       --output "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+    && echo "${WIKIPEDIA_ZIM_SHA256}  /default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+       | sha256sum --check --strict \
+    && mv \
+       "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+       "/default-content/zim/${WIKIPEDIA_ZIM_NAME}" \
+    && chmod 0444 "/default-content/zim/${WIKIPEDIA_ZIM_NAME}"
+
 # ── Runtime final ──
 FROM debian:bookworm-slim
 
@@ -55,8 +79,11 @@ COPY --from=rust-builder /build/target/release/edu-conect-rural-server /app/serv
 COPY --from=rust-builder /build/static/ /app/static/
 COPY --from=next-builder /build/out/ /app/frontend/
 COPY edu-conect-rural-dashboard/modulos/ /app/modulos/
+# Wikipedia incluida de fábrica: solo lectura (root:root 0444), UID 10001 la lee.
+COPY --from=content-builder /default-content/zim/ /app/default-content/zim/
 
 ENV DATA_DIR=/data \
+    DEFAULT_ZIM_DIR=/app/default-content/zim \
     FRONTEND_PATH=/app/frontend/ \
     LISTEN_ADDR=0.0.0.0:8080 \
     RUST_LOG=info

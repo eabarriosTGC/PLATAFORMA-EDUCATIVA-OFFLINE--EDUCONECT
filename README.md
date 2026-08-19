@@ -310,17 +310,45 @@ Cada módulo es un HTML auto-contenido con CSS y JS embebidos, diseñado con:
 
 ## 📖 Wikipedia Offline (ZIM)
 
-El servidor incluye un **lector ZIM nativo en Rust puro** (sin kiwix-serve, sin dependencias externas).
+El servidor incluye un **lector ZIM nativo en Rust puro** (sin kiwix-serve, sin dependencias externas) y un **paquete de Wikipedia en español incluido de fábrica** en la imagen Docker.
 
-### Cómo agregar ZIMs
+### Paquete incluido (de fábrica)
+
+| Campo | Valor |
+|---|---|
+| Archivo | `wikipedia_es_top_mini_2026-07.zim` |
+| Edición | Wikipedia ES Top Mini (artículos principales, texto y contenido esencial) |
+| Fecha | julio 2026 |
+| Tamaño | ~196 MB (205 850 124 bytes) |
+| SHA-256 | `742dbed32d1d977de22606d268fe381a2a5eb360ce06bfc60d552be468645784` |
+| Origen | https://download.kiwix.org/zim/wikipedia/ |
+| Licencia | Contenido CC BY-SA 4.0 (Wikipedia) |
+
+El paquete vive **solo en la capa Docker** (nunca en el repositorio Git): se descarga durante el build con la versión y el checksum fijados, y se verifica con `sha256sum --check --strict` antes de entrar a la imagen. Actualizar la imagen puede actualizar el paquete predeterminado.
+
+### Dos zonas de contenido
+
+| Zona | Ruta | Origen | Persistencia |
+|---|---|---|---|
+| Incluida (bundled) | `/app/default-content/zim` | Imagen Docker | Se reemplaza al actualizar la imagen |
+| Adicional (persistent) | `/data/contenido/zim` | Volumen `educonect-data` | Sobrevive a recreaciones y actualizaciones |
+
+El servidor escanea ambas zonas en ese orden. Si un paquete en `/data` tiene el mismo identificador que uno de la imagen, **el de `/data` gana** (un paquete personalizado nunca queda oculto por el de fábrica). `/api/wikipedia/zims` indica el origen de cada paquete:
+
+```json
+{ "slug": "wikipedia_es_top", "nombre": "Wikipedia ES (Top)", "source": "bundled" }
+{ "slug": "wikibooks_es", "nombre": "Wikilibros ES", "source": "persistent" }
+```
+
+### Cómo agregar ZIMs adicionales
 
 ```bash
-# 1. Descargar archivos .zim desde Kiwix
+# Descargar archivos .zim desde Kiwix al volumen persistente
 mkdir -p data/contenido/zim
 cd data/contenido/zim
 
-# Wikipedia en español (347K artículos, ~27 GB con imágenes)
-wget https://download.kiwix.org/zim/wikipedia/wikipedia_es_all_maxi_2025-12.zim
+# Wikipedia ES — paquete educativo ampliado (3.4 GB, todos los artículos sin imágenes)
+wget https://download.kiwix.org/zim/wikipedia/wikipedia_es_all_mini_2026-07.zim
 
 # Vikidia para niños (~12 MB, sin imágenes)
 wget https://download.kiwix.org/zim/vikidia/vikidia_es_all_nopic_2025-12.zim
@@ -329,10 +357,11 @@ wget https://download.kiwix.org/zim/vikidia/vikidia_es_all_nopic_2025-12.zim
 wget https://download.kiwix.org/zim/wikibooks/wikibooks_es_all_nopic_2025-10.zim
 
 # 2. Reiniciar el servidor (detecta ZIMs automáticamente)
+docker compose restart
 ```
 
 El servidor soporta **múltiples ZIMs simultáneamente** y los clasifica automáticamente:
-- `wikipedia_es_top` — Wikipedia ES (Top), por defecto
+- `wikipedia_es_top` — Wikipedia ES (Top), por defecto (incluido)
 - `wikipedia_es_physics` — Física
 - `wikipedia_es_climate` — Cambio Climático
 - `vikidia_es` — Vikidia (enciclopedia infantil)

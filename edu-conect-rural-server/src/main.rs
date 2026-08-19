@@ -3,6 +3,7 @@ mod config;
 mod content;
 mod db;
 mod models;
+mod network;
 mod rate_limit;
 mod zim_proxy;
 
@@ -11,7 +12,7 @@ use std::path::PathBuf;
 
 use axum::{
     extract::{ConnectInfo, Multipart, Path, Query, State},
-    http::header,
+    http::{header, HeaderMap},
     http::StatusCode,
     response::{Html, IntoResponse, Json, Response},
     routing::{delete, get, post, put},
@@ -35,6 +36,10 @@ struct AppState {
     zim: SharedZim,
     h264_encoder: &'static str,
     login_limiter: std::sync::Arc<RateLimiter>,
+    /// Dirección LAN normalizada (`PUBLIC_BASE_URL`) o `None`.
+    public_base_url: Option<String>,
+    /// Dirección de escucha configurada (p. ej. `0.0.0.0:8080`).
+    listen_addr: String,
 }
 
 /// Rutas de almacenamiento mutable. Todo deriva de `DATA_DIR`
@@ -168,6 +173,21 @@ async fn dashboard_pagina() -> impl IntoResponse {
     (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
 }
 
+/// GET /api/network — dirección LAN que otros dispositivos usan para
+/// conectarse. Prefiere `PUBLIC_BASE_URL`; sin ella deriva del `Host`.
+/// Nunca descubre IPs desde el contenedor ni expone la IP Docker.
+async fn network_info(State(state): State<AppState>, headers: HeaderMap) -> Json<network::NetworkResponse> {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    Json(network::construir_respuesta(
+        state.public_base_url.as_deref(),
+        host.as_deref(),
+        &state.listen_addr,
+    ))
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
@@ -181,6 +201,12 @@ async fn main() {
     let frontend_path = std::env::var("FRONTEND_PATH").unwrap_or_else(|_| "../edu-conect-rural-dashboard/out/".into());
     let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8080".into()).parse().expect("LISTEN_ADDR inválida");
+    let listen_addr_text = listen_addr.to_string();
+
+    let public_base_url = config::public_base_url();
+    if let Some(url) = &public_base_url {
+        tracing::info!("🌐 PUBLIC_BASE_URL configurada: {url}");
+    }
 
     let jwt_secret = config::jwt_secret_requerido();
     let database = Database::open(&paths.db.to_string_lossy(), jwt_secret).expect("Error al abrir la base de datos");
@@ -199,6 +225,8 @@ async fn main() {
         zim: zim.clone(),
         h264_encoder,
         login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),
+        public_base_url,
+        listen_addr: listen_addr_text,
     };
 
     let app = Router::new()
@@ -206,6 +234,7 @@ async fn main() {
         .route("/health", get(|| async {
             Json(serde_json::json!({"status": "ok", "version": env!("CARGO_PKG_VERSION")}))
         }))
+        .route("/api/network", get(network_info))
         .route("/", get(landing_page))
         .route("/app", get(|| async { axum::response::Redirect::to("/app/") }))
         .route("/app/", get(dashboard_pagina))

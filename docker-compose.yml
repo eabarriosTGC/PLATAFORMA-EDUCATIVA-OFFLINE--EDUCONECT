@@ -10,6 +10,7 @@ services:
     environment:
       - "JWT_SECRET=${JWT_SECRET:?Crea un archivo .env con un JWT_SECRET seguro}"
       - "ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}"
+      - "PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]

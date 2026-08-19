@@ -178,6 +178,32 @@
       opacity: 0.7;
     }
 
+    /* ── Red local ── */
+    .network-section {
+      text-align: center;
+      padding: 0 24px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .network-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+    }
+    .network-url {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(45,125,95,0.08);
+      border: 1px dashed rgba(45,125,95,0.35);
+      border-radius: 10px;
+      padding: 8px 18px;
+      font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+    }
+
     /* ── Footer ── */
     .footer {
       width: 100%;
@@ -261,6 +287,12 @@
     <p class="cta-hint">Sin conexión requerida · Funciona en cualquier dispositivo</p>
   </div>
 
+  <!-- ═══ Red local ═══ -->
+  <section class="network-section" aria-label="Conexión de otros dispositivos">
+    <span class="network-label">Conecta otros dispositivos:</span>
+    <span class="network-url" id="network-url">Consulta la dirección de red en el equipo servidor</span>
+  </section>
+
   <!-- ═══ Footer ═══ -->
   <footer class="footer">
     <span>© 2026 EduConect Rural · Diseñado para escuelas rurales colombianas 🇨🇴</span>
@@ -283,6 +315,22 @@
         if (hero) hero.textContent = total + (total === 1 ? ' módulo interactivo' : ' módulos interactivos');
         if (label) label.textContent = total + (total === 1 ? ' Módulo' : ' Módulos');
       } catch (e) { /* API no disponible: se mantiene el texto sin número */ }
+    })();
+
+    // Dirección LAN para otros dispositivos: GET /api/network es la fuente de verdad.
+    // Fallback honesto: texto fijo si la API no responde o no hay dirección.
+    (async function () {
+      var el = document.getElementById('network-url');
+      if (!el) return;
+      try {
+        var res = await fetch('/api/network', { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data && typeof data.access_url === 'string' && data.access_url) {
+          el.textContent = data.access_url;
+          el.title = 'Abre esta dirección desde otro dispositivo en la misma red';
+        }
+      } catch (e) { /* se mantiene el texto de respaldo */ }
     })();
   </script>
 

@@ -42,3 +42,165 @@ pub fn jwt_secret_requerido() -> String {
     }
     secret.to_string()
 }
+
+/// Lee y normaliza `PUBLIC_BASE_URL` (dirección LAN que otros dispositivos
+/// usarán para conectarse a EduConect).
+///
+/// - Ausente o vacía → `None`: el endpoint `/api/network` deriva la dirección
+///   del header `Host` de cada solicitud.
+/// - Inválida → panic al arrancar: un error de configuración debe ser ruidoso,
+///   no un fallback silencioso a una dirección equivocada.
+pub fn public_base_url() -> Option<String> {
+    public_base_url_desde(&std::env::var("PUBLIC_BASE_URL").unwrap_or_default())
+}
+
+/// Núcleo puro de la normalización (testeable sin tocar el entorno).
+fn public_base_url_desde(raw: &str) -> Option<String> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    Some(normalizar_public_base_url(raw).unwrap_or_else(|e| {
+        panic!("PUBLIC_BASE_URL inválida (\"{raw}\"): {e}")
+    }))
+}
+
+/// Valida una URL pública absoluta con un parser real (nunca regex):
+/// solo `http`/`https`, host obligatorio (IPv4, IPv6 o hostname), sin
+/// credenciales, sin query, sin fragmento, sin subrutas y sin `/` final.
+fn normalizar_public_base_url(raw: &str) -> Result<String, String> {
+    let url = url::Url::parse(raw).map_err(|e| format!("no es una URL válida: {e}"))?;
+
+    if !matches!(url.scheme(), "http" | "https") {
+        return Err(format!("esquema \"{}\" no soportado (solo http/https)", url.scheme()));
+    }
+
+    // Guard estricto contra autoridades vacías: WHATWG interpreta
+    // "http:///ruta" como host "ruta" (primer segmento del path). La entrada
+    // cruda debe tener un host explícito: "http://" + autoridad no vacía.
+    let despues_esquema = &raw[url.scheme().len() + 3..]; // tras "://"
+    let autoridad = despues_esquema
+        .split(['/', '?', '#'])
+        .next()
+        .unwrap_or("");
+    if autoridad.is_empty() {
+        return Err("falta el host (IPv4, IPv6 o hostname)".to_string());
+    }
+
+    let host = url
+        .host_str()
+        .ok_or_else(|| "falta el host (IPv4, IPv6 o hostname)".to_string())?;
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err("no se permiten credenciales (usuario/contraseña)".to_string());
+    }
+    if url.query().is_some() {
+        return Err("no se permite query string".to_string());
+    }
+    if url.fragment().is_some() {
+        return Err("no se permite fragmento".to_string());
+    }
+    if url.path() != "/" {
+        return Err("no se permiten subrutas (solo la raíz)".to_string());
+    }
+
+    // Reconstrucción canónica sin `/` final: esquema://host[:puerto]
+    let puerto = url.port().map(|p| format!(":{p}")).unwrap_or_default();
+    Ok(format!("{}://{}{}", url.scheme(), host, puerto))
+}
+
+#[cfg(test)]
+mod tests_public_base_url {
+    use super::*;
+
+    #[test]
+    fn ipv4_lan_valida() {
+        assert_eq!(
+            normalizar_public_base_url("http://192.168.101.15:8080").unwrap(),
+            "http://192.168.101.15:8080"
+        );
+    }
+
+    #[test]
+    fn elimina_barra_final() {
+        assert_eq!(
+            normalizar_public_base_url("http://192.168.101.15:8080/").unwrap(),
+            "http://192.168.101.15:8080"
+        );
+    }
+
+    #[test]
+    fn hostname_valido() {
+        assert_eq!(
+            normalizar_public_base_url("http://educonnect.local").unwrap(),
+            "http://educonnect.local"
+        );
+    }
+
+    #[test]
+    fn https_valido() {
+        assert_eq!(
+            normalizar_public_base_url("https://educonnect.local:8443").unwrap(),
+            "https://educonnect.local:8443"
+        );
+    }
+
+    #[test]
+    fn ipv6_valido() {
+        assert_eq!(
+            normalizar_public_base_url("http://[::1]:8080").unwrap(),
+            "http://[::1]:8080"
+        );
+    }
+
+    #[test]
+    fn puerto_opcional_por_defecto_sin_puerto() {
+        assert_eq!(
+            normalizar_public_base_url("http://192.168.1.50").unwrap(),
+            "http://192.168.1.50"
+        );
+    }
+
+    #[test]
+    fn esquema_distinto_rechazado() {
+        assert!(normalizar_public_base_url("ftp://192.168.1.50:8080").is_err());
+        assert!(normalizar_public_base_url("file:///tmp/x").is_err());
+    }
+
+    #[test]
+    fn credenciales_rechazadas() {
+        assert!(normalizar_public_base_url("http://usuario:clave@192.168.1.50:8080").is_err());
+        assert!(normalizar_public_base_url("http://usuario@192.168.1.50:8080").is_err());
+    }
+
+    #[test]
+    fn query_fragmento_y_subruta_rechazados() {
+        assert!(normalizar_public_base_url("http://192.168.1.50:8080/?x=1").is_err());
+        assert!(normalizar_public_base_url("http://192.168.1.50:8080/#seccion").is_err());
+        assert!(normalizar_public_base_url("http://192.168.1.50:8080/app").is_err());
+        assert!(normalizar_public_base_url("http://192.168.1.50:8080//").is_err());
+    }
+
+    #[test]
+    fn sin_host_rechazado() {
+        assert!(normalizar_public_base_url("http://").is_err());
+        assert!(normalizar_public_base_url("http:///ruta").is_err());
+    }
+
+    #[test]
+    fn url_rota_rechazada() {
+        assert!(normalizar_public_base_url("no-es-una-url").is_err());
+        assert!(normalizar_public_base_url("192.168.1.50:8080").is_err());
+    }
+
+    #[test]
+    fn vacia_produce_none() {
+        assert_eq!(public_base_url_desde(""), None);
+        assert_eq!(public_base_url_desde("   "), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "PUBLIC_BASE_URL inválida")]
+    fn invalida_rechazada_al_arrancar() {
+        let _ = public_base_url_desde("ftp://192.168.1.50");
+    }
+}

@@ -318,6 +318,31 @@
     border: 1px dashed var(--gray-200);
   }
 
+  /* ---------- AUTH / TOOLBAR ---------- */
+  .login-shell {
+    min-height: calc(100vh - 60px); display: grid; place-items: center;
+    padding: 24px 16px;
+  }
+  .login-card { width: min(100%, 420px); }
+  .login-icon { font-size: 3rem; text-align: center; margin-bottom: 8px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display:block; font-size:.82rem; font-weight:700; margin-bottom:5px; }
+  .form-control {
+    width:100%; padding:11px 12px; border:1px solid var(--gray-300);
+    border-radius:var(--radius-sm); background:var(--white); color:var(--gray-900);
+    font:inherit;
+  }
+  .form-control:focus { outline:2px solid var(--terracotta); outline-offset:1px; }
+  .toolbar {
+    display:flex; justify-content:space-between; align-items:center;
+    gap:12px; flex-wrap:wrap; margin-bottom:20px;
+  }
+  .toolbar .page-subtitle { margin:0; }
+  .filter-input { min-width:220px; flex:1; }
+  .results-meta { margin-left:auto; font-size:.78rem; color:var(--gray-600); }
+  .risk-row td { background:#fffaf0; }
+  .course-summary { margin-top:20px; }
+
   /* ---------- STUDENT DETAIL ---------- */
   .detail-header {
     display: flex; align-items: center;
@@ -402,11 +427,38 @@
   </div>
 </nav>
 
-<!-- APP -->
-<div class="app-container" id="app">
+<!-- LOGIN -->
+<section class="login-shell" id="login-view">
+  <form class="card login-card" id="login-form" autocomplete="on">
+    <div class="login-icon" aria-hidden="true">👨‍🏫</div>
+    <h1 class="page-title" style="text-align:center">Acceso docente</h1>
+    <p class="page-subtitle" style="text-align:center">Ingresa con la cuenta administrativa de EduConect.</p>
+    <div class="form-group">
+      <label for="login-usuario">Usuario</label>
+      <input class="form-control" id="login-usuario" name="username" value="admin" autocomplete="username" required>
+    </div>
+    <div class="form-group">
+      <label for="login-password">Contraseña</label>
+      <input class="form-control" id="login-password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <div id="login-error" class="error-box" role="alert" style="display:none"></div>
+    <button class="btn btn-primary" id="login-submit" type="submit" style="width:100%;justify-content:center">Entrar al panel</button>
+  </form>
+</section>
 
-  <h1 class="page-title">📊 Panel del Profesor</h1>
-  <p class="page-subtitle">Seguimiento académico — EduConect Rural</p>
+<!-- APP -->
+<div class="app-container" id="app" style="display:none">
+
+  <div class="toolbar">
+    <div>
+      <h1 class="page-title">📊 Panel del Profesor</h1>
+      <p class="page-subtitle">Seguimiento académico — EduConect Rural</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge badge-sage" id="session-user">Docente</span>
+      <button class="btn btn-secondary btn-sm" id="logout-btn" type="button">Cerrar sesión</button>
+    </div>
+  </div>
 
   <!-- TABS -->
   <div class="tabs" role="tablist">
@@ -422,9 +474,9 @@
     <div id="dashboard-content" style="display:none">
       <div class="stats-grid" id="stats-grid"></div>
       <div style="text-align:right; margin-top:12px">
-        <a href="/api/profesor/exportar" class="btn btn-export" download="progreso.csv">
+        <button id="export-btn" type="button" class="btn btn-export">
           ⬇ Exportar CSV Completo
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -436,6 +488,16 @@
     <div id="estudiantes-content" style="display:none">
       <div class="card" style="margin-bottom:16px">
         <div class="card-title">👥 Todos los Estudiantes</div>
+        <div class="filter-bar">
+          <input class="form-control filter-input" id="buscar-estudiante" type="search" placeholder="Buscar estudiante…" aria-label="Buscar estudiante">
+          <select id="filtro-riesgo" aria-label="Filtrar por estado">
+            <option value="todos">Todos</option>
+            <option value="riesgo">Requieren atención (&lt; 40%)</option>
+            <option value="curso">En progreso</option>
+            <option value="completado">Promedio completado</option>
+          </select>
+          <span class="results-meta" id="estudiantes-meta"></span>
+        </div>
         <div class="table-wrap" id="estudiantes-table"></div>
       </div>
       <!-- Student detail panel -->
@@ -463,6 +525,13 @@
           <select id="filtro-estudiante">
             <option value="">Todos los estudiantes</option>
           </select>
+          <select id="filtro-estado">
+            <option value="">Todos los estados</option>
+            <option value="curso">En curso</option>
+            <option value="completado">Completado</option>
+          </select>
+          <input class="form-control filter-input" id="buscar-progreso" type="search" placeholder="Buscar curso…" aria-label="Buscar curso">
+          <span class="results-meta" id="progreso-meta"></span>
         </div>
         <div class="table-wrap" id="progreso-table"></div>
       </div>
@@ -489,6 +558,62 @@
   let estudiantesData = [];
   let progresoData = [];
   let detalleAbierto = null;  // usuario del detalle actual
+  let authToken = sessionStorage.getItem('educonect_profesor_token') || '';
+
+  /* ---------- AUTH ---------- */
+  function mostrarLogin(mensaje) {
+    authToken = '';
+    sessionStorage.removeItem('educonect_profesor_token');
+    sessionStorage.removeItem('educonect_profesor_usuario');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-view').style.display = 'grid';
+    var error = document.getElementById('login-error');
+    if (mensaje) { error.textContent = mensaje; error.style.display = 'block'; }
+  }
+
+  function iniciarPanel(usuario) {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('session-user').textContent = usuario || 'Docente';
+    cargarDashboard();
+    cargarEstudiantes();
+  }
+
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var boton = document.getElementById('login-submit');
+    var error = document.getElementById('login-error');
+    boton.disabled = true;
+    boton.textContent = 'Verificando…';
+    error.style.display = 'none';
+    fetch('/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuario: document.getElementById('login-usuario').value.trim(),
+        password: document.getElementById('login-password').value
+      })
+    }).then(function(r) {
+      if (!r.ok) throw new Error(r.status === 401 ? 'Usuario o contraseña incorrectos.' : 'No fue posible iniciar sesión.');
+      return r.json();
+    }).then(function(data) {
+      authToken = data.token;
+      sessionStorage.setItem('educonect_profesor_token', data.token);
+      sessionStorage.setItem('educonect_profesor_usuario', data.usuario);
+      document.getElementById('login-password').value = '';
+      iniciarPanel(data.usuario);
+    }).catch(function(err) {
+      error.textContent = err.message;
+      error.style.display = 'block';
+    }).finally(function() {
+      boton.disabled = false;
+      boton.textContent = 'Entrar al panel';
+    });
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', function() {
+    mostrarLogin('La sesión se cerró correctamente.');
+  });
 
   /* ---------- TABS ---------- */
   const tabBtns = document.querySelectorAll('.tab-btn');
@@ -555,9 +680,15 @@
     timeoutMs = timeoutMs || 8000;
     var controller = new AbortController();
     var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
-    var opts = Object.assign({}, options, { signal: controller.signal });
+    var opts = Object.assign({}, options);
+    opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + authToken });
+    opts.signal = controller.signal;
     return fetch(url, opts).then(function(r) {
       clearTimeout(timer);
+      if (r.status === 401) {
+        mostrarLogin('Tu sesión venció. Ingresa nuevamente.');
+        throw new Error('Sesión vencida');
+      }
       if (!r.ok) {
         return r.text().then(function(t) {
           throw new Error(t || 'Error HTTP ' + r.status);
@@ -622,8 +753,10 @@
 
   function renderDashboardStats(data) {
     var grid = document.getElementById('stats-grid');
+    var anterior = document.querySelector('.course-summary');
+    if (anterior) anterior.remove();
     var estudiantes = data.total_estudiantes || data.estudiantes || data.total_estudiantes_count || 0;
-    var progreso = data.progreso_promedio || data.promedio_progreso || data.porcentaje_promedio || data.promedio || 0;
+    var progreso = data.promedio_general || data.progreso_promedio || data.promedio_progreso || data.porcentaje_promedio || data.promedio || 0;
     var activos = data.cursos_activos || data.cursos_en_curso || data.cursos_iniciados || 0;
     var completados = data.cursos_completados || data.completados || 0;
 
@@ -648,6 +781,13 @@
         '<div class="number">' + escapeHTML(completados) + '</div>' +
         '<div class="label">Cursos Completados</div>' +
       '</div>';
+
+    var cursos = Array.isArray(data.por_curso) ? data.por_curso : [];
+    if (cursos.length) {
+      grid.insertAdjacentHTML('afterend', '<div class="card course-summary"><div class="card-title">📚 Rendimiento por curso</div><div class="table-wrap"><table><thead><tr><th>Curso</th><th>Estudiantes</th><th>Promedio</th></tr></thead><tbody>' + cursos.map(function(c) {
+        return '<tr><td>' + escapeHTML(c.curso) + '</td><td>' + escapeHTML(c.estudiantes) + '</td><td>' + pctDisplay(c.promedio) + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>');
+    }
   }
 
   /* ---------- ESTUDIANTES ---------- */
@@ -656,7 +796,7 @@
     fetchJSON('/api/profesor/estudiantes').then(function(data) {
       mostrarContenido('estudiantes');
       estudiantesData = data.estudiantes || data || [];
-      renderEstudiantesTable(estudiantesData);
+      aplicarFiltroEstudiantes();
     }).catch(function(e) {
       mostrarError('estudiantes', e.message || 'Error al cargar estudiantes');
     });
@@ -664,6 +804,7 @@
 
   function renderEstudiantesTable(lista) {
     var container = document.getElementById('estudiantes-table');
+    document.getElementById('estudiantes-meta').textContent = lista.length + ' resultado' + (lista.length === 1 ? '' : 's');
     if (!lista || lista.length === 0) {
       container.innerHTML = '<div class="empty-box">No hay estudiantes registrados.</div>';
       return;
@@ -675,18 +816,39 @@
       var usuario = e.usuario || e.id || e.nombre_usuario || '';
       var nombre = e.nombre || e.nombre_completo || usuario;
       var cursos = e.cursos_iniciados || e.cursos_activos || e.total_cursos || 0;
-      var promedio = e.promedio !== undefined ? pctDisplay(e.promedio) : (e.progreso_promedio !== undefined ? pctDisplay(e.progreso_promedio) : '—');
+      var promedioNum = Number(e.promedio !== undefined ? e.promedio : e.progreso_promedio);
+      var promedio = isNaN(promedioNum) ? '—' : pctDisplay(promedioNum);
       var ultAct = formatearFecha(e.ultima_actividad || e.ultimo_acceso || e.last_activity);
-      html += '<tr class="clickable" onclick="abrirDetalle(\'' + escapeHTML(usuario) + '\', \'' + escapeHTML(nombre) + '\')" tabindex="0" role="button" aria-label="Ver progreso de ' + escapeHTML(nombre) + '">' +
+      html += '<tr class="clickable' + (promedioNum < 40 ? ' risk-row' : '') + '" data-usuario="' + encodeURIComponent(usuario) + '" data-nombre="' + encodeURIComponent(nombre) + '" tabindex="0" role="button" aria-label="Ver progreso de ' + escapeHTML(nombre) + '">' +
         '<td><strong>' + escapeHTML(nombre) + '</strong></td>' +
         '<td>' + escapeHTML(cursos) + '</td>' +
-        '<td>' + promedio + '</td>' +
+        '<td>' + promedio + (promedioNum < 40 ? ' <span class="badge badge-gold">Atención</span>' : '') + '</td>' +
         '<td>' + ultAct + '</td>' +
       '</tr>';
     });
     html += '</tbody></table>';
     container.innerHTML = html;
+    container.querySelectorAll('tbody tr').forEach(function(row) {
+      function abrir() { window.abrirDetalle(decodeURIComponent(row.dataset.usuario), decodeURIComponent(row.dataset.nombre)); }
+      row.addEventListener('click', abrir);
+      row.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+    });
   }
+
+  function aplicarFiltroEstudiantes() {
+    var q = document.getElementById('buscar-estudiante').value.trim().toLocaleLowerCase('es');
+    var estado = document.getElementById('filtro-riesgo').value;
+    var lista = estudiantesData.filter(function(e) {
+      var usuario = String(e.nombre || e.nombre_completo || e.usuario || '').toLocaleLowerCase('es');
+      var promedio = Number(e.promedio || 0);
+      var coincideEstado = estado === 'todos' || (estado === 'riesgo' && promedio < 40) ||
+        (estado === 'curso' && promedio >= 40 && promedio < 100) || (estado === 'completado' && promedio >= 100);
+      return usuario.indexOf(q) !== -1 && coincideEstado;
+    });
+    renderEstudiantesTable(lista);
+  }
+  document.getElementById('buscar-estudiante').addEventListener('input', aplicarFiltroEstudiantes);
+  document.getElementById('filtro-riesgo').addEventListener('change', aplicarFiltroEstudiantes);
 
   /* ---------- DETALLE ESTUDIANTE ---------- */
   window.abrirDetalle = function(usuario, nombre) {
@@ -728,13 +890,13 @@
       }
       var html = '<div style="margin-bottom:8px"><span class="badge badge-sage">' + cursos.length + ' cursos</span></div>';
       cursos.forEach(function(c) {
-        var curso = c.curso || c.nombre_curso || c.curso_id || c.titulo || 'Curso';
+        var curso = c.curso_titulo || c.curso || c.nombre_curso || c.titulo || c.curso_id || 'Curso';
         var pct = c.porcentaje !== undefined ? Number(c.porcentaje) : (c.progreso !== undefined ? Number(c.progreso) : (c.completado ? 100 : 0));
-        var ultAct = formatearFecha(c.ultima_actividad || c.ultimo_acceso);
+        var ultAct = formatearFecha(c.ultima_vez || c.ultima_actividad || c.ultimo_acceso);
         html += '<div class="course-progress-item">' +
           '<span class="course-name">' + escapeHTML(curso) + '</span>' +
           renderProgressBar(pct) +
-          '<span class="course-pct">' + pctDisplay(pct) + '</span>' +
+          '<span class="course-pct">' + pctDisplay(pct) + '<br><small>' + escapeHTML(ultAct) + '</small></span>' +
         '</div>';
       });
       container.innerHTML = html;
@@ -771,21 +933,25 @@
         select.appendChild(opt);
       }
     });
-    select.onchange = function() {
-      var val = select.value;
-      if (!val) {
-        renderProgresoTable(progresoData);
-      } else {
-        var filtrados = progresoData.filter(function(p) {
-          return (p.usuario || p.nombre_usuario || p.estudiante) === val;
-        });
-        renderProgresoTable(filtrados);
-      }
-    };
+    select.onchange = aplicarFiltrosProgreso;
   }
+
+  function aplicarFiltrosProgreso() {
+    var usuario = document.getElementById('filtro-estudiante').value;
+    var estado = document.getElementById('filtro-estado').value;
+    var q = document.getElementById('buscar-progreso').value.trim().toLocaleLowerCase('es');
+    renderProgresoTable(progresoData.filter(function(p) {
+      var pct = Number(p.porcentaje || 0);
+      var curso = String(p.curso_titulo || p.curso || p.nombre_curso || '').toLocaleLowerCase('es');
+      return (!usuario || p.usuario === usuario) && (!estado || (estado === 'completado' ? pct >= 100 : pct < 100)) && curso.indexOf(q) !== -1;
+    }));
+  }
+  document.getElementById('filtro-estado').addEventListener('change', aplicarFiltrosProgreso);
+  document.getElementById('buscar-progreso').addEventListener('input', aplicarFiltrosProgreso);
 
   function renderProgresoTable(lista) {
     var container = document.getElementById('progreso-table');
+    document.getElementById('progreso-meta').textContent = lista.length + ' registro' + (lista.length === 1 ? '' : 's');
     if (!lista || lista.length === 0) {
       container.innerHTML = '<div class="empty-box">No hay datos de progreso.</div>';
       return;
@@ -795,10 +961,10 @@
     '</tr></thead><tbody>';
     lista.forEach(function(p) {
       var usr = p.usuario || p.nombre_usuario || p.estudiante || '—';
-      var curso = p.curso || p.curso_id || p.nombre_curso || p.titulo || '—';
+      var curso = p.curso_titulo || p.curso || p.nombre_curso || p.titulo || p.curso_id || '—';
       var pct = p.porcentaje !== undefined ? Number(p.porcentaje) : (p.progreso !== undefined ? Number(p.progreso) : (p.completado ? 100 : 0));
       var completado = p.completado || (pct >= 100);
-      var ultAct = formatearFecha(p.ultima_actividad || p.ultimo_acceso);
+      var ultAct = formatearFecha(p.ultima_vez || p.ultima_actividad || p.ultimo_acceso);
       var estado = completado
         ? '<span class="badge badge-sage">Completado</span>'
         : (pct > 0 ? '<span class="badge badge-sky">En curso</span>' : '<span class="badge badge-gray">Sin iniciar</span>');
@@ -814,11 +980,24 @@
     container.innerHTML = html;
   }
 
+  document.getElementById('export-btn').addEventListener('click', function() {
+    fetch('/api/profesor/exportar', { headers: { 'Authorization': 'Bearer ' + authToken } }).then(function(r) {
+      if (r.status === 401) { mostrarLogin('Tu sesión venció. Ingresa nuevamente.'); throw new Error('Sesión vencida'); }
+      if (!r.ok) throw new Error('No se pudo generar el CSV.');
+      return r.blob();
+    }).then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = 'progreso-educonect.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }).catch(function(e) { if (e.message !== 'Sesión vencida') alert(e.message); });
+  });
+
   /* ---------- INIT ---------- */
-  // Load dashboard on init
-  cargarDashboard();
-  // Pre-load estudiantes in background
-  cargarEstudiantes();
+  if (authToken) {
+    iniciarPanel(sessionStorage.getItem('educonect_profesor_usuario'));
+  } else {
+    mostrarLogin();
+  }
 
 })();
 </script>

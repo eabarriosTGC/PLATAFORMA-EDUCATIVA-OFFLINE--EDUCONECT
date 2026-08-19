@@ -151,7 +151,7 @@
     <!-- Sección: Gestión Docente -->
     <div class="sidebar-section">
       <div class="sidebar-section-title">GESTIÓN DOCENTE</div>
-      <a href="#profesores" data-view="profesores" class="sidebar-item sidebar-item-sm">
+      <a href="/profesor/" class="sidebar-item sidebar-item-sm">
         <span class="sidebar-item-icon">👨‍🏫</span>
         <div class="sidebar-item-text">
           <span class="sidebar-item-title">Panel de Profesores</span>
@@ -182,10 +182,10 @@
   <main id="main-content">
     <!-- Header con saludo + búsqueda + estado conexión -->
     <header id="header">
-      <span class="header-greeting">
+      <button class="header-greeting" id="student-profile-btn" type="button" title="Cambiar estudiante" style="border:0;background:transparent;color:inherit;cursor:pointer;font-family:inherit;">
         <span class="wave-emoji">👋</span>
         <span id="greeting-text">¡Hola, Estudiante!</span>
-      </span>
+      </button>
       <div class="search-wrapper">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="search-input" placeholder="Buscar cursos, libros, videos..." autocomplete="off">
@@ -292,16 +292,6 @@
         <div class="empty-state" id="videos-empty" style="display:none;">No hay videos descargados. Usá el panel de administración para descargar videos educativos.</div>
       </section>
 
-      <!-- Vista Panel de Profesores -->
-      <section id="view-profesores" class="view-section view-hidden">
-        <div class="section-title">👨‍🏫 Panel de Profesores</div>
-        <div class="empty-state" style="padding:48px 24px;text-align:center;">
-          <div style="font-size:3rem;margin-bottom:16px;">👨‍🏫</div>
-          <p style="font-size:1.1rem;color:var(--text);margin-bottom:8px;">Accede como Docente para ver estadísticas</p>
-          <p style="font-size:0.85rem;color:var(--text-muted);">Activa el modo Docente en el panel lateral para ver el progreso de tus estudiantes.</p>
-        </div>
-      </section>
-
       <!-- Vista Wikipedia Offline -->
       <section id="view-wikipedia" class="view-section view-hidden">
         <div class="section-title">🌐 Wikipedia Offline</div>
@@ -335,6 +325,26 @@
   </main>
 
   <!-- Overlays / Modals -->
+  <!-- Identidad local del estudiante -->
+  <div class="modal-overlay" id="student-profile-modal">
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="student-profile-title">
+      <div class="modal-header">
+        <span class="modal-title" id="student-profile-title">¿Quién está aprendiendo?</span>
+      </div>
+      <form class="modal-body" id="student-profile-form" style="padding:24px 20px;">
+        <p style="color:var(--text-muted);margin-bottom:14px;">Escribe el nombre con el que aparecerá tu progreso ante el profesor.</p>
+        <label for="student-profile-name" style="display:block;font-weight:600;margin-bottom:6px;">Nombre del estudiante</label>
+        <input id="student-profile-name" maxlength="40" autocomplete="name" required
+          style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card,#fff);color:var(--text);font-size:1rem;">
+        <div id="student-profile-error" style="display:none;color:var(--danger);font-size:.82rem;margin-top:8px;" role="alert"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+          <button class="modal-btn modal-btn-secondary" id="student-profile-cancel" type="button">Cancelar</button>
+          <button class="modal-btn modal-btn-primary" type="submit">Guardar nombre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Video Player Modal -->
   <div class="modal-overlay" id="video-modal">
     <div class="modal">

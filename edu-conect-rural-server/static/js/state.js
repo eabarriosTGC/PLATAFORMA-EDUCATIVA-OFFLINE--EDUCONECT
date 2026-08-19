@@ -1,6 +1,6 @@
 /* js/state.js — Estado global y pub/sub simple */
 var AppState = {
-  usuario: 'estudiante',
+  usuario: localStorage.getItem('educonect_estudiante') || '',
   isTeacher: false,
   activeView: 'dashboard',
   activeCategory: null,

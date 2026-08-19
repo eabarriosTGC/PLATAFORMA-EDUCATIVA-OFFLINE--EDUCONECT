@@ -300,11 +300,16 @@ async fn main() {
         // ── Profesor ──
         .route("/profesor/", get(profesor_pagina))
         .route("/profesor", get(|| async { axum::response::Redirect::to("/profesor/") }))
-        .route("/api/profesor/estudiantes", get(profesor_listar_estudiantes))
-        .route("/api/profesor/progreso", get(profesor_progreso_completo))
-        .route("/api/profesor/progreso/{usuario}", get(profesor_progreso_estudiante))
-        .route("/api/profesor/reporte", get(profesor_reporte))
-        .route("/api/profesor/exportar", get(profesor_exportar_csv))
+        .nest(
+            "/api/profesor",
+            Router::new()
+                .route("/estudiantes", get(profesor_listar_estudiantes))
+                .route("/progreso", get(profesor_progreso_completo))
+                .route("/progreso/{usuario}", get(profesor_progreso_estudiante))
+                .route("/reporte", get(profesor_reporte))
+                .route("/exportar", get(profesor_exportar_csv))
+                .layer(auth::AuthLayer::new(state.db.jwt_secret.clone())),
+        )
         // ── Admin: /admin/login es PÚBLICO; el resto va DENTRO del nest protegido ──
         .route("/admin/login", post(admin_login))
         .nest(

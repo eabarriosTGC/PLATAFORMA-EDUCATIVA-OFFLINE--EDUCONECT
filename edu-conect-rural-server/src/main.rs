@@ -9,10 +9,9 @@ mod zim_proxy;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
-
 use axum::{
     extract::{ConnectInfo, Multipart, Path, Query, State},
-    http::{header, HeaderMap},
+    http::{header, HeaderMap, HeaderValue},
     http::StatusCode,
     response::{Html, IntoResponse, Json, Response},
     routing::{delete, get, post, put},
@@ -50,6 +49,8 @@ struct RuntimePaths {
     db: PathBuf,
     videos: PathBuf,
     biblioteca: PathBuf,
+    /// Biblioteca incluida en la imagen (solo lectura, `/app/default-content/biblioteca`)
+    biblioteca_bundled: PathBuf,
     contenido: PathBuf,
     contenido_zim: PathBuf,
 }
@@ -61,6 +62,7 @@ impl RuntimePaths {
             db: data_dir.join("educonect.db"),
             videos: data_dir.join("videos"),
             biblioteca: data_dir.join("biblioteca"),
+            biblioteca_bundled: PathBuf::from(config::default_biblioteca_dir()),
             contenido: data_dir.join("contenido"),
             contenido_zim: data_dir.join("contenido").join("zim"),
             data_dir,
@@ -344,7 +346,7 @@ async fn main() {
         }))
         .route("/phet", get(|| async { axum::response::Redirect::to("/phet/") }))
         .nest_service("/modulos", ServeDir::new("modulos").append_index_html_on_directories(true))
-        .nest_service("/biblioteca", ServeDir::new(&state.paths.biblioteca).append_index_html_on_directories(false))
+        .route("/biblioteca/{*path}", get(servir_biblioteca))
         .nest_service("/videos", ServeDir::new(&state.paths.videos))
         .route("/api/videos", get(listar_videos))
         .route("/api/videos/thumbnail/{id}", get(servir_thumbnail))
@@ -401,10 +403,122 @@ async fn buscar(State(state): State<AppState>, Query(params): Query<SearchQuery>
     state.db.buscar(&params.q, params.limite.unwrap_or(10)).map(Json).map_err(map_db_error)
 }
 
-/// GET /api/biblioteca — devuelve el catálogo completo de la biblioteca digital
+/// GET /api/biblioteca — catálogo con disponibilidad real de archivos.
+/// `source`: "bundled" (imagen) | "persistent" (/data) | "" (sin archivo).
+/// `disponible`: false cuando el archivo no existe en ninguna zona — el
+/// frontend no debe ofrecerlo. No se exponen rutas internas absolutas.
 async fn listar_biblioteca(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let libros = state.db.listar_biblioteca().map_err(map_db_error)?;
-    Ok(Json(serde_json::json!({ "libros": libros })))
+    let libros_db = state.db.listar_biblioteca().map_err(map_db_error)?;
+    let mut libros: Vec<serde_json::Value> = Vec::with_capacity(libros_db.len());
+    for libro in libros_db {
+        let rel = libro.archivo_path.clone()
+            .map(|p| p.replace("data/biblioteca/", ""))
+            .unwrap_or_default();
+        let en_persistente = !rel.is_empty() && state.paths.biblioteca.join(&rel).is_file();
+        let en_bundled = !rel.is_empty() && state.paths.biblioteca_bundled.join(&rel).is_file();
+        let (source, disponible) = if en_persistente {
+            ("persistent", true)
+        } else if en_bundled {
+            ("bundled", true)
+        } else {
+            ("", false)
+        };
+        libros.push(serde_json::json!({
+            "id": libro.id,
+            "titulo": libro.titulo,
+            "descripcion": libro.descripcion,
+            "categoria": libro.categoria,
+            "rango": libro.rango,
+            "tipo": libro.tipo,
+            "archivo_path": libro.archivo_path,
+            "source": source,
+            "disponible": disponible,
+        }));
+    }
+    let total = libros.len();
+    let disponibles = libros.iter().filter(|l| l["disponible"] == true).count();
+    Ok(Json(serde_json::json!({
+        "libros": libros,
+        "total": total,
+        "disponibles": disponibles,
+    })))
+}
+
+/// GET /biblioteca/{*path} — sirve un PDF resolviendo DOS zonas:
+/// `/data/biblioteca` (docente, prevalece) → `/app/default-content/biblioteca`
+/// (incluida en la imagen). Soporta Range simple (`bytes=a-b` / `bytes=a-`),
+/// que PDF.js usa para cargar páginas sin descargar el archivo completo.
+async fn servir_biblioteca(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+    headers: HeaderMap,
+) -> Response {
+    // Higiene de ruta: sin traversal ni rutas absolutas.
+    if path.contains("..") || path.starts_with('/') || path.is_empty() {
+        return (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "ruta inválida".to_string()).into_response();
+    }
+    let persistente = state.paths.biblioteca.join(&path);
+    let bundled = state.paths.biblioteca_bundled.join(&path);
+    let archivo = if persistente.is_file() {
+        persistente
+    } else if bundled.is_file() {
+        bundled
+    } else {
+        return (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "archivo no encontrado".to_string()).into_response();
+    };
+
+    let datos = match std::fs::read(&archivo) {
+        Ok(d) => d,
+        Err(_) => return (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/plain; charset=utf-8")], "no se pudo leer".to_string()).into_response(),
+    };
+    let len = datos.len();
+    let mime = if archivo.extension().map(|e| e == "pdf").unwrap_or(false) {
+        "application/pdf"
+    } else {
+        "application/octet-stream"
+    };
+
+    // ── Range simple (bytes=start-end | bytes=start-) ──
+    if let Some(range) = headers.get(header::RANGE).and_then(|v| v.to_str().ok()) {
+        if let Some(spec) = range.strip_prefix("bytes=") {
+            let (start, end) = if let Some((a, b)) = spec.split_once('-') {
+                let a: usize = a.trim().parse().unwrap_or(0);
+                let b: Option<usize> = b.trim().parse().ok();
+                match b {
+                    Some(e) => (a, e.min(len.saturating_sub(1))),
+                    None => (a, len.saturating_sub(1)),
+                }
+            } else {
+                (0, len.saturating_sub(1))
+            };
+            if start < len && start <= end {
+                let slice = &datos[start..=end];
+                let cl = slice.len().to_string();
+                let cr = format!("bytes {start}-{end}/{len}");
+                return (
+                    StatusCode::PARTIAL_CONTENT,
+                    [
+                        (header::CONTENT_TYPE, HeaderValue::from_str(mime).unwrap()),
+                        (header::CONTENT_LENGTH, HeaderValue::from_str(&cl).unwrap()),
+                        (header::ACCEPT_RANGES, HeaderValue::from_static("bytes")),
+                        (header::CONTENT_RANGE, HeaderValue::from_str(&cr).unwrap()),
+                    ],
+                    slice.to_vec(),
+                ).into_response();
+            }
+        }
+    }
+
+    let cl = len.to_string();
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_str(mime).unwrap()),
+            (header::CONTENT_LENGTH, HeaderValue::from_str(&cl).unwrap()),
+            (header::ACCEPT_RANGES, HeaderValue::from_static("bytes")),
+        ],
+        datos,
+    ).into_response()
 }
 
 // ── Diccionario offline ─────────────────────────────────────────────

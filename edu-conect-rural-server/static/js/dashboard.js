@@ -540,23 +540,32 @@
 
     var archivoPath = (libro.archivo_path || '').replace('data/biblioteca/', '');
 
+    // Sin archivo real (ni bundled ni /data): no se ofrece Abrir ni PDF.
+    var acciones = '';
+    if (libro.disponible) {
+      acciones =
+        '<button class="libro-btn libro-btn-abrir">Abrir</button>' +
+        '<a class="libro-btn libro-btn-pdf" href="/biblioteca/' + escAttr(archivoPath) + '" download>PDF</a>';
+    } else {
+      acciones = '<span class="libro-badge" style="font-size:0.72rem;">📦 Disponible por USB</span>';
+    }
+
     card.innerHTML =
       '<div class="libro-thumb ' + thumbClass + '">📖</div>' +
       '<div class="libro-title">' + escHtml(libro.titulo) + '</div>' +
       badgeHtml +
-      '<div class="libro-actions">' +
-        '<button class="libro-btn libro-btn-abrir">Abrir</button>' +
-        '<a class="libro-btn libro-btn-pdf" href="/biblioteca/' + escAttr(archivoPath) + '" download>PDF</a>' +
-      '</div>';
+      '<div class="libro-actions">' + acciones + '</div>';
 
-    card.querySelector('.libro-btn-abrir').addEventListener('click', function(e) {
-      e.stopPropagation();
-      abrirLibro(libro);
-    });
+    if (libro.disponible) {
+      card.querySelector('.libro-btn-abrir').addEventListener('click', function(e) {
+        e.stopPropagation();
+        abrirLibro(libro);
+      });
 
-    card.addEventListener('click', function() {
-      abrirLibro(libro);
-    });
+      card.addEventListener('click', function() {
+        abrirLibro(libro);
+      });
+    }
 
     return card;
   }

@@ -126,6 +126,23 @@ fn default_zim_dir_desde(raw: &str) -> String {
     }
 }
 
+/// Directorio de la biblioteca incluida en la imagen (solo lectura).
+/// `DEFAULT_BIBLIOTECA_DIR` lo define el Dockerfile; fuera de Docker se usa una
+/// ruta relativa que probablemente no exista (el escaneo de zonas lo tolera).
+pub fn default_biblioteca_dir() -> String {
+    default_biblioteca_dir_desde(&std::env::var("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default())
+}
+
+/// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
+fn default_biblioteca_dir_desde(raw: &str) -> String {
+    let dir = raw.trim();
+    if dir.is_empty() {
+        "default-content/biblioteca".to_string()
+    } else {
+        dir.to_string()
+    }
+}
+
 #[cfg(test)]
 mod tests_public_base_url {
     use super::*;
@@ -244,5 +261,28 @@ mod tests_default_zim_dir {
     #[test]
     fn recorta_espacios() {
         assert_eq!(default_zim_dir_desde("  /app/default-content/zim  "), "/app/default-content/zim");
+    }
+}
+
+#[cfg(test)]
+mod tests_default_biblioteca_dir {
+    use super::*;
+
+    #[test]
+    fn sin_variable_usa_default_relativo() {
+        assert_eq!(default_biblioteca_dir_desde(""), "default-content/biblioteca");
+    }
+
+    #[test]
+    fn con_variable_usa_la_ruta_de_la_imagen() {
+        assert_eq!(
+            default_biblioteca_dir_desde("/app/default-content/biblioteca"),
+            "/app/default-content/biblioteca"
+        );
+    }
+
+    #[test]
+    fn recorta_espacios() {
+        assert_eq!(default_biblioteca_dir_desde("  /app/default-content/biblioteca  "), "/app/default-content/biblioteca");
     }
 }

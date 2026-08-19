@@ -392,7 +392,41 @@ curl -X POST http://localhost:8080/api/videos/generar-thumbnails
 
 ## 📚 Biblioteca Digital
 
-Colocá archivos PDF en `data/biblioteca/` y aparecen automáticamente en la biblioteca. El visor PDF.js progresivo permite leer libros completos sin recargar.
+La imagen incluye **16 libros PDF verificados de fábrica** (manifestado en `edu-conect-rural-server/manifiesto-biblioteca.json`: URL, SHA-256, tamaño y licencia por título). Se descargan en build con verificación estricta (`%PDF-` + checksum) y viven en `/app/default-content/biblioteca` (solo lectura). El docente agrega PDFs en `data/biblioteca/` (persistente) y **si usa la misma ruta relativa, su copia prevalece** sobre la incluida.
+
+### Dos zonas de contenido
+
+| Zona | Ruta | Origen | Persistencia |
+|---|---|---|---|
+| Incluida (bundled) | `/app/default-content/biblioteca` | Imagen Docker | Se actualiza con la imagen |
+| Docente (persistent) | `/data/biblioteca` | Volumen `educonect-data` | Sobrevive a recreaciones |
+
+`/api/biblioteca` marca cada libro con `source` (`bundled`/`persistent`) y `disponible` (el archivo existe en alguna zona). Un libro sin archivo **no ofrece el botón "Abrir"** — aparece como "Disponible por USB".
+
+### Paquete educativo ampliado (por USB)
+
+Estos 5 títulos NO van en la imagen (4 pesados ~240 MB + 1 con autorización de redistribución pendiente). Copiá los PDFs a `data/biblioteca/` para activarlos:
+
+```bash
+mkdir -p data/biblioteca/cuentos
+# Ábrete grano pequeño (60.8 MB)
+curl -L -o data/biblioteca/cuentos/09-abrete-grano-pequeno.pdf \
+  'https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/9_Abretegranopequeno.pdf'
+# El pequeño escribiente florentino (64.8 MB)
+curl -L -o data/biblioteca/cuentos/12-el-pequeno-escribiente.pdf \
+  'https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/12_Elpequeno_escribienteflorentino.pdf'
+# Los pigmeos (64.3 MB)
+curl -L -o data/biblioteca/cuentos/11-los-pigmeos.pdf \
+  'https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/11_Lospigmeos.pdf'
+# El rey de los topos y su hija (50.3 MB)
+curl -L -o data/biblioteca/cuentos/10-el-rey-de-los-topos.pdf \
+  'https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/10_Elreydelostoposysuhija.pdf'
+# Narraciones indígenas del desierto (0.4 MB — espera autorización de Norma)
+curl -L -o data/biblioteca/wayuu/narraciones-indigenas-desierto.pdf \
+  'https://www.normainfantilyjuvenil.com/co/uploads/2019/01/9789580007180.pdf'
+```
+
+Tras copiarlos, reiniciá: `docker compose restart` — la API los marca `disponible: true` con `source: persistent`.
 
 ---
 

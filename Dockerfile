@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /default-content/zim \
-    && curl --fail --location --retry 5 \
+    && curl --fail --location --retry 5 --retry-all-errors --continue-at - \
        "${WIKIPEDIA_ZIM_URL}" \
        --output "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
     && echo "${WIKIPEDIA_ZIM_SHA256}  /default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
@@ -49,6 +49,20 @@ RUN mkdir -p /default-content/zim \
        "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
        "/default-content/zim/${WIKIPEDIA_ZIM_NAME}" \
     && chmod 0444 "/default-content/zim/${WIKIPEDIA_ZIM_NAME}"
+
+# ── Builder: biblioteca incluida (16 PDFs verificados por manifiesto) ──
+# Manifiesto versionado con URL + SHA-256 + tamaño + licencia. Mismo contrato
+# que el ZIM: reproducible, verificación estricta, solo lectura en runtime.
+FROM debian:bookworm-slim AS content-builder-biblioteca
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl jq \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY edu-conect-rural-server/manifiesto-biblioteca.json /manifiesto-biblioteca.json
+COPY edu-conect-rural-server/download-biblioteca-manifiesto.sh /download-biblioteca-manifiesto.sh
+RUN chmod +x /download-biblioteca-manifiesto.sh \
+    && /download-biblioteca-manifiesto.sh /manifiesto-biblioteca.json /default-content/biblioteca
 
 # ── Runtime final ──
 FROM debian:bookworm-slim
@@ -81,9 +95,12 @@ COPY --from=next-builder /build/out/ /app/frontend/
 COPY edu-conect-rural-dashboard/modulos/ /app/modulos/
 # Wikipedia incluida de fábrica: solo lectura (root:root 0444), UID 10001 la lee.
 COPY --from=content-builder /default-content/zim/ /app/default-content/zim/
+# Biblioteca incluida de fábrica: 16 PDFs verificados (manifiesto + SHA-256).
+COPY --from=content-builder-biblioteca /default-content/biblioteca/ /app/default-content/biblioteca/
 
 ENV DATA_DIR=/data \
     DEFAULT_ZIM_DIR=/app/default-content/zim \
+    DEFAULT_BIBLIOTECA_DIR=/app/default-content/biblioteca \
     FRONTEND_PATH=/app/frontend/ \
     LISTEN_ADDR=0.0.0.0:8080 \
     RUST_LOG=info

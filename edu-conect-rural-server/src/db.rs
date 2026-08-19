@@ -129,13 +129,16 @@ impl Database {
         let sql2 = include_str!("../seeds/002_modulos.sql");
         let sql5 = include_str!("../seeds/005_biblioteca_fts.sql");
         let sql6 = include_str!("../seeds/006_diccionarios.sql");
+        let sql7 = include_str!("../seeds/007_biblioteca_unicos.sql");
         let tx = conn.transaction()?;
         tx.execute_batch(sql1)?;
         tx.execute_batch(sql2)?;
         tx.execute_batch(sql5)?;
         tx.execute_batch(sql6)?;
+        // 007: deduplica la biblioteca y crea el UNIQUE del que depende el OR IGNORE.
+        tx.execute_batch(sql7)?;
         tx.commit()?;
-        tracing::info!("Semillas cargadas (cursos + módulos + biblioteca + diccionarios)");
+        tracing::info!("Semillas cargadas (cursos + módulos + biblioteca + diccionarios + dedupe biblioteca)");
         Ok(())
     }
 

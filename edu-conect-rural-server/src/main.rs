@@ -1359,6 +1359,7 @@ fn guess_icon(dir_name: &str, titulo: &str) -> String {
     let combined = format!("{} {}", dir_name, titulo).to_lowercase();
     if combined.contains("mate") || combined.contains("lógica") { return "🧮".into(); }
     if combined.contains("leng") || combined.contains("lectura") || combined.contains("vocal") { return "🔤".into(); }
+    if combined.contains("sistema solar") || combined.contains("planeta") { return "🪐".into(); }
     if combined.contains("cien") || combined.contains("natura") || combined.contains("tabla") { return "🔬".into(); }
     if combined.contains("arte") || combined.contains("música") { return "🎨".into(); }
     if combined.contains("geo") || combined.contains("mapa") { return "🌍".into(); }
@@ -1382,7 +1383,7 @@ fn guess_category(dir_name: &str) -> String {
     let d = dir_name.to_lowercase();
     if d.starts_with("leng") { return "Lenguaje".into(); }
     if d.starts_with("mate") { return "Matemáticas".into(); }
-    if d.starts_with("cien") { return "Ciencias".into(); }
+    if d.starts_with("cien") || d.starts_with("cie-") { return "Ciencias".into(); }
     if d.starts_with("art") { return "Arte".into(); }
     if d.starts_with("geo") { return "Geografía".into(); }
     if d.starts_with("nut") { return "Nutrición".into(); }

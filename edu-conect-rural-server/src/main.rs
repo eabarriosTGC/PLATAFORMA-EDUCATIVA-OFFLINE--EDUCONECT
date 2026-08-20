@@ -1364,6 +1364,7 @@ fn guess_icon(dir_name: &str, titulo: &str) -> String {
     if combined.contains("anatomía") || combined.contains("cuerpo humano") || combined.contains("órgano") { return "🫀".into(); }
     if combined.contains("cien") || combined.contains("natura") || combined.contains("tabla") { return "🔬".into(); }
     if combined.contains("arte") || combined.contains("música") { return "🎨".into(); }
+    if combined.contains("geometría") || combined.contains("cubo") || combined.contains("esfera") { return "📐".into(); }
     if combined.contains("geo") || combined.contains("mapa") { return "🌍".into(); }
     if combined.contains("nutri") || combined.contains("alimen") { return "🥗".into(); }
     if combined.contains("salud") || combined.contains("higiene") { return "🧼".into(); }

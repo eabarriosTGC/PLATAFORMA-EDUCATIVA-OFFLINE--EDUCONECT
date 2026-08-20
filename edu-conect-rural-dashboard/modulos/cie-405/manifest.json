@@ -1,0 +1,15 @@
+{
+  "id": "cie-405",
+  "title": "Clase de Geometría 3D",
+  "subject": "Matemáticas",
+  "grades": [4, 5, 6, 7],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Identificar los cuerpos geométricos: cubo, esfera, cilindro, cono y pirámide",
+    "Reconocer caras, aristas y vértices en cada cuerpo geométrico",
+    "Relacionar cada cuerpo con su fórmula de volumen y ejemplos de la vida diaria"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

@@ -1366,6 +1366,7 @@ fn guess_icon(dir_name: &str, titulo: &str) -> String {
     if combined.contains("arte") || combined.contains("música") { return "🎨".into(); }
     if combined.contains("geometría") || combined.contains("cubo") || combined.contains("esfera") { return "📐".into(); }
     if combined.contains("química") || combined.contains("molécula") || combined.contains("átomo") { return "⚗️".into(); }
+    if dir_name.starts_with("qui-") { return "⚗️".into(); }
     if combined.contains("parab") || combined.contains("proyectil") { return "🚀".into(); }
     if combined.contains("adn") || combined.contains("genética") { return "🧬".into(); }
     if combined.contains("geo") || combined.contains("mapa") { return "🌍".into(); }
@@ -1390,6 +1391,7 @@ fn guess_category(dir_name: &str) -> String {
     if d.starts_with("leng") { return "Lenguaje".into(); }
     if d.starts_with("mate") { return "Matemáticas".into(); }
     if d.starts_with("cien") || d.starts_with("cie-") { return "Ciencias".into(); }
+    if d.starts_with("qui-") { return "Química".into(); }
     if d.starts_with("art") { return "Arte".into(); }
     if d.starts_with("geo") { return "Geografía".into(); }
     if d.starts_with("nut") { return "Nutrición".into(); }

@@ -1914,6 +1914,12 @@ fn guess_icon(dir_name: &str, titulo: &str) -> String {
     if dir_name.starts_with("qui-") {
         return "⚗️".into();
     }
+    if combined.contains("gráfica") || combined.contains("funciones") || combined.contains("onda") {
+        return "📈".into();
+    }
+    if combined.contains("magn") || combined.contains("imán") || combined.contains("iman") {
+        return "🧲".into();
+    }
     if combined.contains("parab") || combined.contains("proyectil") {
         return "🚀".into();
     }

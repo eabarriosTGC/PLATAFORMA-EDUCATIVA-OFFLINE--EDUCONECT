@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101018">
+  <meta name="description" content="Campo magnético en 3D offline: imán con polos norte y sur y partículas que viajan del norte al sur.">
+  <title>Campo Magnético 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Física interactiva · 7° a 10°</span><h1>🧲 Campo Magnético 3D</h1><p>Observa las líneas de campo viajando del polo norte al polo sur.</p></div>
+    <div class="progress"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Imán y líneas de campo</h2><p>Arrastra para girar · rueda o pellizco para acercar · toca un elemento</p></div>
+        <div class="actions"><button id="rotateButton" type="button">⏸ Detener giro</button><button id="resetButton" type="button">⌂ Centrar</button></div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Simulación tridimensional educativa de un imán con campo magnético">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Las fichas y preguntas siguen disponibles.</span></div>
+      </div>
+      <div class="toolbar">
+        <label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label>
+      </div>
+      <div id="partButtons" class="part-buttons" aria-label="Seleccionar parte del imán"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="partType" class="badge">Polo</span><h2 id="partName">Polo norte</h2>
+        <p id="partDescription">Extremo rojo del imán por donde salen las líneas de campo.</p>
+        <div class="fact-grid">
+          <div><span>Rol</span><strong id="partRole">De donde sale el campo</strong></div>
+          <div><span>Color</span><strong id="partDetail">Rojo</strong></div>
+        </div>
+        <p id="partExample" class="care">💡 Los polos iguales se repelen y los distintos se atraen.</p>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión física</span><h2 id="missionTitle">Encuentra el polo norte</h2><p id="missionHint">Toca el extremo rojo del imán.</p><div id="missionStatus" class="status" aria-live="polite">Misión 1 de 6</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="question">¿Qué color tiene el polo norte?</h2><div id="answers" class="answers"></div><p id="feedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Simulación didáctica · EduConect Rural · Funciona sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

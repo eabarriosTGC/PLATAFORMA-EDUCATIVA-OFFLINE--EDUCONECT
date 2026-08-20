@@ -1,0 +1,15 @@
+{
+  "id": "cie-410",
+  "title": "Campo Magnético 3D",
+  "subject": "Física",
+  "grades": [7, 8, 9, 10],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Identificar los polos norte y sur de un imán",
+    "Observar cómo las líneas de campo viajan del polo norte al sur",
+    "Relacionar la fuerza magnética con la atracción y repulsión de los polos"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

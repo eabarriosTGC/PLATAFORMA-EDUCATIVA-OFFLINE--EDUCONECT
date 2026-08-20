@@ -1,0 +1,15 @@
+{
+  "id": "cie-407",
+  "title": "Tiro Parabólico 3D",
+  "subject": "Física",
+  "grades": [8, 9, 10, 11],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Observar la trayectoria parabólica de un proyectil bajo la gravedad",
+    "Relacionar velocidad inicial, ángulo de lanzamiento y alcance",
+    "Interpretar la parábola como la composición de movimiento horizontal uniforme y vertical acelerado"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

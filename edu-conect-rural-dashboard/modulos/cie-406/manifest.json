@@ -1,0 +1,15 @@
+{
+  "id": "cie-406",
+  "title": "Molécula de Agua 3D",
+  "subject": "Química",
+  "grades": [6, 7, 8, 9],
+  "duration_minutes": 20,
+  "learning_objectives": [
+    "Identificar los átomos que forman la molécula de agua (H₂O)",
+    "Reconocer el enlace covalente y el ángulo característico de 104.5°",
+    "Relacionar la estructura molecular con la importancia del agua en La Guajira"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

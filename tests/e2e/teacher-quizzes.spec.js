@@ -1,0 +1,3 @@
+const {test,expect}=require('@playwright/test');const BASE=process.env.E2E_BASE_URL||'http://localhost:8080';
+test('quizzes exige autenticación',async({request})=>{expect((await request.get(BASE+'/api/profesor/quizzes')).status()).toBe(401)});
+test('interfaz local y móvil',async({page})=>{const x=[];page.on('request',r=>{if(new URL(r.url()).origin!==new URL(BASE).origin)x.push(r.url())});await page.setViewportSize({width:390,height:844});await page.goto(BASE+'/profesor/quizzes/');await expect(page).toHaveTitle(/Cuestionarios/);expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);expect(x).toEqual([])});

@@ -7,7 +7,7 @@ use serde::Serialize;
 /// Resultado de búsqueda unificado
 #[derive(Debug, Serialize)]
 pub struct SearchResult {
-    pub tipo: String,       // "curso" | "video" | "libro"
+    pub tipo: String, // "curso" | "video" | "libro"
     pub id: i64,
     pub titulo: String,
     pub descripcion: String,
@@ -47,7 +47,9 @@ const LONGITUD_MINIMA_PASSWORD: usize = 12;
 
 impl Database {
     /// Helper privado: obtiene una conexión del pool o devuelve error.
-    fn conn(&self) -> Result<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>, DbError> {
+    pub(crate) fn conn(
+        &self,
+    ) -> Result<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>, DbError> {
         Ok(self.pool.get()?)
     }
 
@@ -89,6 +91,7 @@ impl Database {
         Self::ejecutar_migraciones_auth(&mut bootstrap, initial_password)?;
         Self::ejecutar_migraciones_content(&mut bootstrap)?;
         Self::ejecutar_migraciones_search(&mut bootstrap)?;
+        Self::ejecutar_migraciones_quizzes(&mut bootstrap)?;
         Self::reindex_search(&mut bootstrap)?;
 
         // 4. Cierre del bootstrap antes de crear el pool.
@@ -123,6 +126,14 @@ impl Database {
         Ok(())
     }
 
+    fn ejecutar_migraciones_quizzes(conn: &mut Connection) -> Result<(), DbError> {
+        let tx = conn.transaction()?;
+        tx.execute_batch(include_str!("../migrations/005_quizzes.sql"))?;
+        tx.commit()?;
+        tracing::info!("Migración de cuestionarios ejecutada");
+        Ok(())
+    }
+
     /// Seeds, atómicos en una sola transacción (idempotentes: INSERT OR IGNORE).
     fn ejecutar_seeds(conn: &mut Connection) -> Result<(), DbError> {
         let sql1 = include_str!("../seeds/001_cursos.sql");
@@ -138,7 +149,9 @@ impl Database {
         // 007: deduplica la biblioteca y crea el UNIQUE del que depende el OR IGNORE.
         tx.execute_batch(sql7)?;
         tx.commit()?;
-        tracing::info!("Semillas cargadas (cursos + módulos + biblioteca + diccionarios + dedupe biblioteca)");
+        tracing::info!(
+            "Semillas cargadas (cursos + módulos + biblioteca + diccionarios + dedupe biblioteca)"
+        );
         Ok(())
     }
 
@@ -202,12 +215,10 @@ impl Database {
             ));
         }
         if !(0.0..=100.0).contains(&payload.porcentaje) {
-            return Err(DbError::Validacion(
-                format!(
-                    "El campo 'porcentaje' debe estar entre 0 y 100. Valor recibido: {}",
-                    payload.porcentaje
-                ),
-            ));
+            return Err(DbError::Validacion(format!(
+                "El campo 'porcentaje' debe estar entre 0 y 100. Valor recibido: {}",
+                payload.porcentaje
+            )));
         }
 
         // Verificar que el curso existe
@@ -397,8 +408,7 @@ impl Database {
     /// Total de registros de progreso.
     pub fn total_registros_progreso(&self) -> Result<i64, DbError> {
         let conn = self.conn()?;
-        let count: i64 =
-            conn.query_row("SELECT COUNT(*) FROM progreso", [], |row| row.get(0))?;
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM progreso", [], |row| row.get(0))?;
         Ok(count)
     }
 
@@ -423,7 +433,11 @@ impl Database {
 
     pub fn total_videos(&self) -> Result<i64, DbError> {
         let conn = self.conn()?;
-        Ok(conn.query_row("SELECT COUNT(*) FROM videos WHERE activo=1", [], |r| r.get(0))?)
+        Ok(
+            conn.query_row("SELECT COUNT(*) FROM videos WHERE activo=1", [], |r| {
+                r.get(0)
+            })?,
+        )
     }
 
     pub fn total_archivos(&self) -> Result<i64, DbError> {
@@ -431,14 +445,27 @@ impl Database {
         Ok(conn.query_row("SELECT COUNT(*) FROM archivos", [], |r| r.get(0))?)
     }
 
-    pub fn insertar_curso(&self, titulo: &str, descripcion: &str, categoria: &str, archivo_path: &str) -> Result<(), DbError> {
+    pub fn insertar_curso(
+        &self,
+        titulo: &str,
+        descripcion: &str,
+        categoria: &str,
+        archivo_path: &str,
+    ) -> Result<(), DbError> {
         let conn = self.conn()?;
         conn.execute("INSERT INTO cursos (titulo, descripcion, categoria, archivo_path) VALUES (?1, ?2, ?3, ?4)",
             params![titulo, descripcion, categoria, archivo_path])?;
         Ok(())
     }
 
-    pub fn actualizar_curso(&self, id: i64, titulo: &str, descripcion: &str, categoria: &str, archivo_path: &str) -> Result<(), DbError> {
+    pub fn actualizar_curso(
+        &self,
+        id: i64,
+        titulo: &str,
+        descripcion: &str,
+        categoria: &str,
+        archivo_path: &str,
+    ) -> Result<(), DbError> {
         let conn = self.conn()?;
         conn.execute("UPDATE cursos SET titulo=?1, descripcion=?2, categoria=?3, archivo_path=?4 WHERE id=?5",
             params![titulo, descripcion, categoria, archivo_path, id])?;
@@ -451,7 +478,15 @@ impl Database {
         Ok(())
     }
 
-    pub fn insertar_video(&self, titulo: &str, canal: &str, duracion: &str, thumbnail: &str, categoria: &str, archivo: &str) -> Result<(), DbError> {
+    pub fn insertar_video(
+        &self,
+        titulo: &str,
+        canal: &str,
+        duracion: &str,
+        thumbnail: &str,
+        categoria: &str,
+        archivo: &str,
+    ) -> Result<(), DbError> {
         let conn = self.conn()?;
         conn.execute("INSERT INTO videos (titulo, canal, duracion, thumbnail, categoria, archivo) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![titulo, canal, duracion, thumbnail, categoria, archivo])?;
@@ -465,7 +500,14 @@ impl Database {
     }
 
     #[allow(dead_code)]
-    pub fn insertar_archivo(&self, tipo: &str, nombre: &str, ruta: &str, tamano: i64, mime: &str) -> Result<(), DbError> {
+    pub fn insertar_archivo(
+        &self,
+        tipo: &str,
+        nombre: &str,
+        ruta: &str,
+        tamano: i64,
+        mime: &str,
+    ) -> Result<(), DbError> {
         let conn = self.conn()?;
         conn.execute("INSERT INTO archivos (tipo, nombre_original, ruta_archivo, tamano, mime_type) VALUES (?1, ?2, ?3, ?4, ?5)",
             params![tipo, nombre, ruta, tamano, mime])?;
@@ -505,8 +547,14 @@ impl Database {
         let tx = conn.transaction()?;
         tx.execute("INSERT INTO cursos_fts(cursos_fts) VALUES('rebuild')", [])?;
         tx.execute("INSERT INTO videos_fts(videos_fts) VALUES('rebuild')", [])?;
-        tx.execute("INSERT INTO biblioteca_fts(biblioteca_fts) VALUES('rebuild')", [])?;
-        tx.execute("INSERT INTO diccionario_fts(diccionario_fts) VALUES('rebuild')", [])?;
+        tx.execute(
+            "INSERT INTO biblioteca_fts(biblioteca_fts) VALUES('rebuild')",
+            [],
+        )?;
+        tx.execute(
+            "INSERT INTO diccionario_fts(diccionario_fts) VALUES('rebuild')",
+            [],
+        )?;
         tx.commit()?;
         tracing::info!("Índices FTS5 reconstruidos (cursos, videos, biblioteca, diccionario)");
         Ok(())
@@ -607,7 +655,11 @@ impl Database {
 
     /// Búsqueda full-text exclusiva en la biblioteca digital.
     #[allow(dead_code)]
-    pub fn buscar_en_biblioteca(&self, query: &str, limite: i64) -> Result<Vec<SearchResult>, DbError> {
+    pub fn buscar_en_biblioteca(
+        &self,
+        query: &str,
+        limite: i64,
+    ) -> Result<Vec<SearchResult>, DbError> {
         let conn = self.conn()?;
         let mut resultados = Vec::new();
 
@@ -662,7 +714,11 @@ impl Database {
 
     // ── diccionario ──────────────────────────────────────────────────
 
-    pub fn buscar_en_diccionario(&self, query: &str, limite: i64) -> Result<Vec<serde_json::Value>, DbError> {
+    pub fn buscar_en_diccionario(
+        &self,
+        query: &str,
+        limite: i64,
+    ) -> Result<Vec<serde_json::Value>, DbError> {
         let conn = self.conn()?;
         let exacta = conn.query_row(
             "SELECT id, palabra, definicion, tipo, categoria, sinonimos, antonimos, relacionadas
@@ -682,39 +738,53 @@ impl Database {
                 }))
             },
         );
-        if let Ok(entry) = exacta { return Ok(vec![entry]); }
-        let fts_query = format!("\"{}\" OR {}*", query.replace('"', ""), query.replace('"', ""));
+        if let Ok(entry) = exacta {
+            return Ok(vec![entry]);
+        }
+        let fts_query = format!(
+            "\"{}\" OR {}*",
+            query.replace('"', ""),
+            query.replace('"', "")
+        );
         let mut stmt = conn.prepare(
             "SELECT d.id, d.palabra, d.definicion, d.tipo, d.categoria,
                     d.sinonimos, d.antonimos, d.relacionadas, rank
              FROM diccionario_fts f JOIN diccionario d ON d.id = f.rowid
              WHERE diccionario_fts MATCH ?1 ORDER BY rank LIMIT ?2",
         )?;
-        let results = stmt.query_map(params![fts_query, limite], |row| {
-            Ok(serde_json::json!({
-                "id": row.get::<_, i64>(0)?,
-                "palabra": row.get::<_, String>(1)?,
-                "definicion": row.get::<_, String>(2)?,
-                "tipo": row.get::<_, String>(3)?,
-                "categoria": row.get::<_, String>(4)?,
-                "sinonimos": row.get::<_, String>(5)?,
-                "antonimos": row.get::<_, String>(6)?,
-                "relacionadas": row.get::<_, String>(7)?,
-                "coincidencia": "fts",
-            }))
-        })?.collect::<Result<Vec<_>, _>>()?;
+        let results = stmt
+            .query_map(params![fts_query, limite], |row| {
+                Ok(serde_json::json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "palabra": row.get::<_, String>(1)?,
+                    "definicion": row.get::<_, String>(2)?,
+                    "tipo": row.get::<_, String>(3)?,
+                    "categoria": row.get::<_, String>(4)?,
+                    "sinonimos": row.get::<_, String>(5)?,
+                    "antonimos": row.get::<_, String>(6)?,
+                    "relacionadas": row.get::<_, String>(7)?,
+                    "coincidencia": "fts",
+                }))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(results)
     }
 
-    pub fn sugerir_palabras(&self, prefijo: &str, limite: i64) -> Result<Vec<serde_json::Value>, DbError> {
+    pub fn sugerir_palabras(
+        &self,
+        prefijo: &str,
+        limite: i64,
+    ) -> Result<Vec<serde_json::Value>, DbError> {
         let conn = self.conn()?;
         let pattern = format!("{}%", prefijo);
         let mut stmt = conn.prepare(
             "SELECT DISTINCT palabra FROM diccionario WHERE palabra LIKE ?1 ORDER BY palabra LIMIT ?2",
         )?;
-        let results = stmt.query_map(params![pattern, limite], |row| {
-            Ok(serde_json::json!({"palabra": row.get::<_, String>(0)?}))
-        })?.collect::<Result<Vec<_>, _>>()?;
+        let results = stmt
+            .query_map(params![pattern, limite], |row| {
+                Ok(serde_json::json!({"palabra": row.get::<_, String>(0)?}))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(results)
     }
 
@@ -749,7 +819,7 @@ impl Database {
             "SELECT p.usuario, COUNT(p.curso_id) as cursos_iniciados,
                     ROUND(AVG(p.porcentaje), 1) as promedio,
                     MAX(p.ultima_vez) as ultima_actividad
-             FROM progreso p GROUP BY p.usuario ORDER BY ultima_actividad DESC"
+             FROM progreso p GROUP BY p.usuario ORDER BY ultima_actividad DESC",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(serde_json::json!({
@@ -760,7 +830,9 @@ impl Database {
             }))
         })?;
         let mut results = Vec::new();
-        for r in rows { results.push(r?); }
+        for r in rows {
+            results.push(r?);
+        }
         Ok(results)
     }
 
@@ -770,7 +842,7 @@ impl Database {
             "SELECT p.id, p.usuario, p.curso_id, c.titulo, c.categoria,
                     p.porcentaje, p.ultima_vez
              FROM progreso p JOIN cursos c ON c.id = p.curso_id
-             ORDER BY p.ultima_vez DESC"
+             ORDER BY p.ultima_vez DESC",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(serde_json::json!({
@@ -781,7 +853,9 @@ impl Database {
             }))
         })?;
         let mut results = Vec::new();
-        for r in rows { results.push(r?); }
+        for r in rows {
+            results.push(r?);
+        }
         Ok(results)
     }
 
@@ -791,7 +865,7 @@ impl Database {
             "SELECT p.id, p.usuario, p.curso_id, c.titulo, c.categoria,
                     p.porcentaje, p.ultima_vez
              FROM progreso p JOIN cursos c ON c.id = p.curso_id
-             WHERE p.usuario = ?1 ORDER BY p.porcentaje DESC"
+             WHERE p.usuario = ?1 ORDER BY p.porcentaje DESC",
         )?;
         let rows = stmt.query_map(params![usuario], |row| {
             Ok(serde_json::json!({
@@ -802,14 +876,17 @@ impl Database {
             }))
         })?;
         let mut results = Vec::new();
-        for r in rows { results.push(r?); }
+        for r in rows {
+            results.push(r?);
+        }
         Ok(results)
     }
     pub fn exportar_csv(&self) -> Result<String, DbError> {
         let data = self.progreso_completo()?;
         let mut csv = String::from("usuario,curso,porcentaje,ultima_vez\n");
         for row in &data {
-            csv.push_str(&format!("{},{},{},{}\n",
+            csv.push_str(&format!(
+                "{},{},{},{}\n",
                 escape_csv(row["usuario"].as_str().unwrap_or("")),
                 escape_csv(row["curso_titulo"].as_str().unwrap_or("")),
                 row["porcentaje"].as_f64().unwrap_or(0.0),
@@ -821,32 +898,48 @@ impl Database {
 
     pub fn estadisticas_docente(&self) -> Result<serde_json::Value, DbError> {
         let conn = self.conn()?;
-        let total_estudiantes: i64 = conn.query_row(
-            "SELECT COUNT(DISTINCT usuario) FROM progreso", [], |r| r.get(0)
-        ).unwrap_or(0);
-        let total_progresos: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM progreso", [], |r| r.get(0)
-        ).unwrap_or(0);
-        let promedio_general: f64 = conn.query_row(
-            "SELECT COALESCE(ROUND(AVG(porcentaje), 1), 0.0) FROM progreso", [], |r| r.get(0)
-        ).unwrap_or(0.0);
-        let cursos_activos: i64 = conn.query_row(
-            "SELECT COUNT(DISTINCT curso_id) FROM progreso WHERE porcentaje < 100", [], |r| r.get(0)
-        ).unwrap_or(0);
-        let cursos_completados: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM progreso WHERE porcentaje >= 100", [], |r| r.get(0)
-        ).unwrap_or(0);
+        let total_estudiantes: i64 = conn
+            .query_row("SELECT COUNT(DISTINCT usuario) FROM progreso", [], |r| {
+                r.get(0)
+            })
+            .unwrap_or(0);
+        let total_progresos: i64 = conn
+            .query_row("SELECT COUNT(*) FROM progreso", [], |r| r.get(0))
+            .unwrap_or(0);
+        let promedio_general: f64 = conn
+            .query_row(
+                "SELECT COALESCE(ROUND(AVG(porcentaje), 1), 0.0) FROM progreso",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap_or(0.0);
+        let cursos_activos: i64 = conn
+            .query_row(
+                "SELECT COUNT(DISTINCT curso_id) FROM progreso WHERE porcentaje < 100",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
+        let cursos_completados: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM progreso WHERE porcentaje >= 100",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
         let mut stmt = conn.prepare(
             "SELECT c.titulo, COUNT(DISTINCT p.usuario), ROUND(AVG(p.porcentaje), 1)
              FROM progreso p JOIN cursos c ON c.id = p.curso_id
-             GROUP BY p.curso_id ORDER BY COUNT(DISTINCT p.usuario) DESC"
+             GROUP BY p.curso_id ORDER BY COUNT(DISTINCT p.usuario) DESC",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(serde_json::json!({"curso": row.get::<_, String>(0)?,
                 "estudiantes": row.get::<_, i64>(1)?, "promedio": row.get::<_, f64>(2)?}))
         })?;
         let mut por_curso = Vec::new();
-        for r in rows { por_curso.push(r?); }
+        for r in rows {
+            por_curso.push(r?);
+        }
         Ok(serde_json::json!({
             "total_estudiantes": total_estudiantes, "total_progresos": total_progresos,
             "promedio_general": promedio_general, "cursos_activos": cursos_activos,
@@ -866,7 +959,6 @@ fn escape_csv(s: &str) -> String {
         s.to_string()
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -920,10 +1012,8 @@ mod tests {
     // ── inicialización SQLite (2B): bootstrap único → pool definitivo ──
 
     fn temp_db(nombre: &str) -> String {
-        let dir = std::env::temp_dir().join(format!(
-            "educonect-2b-{}-{nombre}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("educonect-2b-{}-{nombre}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("test.db");
         let s = path.to_string_lossy().to_string();
@@ -949,16 +1039,29 @@ mod tests {
     #[test]
     fn test_journal_mode_wal_y_pragmas_por_conexion() {
         let path = temp_db("wal");
-        let db = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
+        let db =
+            Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into()))
+                .unwrap();
         let conn = db.pool.get().unwrap();
 
-        let jm: String = conn.query_row("PRAGMA journal_mode", [], |r| r.get(0)).unwrap();
+        let jm: String = conn
+            .query_row("PRAGMA journal_mode", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(jm, "wal", "journal_mode debe quedar en WAL");
-        let fk: i64 = conn.query_row("PRAGMA foreign_keys", [], |r| r.get(0)).unwrap();
-        assert_eq!(fk, 1, "foreign_keys debe estar ON en cada conexión del pool");
-        let bt: i64 = conn.query_row("PRAGMA busy_timeout", [], |r| r.get(0)).unwrap();
+        let fk: i64 = conn
+            .query_row("PRAGMA foreign_keys", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            fk, 1,
+            "foreign_keys debe estar ON en cada conexión del pool"
+        );
+        let bt: i64 = conn
+            .query_row("PRAGMA busy_timeout", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(bt, 5000, "busy_timeout debe ser 5000");
-        let sync: i64 = conn.query_row("PRAGMA synchronous", [], |r| r.get(0)).unwrap();
+        let sync: i64 = conn
+            .query_row("PRAGMA synchronous", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(sync, 1, "synchronous debe ser NORMAL (1)");
 
         drop(conn);
@@ -969,17 +1072,25 @@ mod tests {
     #[test]
     fn test_reabrir_db_conserva_datos_y_seeds_idempotentes() {
         let path = temp_db("reopen");
-        let db1 = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
+        let db1 =
+            Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into()))
+                .unwrap();
         let cursos1 = db1.listar_cursos().unwrap().len();
         assert!(cursos1 > 0, "los seeds deben cargar cursos");
         let admins1 = db1.total_admins().unwrap();
         drop(db1);
 
         // Reabrir: migraciones y seeds deben ser idempotentes.
-        let db2 = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
+        let db2 =
+            Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into()))
+                .unwrap();
         let cursos2 = db2.listar_cursos().unwrap().len();
         assert_eq!(cursos1, cursos2, "reabrir no debe duplicar seeds");
-        assert_eq!(db2.total_admins().unwrap(), admins1, "no debe duplicarse el admin");
+        assert_eq!(
+            db2.total_admins().unwrap(),
+            admins1,
+            "no debe duplicarse el admin"
+        );
         drop(db2);
 
         limpiar_db(&path);
@@ -988,7 +1099,9 @@ mod tests {
     #[test]
     fn test_pool_ocho_conexiones_sin_lock_y_escritura_concurrente() {
         let path = temp_db("pool8");
-        let db = Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into())).unwrap();
+        let db =
+            Database::open_internal(&path, secret_test(), Some("test-password-segura-2b".into()))
+                .unwrap();
 
         // Tomar las 8 conexiones del pool sin "database is locked".
         let mut conns: Vec<r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>> =
@@ -1026,7 +1139,11 @@ mod tests {
             .unwrap()
             .query_row("SELECT COUNT(*) FROM cursos", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(despues, antes + 40, "deben persistir los 40 inserts concurrentes");
+        assert_eq!(
+            despues,
+            antes + 40,
+            "deben persistir los 40 inserts concurrentes"
+        );
 
         drop(db);
         limpiar_db(&path);
@@ -1038,17 +1155,24 @@ mod tests {
     fn test_sin_admin_y_sin_variable_rechaza_arranque() {
         let path = temp_db("noenv");
         let res = Database::open_internal(&path, secret_test(), None);
-        assert!(res.is_err(), "debe rechazar el arranque sin ADMIN_INITIAL_PASSWORD");
+        assert!(
+            res.is_err(),
+            "debe rechazar el arranque sin ADMIN_INITIAL_PASSWORD"
+        );
         let err = res.err().unwrap().to_string();
-        assert!(err.contains("ADMIN_INITIAL_PASSWORD"), "el mensaje debe nombrar la variable: {err}");
+        assert!(
+            err.contains("ADMIN_INITIAL_PASSWORD"),
+            "el mensaje debe nombrar la variable: {err}"
+        );
         limpiar_db(&path);
     }
 
     #[test]
     fn test_sin_admin_crea_con_password_valida() {
         let path = temp_db("crea");
-        let db = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
-            .unwrap();
+        let db =
+            Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+                .unwrap();
         assert_eq!(db.total_admins().unwrap(), 1);
         let admin = db.obtener_admin("admin").unwrap();
         assert!(bcrypt::verify("clave-segura-de-prueba", &admin.password_hash).unwrap());
@@ -1071,7 +1195,10 @@ mod tests {
     fn test_password_admin123_rechazada() {
         let path = temp_db("admin123");
         let res = Database::open_internal(&path, secret_test(), Some("admin123".into()));
-        assert!(res.is_err(), "debe rechazar la contraseña conocida admin123");
+        assert!(
+            res.is_err(),
+            "debe rechazar la contraseña conocida admin123"
+        );
         let err = res.err().unwrap().to_string();
         assert!(err.contains("conocida"), "mensaje: {err}");
         limpiar_db(&path);
@@ -1081,8 +1208,9 @@ mod tests {
     fn test_admin_heredado_admin123_rota_hash() {
         let path = temp_db("rotar");
         // Simular el estado legado: crear admin y reescribir su hash a admin123.
-        let db0 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
-            .unwrap();
+        let db0 =
+            Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+                .unwrap();
         let hash_legado = bcrypt::hash("admin123", 12).unwrap();
         db0.pool
             .get()
@@ -1095,8 +1223,12 @@ mod tests {
         drop(db0);
 
         // Reabrir con la nueva contraseña: debe rotar el hash heredado.
-        let db1 = Database::open_internal(&path, secret_test(), Some("nueva-clave-2d-muy-segura".into()))
-            .unwrap();
+        let db1 = Database::open_internal(
+            &path,
+            secret_test(),
+            Some("nueva-clave-2d-muy-segura".into()),
+        )
+        .unwrap();
         let admin = db1.obtener_admin("admin").unwrap();
         assert!(bcrypt::verify("nueva-clave-2d-muy-segura", &admin.password_hash).unwrap());
         assert!(!bcrypt::verify("admin123", &admin.password_hash).unwrap());
@@ -1107,16 +1239,21 @@ mod tests {
     #[test]
     fn test_admin_seguro_no_se_modifica() {
         let path = temp_db("seguro");
-        let db0 = Database::open_internal(&path, secret_test(), Some("primera-clave-segura".into()))
-            .unwrap();
+        let db0 =
+            Database::open_internal(&path, secret_test(), Some("primera-clave-segura".into()))
+                .unwrap();
         let hash0 = db0.obtener_admin("admin").unwrap().password_hash;
         drop(db0);
 
         // Reabrir con OTRA variable: el admin seguro no se toca.
-        let db1 = Database::open_internal(&path, secret_test(), Some("otra-clave-distinta-2d".into()))
-            .unwrap();
+        let db1 =
+            Database::open_internal(&path, secret_test(), Some("otra-clave-distinta-2d".into()))
+                .unwrap();
         let admin = db1.obtener_admin("admin").unwrap();
-        assert_eq!(admin.password_hash, hash0, "no debe modificarse el hash de un admin seguro");
+        assert_eq!(
+            admin.password_hash, hash0,
+            "no debe modificarse el hash de un admin seguro"
+        );
         assert!(bcrypt::verify("primera-clave-segura", &admin.password_hash).unwrap());
         drop(db1);
         limpiar_db(&path);
@@ -1125,16 +1262,22 @@ mod tests {
     #[test]
     fn test_bootstrap_admin_idempotente() {
         let path = temp_db("idem");
-        let db1 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
-            .unwrap();
+        let db1 =
+            Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+                .unwrap();
         let admins1 = db1.total_admins().unwrap();
         let hash1 = db1.obtener_admin("admin").unwrap().password_hash;
         drop(db1);
 
         // Segunda ejecución con la misma variable: no duplica ni modifica.
-        let db2 = Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
-            .unwrap();
-        assert_eq!(db2.total_admins().unwrap(), admins1, "no debe duplicar admins");
+        let db2 =
+            Database::open_internal(&path, secret_test(), Some("clave-segura-de-prueba".into()))
+                .unwrap();
+        assert_eq!(
+            db2.total_admins().unwrap(),
+            admins1,
+            "no debe duplicar admins"
+        );
         assert_eq!(
             db2.obtener_admin("admin").unwrap().password_hash,
             hash1,

@@ -135,11 +135,10 @@ impl Quiz {
         ResultadoQuiz {
             correctas,
             total,
-            porcentaje: if total == 0 {
-                0
-            } else {
-                ((correctas * 100) / total) as u32
-            },
+            porcentaje: (correctas as u32)
+                .checked_mul(100)
+                .and_then(|n| n.checked_div(total as u32))
+                .unwrap_or(0),
             detalle,
         }
     }

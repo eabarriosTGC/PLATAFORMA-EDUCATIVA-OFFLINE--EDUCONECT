@@ -71,6 +71,16 @@ pub fn validar(p: &QuizPayload) -> Result<(), DbError> {
             "Debe contener entre 1 y 100 preguntas".into(),
         ));
     }
+    if p.tema.trim().is_empty() || p.tema.chars().count() > 80 {
+        return Err(DbError::Validacion(
+            "El tema debe tener entre 1 y 80 caracteres".into(),
+        ));
+    }
+    if p.descripcion.chars().count() > 500 {
+        return Err(DbError::Validacion(
+            "La descripción no puede superar 500 caracteres".into(),
+        ));
+    }
     for (i, q) in p.preguntas.iter().enumerate() {
         if !TIPOS.contains(&q.tipo.as_str()) {
             return Err(DbError::Validacion(format!(
@@ -96,14 +106,107 @@ pub fn validar(p: &QuizPayload) -> Result<(), DbError> {
                 i + 1
             )));
         }
+        if matches!(q.tipo.as_str(), "choice" | "truefalse" | "multi") {
+            validar_textos(&q.options, i, "opciones")?;
+        }
+        if q.tipo == "truefalse"
+            && (q.options.len() != 2
+                || q.options[0] != "Verdadero"
+                || q.options[1] != "Falso"
+                || indice_respuesta(q).map_or(true, |a| a > 1))
+        {
+            return Err(DbError::Validacion(format!(
+                "Verdadero/Falso inválido en la pregunta {}",
+                i + 1
+            )));
+        }
+        if q.tipo == "choice" && indice_respuesta(q).map_or(true, |a| a >= q.options.len()) {
+            return Err(DbError::Validacion(format!(
+                "Respuesta correcta inválida en la pregunta {}",
+                i + 1
+            )));
+        }
+        if q.tipo == "multi"
+            && (q.answers.is_empty()
+                || q.answers.iter().any(|a| *a >= q.options.len())
+                || tiene_duplicados_indices(&q.answers))
+        {
+            return Err(DbError::Validacion(format!(
+                "Selecciona una o más respuestas correctas válidas en la pregunta {}",
+                i + 1
+            )));
+        }
         if q.tipo == "order" && q.items.len() < 2 {
             return Err(DbError::Validacion(format!(
                 "Faltan elementos para ordenar en la pregunta {}",
                 i + 1
             )));
         }
+        if q.tipo == "order" {
+            validar_textos(&q.items, i, "elementos")?;
+        }
+        if q.tipo == "fill" {
+            let answer = q.answer.as_str().unwrap_or("").trim();
+            if answer.is_empty() {
+                return Err(DbError::Validacion(format!(
+                    "Falta la respuesta en la pregunta {}",
+                    i + 1
+                )));
+            }
+            if q.accepted.iter().any(|v| v.trim().is_empty()) {
+                return Err(DbError::Validacion(format!(
+                    "Hay respuestas alternativas vacías en la pregunta {}",
+                    i + 1
+                )));
+            }
+        }
+        if q.tipo == "numeric" {
+            let answer = q.answer.as_f64();
+            let (Some(answer), Some(min), Some(max)) = (answer, q.min, q.max) else {
+                return Err(DbError::Validacion(format!(
+                    "Configuración numérica incompleta en la pregunta {}",
+                    i + 1
+                )));
+            };
+            let tol = q.tol.unwrap_or(0.0);
+            if !answer.is_finite() || !min.is_finite() || !max.is_finite() || !tol.is_finite()
+                || min > max || answer < min || answer > max || tol < 0.0
+            {
+                return Err(DbError::Validacion(format!(
+                    "Rango, respuesta o tolerancia inválidos en la pregunta {}",
+                    i + 1
+                )));
+            }
+        }
     }
     Ok(())
+}
+
+fn indice_respuesta(q: &PreguntaQuiz) -> Option<usize> {
+    q.answer.as_u64().and_then(|v| usize::try_from(v).ok())
+}
+
+fn validar_textos(items: &[String], pregunta: usize, nombre: &str) -> Result<(), DbError> {
+    if items.iter().any(|v| v.trim().is_empty() || v.chars().count() > 200) {
+        return Err(DbError::Validacion(format!(
+            "Hay {nombre} vacíos o demasiado largos en la pregunta {}",
+            pregunta + 1
+        )));
+    }
+    let normalizados: std::collections::HashSet<String> =
+        items.iter().map(|v| v.trim().to_lowercase()).collect();
+    if normalizados.len() != items.len() {
+        return Err(DbError::Validacion(format!(
+            "Hay {nombre} repetidos en la pregunta {}",
+            pregunta + 1
+        )));
+    }
+    Ok(())
+}
+
+fn tiene_duplicados_indices(items: &[usize]) -> bool {
+    let unicos: std::collections::HashSet<usize> = items.iter().copied().collect();
+    unicos.len() != items.len()
 }
 fn map_quiz(r: &rusqlite::Row<'_>) -> rusqlite::Result<Quiz> {
     let raw: String = r.get(4)?;
@@ -190,7 +293,7 @@ impl Database {
 mod tests {
     use super::*;
     fn q(t: &str) -> PreguntaQuiz {
-        PreguntaQuiz {
+        let mut pregunta = PreguntaQuiz {
             tipo: t.into(),
             text: "Pregunta".into(),
             options: vec!["A".into(), "B".into()],
@@ -202,7 +305,20 @@ mod tests {
             min: None,
             max: None,
             tol: None,
+        };
+        match t {
+            "truefalse" => pregunta.options = vec!["Verdadero".into(), "Falso".into()],
+            "multi" => pregunta.answers = vec![0],
+            "fill" => pregunta.answer = serde_json::json!("respuesta"),
+            "numeric" => {
+                pregunta.answer = serde_json::json!(5);
+                pregunta.min = Some(0.0);
+                pregunta.max = Some(10.0);
+                pregunta.tol = Some(0.0);
+            }
+            _ => {}
         }
+        pregunta
     }
     #[test]
     fn seis_tipos() {
@@ -225,5 +341,66 @@ mod tests {
             preguntas: vec![q("hack")]
         })
         .is_err())
+    }
+
+    fn payload(q: PreguntaQuiz) -> QuizPayload {
+        QuizPayload {
+            titulo: "Quiz".into(),
+            descripcion: "".into(),
+            tema: "General".into(),
+            preguntas: vec![q],
+        }
+    }
+
+    #[test]
+    fn seleccion_multiple_exige_respuesta() {
+        let mut pregunta = q("multi");
+        pregunta.answers.clear();
+        assert!(validar(&payload(pregunta.clone())).is_err());
+        pregunta.answers = vec![0, 1];
+        assert!(validar(&payload(pregunta)).is_ok());
+    }
+
+    #[test]
+    fn seleccion_unica_exige_indice_valido() {
+        let mut pregunta = q("choice");
+        pregunta.answer = serde_json::json!(9);
+        assert!(validar(&payload(pregunta)).is_err());
+    }
+
+    #[test]
+    fn verdadero_falso_es_fijo() {
+        let mut pregunta = q("truefalse");
+        pregunta.options = vec!["Sí".into(), "No".into()];
+        assert!(validar(&payload(pregunta)).is_err());
+    }
+
+    #[test]
+    fn rechaza_opciones_vacias_o_repetidas() {
+        let mut vacia = q("choice");
+        vacia.options[1] = " ".into();
+        assert!(validar(&payload(vacia)).is_err());
+        let mut repetida = q("choice");
+        repetida.options = vec!["A".into(), " a ".into()];
+        assert!(validar(&payload(repetida)).is_err());
+    }
+
+    #[test]
+    fn completar_exige_respuesta() {
+        let mut pregunta = q("fill");
+        pregunta.answer = serde_json::json!("");
+        assert!(validar(&payload(pregunta)).is_err());
+    }
+
+    #[test]
+    fn numerica_valida_rango_y_tolerancia() {
+        let mut pregunta = q("numeric");
+        pregunta.answer = serde_json::json!(7);
+        pregunta.min = Some(1.0);
+        pregunta.max = Some(10.0);
+        pregunta.tol = Some(0.5);
+        assert!(validar(&payload(pregunta.clone())).is_ok());
+        pregunta.tol = Some(-1.0);
+        assert!(validar(&payload(pregunta)).is_err());
     }
 }

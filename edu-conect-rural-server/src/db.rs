@@ -129,6 +129,19 @@ impl Database {
     fn ejecutar_migraciones_quizzes(conn: &mut Connection) -> Result<(), DbError> {
         let tx = conn.transaction()?;
         tx.execute_batch(include_str!("../migrations/005_quizzes.sql"))?;
+        let tiene_publicado = {
+            let mut stmt = tx.prepare("PRAGMA table_info(quizzes)")?;
+            let columnas = stmt
+                .query_map([], |row| row.get::<_, String>(1))?
+                .collect::<Result<Vec<_>, _>>()?;
+            columnas.iter().any(|nombre| nombre == "publicado")
+        };
+        if !tiene_publicado {
+            tx.execute_batch(
+                "ALTER TABLE quizzes ADD COLUMN publicado INTEGER NOT NULL DEFAULT 0 \
+                 CHECK(publicado IN (0,1));",
+            )?;
+        }
         tx.commit()?;
         tracing::info!("Migración de cuestionarios ejecutada");
         Ok(())

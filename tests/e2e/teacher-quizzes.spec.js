@@ -55,3 +55,20 @@ test('editor protege atributos y permite respuestas múltiples', async ({ page }
   await page.locator('[data-multi-correct="0"]').check();
   await expect(page.locator('[data-multi-correct="0"]')).toBeChecked();
 });
+
+test('cuestionarios aparecen en la plataforma estudiantil sin soluciones', async ({ request, page }) => {
+  const lista = await request.get(BASE + '/api/quizzes');
+  expect(lista.status()).toBe(200);
+  const quizzes = await lista.json();
+  await page.goto(BASE + '/app/#cuestionarios');
+  await expect(page.getByText('Cuestionarios', { exact: true }).first()).toBeVisible();
+  if (quizzes.length) {
+    const jugar = await request.get(BASE + '/api/quizzes/' + quizzes[0].id + '/jugar');
+    expect(jugar.status()).toBe(200);
+    const raw = JSON.stringify(await jugar.json());
+    expect(raw).not.toContain('"answer"');
+    expect(raw).not.toContain('"answers"');
+    expect(raw).not.toContain('"accepted"');
+    expect(raw).not.toContain('"tol"');
+  }
+});

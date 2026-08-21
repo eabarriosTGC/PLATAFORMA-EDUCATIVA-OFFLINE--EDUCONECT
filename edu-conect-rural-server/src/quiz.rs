@@ -58,6 +58,132 @@ pub struct QuizResumen {
     pub tema: String,
     pub total_preguntas: usize,
     pub actualizado_en: String,
+    pub publicado: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PublicacionQuiz {
+    pub publicado: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PreguntaPublica {
+    #[serde(rename = "type")]
+    pub tipo: String,
+    pub text: String,
+    pub options: Vec<String>,
+    pub items: Vec<String>,
+    pub time: u32,
+    pub min: Option<f64>,
+    pub max: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct QuizPublico {
+    pub id: i64,
+    pub titulo: String,
+    pub descripcion: String,
+    pub tema: String,
+    pub preguntas: Vec<PreguntaPublica>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EntregaQuiz {
+    pub respuestas: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ResultadoQuiz {
+    pub correctas: usize,
+    pub total: usize,
+    pub porcentaje: u32,
+    pub detalle: Vec<bool>,
+}
+
+impl Quiz {
+    pub fn para_estudiante(&self) -> QuizPublico {
+        QuizPublico {
+            id: self.id,
+            titulo: self.titulo.clone(),
+            descripcion: self.descripcion.clone(),
+            tema: self.tema.clone(),
+            preguntas: self
+                .preguntas
+                .iter()
+                .map(|q| PreguntaPublica {
+                    tipo: q.tipo.clone(),
+                    text: q.text.clone(),
+                    options: q.options.clone(),
+                    items: q.items.clone(),
+                    time: q.time,
+                    min: q.min,
+                    max: q.max,
+                })
+                .collect(),
+        }
+    }
+
+    pub fn calificar(&self, entrega: &EntregaQuiz) -> ResultadoQuiz {
+        let detalle: Vec<bool> = self
+            .preguntas
+            .iter()
+            .enumerate()
+            .map(|(i, q)| respuesta_correcta(q, entrega.respuestas.get(i)))
+            .collect();
+        let correctas = detalle.iter().filter(|v| **v).count();
+        let total = detalle.len();
+        ResultadoQuiz {
+            correctas,
+            total,
+            porcentaje: if total == 0 {
+                0
+            } else {
+                ((correctas * 100) / total) as u32
+            },
+            detalle,
+        }
+    }
+}
+
+fn respuesta_correcta(q: &PreguntaQuiz, recibida: Option<&serde_json::Value>) -> bool {
+    let Some(recibida) = recibida else {
+        return false;
+    };
+    match q.tipo.as_str() {
+        "choice" | "truefalse" => recibida.as_u64() == q.answer.as_u64(),
+        "multi" => {
+            let mut actual: Vec<usize> = recibida
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|v| v.as_u64().and_then(|n| usize::try_from(n).ok()))
+                .collect();
+            let mut esperada = q.answers.clone();
+            actual.sort_unstable();
+            actual.dedup();
+            esperada.sort_unstable();
+            actual == esperada
+        }
+        "order" => recibida.as_array().is_some_and(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str())
+                .eq(q.items.iter().map(String::as_str))
+                && a.len() == q.items.len()
+        }),
+        "fill" => recibida.as_str().is_some_and(|v| {
+            let v = v.trim().to_lowercase();
+            q.answer
+                .as_str()
+                .is_some_and(|a| a.trim().to_lowercase() == v)
+                || q.accepted.iter().any(|a| a.trim().to_lowercase() == v)
+        }),
+        "numeric" => recibida.as_f64().is_some_and(|v| {
+            q.answer
+                .as_f64()
+                .is_some_and(|a| (v - a).abs() <= q.tol.unwrap_or(0.0))
+        }),
+        _ => false,
+    }
 }
 
 pub fn validar(p: &QuizPayload) -> Result<(), DbError> {
@@ -234,9 +360,44 @@ fn map_quiz(r: &rusqlite::Row<'_>) -> rusqlite::Result<Quiz> {
     })
 }
 impl Database {
+    pub fn listar_quizzes_estudiante(&self) -> Result<Vec<QuizResumen>, DbError> {
+        let c = self.conn()?;
+        let mut s = c.prepare(
+            "SELECT id,titulo,descripcion,tema,preguntas,actualizado_en,publicado \
+             FROM quizzes WHERE publicado=1 ORDER BY actualizado_en DESC,id DESC",
+        )?;
+        let rows = s.query_map([], |r| {
+            let raw: String = r.get(4)?;
+            let total_preguntas = serde_json::from_str::<Vec<serde_json::Value>>(&raw)
+                .map(|v| v.len())
+                .unwrap_or(0);
+            Ok(QuizResumen {
+                id: r.get(0)?,
+                titulo: r.get(1)?,
+                descripcion: r.get(2)?,
+                tema: r.get(3)?,
+                total_preguntas,
+                actualizado_en: r.get(5)?,
+                publicado: r.get::<_, i64>(6)? != 0,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    pub fn obtener_quiz_estudiante(&self, id: i64) -> Result<Quiz, DbError> {
+        self.conn()?
+            .query_row(
+                "SELECT id,titulo,descripcion,tema,preguntas,propietario,creado_en,actualizado_en \
+                 FROM quizzes WHERE id=?1 AND publicado=1",
+                [id],
+                map_quiz,
+            )
+            .optional()?
+            .ok_or_else(|| DbError::NoEncontrado("Cuestionario no encontrado".into()))
+    }
     pub fn listar_quizzes(&self, owner: &str) -> Result<Vec<QuizResumen>, DbError> {
         let c = self.conn()?;
-        let mut s = c.prepare("SELECT id,titulo,descripcion,tema,preguntas,actualizado_en FROM quizzes WHERE propietario=?1 ORDER BY actualizado_en DESC,id DESC")?;
+        let mut s = c.prepare("SELECT id,titulo,descripcion,tema,preguntas,actualizado_en,publicado FROM quizzes WHERE propietario=?1 ORDER BY actualizado_en DESC,id DESC")?;
         let rows = s.query_map([owner], |r| {
             let raw: String = r.get(4)?;
             let n = serde_json::from_str::<Vec<serde_json::Value>>(&raw)
@@ -249,12 +410,26 @@ impl Database {
                 tema: r.get(3)?,
                 total_preguntas: n,
                 actualizado_en: r.get(5)?,
+                publicado: r.get::<_, i64>(6)? != 0,
             })
         })?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
     }
     pub fn obtener_quiz(&self, id: i64, owner: &str) -> Result<Quiz, DbError> {
         self.conn()?.query_row("SELECT id,titulo,descripcion,tema,preguntas,propietario,creado_en,actualizado_en FROM quizzes WHERE id=?1 AND propietario=?2",params![id,owner],map_quiz).optional()?.ok_or_else(||DbError::NoEncontrado("Cuestionario no encontrado".into()))
+    }
+    pub fn publicar_quiz(&self, id: i64, owner: &str, publicado: bool) -> Result<(), DbError> {
+        let valor = if publicado { 1 } else { 0 };
+        let n = self.conn()?.execute(
+            "UPDATE quizzes SET publicado=?1,actualizado_en=CURRENT_TIMESTAMP \
+             WHERE id=?2 AND propietario=?3",
+            params![valor, id, owner],
+        )?;
+        if n == 0 {
+            Err(DbError::NoEncontrado("Cuestionario no encontrado".into()))
+        } else {
+            Ok(())
+        }
     }
     pub fn crear_quiz(&self, owner: &str, p: &QuizPayload) -> Result<Quiz, DbError> {
         validar(p)?;
@@ -411,5 +586,53 @@ mod tests {
         assert!(validar(&payload(pregunta.clone())).is_ok());
         pregunta.tol = Some(-1.0);
         assert!(validar(&payload(pregunta)).is_err());
+    }
+
+    #[test]
+    fn vista_estudiante_no_expone_soluciones() {
+        let quiz = Quiz {
+            id: 1,
+            titulo: "Demo".into(),
+            descripcion: "".into(),
+            tema: "General".into(),
+            preguntas: vec![q("choice")],
+            propietario: "admin".into(),
+            creado_en: "".into(),
+            actualizado_en: "".into(),
+        };
+        let json = serde_json::to_value(quiz.para_estudiante()).unwrap();
+        let pregunta = &json["preguntas"][0];
+        assert!(pregunta.get("answer").is_none());
+        assert!(pregunta.get("answers").is_none());
+        assert!(pregunta.get("accepted").is_none());
+        assert!(pregunta.get("tol").is_none());
+    }
+
+    #[test]
+    fn servidor_califica_los_seis_tipos() {
+        let preguntas = TIPOS.iter().map(|t| q(t)).collect::<Vec<_>>();
+        let quiz = Quiz {
+            id: 1,
+            titulo: "Demo".into(),
+            descripcion: "".into(),
+            tema: "General".into(),
+            preguntas,
+            propietario: "admin".into(),
+            creado_en: "".into(),
+            actualizado_en: "".into(),
+        };
+        let entrega = EntregaQuiz {
+            respuestas: vec![
+                serde_json::json!(0),
+                serde_json::json!(0),
+                serde_json::json!([0]),
+                serde_json::json!(["A", "B"]),
+                serde_json::json!(5),
+                serde_json::json!("respuesta"),
+            ],
+        };
+        let resultado = quiz.calificar(&entrega);
+        assert_eq!(resultado.correctas, 6);
+        assert_eq!(resultado.porcentaje, 100);
     }
 }

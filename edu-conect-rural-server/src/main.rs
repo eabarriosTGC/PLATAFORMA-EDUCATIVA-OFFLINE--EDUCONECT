@@ -27,7 +27,9 @@ use db::{Database, DbError, SearchResult};
 use models::{
     ApiError, ArchivoResponse, Curso, LoginPayload, LoginResponse, NuevoProgreso, Progreso,
 };
-use quiz::{Quiz, QuizPayload, QuizResumen};
+use quiz::{
+    EntregaQuiz, PublicacionQuiz, Quiz, QuizPayload, QuizPublico, QuizResumen, ResultadoQuiz,
+};
 use rate_limit::RateLimiter;
 use zim_proxy::{buscar_articulos, listar_zims, obtener_articulo, zim_inyectar_estilos, SharedZim};
 
@@ -334,6 +336,13 @@ async fn main() {
         // ── API módulos (filesystem scan) ──
         .route("/api/modulos", get(listar_modulos))
         .route("/api/multimedia", get(listar_phet))
+        // ── Cuestionarios para estudiantes (sin revelar soluciones) ──
+        .route("/api/quizzes", get(quiz_estudiante_listar))
+        .route("/api/quizzes/{id}/jugar", get(quiz_estudiante_obtener))
+        .route(
+            "/api/quizzes/{id}/responder",
+            post(quiz_estudiante_responder),
+        )
         .route("/api/youtube", get(|| async {
             Json(serde_json::json!({"videos": [], "total": 0, "status": "offline_content_coming_soon"}))
         }))
@@ -361,6 +370,7 @@ async fn main() {
                 .route("/quizzes", get(quiz_listar).post(quiz_crear))
                 .route("/quizzes/importar", post(quiz_importar))
                 .route("/quizzes/{id}", get(quiz_obtener).put(quiz_actualizar).delete(quiz_eliminar))
+                .route("/quizzes/{id}/publicacion", put(quiz_publicar))
                 .route("/quizzes/{id}/duplicar", post(quiz_duplicar))
                 .layer(auth::AuthLayer::new(state.db.jwt_secret.clone())),
         )
@@ -924,6 +934,39 @@ async fn profesor_quizzes_pagina() -> impl IntoResponse {
     )
 }
 
+async fn quiz_estudiante_listar(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<QuizResumen>>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .listar_quizzes_estudiante()
+        .map(Json)
+        .map_err(map_db_error)
+}
+
+async fn quiz_estudiante_obtener(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<QuizPublico>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .obtener_quiz_estudiante(id)
+        .map(|q| Json(q.para_estudiante()))
+        .map_err(map_db_error)
+}
+
+async fn quiz_estudiante_responder(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(entrega): Json<EntregaQuiz>,
+) -> Result<Json<ResultadoQuiz>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .obtener_quiz_estudiante(id)
+        .map(|q| Json(q.calificar(&entrega)))
+        .map_err(map_db_error)
+}
+
 async fn quiz_listar(
     user: models::AuthUser,
     State(state): State<AppState>,
@@ -984,6 +1027,18 @@ async fn quiz_eliminar(
         .db
         .eliminar_quiz(id, &user.usuario)
         .map(|_| Json(serde_json::json!({"ok":true})))
+        .map_err(map_db_error)
+}
+async fn quiz_publicar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(p): Json<PublicacionQuiz>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .publicar_quiz(id, &user.usuario, p.publicado)
+        .map(|_| Json(serde_json::json!({"ok": true, "publicado": p.publicado})))
         .map_err(map_db_error)
 }
 async fn quiz_duplicar(

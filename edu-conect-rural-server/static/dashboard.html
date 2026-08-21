@@ -49,6 +49,15 @@
         </div>
       </a>
 
+      <a href="#cuestionarios" data-view="cuestionarios" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🧠</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Cuestionarios</span>
+          <span class="sidebar-item-desc">Practica y comprueba lo aprendido</span>
+        </div>
+        <span class="nav-badge" id="badge-quizzes">0</span>
+      </a>
+
       <a href="#categoria" data-cat="Ciencias y Naturaleza" class="sidebar-item sidebar-item-sm">
         <span class="sidebar-item-icon">🔬</span>
         <div class="sidebar-item-text">
@@ -240,6 +249,11 @@
               </div>
               <span class="qa-arrow">→</span>
             </div>
+            <div class="qa-card card-clickable" data-view="cuestionarios">
+              <div class="qa-icon">🧠</div>
+              <div class="qa-info"><div class="qa-label">Cuestionarios</div><div class="qa-value" id="qa-quizzes-count">0</div></div>
+              <span class="qa-arrow">→</span>
+            </div>
           </div>
         </section>
 
@@ -258,6 +272,13 @@
         <div class="section-title">📚 Todos los Cursos</div>
         <div class="filters-bar" id="cursos-filters"></div>
         <div class="curso-grid" id="cursos-grid"></div>
+      </section>
+
+      <section id="view-cuestionarios" class="view-section view-hidden">
+        <div class="section-title">🧠 Cuestionarios</div>
+        <p class="quiz-intro">Elige una actividad, responde a tu ritmo y recibe el resultado al terminar.</p>
+        <div id="quiz-catalog" class="quiz-catalog"></div>
+        <div id="quiz-player" class="quiz-player" hidden></div>
       </section>
 
       <!-- Vista biblioteca -->
@@ -440,6 +461,7 @@
   <script src="/static/js/sidebar-badges.js"></script>
   <script src="/static/js/wikipedia-viewer.js"></script>
   <script src="/static/js/modulos-viewer.js"></script>
+  <script src="/static/js/quizzes-estudiante.js"></script>
   <script src="/static/js/dashboard.js"></script>
 
 </body>

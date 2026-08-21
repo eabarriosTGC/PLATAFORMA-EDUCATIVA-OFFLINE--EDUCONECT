@@ -275,13 +275,13 @@
       renderVideos();
       updateProgresoUI();
 
-      // Set initial view (shows dashboard by default)
-      setView('dashboard');
+      // Respeta enlaces directos como /app/#cuestionarios.
+      setView(location.hash === '#cuestionarios' ? 'cuestionarios' : 'dashboard');
     }).catch(function() {
       AppState.loading = false;
       notifyState();
       // Set initial view even on error
-      setView('dashboard');
+      setView(location.hash === '#cuestionarios' ? 'cuestionarios' : 'dashboard');
     });
   }
 

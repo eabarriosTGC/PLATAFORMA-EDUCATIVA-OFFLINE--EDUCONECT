@@ -1,0 +1,15 @@
+{
+  "id": "cie-403",
+  "title": "Laboratorio de la Célula 3D",
+  "subject": "Ciencias Naturales",
+  "grades": [4, 5, 6, 7],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Identificar los principales orgánulos celulares",
+    "Relacionar cada orgánulo con su función",
+    "Comparar células animales y vegetales"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

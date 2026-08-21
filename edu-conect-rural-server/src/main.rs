@@ -1,38 +1,87 @@
 mod auth;
+mod config;
 mod content;
 mod db;
 mod models;
+mod network;
+mod quiz;
 mod rate_limit;
 mod zim_proxy;
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
-
 use axum::{
     extract::{ConnectInfo, Multipart, Path, Query, State},
-    http::header,
     http::StatusCode,
+    http::{header, HeaderMap, HeaderValue},
     response::{Html, IntoResponse, Json, Response},
     routing::{delete, get, post, put},
     Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
+use std::net::SocketAddr;
+use std::path::PathBuf;
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
 
 use db::{Database, DbError, SearchResult};
-use models::{ApiError, ArchivoResponse, Curso, LoginPayload, LoginResponse, NuevoProgreso, Progreso};
+use models::{
+    ApiError, ArchivoResponse, Curso, LoginPayload, LoginResponse, NuevoProgreso, Progreso,
+};
+use quiz::{
+    EntregaQuiz, PublicacionQuiz, Quiz, QuizPayload, QuizPublico, QuizResumen, ResultadoQuiz,
+};
 use rate_limit::RateLimiter;
-use zim_proxy::{SharedZim, buscar_articulos, obtener_articulo, listar_zims, zim_inyectar_estilos};
+use zim_proxy::{buscar_articulos, listar_zims, obtener_articulo, zim_inyectar_estilos, SharedZim};
 
 #[derive(Clone)]
 struct AppState {
     db: Database,
     frontend_path: String,
+    paths: RuntimePaths,
     zim: SharedZim,
     h264_encoder: &'static str,
     login_limiter: std::sync::Arc<RateLimiter>,
+    /// Dirección LAN normalizada (`PUBLIC_BASE_URL`) o `None`.
+    public_base_url: Option<String>,
+    /// Dirección de escucha configurada (p. ej. `0.0.0.0:8080`).
+    listen_addr: String,
+}
+
+/// Rutas de almacenamiento mutable. Todo deriva de `DATA_DIR`
+/// (en Docker: /data; en dev local: ./data).
+#[derive(Clone, Debug)]
+struct RuntimePaths {
+    data_dir: PathBuf,
+    db: PathBuf,
+    videos: PathBuf,
+    biblioteca: PathBuf,
+    /// Biblioteca incluida en la imagen (solo lectura, `/app/default-content/biblioteca`)
+    biblioteca_bundled: PathBuf,
+    contenido: PathBuf,
+    contenido_zim: PathBuf,
+}
+
+impl RuntimePaths {
+    fn nuevo(data_dir: &str) -> Self {
+        let data_dir = PathBuf::from(data_dir);
+        Self {
+            db: data_dir.join("educonect.db"),
+            videos: data_dir.join("videos"),
+            biblioteca: data_dir.join("biblioteca"),
+            biblioteca_bundled: PathBuf::from(config::default_biblioteca_dir()),
+            contenido: data_dir.join("contenido"),
+            contenido_zim: data_dir.join("contenido").join("zim"),
+            data_dir,
+        }
+    }
+
+    /// Crea los directorios mutables al arrancar (idempotente).
+    fn ensure_dirs(&self) -> std::io::Result<()> {
+        std::fs::create_dir_all(&self.videos)?;
+        std::fs::create_dir_all(&self.biblioteca)?;
+        std::fs::create_dir_all(&self.contenido_zim)?;
+        Ok(())
+    }
 }
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -42,16 +91,25 @@ fn err_400(m: &str) -> (StatusCode, Json<ApiError>) {
     (StatusCode::BAD_REQUEST, Json(ApiError { error: m.into() }))
 }
 fn err_422(m: &str) -> (StatusCode, Json<ApiError>) {
-    (StatusCode::UNPROCESSABLE_ENTITY, Json(ApiError { error: m.into() }))
+    (
+        StatusCode::UNPROCESSABLE_ENTITY,
+        Json(ApiError { error: m.into() }),
+    )
 }
 fn err_404(m: &str) -> (StatusCode, Json<ApiError>) {
     (StatusCode::NOT_FOUND, Json(ApiError { error: m.into() }))
 }
 fn err_429(m: &str) -> (StatusCode, Json<ApiError>) {
-    (StatusCode::TOO_MANY_REQUESTS, Json(ApiError { error: m.into() }))
+    (
+        StatusCode::TOO_MANY_REQUESTS,
+        Json(ApiError { error: m.into() }),
+    )
 }
 fn err_500(m: &str) -> (StatusCode, Json<ApiError>) {
-    (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError { error: m.into() }))
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ApiError { error: m.into() }),
+    )
 }
 fn error_response(code: StatusCode, msg: impl Into<String>) -> (StatusCode, Json<ApiError>) {
     (code, Json(ApiError { error: msg.into() }))
@@ -60,16 +118,23 @@ fn map_db_error(err: DbError) -> (StatusCode, Json<ApiError>) {
     match &err {
         DbError::NoEncontrado(msg) => error_response(StatusCode::NOT_FOUND, msg),
         DbError::Validacion(msg) => error_response(StatusCode::UNPROCESSABLE_ENTITY, msg),
-        DbError::Sqlite(e) => {
-            error_response(StatusCode::INTERNAL_SERVER_ERROR, format!("Error de base de datos: {e}"))
-        }
-        DbError::Pool(e) => {
-            error_response(StatusCode::INTERNAL_SERVER_ERROR, format!("Error de pool de conexiones: {e}"))
-        }
+        DbError::Sqlite(e) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error de base de datos: {e}"),
+        ),
+        DbError::Pool(e) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error de pool de conexiones: {e}"),
+        ),
     }
 }
 fn auth_401() -> (StatusCode, Json<ApiError>) {
-    (StatusCode::UNAUTHORIZED, Json(ApiError { error: "Credenciales inválidas".into() }))
+    (
+        StatusCode::UNAUTHORIZED,
+        Json(ApiError {
+            error: "Credenciales inválidas".into(),
+        }),
+    )
 }
 
 // ── inicio ──────────────────────────────────────────────────────────
@@ -98,14 +163,19 @@ fn detect_h264_encoder() -> &'static str {
 /// Genera un thumbnail para un video usando ffmpeg.
 /// Extrae un frame en el segundo 3 y lo guarda como {path}.thumb.jpg
 fn generar_thumbnail(video_path: &str) -> Option<String> {
-    let thumbnail_path = format!("{}.thumb.jpg", video_path);
+    let thumbnail_path = format!("{video_path}.thumb.jpg");
     let result = std::process::Command::new("ffmpeg")
         .args([
-            "-i", video_path,
-            "-ss", "00:00:03",
-            "-vframes", "1",
-            "-q:v", "2",
-            "-y", &thumbnail_path,
+            "-i",
+            video_path,
+            "-ss",
+            "00:00:03",
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
+            "-y",
+            &thumbnail_path,
         ])
         .output();
     match result {
@@ -123,30 +193,114 @@ fn generar_thumbnail(video_path: &str) -> Option<String> {
 /// Landing page personalizada
 async fn landing_page() -> impl IntoResponse {
     let html = include_str!("../static/index.html");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
 }
 
 /// GET /app/ — Dashboard vanilla HTML
 async fn dashboard_pagina() -> impl IntoResponse {
     let html = include_str!("../static/dashboard.html");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
+}
+
+/// GET /api/network — dirección LAN que otros dispositivos usan para
+/// conectarse. Prefiere `PUBLIC_BASE_URL`; sin ella deriva del `Host`.
+/// Nunca descubre IPs desde el contenedor ni expone la IP Docker.
+async fn network_info(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Json<network::NetworkResponse> {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    Json(network::construir_respuesta(
+        state.public_base_url.as_deref(),
+        host.as_deref(),
+        &state.listen_addr,
+    ))
+}
+
+/// GET /api/network/qr.svg — QR offline con la dirección LAN.
+/// SVG generado localmente (sin CDN); codifica exclusivamente `access_url`.
+/// `503` si no hay dirección disponible. `no-store`: un QR obsoleto
+/// escaneado es un usuario perdido.
+async fn network_qr(State(state): State<AppState>, headers: HeaderMap) -> Response {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+    let resp = network::construir_respuesta(
+        state.public_base_url.as_deref(),
+        host.as_deref(),
+        &state.listen_addr,
+    );
+    match network::svg_qr_para(&resp) {
+        Ok(svg) => (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "image/svg+xml"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            svg,
+        )
+            .into_response(),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            [
+                (header::CONTENT_TYPE, "application/json"),
+                (header::CACHE_CONTROL, "no-store"),
+            ],
+            Json(ApiError {
+                error: "Sin dirección de red disponible".into(),
+            }),
+        )
+            .into_response(),
+    }
 }
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
         .init();
 
-    let db_path = std::env::var("DB_PATH").unwrap_or_else(|_| "data/educonect.db".into());
-    let frontend_path = std::env::var("FRONTEND_PATH").unwrap_or_else(|_| "../edu-conect-rural-dashboard/out/".into());
+    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "data".into());
+    let paths = RuntimePaths::nuevo(&data_dir);
+    paths
+        .ensure_dirs()
+        .expect("Error creando directorios de datos");
+    tracing::info!("📁 Directorio de datos: {}", paths.data_dir.display());
+    let frontend_path = std::env::var("FRONTEND_PATH")
+        .unwrap_or_else(|_| "../edu-conect-rural-dashboard/out/".into());
     let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
-        .unwrap_or_else(|_| "0.0.0.0:8080".into()).parse().expect("LISTEN_ADDR inválida");
+        .unwrap_or_else(|_| "0.0.0.0:8080".into())
+        .parse()
+        .expect("LISTEN_ADDR inválida");
+    let listen_addr_text = listen_addr.to_string();
 
-    let database = Database::open(&db_path).expect("Error al abrir la base de datos");
+    let public_base_url = config::public_base_url();
+    if let Some(url) = &public_base_url {
+        tracing::info!("🌐 PUBLIC_BASE_URL configurada: {url}");
+    }
 
-    // Inicializar lector ZIM (Wikipedia offline puro Rust)
-    let zim = zim_proxy::inicializar().await;
+    let jwt_secret = config::jwt_secret_requerido();
+    let database = Database::open(&paths.db.to_string_lossy(), jwt_secret)
+        .expect("Error al abrir la base de datos");
+
+    // Inicializar lector ZIM (Wikipedia offline puro Rust) — dos zonas:
+    // bundled (imagen, solo lectura) + persistente (/data, pisa duplicados)
+    let zim_bundled = config::default_zim_dir();
+    let zim = zim_proxy::inicializar(&zim_bundled, &paths.contenido_zim.to_string_lossy()).await;
 
     // Detectar encoder H.264 soportado por el hardware (Raspberry Pi → h264_v4l2m2m, x86 → libx264)
     let h264_encoder = detect_h264_encoder();
@@ -155,9 +309,12 @@ async fn main() {
     let state = AppState {
         db: database.clone(),
         frontend_path: frontend_path.clone(),
+        paths: paths.clone(),
         zim: zim.clone(),
         h264_encoder,
         login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),
+        public_base_url,
+        listen_addr: listen_addr_text,
     };
 
     let app = Router::new()
@@ -165,6 +322,8 @@ async fn main() {
         .route("/health", get(|| async {
             Json(serde_json::json!({"status": "ok", "version": env!("CARGO_PKG_VERSION")}))
         }))
+        .route("/api/network", get(network_info))
+        .route("/api/network/qr.svg", get(network_qr))
         .route("/", get(landing_page))
         .route("/app", get(|| async { axum::response::Redirect::to("/app/") }))
         .route("/app/", get(dashboard_pagina))
@@ -177,6 +336,13 @@ async fn main() {
         // ── API módulos (filesystem scan) ──
         .route("/api/modulos", get(listar_modulos))
         .route("/api/multimedia", get(listar_phet))
+        // ── Cuestionarios para estudiantes (sin revelar soluciones) ──
+        .route("/api/quizzes", get(quiz_estudiante_listar))
+        .route("/api/quizzes/{id}/jugar", get(quiz_estudiante_obtener))
+        .route(
+            "/api/quizzes/{id}/responder",
+            post(quiz_estudiante_responder),
+        )
         .route("/api/youtube", get(|| async {
             Json(serde_json::json!({"videos": [], "total": 0, "status": "offline_content_coming_soon"}))
         }))
@@ -191,11 +357,23 @@ async fn main() {
         // ── Profesor ──
         .route("/profesor/", get(profesor_pagina))
         .route("/profesor", get(|| async { axum::response::Redirect::to("/profesor/") }))
-        .route("/api/profesor/estudiantes", get(profesor_listar_estudiantes))
-        .route("/api/profesor/progreso", get(profesor_progreso_completo))
-        .route("/api/profesor/progreso/{usuario}", get(profesor_progreso_estudiante))
-        .route("/api/profesor/reporte", get(profesor_reporte))
-        .route("/api/profesor/exportar", get(profesor_exportar_csv))
+        .route("/profesor/quizzes/", get(profesor_quizzes_pagina))
+        .route("/profesor/quizzes", get(|| async { axum::response::Redirect::to("/profesor/quizzes/") }))
+        .nest(
+            "/api/profesor",
+            Router::new()
+                .route("/estudiantes", get(profesor_listar_estudiantes))
+                .route("/progreso", get(profesor_progreso_completo))
+                .route("/progreso/{usuario}", get(profesor_progreso_estudiante))
+                .route("/reporte", get(profesor_reporte))
+                .route("/exportar", get(profesor_exportar_csv))
+                .route("/quizzes", get(quiz_listar).post(quiz_crear))
+                .route("/quizzes/importar", post(quiz_importar))
+                .route("/quizzes/{id}", get(quiz_obtener).put(quiz_actualizar).delete(quiz_eliminar))
+                .route("/quizzes/{id}/publicacion", put(quiz_publicar))
+                .route("/quizzes/{id}/duplicar", post(quiz_duplicar))
+                .layer(auth::AuthLayer::new(state.db.jwt_secret.clone())),
+        )
         // ── Admin: /admin/login es PÚBLICO; el resto va DENTRO del nest protegido ──
         .route("/admin/login", post(admin_login))
         .nest(
@@ -230,8 +408,8 @@ async fn main() {
         }))
         .route("/phet", get(|| async { axum::response::Redirect::to("/phet/") }))
         .nest_service("/modulos", ServeDir::new("modulos").append_index_html_on_directories(true))
-        .nest_service("/biblioteca", ServeDir::new("data/biblioteca").append_index_html_on_directories(false))
-        .nest_service("/videos", ServeDir::new("data/videos"))
+        .route("/biblioteca/{*path}", get(servir_biblioteca))
+        .nest_service("/videos", ServeDir::new(&state.paths.videos))
         .route("/api/videos", get(listar_videos))
         .route("/api/videos/thumbnail/{id}", get(servir_thumbnail))
         .route("/api/videos/descargar", post(handler_descargar_video))
@@ -252,51 +430,221 @@ async fn main() {
     tracing::info!("📁 Frontend estático servido desde: {frontend_path}");
 
     let listener = tokio::net::TcpListener::bind(listen_addr).await.unwrap();
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
-        .with_graceful_shutdown(async {
-            tokio::signal::ctrl_c().await.ok();
-            tracing::info!("Señal recibida — apagando EduConect Rural...");
-        })
-        .await
-        .unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.ok();
+        tracing::info!("Señal recibida — apagando EduConect Rural...");
+    })
+    .await
+    .unwrap();
 }
 
 // ── handlers API pública ──────────────────────────────────────────────
 
-async fn listar_cursos(State(state): State<AppState>) -> Result<Json<Vec<Curso>>, (StatusCode, Json<ApiError>)> {
+async fn listar_cursos(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Curso>>, (StatusCode, Json<ApiError>)> {
     state.db.listar_cursos().map(Json).map_err(map_db_error)
 }
-async fn obtener_curso(State(state): State<AppState>, Path(id): Path<i64>) -> Result<Json<Curso>, (StatusCode, Json<ApiError>)> {
+async fn obtener_curso(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<Curso>, (StatusCode, Json<ApiError>)> {
     state.db.obtener_curso(id).map(Json).map_err(map_db_error)
 }
-async fn guardar_progreso(State(state): State<AppState>, Json(payload): Json<NuevoProgreso>) -> Result<(StatusCode, Json<Progreso>), (StatusCode, Json<ApiError>)> {
-    state.db.guardar_progreso(&payload).map(|p| (StatusCode::CREATED, Json(p))).map_err(map_db_error)
+async fn guardar_progreso(
+    State(state): State<AppState>,
+    Json(payload): Json<NuevoProgreso>,
+) -> Result<(StatusCode, Json<Progreso>), (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .guardar_progreso(&payload)
+        .map(|p| (StatusCode::CREATED, Json(p)))
+        .map_err(map_db_error)
 }
-async fn obtener_progreso_usuario(State(state): State<AppState>, Path(usuario): Path<String>) -> Result<Json<Vec<Progreso>>, (StatusCode, Json<ApiError>)> {
-    state.db.progreso_por_usuario(&usuario).map(Json).map_err(map_db_error)
+async fn obtener_progreso_usuario(
+    State(state): State<AppState>,
+    Path(usuario): Path<String>,
+) -> Result<Json<Vec<Progreso>>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .progreso_por_usuario(&usuario)
+        .map(Json)
+        .map_err(map_db_error)
 }
 
 #[derive(Deserialize)]
-struct SearchQuery { q: String, limite: Option<i64> }
+struct SearchQuery {
+    q: String,
+    limite: Option<i64>,
+}
 
 /// GET /api/buscar?q=... — búsqueda full-text
-async fn buscar(State(state): State<AppState>, Query(params): Query<SearchQuery>) -> Result<Json<Vec<SearchResult>>, (StatusCode, Json<ApiError>)> {
+async fn buscar(
+    State(state): State<AppState>,
+    Query(params): Query<SearchQuery>,
+) -> Result<Json<Vec<SearchResult>>, (StatusCode, Json<ApiError>)> {
     if params.q.trim().is_empty() {
         return Ok(Json(vec![]));
     }
-    state.db.buscar(&params.q, params.limite.unwrap_or(10)).map(Json).map_err(map_db_error)
+    state
+        .db
+        .buscar(&params.q, params.limite.unwrap_or(10))
+        .map(Json)
+        .map_err(map_db_error)
 }
 
-/// GET /api/biblioteca — devuelve el catálogo completo de la biblioteca digital
-async fn listar_biblioteca(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let libros = state.db.listar_biblioteca().map_err(map_db_error)?;
-    Ok(Json(serde_json::json!({ "libros": libros })))
+/// GET /api/biblioteca — catálogo con disponibilidad real de archivos.
+/// `source`: "bundled" (imagen) | "persistent" (/data) | "" (sin archivo).
+/// `disponible`: false cuando el archivo no existe en ninguna zona — el
+/// frontend no debe ofrecerlo. No se exponen rutas internas absolutas.
+async fn listar_biblioteca(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let libros_db = state.db.listar_biblioteca().map_err(map_db_error)?;
+    let mut libros: Vec<serde_json::Value> = Vec::with_capacity(libros_db.len());
+    for libro in libros_db {
+        let rel = libro
+            .archivo_path
+            .clone()
+            .map(|p| p.replace("data/biblioteca/", ""))
+            .unwrap_or_default();
+        let en_persistente = !rel.is_empty() && state.paths.biblioteca.join(&rel).is_file();
+        let en_bundled = !rel.is_empty() && state.paths.biblioteca_bundled.join(&rel).is_file();
+        let (source, disponible) = if en_persistente {
+            ("persistent", true)
+        } else if en_bundled {
+            ("bundled", true)
+        } else {
+            ("", false)
+        };
+        libros.push(serde_json::json!({
+            "id": libro.id,
+            "titulo": libro.titulo,
+            "descripcion": libro.descripcion,
+            "categoria": libro.categoria,
+            "rango": libro.rango,
+            "tipo": libro.tipo,
+            "archivo_path": libro.archivo_path,
+            "source": source,
+            "disponible": disponible,
+        }));
+    }
+    let total = libros.len();
+    let disponibles = libros.iter().filter(|l| l["disponible"] == true).count();
+    Ok(Json(serde_json::json!({
+        "libros": libros,
+        "total": total,
+        "disponibles": disponibles,
+    })))
+}
+
+/// GET /biblioteca/{*path} — sirve un PDF resolviendo DOS zonas:
+/// `/data/biblioteca` (docente, prevalece) → `/app/default-content/biblioteca`
+/// (incluida en la imagen). Soporta Range simple (`bytes=a-b` / `bytes=a-`),
+/// que PDF.js usa para cargar páginas sin descargar el archivo completo.
+async fn servir_biblioteca(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+    headers: HeaderMap,
+) -> Response {
+    // Higiene de ruta: sin traversal ni rutas absolutas.
+    if path.contains("..") || path.starts_with('/') || path.is_empty() {
+        return (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            "ruta inválida".to_string(),
+        )
+            .into_response();
+    }
+    let persistente = state.paths.biblioteca.join(&path);
+    let bundled = state.paths.biblioteca_bundled.join(&path);
+    let archivo = if persistente.is_file() {
+        persistente
+    } else if bundled.is_file() {
+        bundled
+    } else {
+        return (
+            StatusCode::NOT_FOUND,
+            [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            "archivo no encontrado".to_string(),
+        )
+            .into_response();
+    };
+
+    let datos = match std::fs::read(&archivo) {
+        Ok(d) => d,
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+                "no se pudo leer".to_string(),
+            )
+                .into_response()
+        }
+    };
+    let len = datos.len();
+    let mime = if archivo.extension().map(|e| e == "pdf").unwrap_or(false) {
+        "application/pdf"
+    } else {
+        "application/octet-stream"
+    };
+
+    // ── Range simple (bytes=start-end | bytes=start-) ──
+    if let Some(range) = headers.get(header::RANGE).and_then(|v| v.to_str().ok()) {
+        if let Some(spec) = range.strip_prefix("bytes=") {
+            let (start, end) = if let Some((a, b)) = spec.split_once('-') {
+                let a: usize = a.trim().parse().unwrap_or(0);
+                let b: Option<usize> = b.trim().parse().ok();
+                match b {
+                    Some(e) => (a, e.min(len.saturating_sub(1))),
+                    None => (a, len.saturating_sub(1)),
+                }
+            } else {
+                (0, len.saturating_sub(1))
+            };
+            if start < len && start <= end {
+                let slice = &datos[start..=end];
+                let cl = slice.len().to_string();
+                let cr = format!("bytes {start}-{end}/{len}");
+                return (
+                    StatusCode::PARTIAL_CONTENT,
+                    [
+                        (header::CONTENT_TYPE, HeaderValue::from_str(mime).unwrap()),
+                        (header::CONTENT_LENGTH, HeaderValue::from_str(&cl).unwrap()),
+                        (header::ACCEPT_RANGES, HeaderValue::from_static("bytes")),
+                        (header::CONTENT_RANGE, HeaderValue::from_str(&cr).unwrap()),
+                    ],
+                    slice.to_vec(),
+                )
+                    .into_response();
+            }
+        }
+    }
+
+    let cl = len.to_string();
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, HeaderValue::from_str(mime).unwrap()),
+            (header::CONTENT_LENGTH, HeaderValue::from_str(&cl).unwrap()),
+            (header::ACCEPT_RANGES, HeaderValue::from_static("bytes")),
+        ],
+        datos,
+    )
+        .into_response()
 }
 
 // ── Diccionario offline ─────────────────────────────────────────────
 
 #[derive(Deserialize)]
-struct DiccionarioQuery { q: Option<String>, limite: Option<i64> }
+struct DiccionarioQuery {
+    q: Option<String>,
+    limite: Option<i64>,
+}
 
 /// GET /api/diccionario/buscar?q=palabra — busca en el diccionario
 async fn diccionario_buscar(
@@ -307,7 +655,10 @@ async fn diccionario_buscar(
     if q.trim().is_empty() {
         return Ok(Json(serde_json::json!({ "resultados": [] })));
     }
-    let resultados = state.db.buscar_en_diccionario(&q, params.limite.unwrap_or(10)).map_err(map_db_error)?;
+    let resultados = state
+        .db
+        .buscar_en_diccionario(&q, params.limite.unwrap_or(10))
+        .map_err(map_db_error)?;
     Ok(Json(serde_json::json!({ "resultados": resultados })))
 }
 
@@ -320,7 +671,10 @@ async fn diccionario_sugerir(
     if q.trim().is_empty() {
         return Ok(Json(serde_json::json!({ "sugerencias": [] })));
     }
-    let sugerencias = state.db.sugerir_palabras(&q, params.limite.unwrap_or(8)).map_err(map_db_error)?;
+    let sugerencias = state
+        .db
+        .sugerir_palabras(&q, params.limite.unwrap_or(8))
+        .map_err(map_db_error)?;
     Ok(Json(serde_json::json!({ "sugerencias": sugerencias })))
 }
 
@@ -335,16 +689,23 @@ async fn diccionario_palabra_dia(
 /// GET /diccionario/ — página HTML del diccionario offline
 async fn diccionario_pagina() -> impl IntoResponse {
     let html = include_str!("../static/diccionario.html");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
 }
 
 // ── listar videos locales ─────────────────────────────────────────────
 
-async fn listar_videos() -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn listar_videos(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let videos_dir = state.paths.videos.clone();
     // std::fs::read_dir es bloqueante; lo movemos a un hilo para no saturar el reactor de Tokio
-    let videos: Vec<serde_json::Value> = tokio::task::spawn_blocking(|| -> Result<Vec<serde_json::Value>, String> {
+    let videos: Vec<serde_json::Value> = tokio::task::spawn_blocking(move || -> Result<Vec<serde_json::Value>, String> {
         let mut videos = Vec::new();
-        let dir = std::path::Path::new("data/videos");
+        let dir = videos_dir.as_path();
         if dir.is_dir() {
             if let Ok(entries) = std::fs::read_dir(dir) {
                 for entry in entries.flatten() {
@@ -385,34 +746,49 @@ async fn listar_videos() -> Result<Json<serde_json::Value>, (StatusCode, Json<Ap
 
 /// GET /api/videos/thumbnail/{id} — sirve la miniatura de un video por ID (nombre)
 async fn servir_thumbnail(
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ApiError>)> {
-    let id = id.replace('"', "").replace('\'', "").replace("..", "");
-    // Buscar archivo .thumb.jpg con ese nombre base en data/videos
-    let videos_dir = std::path::Path::new("data/videos");
+    let id = id.replace(['"', '\''], "").replace("..", "");
+    // Buscar archivo .thumb.jpg con ese nombre base en el directorio de videos
+    let videos_dir = state.paths.videos.clone();
     if !videos_dir.is_dir() {
         return Err(err_404("No hay directorio de videos"));
     }
     let entries = std::fs::read_dir(videos_dir).map_err(|_| err_500("Error leyendo directorio"))?;
     for entry in entries.flatten() {
         let path = entry.path();
-        let file_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+        let file_name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
         // Buscar coincidencia por nombre base (sin extensión) o nombre completo
-        let stem = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+        let stem = path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_default();
         if (stem == id || file_name == id) && file_name.ends_with(".thumb.jpg") {
-            let data = tokio::fs::read(&path).await.map_err(|_| err_500("Error leyendo thumbnail"))?;
+            let data = tokio::fs::read(&path)
+                .await
+                .map_err(|_| err_500("Error leyendo thumbnail"))?;
             return Ok((
-                [(header::CONTENT_TYPE, "image/jpeg"),
-                 (header::CACHE_CONTROL, "public, max-age=86400")],
+                [
+                    (header::CONTENT_TYPE, "image/jpeg"),
+                    (header::CACHE_CONTROL, "public, max-age=86400"),
+                ],
                 data,
             ));
         }
         // También buscar coincidencia parcial: si el id forma parte del nombre
         if file_name.contains(&id) && file_name.ends_with(".thumb.jpg") {
-            let data = tokio::fs::read(&path).await.map_err(|_| err_500("Error leyendo thumbnail"))?;
+            let data = tokio::fs::read(&path)
+                .await
+                .map_err(|_| err_500("Error leyendo thumbnail"))?;
             return Ok((
-                [(header::CONTENT_TYPE, "image/jpeg"),
-                 (header::CACHE_CONTROL, "public, max-age=86400")],
+                [
+                    (header::CONTENT_TYPE, "image/jpeg"),
+                    (header::CACHE_CONTROL, "public, max-age=86400"),
+                ],
                 data,
             ));
         }
@@ -425,7 +801,11 @@ async fn servir_thumbnail(
 /// GET /videos-page/ — página HTML de galería de videos offline
 async fn videos_pagina() -> impl IntoResponse {
     let html = include_str!("../static/videos.html");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
 }
 
 // ── PWA handlers ────────────────────────────────────────────────────
@@ -433,30 +813,49 @@ async fn videos_pagina() -> impl IntoResponse {
 /// GET /sw.js — Service Worker para caché offline
 async fn handler_sw_js() -> impl IntoResponse {
     let js = include_str!("../static/sw.js");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "application/javascript; charset=utf-8")], Html(js))
+    (
+        StatusCode::OK,
+        [(
+            header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
+        Html(js),
+    )
 }
 
 /// GET /manifest.json — PWA manifest
 async fn handler_manifest() -> impl IntoResponse {
     let manifest = include_str!("../static/manifest.json");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "application/manifest+json; charset=utf-8")], Html(manifest))
+    (
+        StatusCode::OK,
+        [(
+            header::CONTENT_TYPE,
+            "application/manifest+json; charset=utf-8",
+        )],
+        Html(manifest),
+    )
 }
 
 /// GET /app-icon.svg — Icono SVG de la aplicación
 async fn handler_app_icon() -> impl IntoResponse {
     let svg = include_str!("../static/app-icon.svg");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")], Html(svg))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")],
+        Html(svg),
+    )
 }
 
 // ── TTS offline (espeak-ng nativo, sin Python) ──────────────────────
 
 #[derive(Deserialize)]
-struct TtsQuery { text: String, rate: Option<i64> }
+struct TtsQuery {
+    text: String,
+    rate: Option<i64>,
+}
 
 /// GET /api/tts?text=hola&rate=150 — genera audio WAV con espeak-ng
-async fn handler_tts(
-    Query(params): Query<TtsQuery>,
-) -> Response {
+async fn handler_tts(Query(params): Query<TtsQuery>) -> Response {
     if params.text.trim().is_empty() {
         return err_422("El parámetro 'text' no puede estar vacío").into_response();
     }
@@ -467,10 +866,14 @@ async fn handler_tts(
     // spawn_blocking porque espeak-ng es síncrono
     match tokio::task::spawn_blocking(move || -> Result<Vec<u8>, String> {
         let child = std::process::Command::new("espeak-ng")
-            .arg("-v").arg("es-es+mbrola-3")
-            .arg("-s").arg(rate.to_string())
-            .arg("-p").arg("40")
-            .arg("-w").arg("/dev/stdout")
+            .arg("-v")
+            .arg("es-es+mbrola-3")
+            .arg("-s")
+            .arg(rate.to_string())
+            .arg("-p")
+            .arg("40")
+            .arg("-w")
+            .arg("/dev/stdout")
             .arg("--")
             .arg(&text)
             .stdout(std::process::Stdio::piped())
@@ -478,7 +881,8 @@ async fn handler_tts(
             .spawn()
             .map_err(|e| format!("Error al ejecutar espeak-ng: {e}"))?;
 
-        let output = child.wait_with_output()
+        let output = child
+            .wait_with_output()
             .map_err(|e| format!("Error al leer espeak-ng: {e}"))?;
 
         if !output.status.success() {
@@ -487,7 +891,9 @@ async fn handler_tts(
         }
 
         Ok(output.stdout)
-    }).await {
+    })
+    .await
+    {
         Ok(Ok(audio_data)) => {
             if audio_data.is_empty() {
                 return err_500("espeak-ng no generó audio").into_response();
@@ -500,7 +906,8 @@ async fn handler_tts(
                     (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
                 ],
                 audio_data,
-            ).into_response()
+            )
+                .into_response()
         }
         Ok(Err(e)) => err_500(&e).into_response(),
         Err(e) => err_500(&format!("Error interno: {e}")).into_response(),
@@ -511,36 +918,187 @@ async fn handler_tts(
 
 async fn profesor_pagina() -> impl IntoResponse {
     let html = include_str!("../static/profesor.html");
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html))
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
 }
 
-async fn profesor_listar_estudiantes(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn profesor_quizzes_pagina() -> impl IntoResponse {
+    let html = include_str!("../static/profesor-quizzes.html");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
+}
+
+async fn quiz_estudiante_listar(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<QuizResumen>>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .listar_quizzes_estudiante()
+        .map(Json)
+        .map_err(map_db_error)
+}
+
+async fn quiz_estudiante_obtener(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<QuizPublico>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .obtener_quiz_estudiante(id)
+        .map(|q| Json(q.para_estudiante()))
+        .map_err(map_db_error)
+}
+
+async fn quiz_estudiante_responder(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(entrega): Json<EntregaQuiz>,
+) -> Result<Json<ResultadoQuiz>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .obtener_quiz_estudiante(id)
+        .map(|q| Json(q.calificar(&entrega)))
+        .map_err(map_db_error)
+}
+
+async fn quiz_listar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<QuizResumen>>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .listar_quizzes(&user.usuario)
+        .map(Json)
+        .map_err(map_db_error)
+}
+async fn quiz_obtener(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<Quiz>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .obtener_quiz(id, &user.usuario)
+        .map(Json)
+        .map_err(map_db_error)
+}
+async fn quiz_crear(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Json(p): Json<QuizPayload>,
+) -> Result<(StatusCode, Json<Quiz>), (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .crear_quiz(&user.usuario, &p)
+        .map(|q| (StatusCode::CREATED, Json(q)))
+        .map_err(map_db_error)
+}
+async fn quiz_importar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Json(p): Json<QuizPayload>,
+) -> Result<(StatusCode, Json<Quiz>), (StatusCode, Json<ApiError>)> {
+    quiz_crear(user, State(state), Json(p)).await
+}
+async fn quiz_actualizar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(p): Json<QuizPayload>,
+) -> Result<Json<Quiz>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .actualizar_quiz(id, &user.usuario, &p)
+        .map(Json)
+        .map_err(map_db_error)
+}
+async fn quiz_eliminar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .eliminar_quiz(id, &user.usuario)
+        .map(|_| Json(serde_json::json!({"ok":true})))
+        .map_err(map_db_error)
+}
+async fn quiz_publicar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(p): Json<PublicacionQuiz>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .publicar_quiz(id, &user.usuario, p.publicado)
+        .map(|_| Json(serde_json::json!({"ok": true, "publicado": p.publicado})))
+        .map_err(map_db_error)
+}
+async fn quiz_duplicar(
+    user: models::AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<(StatusCode, Json<Quiz>), (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .duplicar_quiz(id, &user.usuario)
+        .map(|q| (StatusCode::CREATED, Json(q)))
+        .map_err(map_db_error)
+}
+
+async fn profesor_listar_estudiantes(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     let estudiantes = state.db.listar_estudiantes().map_err(map_db_error)?;
     Ok(Json(serde_json::json!({ "estudiantes": estudiantes })))
 }
 
-async fn profesor_progreso_completo(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn profesor_progreso_completo(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     let progreso = state.db.progreso_completo().map_err(map_db_error)?;
     Ok(Json(serde_json::json!({ "progreso": progreso })))
 }
 
-async fn profesor_progreso_estudiante(State(state): State<AppState>, Path(usuario): Path<String>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let progreso = state.db.progreso_estudiante(&usuario).map_err(map_db_error)?;
-    Ok(Json(serde_json::json!({ "usuario": usuario, "progreso": progreso })))
+async fn profesor_progreso_estudiante(
+    State(state): State<AppState>,
+    Path(usuario): Path<String>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let progreso = state
+        .db
+        .progreso_estudiante(&usuario)
+        .map_err(map_db_error)?;
+    Ok(Json(
+        serde_json::json!({ "usuario": usuario, "progreso": progreso }),
+    ))
 }
 
-async fn profesor_reporte(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn profesor_reporte(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     let stats = state.db.estadisticas_docente().map_err(map_db_error)?;
     Ok(Json(stats))
 }
 
-async fn profesor_exportar_csv(State(state): State<AppState>) -> Result<impl IntoResponse, (StatusCode, Json<ApiError>)> {
+async fn profesor_exportar_csv(
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, (StatusCode, Json<ApiError>)> {
     let csv = state.db.exportar_csv().map_err(map_db_error)?;
     Ok((
         StatusCode::OK,
         [
             (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
-            (header::CONTENT_DISPOSITION, "attachment; filename=\"progreso-educonect.csv\""),
+            (
+                header::CONTENT_DISPOSITION,
+                "attachment; filename=\"progreso-educonect.csv\"",
+            ),
         ],
         csv,
     ))
@@ -549,10 +1107,14 @@ async fn profesor_exportar_csv(State(state): State<AppState>) -> Result<impl Int
 // ── descargar video con yt-dlp ──────────────────────────────────────
 
 #[derive(Deserialize)]
-struct DescargarPayload { url: String, quality: Option<String> }
+struct DescargarPayload {
+    url: String,
+    quality: Option<String>,
+}
 
 /// POST /api/videos/descargar — descarga un video de YouTube con yt-dlp
 async fn handler_descargar_video(
+    State(state): State<AppState>,
     Json(payload): Json<DescargarPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     if payload.url.trim().is_empty() {
@@ -561,31 +1123,56 @@ async fn handler_descargar_video(
     let quality = payload.quality.unwrap_or_else(|| "720".into());
     let format_arg = match quality.as_str() {
         "best" => "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-        "480" => "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best",
-        "720" => "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best",
+        "480" => {
+            "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best"
+        }
+        "720" => {
+            "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best"
+        }
         _ => "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best",
     };
-    let videos_dir = std::path::Path::new("data/videos");
-    tokio::fs::create_dir_all(videos_dir).await.map_err(|e| err_500(&e.to_string()))?;
+    let videos_dir = state.paths.videos.clone();
+    tokio::fs::create_dir_all(&videos_dir)
+        .await
+        .map_err(|e| err_500(&e.to_string()))?;
     let output = tokio::task::spawn_blocking(move || -> Result<String, String> {
         let result = std::process::Command::new("yt-dlp")
-            .arg("--output").arg(format!("{}/%(title)s.%(ext)s", videos_dir.display()))
-            .arg("--format").arg(format_arg)
-            .arg("--restrict-filenames").arg("--no-playlist")
-            .arg("--embed-metadata").arg("--embed-thumbnail")
-            .arg("--merge-output-format").arg("mp4")
-            .arg("--no-warnings").arg("--print").arg("filename")
-            .arg(&payload.url).output()
+            .arg("--output")
+            .arg(format!("{}/%(title)s.%(ext)s", videos_dir.display()))
+            .arg("--format")
+            .arg(format_arg)
+            .arg("--restrict-filenames")
+            .arg("--no-playlist")
+            .arg("--embed-metadata")
+            .arg("--embed-thumbnail")
+            .arg("--merge-output-format")
+            .arg("mp4")
+            .arg("--no-warnings")
+            .arg("--print")
+            .arg("filename")
+            .arg(&payload.url)
+            .output()
             .map_err(|e| format!("Error ejecutando yt-dlp: {e}"))?;
         if !result.status.success() {
-            return Err(format!("yt-dlp falló: {}", String::from_utf8_lossy(&result.stderr)));
+            return Err(format!(
+                "yt-dlp falló: {}",
+                String::from_utf8_lossy(&result.stderr)
+            ));
         }
         let filename = String::from_utf8_lossy(&result.stdout).trim().to_string();
-        if filename.is_empty() { return Err("yt-dlp no devolvió nombre de archivo".into()); }
+        if filename.is_empty() {
+            return Err("yt-dlp no devolvió nombre de archivo".into());
+        }
         Ok(filename)
-    }).await.map_err(|e| err_500(&format!("Error: {e}")))?
-      .map_err(|e| err_500(&e))?;
-    let file_stem = std::path::Path::new(&output).file_stem().and_then(|s| s.to_str()).unwrap_or("video").to_string();
+    })
+    .await
+    .map_err(|e| err_500(&format!("Error: {e}")))?
+    .map_err(|e| err_500(&e))?;
+    let file_stem = std::path::Path::new(&output)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("video")
+        .to_string();
     let file_path = std::path::Path::new(&output);
     let metadata = tokio::fs::metadata(&file_path).await.ok();
     let size = metadata.map(|m| m.len()).unwrap_or(0);
@@ -594,7 +1181,10 @@ async fn handler_descargar_video(
     let thumbnail = generar_thumbnail(&output);
     let thumb_url: Option<String> = thumbnail.as_ref().map(|t| {
         let p = std::path::Path::new(t);
-        format!("/videos/{}", p.file_name().unwrap_or_default().to_string_lossy())
+        format!(
+            "/videos/{}",
+            p.file_name().unwrap_or_default().to_string_lossy()
+        )
     });
     let mut resp = serde_json::json!({
         "ok": true, "file": output, "title": file_stem.replace(['_', '-'], " "),
@@ -609,40 +1199,86 @@ async fn handler_descargar_video(
 // ── convertir / optimizar video ────────────────────────────────────
 
 #[derive(Deserialize)]
-struct ConvertirPayload { filename: String }
+struct ConvertirPayload {
+    filename: String,
+}
 
 /// POST /api/videos/convertir — transcodifica un video a H.264 optimizado
 async fn handler_convertir_video(
     State(state): State<AppState>,
     Json(payload): Json<ConvertirPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let input_path = std::path::Path::new("data/videos").join(&payload.filename);
-    if !input_path.exists() { return Err(err_404(&format!("Archivo no encontrado: {}", payload.filename))); }
-    let output_name = format!("{}_opt.mp4", input_path.file_stem().and_then(|s| s.to_str()).unwrap_or("video"));
-    let output_path = std::path::Path::new("data/videos").join(&output_name);
+    let videos_dir = &state.paths.videos;
+    let input_path = videos_dir.join(&payload.filename);
+    if !input_path.exists() {
+        return Err(err_404(&format!(
+            "Archivo no encontrado: {}",
+            payload.filename
+        )));
+    }
+    let output_name = format!(
+        "{}_opt.mp4",
+        input_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("video")
+    );
+    let output_path = videos_dir.join(&output_name);
     let input = input_path.to_string_lossy().to_string();
     let output = output_path.to_string_lossy().to_string();
     let encoder = state.h264_encoder;
     tokio::task::spawn_blocking(move || -> Result<(), String> {
         let result = std::process::Command::new("ffmpeg")
-            .args(["-i", &input, "-c:v", encoder, "-preset", "medium", "-crf", "20",
-                   "-c:a", "aac", "-b:a", "64k", "-ac", "1",
-                   "-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease",
-                   "-movflags", "+faststart", "-threads", "2", "-y", &output])
-            .output().map_err(|e| format!("ffmpeg falló: {e}"))?;
+            .args([
+                "-i",
+                &input,
+                "-c:v",
+                encoder,
+                "-preset",
+                "medium",
+                "-crf",
+                "20",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "64k",
+                "-ac",
+                "1",
+                "-vf",
+                "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease",
+                "-movflags",
+                "+faststart",
+                "-threads",
+                "2",
+                "-y",
+                &output,
+            ])
+            .output()
+            .map_err(|e| format!("ffmpeg falló: {e}"))?;
         if !result.status.success() {
-            return Err(format!("ffmpeg: {}", String::from_utf8_lossy(&result.stderr)));
+            return Err(format!(
+                "ffmpeg: {}",
+                String::from_utf8_lossy(&result.stderr)
+            ));
         }
         Ok(())
-    }).await.map_err(|e| err_500(&format!("Error: {e}")))?
-      .map_err(|e| err_500(&e))?;
+    })
+    .await
+    .map_err(|e| err_500(&format!("Error: {e}")))?
+    .map_err(|e| err_500(&e))?;
     // Generar thumbnail para el video convertido
     let thumbnail = generar_thumbnail(&output_path.to_string_lossy());
     let thumb_url: Option<String> = thumbnail.as_ref().map(|t| {
         let p = std::path::Path::new(t);
-        format!("/videos/{}", p.file_name().unwrap_or_default().to_string_lossy())
+        format!(
+            "/videos/{}",
+            p.file_name().unwrap_or_default().to_string_lossy()
+        )
     });
-    let size = tokio::fs::metadata(&output_path).await.map(|m| m.len()).unwrap_or(0);
+    let size = tokio::fs::metadata(&output_path)
+        .await
+        .map(|m| m.len())
+        .unwrap_or(0);
     let mut resp = serde_json::json!({
         "ok": true, "file": output_name, "size": size,
         "encoder": encoder, "url": format!("/videos/{}", output_name)
@@ -657,28 +1293,35 @@ async fn handler_convertir_video(
 
 /// POST /api/videos/generar-thumbnails — genera thumbnails para todos los videos que no tengan uno
 async fn generar_thumbnails_lote(
+    State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let resultado = tokio::task::spawn_blocking(|| -> Result<serde_json::Value, String> {
-        let dir = std::path::Path::new("data/videos");
+    let videos_dir = state.paths.videos.clone();
+    let resultado = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, String> {
+        let dir = videos_dir.as_path();
         if !dir.is_dir() {
             return Ok(serde_json::json!({"generados": 0, "total": 0, "errores": []}));
         }
         let mut total = 0u64;
         let mut generados = 0u64;
         let mut errores: Vec<String> = Vec::new();
-        let entries = std::fs::read_dir(dir).map_err(|e| format!("Error leyendo directorio: {e}"))?;
+        let entries =
+            std::fs::read_dir(dir).map_err(|e| format!("Error leyendo directorio: {e}"))?;
         for entry in entries {
             let entry = entry.map_err(|e| format!("Error en entrada: {e}"))?;
             let path = entry.path();
             if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if matches!(ext.to_lowercase().as_str(), "mp4" | "webm" | "ogg" | "mov") {
                     let video_path = path.to_string_lossy().to_string();
-                    let thumb_path_str = format!("{}.thumb.jpg", video_path);
+                    let thumb_path_str = format!("{video_path}.thumb.jpg");
                     if !std::path::Path::new(&thumb_path_str).exists() {
                         total += 1;
                         match generar_thumbnail(&video_path) {
-                            Some(_) => { generados += 1; }
-                            None => { errores.push(video_path.clone()); }
+                            Some(_) => {
+                                generados += 1;
+                            }
+                            None => {
+                                errores.push(video_path.clone());
+                            }
                         }
                     }
                 }
@@ -689,7 +1332,9 @@ async fn generar_thumbnails_lote(
             "total": total,
             "errores": errores
         }))
-    }).await.map_err(|e| err_500(&format!("Error: {e}")))?;
+    })
+    .await
+    .map_err(|e| err_500(&format!("Error: {e}")))?;
     Ok(Json(resultado.map_err(|e| err_500(&e))?))
 }
 
@@ -704,88 +1349,226 @@ async fn admin_login(
     let ip = addr.ip().to_string();
     if !state.login_limiter.check(&ip).await {
         tracing::warn!("Rate limit excedido para IP {}", ip);
-        return Err(err_429("Demasiados intentos. Espera 1 minuto y vuelve a intentar."));
+        return Err(err_429(
+            "Demasiados intentos. Espera 1 minuto y vuelve a intentar.",
+        ));
     }
 
-    if payload.usuario.trim().is_empty() { return Err(err_422("El campo 'usuario' no puede estar vacío")); }
-    if payload.password.is_empty() { return Err(err_422("El campo 'password' no puede estar vacío")); }
-    let admin = state.db.obtener_admin(&payload.usuario).map_err(|_| auth_401())?;
-    if !bcrypt::verify(&payload.password, &admin.password_hash).unwrap_or(false) { return Err(auth_401()); }
-    let token = auth::create_token(&payload.usuario, &state.db.jwt_secret)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError { error: format!("Error: {e}") })))?;
-    Ok(Json(LoginResponse { token, usuario: payload.usuario, expira_en: (Utc::now() + chrono::Duration::hours(24)).timestamp() }))
+    if payload.usuario.trim().is_empty() {
+        return Err(err_422("El campo 'usuario' no puede estar vacío"));
+    }
+    if payload.password.is_empty() {
+        return Err(err_422("El campo 'password' no puede estar vacío"));
+    }
+    let admin = state
+        .db
+        .obtener_admin(&payload.usuario)
+        .map_err(|_| auth_401())?;
+    if !bcrypt::verify(&payload.password, &admin.password_hash).unwrap_or(false) {
+        return Err(auth_401());
+    }
+    let token = auth::create_token(&payload.usuario, &state.db.jwt_secret).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: format!("Error: {e}"),
+            }),
+        )
+    })?;
+    Ok(Json(LoginResponse {
+        token,
+        usuario: payload.usuario,
+        expira_en: (Utc::now() + chrono::Duration::hours(24)).timestamp(),
+    }))
 }
 
-async fn admin_dashboard(user: models::AuthUser) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    Ok(Json(serde_json::json!({"mensaje": format!("Bienvenido, {}", user.usuario), "usuario": user.usuario})))
+async fn admin_dashboard(
+    user: models::AuthUser,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    Ok(Json(
+        serde_json::json!({"mensaje": format!("Bienvenido, {}", user.usuario), "usuario": user.usuario}),
+    ))
 }
 
-async fn admin_estadisticas(_user: models::AuthUser, State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let n = state.db.listar_cursos().map_err(|e| err_500(&e.to_string()))?.len();
-    Ok(Json(serde_json::json!({"total_cursos": n, "total_progresos": state.db.total_registros_progreso().unwrap_or(0), "version": env!("CARGO_PKG_VERSION")})))
+async fn admin_estadisticas(
+    _user: models::AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let n = state
+        .db
+        .listar_cursos()
+        .map_err(|e| err_500(&e.to_string()))?
+        .len();
+    Ok(Json(
+        serde_json::json!({"total_cursos": n, "total_progresos": state.db.total_registros_progreso().unwrap_or(0), "version": env!("CARGO_PKG_VERSION")}),
+    ))
 }
 
 // ── handlers content management ───────────────────────────────────────
 
 #[derive(Deserialize)]
-struct CursoPayload { titulo: String, descripcion: Option<String>, categoria: String, archivo_path: Option<String> }
+struct CursoPayload {
+    titulo: String,
+    descripcion: Option<String>,
+    categoria: String,
+    archivo_path: Option<String>,
+}
 #[derive(Deserialize)]
-struct VideoPayload { titulo: String, canal: Option<String>, duracion: Option<String>, thumbnail: Option<String>, categoria: Option<String>, archivo: Option<String> }
+struct VideoPayload {
+    titulo: String,
+    canal: Option<String>,
+    duracion: Option<String>,
+    thumbnail: Option<String>,
+    categoria: Option<String>,
+    archivo: Option<String>,
+}
 
-async fn contenido_status(State(state): State<AppState>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    let n = state.db.listar_cursos().map_err(|e| err_500(&e.to_string()))?.len();
-    Ok(Json(serde_json::json!({"total_cursos": n, "total_videos": state.db.total_videos().unwrap_or(0), "total_archivos": state.db.total_archivos().unwrap_or(0), "espacio_usado_kb": content::dir_size_kb("data/contenido")})))
+async fn contenido_status(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    let n = state
+        .db
+        .listar_cursos()
+        .map_err(|e| err_500(&e.to_string()))?
+        .len();
+    Ok(Json(
+        serde_json::json!({"total_cursos": n, "total_videos": state.db.total_videos().unwrap_or(0), "total_archivos": state.db.total_archivos().unwrap_or(0), "espacio_usado_kb": content::dir_size_kb(&state.paths.contenido)}),
+    ))
 }
 
 #[allow(dead_code)]
-async fn contenido_upload(State(state): State<AppState>, mut multipart: Multipart) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+async fn contenido_upload(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
     let mut items = vec![];
-    while let Some(field) = multipart.next_field().await.map_err(|e| err_400(&e.to_string()))? {
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| err_400(&e.to_string()))?
+    {
         let name = field.file_name().unwrap_or("archivo").to_string();
-        let mime = field.content_type().unwrap_or("application/octet-stream").to_string();
+        let mime = field
+            .content_type()
+            .unwrap_or("application/octet-stream")
+            .to_string();
         let data = field.bytes().await.map_err(|e| err_400(&e.to_string()))?;
         let ext = name.rsplit('.').next().unwrap_or("bin").to_lowercase();
-        let tipo = match ext.as_str() { "pdf"=>"pdf", "mp4"|"webm"|"avi"|"mov"=>"video", "jpg"|"jpeg"|"png"|"gif"|"svg"|"webp"=>"imagen", "md"|"txt"|"html"=>"nota", _=>"otro" };
-        let dir = PathBuf::from("data/contenido");
-        tokio::fs::create_dir_all(&dir).await.map_err(|e| err_500(&e.to_string()))?;
+        let tipo = match ext.as_str() {
+            "pdf" => "pdf",
+            "mp4" | "webm" | "avi" | "mov" => "video",
+            "jpg" | "jpeg" | "png" | "gif" | "svg" | "webp" => "imagen",
+            "md" | "txt" | "html" => "nota",
+            _ => "otro",
+        };
+        let dir = state.paths.contenido.clone();
+        tokio::fs::create_dir_all(&dir)
+            .await
+            .map_err(|e| err_500(&e.to_string()))?;
         let safe = format!("{}_{}", Utc::now().timestamp(), name.replace(' ', "_"));
-        tokio::fs::write(dir.join(&safe), &data).await.map_err(|e| err_500(&e.to_string()))?;
-        let ruta = format!("data/contenido/{}", safe);
-        state.db.insertar_archivo(tipo, &name, &ruta, data.len() as i64, &mime).map_err(|e| err_500(&e.to_string()))?;
-        items.push(serde_json::json!({"nombre": name, "ruta": ruta, "tipo": tipo, "tamano": data.len()}));
+        tokio::fs::write(dir.join(&safe), &data)
+            .await
+            .map_err(|e| err_500(&e.to_string()))?;
+        let ruta = format!("{}/{}", dir.display(), safe);
+        state
+            .db
+            .insertar_archivo(tipo, &name, &ruta, data.len() as i64, &mime)
+            .map_err(|e| err_500(&e.to_string()))?;
+        items.push(
+            serde_json::json!({"nombre": name, "ruta": ruta, "tipo": tipo, "tamano": data.len()}),
+        );
     }
     Ok(Json(serde_json::json!({"archivos": items})))
 }
 
-async fn contenido_crear_curso(State(state): State<AppState>, Json(p): Json<CursoPayload>) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ApiError>)> {
-    if p.titulo.trim().is_empty() { return Err(err_422("El título no puede estar vacío")); }
-    state.db.insertar_curso(&p.titulo, &p.descripcion.unwrap_or_default(), &p.categoria, &p.archivo_path.unwrap_or_default()).map_err(|e| err_500(&e.to_string()))?;
+async fn contenido_crear_curso(
+    State(state): State<AppState>,
+    Json(p): Json<CursoPayload>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ApiError>)> {
+    if p.titulo.trim().is_empty() {
+        return Err(err_422("El título no puede estar vacío"));
+    }
+    state
+        .db
+        .insertar_curso(
+            &p.titulo,
+            &p.descripcion.unwrap_or_default(),
+            &p.categoria,
+            &p.archivo_path.unwrap_or_default(),
+        )
+        .map_err(|e| err_500(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(serde_json::json!({"ok": true}))))
 }
 
-async fn contenido_editar_curso(State(state): State<AppState>, Path(id): Path<i64>, Json(p): Json<CursoPayload>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    state.db.actualizar_curso(id, &p.titulo, &p.descripcion.unwrap_or_default(), &p.categoria, &p.archivo_path.unwrap_or_default()).map_err(|e| err_500(&e.to_string()))?;
+async fn contenido_editar_curso(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(p): Json<CursoPayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .actualizar_curso(
+            id,
+            &p.titulo,
+            &p.descripcion.unwrap_or_default(),
+            &p.categoria,
+            &p.archivo_path.unwrap_or_default(),
+        )
+        .map_err(|e| err_500(&e.to_string()))?;
     Ok(Json(serde_json::json!({"ok": true})))
 }
 
-async fn contenido_eliminar_curso(State(state): State<AppState>, Path(id): Path<i64>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    state.db.eliminar_curso(id).map_err(|e| err_500(&e.to_string()))?;
+async fn contenido_eliminar_curso(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .eliminar_curso(id)
+        .map_err(|e| err_500(&e.to_string()))?;
     Ok(Json(serde_json::json!({"ok": true})))
 }
 
-async fn contenido_crear_video(State(state): State<AppState>, Json(p): Json<VideoPayload>) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ApiError>)> {
-    if p.titulo.trim().is_empty() { return Err(err_422("El título del video no puede estar vacío")); }
-    state.db.insertar_video(&p.titulo, &p.canal.unwrap_or_default(), &p.duracion.unwrap_or_default(), &p.thumbnail.unwrap_or_default(), &p.categoria.unwrap_or_default(), &p.archivo.unwrap_or_default()).map_err(|e| err_500(&e.to_string()))?;
+async fn contenido_crear_video(
+    State(state): State<AppState>,
+    Json(p): Json<VideoPayload>,
+) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ApiError>)> {
+    if p.titulo.trim().is_empty() {
+        return Err(err_422("El título del video no puede estar vacío"));
+    }
+    state
+        .db
+        .insertar_video(
+            &p.titulo,
+            &p.canal.unwrap_or_default(),
+            &p.duracion.unwrap_or_default(),
+            &p.thumbnail.unwrap_or_default(),
+            &p.categoria.unwrap_or_default(),
+            &p.archivo.unwrap_or_default(),
+        )
+        .map_err(|e| err_500(&e.to_string()))?;
     Ok((StatusCode::CREATED, Json(serde_json::json!({"ok": true}))))
 }
 
-async fn contenido_eliminar_video(State(state): State<AppState>, Path(id): Path<i64>) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
-    state.db.eliminar_video(id).map_err(|e| err_500(&e.to_string()))?;
+async fn contenido_eliminar_video(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .eliminar_video(id)
+        .map_err(|e| err_500(&e.to_string()))?;
     Ok(Json(serde_json::json!({"ok": true})))
 }
 
-async fn contenido_listar_archivos(State(state): State<AppState>) -> Result<Json<Vec<ArchivoResponse>>, (StatusCode, Json<ApiError>)> {
-    state.db.listar_archivos().map_err(|e| err_500(&e.to_string())).map(Json)
+async fn contenido_listar_archivos(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<ArchivoResponse>>, (StatusCode, Json<ApiError>)> {
+    state
+        .db
+        .listar_archivos()
+        .map_err(|e| err_500(&e.to_string()))
+        .map(Json)
 }
 
 // ══════════════════════════════════════════════
@@ -809,10 +1592,7 @@ async fn handler_zim_raiz(State(state): State<AppState>) -> axum::response::Resp
 }
 
 /// GET /zim/{*path} — sirve un artículo del ZIM por defecto
-async fn handler_zim_articulo(
-    State(state): State<AppState>,
-    Path(path): Path<String>,
-) -> Response {
+async fn handler_zim_articulo(State(state): State<AppState>, Path(path): Path<String>) -> Response {
     let guard = state.zim.read().await;
     let reader = match guard.zims.get(&guard.default_key) {
         Some(r) => r,
@@ -882,9 +1662,7 @@ async fn wikipedia_article(
 }
 
 /// GET /api/wikipedia/zims — lista los ZIMs disponibles
-async fn wikipedia_zims(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+async fn wikipedia_zims(State(state): State<AppState>) -> Json<serde_json::Value> {
     let guard = state.zim.read().await;
     Json(serde_json::json!({
         "zims": listar_zims(&guard),
@@ -900,7 +1678,9 @@ fn servir_entrada_zim(reader: &zim_proxy::ZimReader, path: &str) -> Response {
         path
     };
 
-    let entry = reader.archive.get_entry_bypath_str(url)
+    let entry = reader
+        .archive
+        .get_entry_bypath_str(url)
         .or_else(|_| reader.archive.get_entry_bypath_str(&format!("A/{url}")));
 
     let entry = match entry {
@@ -913,7 +1693,9 @@ fn servir_entrada_zim(reader: &zim_proxy::ZimReader, path: &str) -> Response {
         Err(_) => return zim_pagina_no_encontrado(url),
     };
 
-    let mime = item.get_mimetype().unwrap_or_else(|_| "text/html; charset=utf-8".into());
+    let mime = item
+        .get_mimetype()
+        .unwrap_or_else(|_| "text/html; charset=utf-8".into());
     let blob = match item.get_data() {
         Ok(b) => b,
         Err(_) => return zim_pagina_no_encontrado(url),
@@ -927,13 +1709,15 @@ fn servir_entrada_zim(reader: &zim_proxy::ZimReader, path: &str) -> Response {
             StatusCode::OK,
             [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
             styled.into_bytes(),
-        ).into_response()
+        )
+            .into_response()
     } else {
         (
             StatusCode::OK,
             [(header::CONTENT_TYPE, mime.as_str())],
             data,
-        ).into_response()
+        )
+            .into_response()
     }
 }
 
@@ -952,13 +1736,18 @@ a{color:#e94560;}
 <h1>📖 Wikipedia Offline</h1>
 <p>No hay archivos ZIM cargados.</p>
 <h2>Cómo instalar:</h2>
-<pre><code>mkdir -p data/contenido/zim
-wget -P data/contenido/zim/ \
+<pre><code>mkdir -p /data/contenido/zim
+wget -P /data/contenido/zim/ \
   https://download.kiwix.org/zim/wikibooks/wikibooks_es_all_nopic_2025-10.zim
 # Luego reinicia el servidor</code></pre>
 <a class="btn" href="/">← Volver al inicio</a>
 </body></html>"#;
-    (StatusCode::OK, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html)).into_response()
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
+        .into_response()
 }
 
 fn zim_pagina_no_encontrado(url: &str) -> Response {
@@ -974,7 +1763,12 @@ h1{{color:#e94560;}}a{{color:#e94560;}}
 <a class="btn" href="/zim/">← Página principal</a>
 </body></html>"#
     );
-    (StatusCode::NOT_FOUND, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], Html(html)).into_response()
+    (
+        StatusCode::NOT_FOUND,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
+        .into_response()
 }
 
 // ══════════════════════════════════════════════
@@ -1031,14 +1825,21 @@ fn scan_modulos_dir(dir_path: &str, is_phet: bool) -> Vec<ModuloInfo> {
 
     for entry in dir.flatten() {
         let path = entry.path();
-        if !path.is_dir() { continue; }
+        if !path.is_dir() {
+            continue;
+        }
 
-        let dir_name = path.file_name()
+        let dir_name = path
+            .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
 
-        if dir_name == "comun" { continue; }
-        if is_phet && dir_name == "menu.html" { continue; }
+        if dir_name == "comun" {
+            continue;
+        }
+        if is_phet && dir_name == "menu.html" {
+            continue;
+        }
 
         // Buscar index.html dentro del directorio
         let index_path = path.join("index.html");
@@ -1048,8 +1849,12 @@ fn scan_modulos_dir(dir_path: &str, is_phet: bool) -> Vec<ModuloInfo> {
             // Buscar cualquier .html
             match std::fs::read_dir(&path) {
                 Ok(entries) => {
-                    let html_file = entries.flatten()
-                        .find(|e| e.path().extension().map(|ext| ext == "html").unwrap_or(false));
+                    let html_file = entries.flatten().find(|e| {
+                        e.path()
+                            .extension()
+                            .map(|ext| ext == "html")
+                            .unwrap_or(false)
+                    });
                     match html_file {
                         Some(f) => f.path(),
                         None => continue,
@@ -1075,7 +1880,11 @@ fn scan_modulos_dir(dir_path: &str, is_phet: bool) -> Vec<ModuloInfo> {
             id: dir_name.clone(),
             titulo,
             descripcion,
-            path: if is_phet { format!("/modulos/phet/{}/", dir_name) } else { format!("/modulos/{}/", dir_name) },
+            path: if is_phet {
+                format!("/modulos/phet/{dir_name}/")
+            } else {
+                format!("/modulos/{dir_name}/")
+            },
             icono,
             categoria,
             etiqueta,
@@ -1099,11 +1908,13 @@ fn extract_html_title(html: &str, fallback: &str) -> String {
         let end = after.find("</h1>").unwrap_or(after.len());
         let title = after[..end].trim().to_string();
         // Limpiar tags HTML dentro del h1
-        let clean = title.replace(|c: char| c == '<' || c == '>', "");
-        if !clean.is_empty() { return clean; }
+        let clean = title.replace(['<', '>'], "");
+        if !clean.is_empty() {
+            return clean;
+        }
     }
     // Fallback: nombre del directorio
-    fallback.replace('-', " ").replace('_', " ")
+    fallback.replace(['-', '_'], " ")
 }
 
 fn extract_meta_desc(html: &str) -> String {
@@ -1122,46 +1933,155 @@ fn extract_meta_desc(html: &str) -> String {
 }
 
 fn guess_icon(dir_name: &str, titulo: &str) -> String {
-    let combined = format!("{} {}", dir_name, titulo).to_lowercase();
-    if combined.contains("mate") || combined.contains("lógica") { return "🧮".into(); }
-    if combined.contains("leng") || combined.contains("lectura") || combined.contains("vocal") { return "🔤".into(); }
-    if combined.contains("cien") || combined.contains("natura") || combined.contains("tabla") { return "🔬".into(); }
-    if combined.contains("arte") || combined.contains("música") { return "🎨".into(); }
-    if combined.contains("geo") || combined.contains("mapa") { return "🌍".into(); }
-    if combined.contains("nutri") || combined.contains("alimen") { return "🥗".into(); }
-    if combined.contains("salud") || combined.contains("higiene") { return "🧼".into(); }
-    if combined.contains("clima") || combined.contains("agua") { return "💨".into(); }
-    if combined.contains("emo") || combined.contains("siento") { return "❤️".into(); }
-    if combined.contains("finan") || combined.contains("ahorro") { return "💰".into(); }
-    if combined.contains("ciuda") || combined.contains("palabrero") { return "🕊️".into(); }
-    if combined.contains("digi") || combined.contains("tecno") { return "💻".into(); }
-    if combined.contains("ingl") { return "🇬🇧".into(); }
-    if combined.contains("habi") || combined.contains("crítico") { return "🧠".into(); }
-    if combined.contains("depor") || combined.contains("cuerpo") { return "🏃".into(); }
-    if combined.contains("puzzle") || combined.contains("quiz") { return "🎮".into(); }
-    if combined.contains("3d") || combined.contains("mundo") { return "🌐".into(); }
-    if combined.contains("phet") { return "🧪".into(); }
+    let combined = format!("{dir_name} {titulo}").to_lowercase();
+    if combined.contains("mate") || combined.contains("lógica") {
+        return "🧮".into();
+    }
+    if combined.contains("leng") || combined.contains("lectura") || combined.contains("vocal") {
+        return "🔤".into();
+    }
+    if combined.contains("sistema solar") || combined.contains("planeta") {
+        return "🪐".into();
+    }
+    if combined.contains("célula") || combined.contains("celula") || combined.contains("orgánulo")
+    {
+        return "🧫".into();
+    }
+    if combined.contains("anatomía")
+        || combined.contains("cuerpo humano")
+        || combined.contains("órgano")
+    {
+        return "🫀".into();
+    }
+    if combined.contains("cien") || combined.contains("natura") || combined.contains("tabla") {
+        return "🔬".into();
+    }
+    if combined.contains("arte") || combined.contains("música") {
+        return "🎨".into();
+    }
+    if combined.contains("geometría") || combined.contains("cubo") || combined.contains("esfera") {
+        return "📐".into();
+    }
+    if combined.contains("química") || combined.contains("molécula") || combined.contains("átomo")
+    {
+        return "⚗️".into();
+    }
+    if dir_name.starts_with("qui-") {
+        return "⚗️".into();
+    }
+    if combined.contains("gráfica") || combined.contains("funciones") || combined.contains("onda")
+    {
+        return "📈".into();
+    }
+    if combined.contains("magn") || combined.contains("imán") || combined.contains("iman") {
+        return "🧲".into();
+    }
+    if combined.contains("parab") || combined.contains("proyectil") {
+        return "🚀".into();
+    }
+    if combined.contains("adn") || combined.contains("genética") {
+        return "🧬".into();
+    }
+    if combined.contains("geo") || combined.contains("mapa") {
+        return "🌍".into();
+    }
+    if combined.contains("nutri") || combined.contains("alimen") {
+        return "🥗".into();
+    }
+    if combined.contains("salud") || combined.contains("higiene") {
+        return "🧼".into();
+    }
+    if combined.contains("clima") || combined.contains("agua") {
+        return "💨".into();
+    }
+    if combined.contains("emo") || combined.contains("siento") {
+        return "❤️".into();
+    }
+    if combined.contains("finan") || combined.contains("ahorro") {
+        return "💰".into();
+    }
+    if combined.contains("ciuda") || combined.contains("palabrero") {
+        return "🕊️".into();
+    }
+    if combined.contains("digi") || combined.contains("tecno") {
+        return "💻".into();
+    }
+    if combined.contains("ingl") {
+        return "🇬🇧".into();
+    }
+    if combined.contains("habi") || combined.contains("crítico") {
+        return "🧠".into();
+    }
+    if combined.contains("depor") || combined.contains("cuerpo") {
+        return "🏃".into();
+    }
+    if combined.contains("puzzle") || combined.contains("quiz") {
+        return "🎮".into();
+    }
+    if combined.contains("3d") || combined.contains("mundo") {
+        return "🌐".into();
+    }
+    if combined.contains("phet") {
+        return "🧪".into();
+    }
     "📚".into()
 }
 
 fn guess_category(dir_name: &str) -> String {
     let d = dir_name.to_lowercase();
-    if d.starts_with("leng") { return "Lenguaje".into(); }
-    if d.starts_with("mate") { return "Matemáticas".into(); }
-    if d.starts_with("cien") { return "Ciencias".into(); }
-    if d.starts_with("art") { return "Arte".into(); }
-    if d.starts_with("geo") { return "Geografía".into(); }
-    if d.starts_with("nut") { return "Nutrición".into(); }
-    if d.starts_with("sal") { return "Salud".into(); }
-    if d.starts_with("cli") { return "Clima".into(); }
-    if d.starts_with("emo") { return "Emociones".into(); }
-    if d.starts_with("fin") { return "Finanzas".into(); }
-    if d.starts_with("ciu") { return "Ciudadanía".into(); }
-    if d.starts_with("dig") { return "Digital".into(); }
-    if d.starts_with("ing") { return "Inglés".into(); }
-    if d.starts_with("hab") { return "Habilidades".into(); }
-    if d.starts_with("dep") { return "Deporte".into(); }
-    if d.starts_with("puzzle") || d.starts_with("quiz") { return "Juegos".into(); }
-    if d.starts_with("mundo") { return "3D".into(); }
+    if d.starts_with("leng") {
+        return "Lenguaje".into();
+    }
+    if d.starts_with("mate") {
+        return "Matemáticas".into();
+    }
+    if d.starts_with("cien") || d.starts_with("cie-") {
+        return "Ciencias".into();
+    }
+    if d.starts_with("qui-") {
+        return "Química".into();
+    }
+    if d.starts_with("art") {
+        return "Arte".into();
+    }
+    if d.starts_with("geo") {
+        return "Geografía".into();
+    }
+    if d.starts_with("nut") {
+        return "Nutrición".into();
+    }
+    if d.starts_with("sal") {
+        return "Salud".into();
+    }
+    if d.starts_with("cli") {
+        return "Clima".into();
+    }
+    if d.starts_with("emo") {
+        return "Emociones".into();
+    }
+    if d.starts_with("fin") {
+        return "Finanzas".into();
+    }
+    if d.starts_with("ciu") {
+        return "Ciudadanía".into();
+    }
+    if d.starts_with("dig") {
+        return "Digital".into();
+    }
+    if d.starts_with("ing") {
+        return "Inglés".into();
+    }
+    if d.starts_with("hab") {
+        return "Habilidades".into();
+    }
+    if d.starts_with("dep") {
+        return "Deporte".into();
+    }
+    if d.starts_with("puzzle") || d.starts_with("quiz") {
+        return "Juegos".into();
+    }
+    if d.starts_with("mundo") {
+        return "3D".into();
+    }
     "General".into()
 }

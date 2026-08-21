@@ -14,16 +14,55 @@ COPY edu-conect-rural-server/ .
 
 RUN cargo build --release && strip target/release/edu-conect-rural-server
 
-# ── Builder: Next.js (opcional — falla suave) ──
+# ── Builder: Next.js (obligatorio — produce out/ para el runtime) ──
 FROM node:22-slim AS next-builder
 
 WORKDIR /build
 COPY edu-conect-rural-dashboard/package.json ./
-COPY edu-conect-rural-dashboard/package-lock.json* ./
-RUN npm install --ignore-scripts 2>/dev/null || true
+COPY edu-conect-rural-dashboard/package-lock.json ./
+RUN npm ci --ignore-scripts
 
-COPY edu-conect-rural-dashboard/ .
-RUN npm run build 2>/dev/null; echo "Next.js build skipped (optional)"
+COPY edu-conect-rural-dashboard/ ./
+RUN npm run build
+RUN test -f out/index.html
+
+# ── Builder: contenido offline (Wikipedia ES Top Mini, julio 2026) ──
+# ZIM fijado por nombre + SHA-256 del Metalink oficial de Kiwix.
+# Reproducible: la imagen nunca cambia de contenido por sí sola.
+FROM debian:bookworm-slim AS content-builder
+
+ARG WIKIPEDIA_ZIM_NAME=wikipedia_es_top_mini_2026-07.zim
+ARG WIKIPEDIA_ZIM_URL=https://download.kiwix.org/zim/wikipedia/wikipedia_es_top_mini_2026-07.zim
+ARG WIKIPEDIA_ZIM_SHA256=742dbed32d1d977de22606d268fe381a2a5eb360ce06bfc60d552be468645784
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /default-content/zim \
+    && curl --fail --location --retry 5 --retry-all-errors --continue-at - \
+       "${WIKIPEDIA_ZIM_URL}" \
+       --output "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+    && echo "${WIKIPEDIA_ZIM_SHA256}  /default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+       | sha256sum --check --strict \
+    && mv \
+       "/default-content/zim/${WIKIPEDIA_ZIM_NAME}.download" \
+       "/default-content/zim/${WIKIPEDIA_ZIM_NAME}" \
+    && chmod 0444 "/default-content/zim/${WIKIPEDIA_ZIM_NAME}"
+
+# ── Builder: biblioteca incluida (16 PDFs verificados por manifiesto) ──
+# Manifiesto versionado con URL + SHA-256 + tamaño + licencia. Mismo contrato
+# que el ZIM: reproducible, verificación estricta, solo lectura en runtime.
+FROM debian:bookworm-slim AS content-builder-biblioteca
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl jq \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY edu-conect-rural-server/manifiesto-biblioteca.json /manifiesto-biblioteca.json
+COPY edu-conect-rural-server/download-biblioteca-manifiesto.sh /download-biblioteca-manifiesto.sh
+RUN chmod +x /download-biblioteca-manifiesto.sh \
+    && /download-biblioteca-manifiesto.sh /manifiesto-biblioteca.json /default-content/biblioteca
 
 # ── Runtime final ──
 FROM debian:bookworm-slim
@@ -32,23 +71,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl ffmpeg espeak-ng yt-dlp libgomp1 libzim8 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /data/videos /data/contenido/zim /data/biblioteca /data/contenido
+RUN groupadd --gid 10001 educonnect \
+    && useradd \
+      --uid 10001 \
+      --gid 10001 \
+      --create-home \
+      --home-dir /home/educonnect \
+      --shell /usr/sbin/nologin \
+      educonnect
+
+# Directorios mutables: el volumen named /data se entrega a educonnect.
+# Para volúmenes nuevos: docker compose run --rm --user 0:0 --entrypoint chown \
+#   educonect -R 10001:10001 /data
+RUN mkdir -p \
+      /data/videos \
+      /data/biblioteca \
+      /data/contenido/zim \
+    && chown -R 10001:10001 /data /home/educonnect
 
 COPY --from=rust-builder /build/target/release/edu-conect-rural-server /app/server
 COPY --from=rust-builder /build/static/ /app/static/
 COPY --from=next-builder /build/out/ /app/frontend/
 COPY edu-conect-rural-dashboard/modulos/ /app/modulos/
+# Wikipedia incluida de fábrica: solo lectura (root:root 0444), UID 10001 la lee.
+COPY --from=content-builder /default-content/zim/ /app/default-content/zim/
+# Biblioteca incluida de fábrica: 16 PDFs verificados (manifiesto + SHA-256).
+COPY --from=content-builder-biblioteca /default-content/biblioteca/ /app/default-content/biblioteca/
 
-ENV DB_PATH=/data/educonect.db \
+ENV DATA_DIR=/data \
+    DEFAULT_ZIM_DIR=/app/default-content/zim \
+    DEFAULT_BIBLIOTECA_DIR=/app/default-content/biblioteca \
     FRONTEND_PATH=/app/frontend/ \
     LISTEN_ADDR=0.0.0.0:8080 \
-    RUST_LOG=info \
-    JWT_SECRET=cambiar_en_produccion_con_openssl_rand_base64_64
+    RUST_LOG=info
 
 WORKDIR /app
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
     CMD curl -sf http://localhost:8080/health || exit 1
 
 EXPOSE 8080
+
+# Ejecutar como usuario sin privilegios (docker exec también entra como 10001)
+USER 10001:10001
 ENTRYPOINT ["/app/server"]

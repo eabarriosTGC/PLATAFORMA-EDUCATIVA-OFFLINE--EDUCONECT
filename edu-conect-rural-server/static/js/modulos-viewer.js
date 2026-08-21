@@ -53,7 +53,7 @@
   function createCard(mod) {
     var card = document.createElement('div');
     card.className = 'modulo-card';
-    card.style.cssText = 'background:var(--bg-card);border-radius:16px;padding:20px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);';
+    card.style.cssText = 'background:var(--card, #fff);border-radius:16px;padding:20px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);';
     card.onmouseenter = function() { this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'; };
     card.onmouseleave = function() { this.style.transform=''; this.style.boxShadow=''; };
 
@@ -85,7 +85,7 @@
     overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:1000;display:flex;flex-direction:column;';
 
     var toolbar = document.createElement('div');
-    toolbar.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg-card);border-bottom:1px solid var(--border);';
+    toolbar.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card, #fff);border-bottom:1px solid var(--border);';
     toolbar.innerHTML = 
       '<button class="modulo-close" style="background:var(--accent);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.9rem;">✕ Cerrar</button>' +
       '<span style="color:var(--text);font-weight:600;flex:1;">' + escHtml(mod.titulo) + '</span>' +

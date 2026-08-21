@@ -20,8 +20,6 @@ use axum::{
     extract::{FromRequestParts, Request, State},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Json, Response},
-    routing::{get, post},
-    Router,
 };
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -202,9 +200,7 @@ pub async fn login_handler(
     }
 
     // Buscar admin por usuario (error mapeado a 401 genérico)
-    let admin = db
-        .obtener_admin(&payload.usuario)
-        .map_err(|_| auth_401())?;
+    let admin = db.obtener_admin(&payload.usuario).map_err(|_| auth_401())?;
 
     // Verificar password con bcrypt
     let valida = bcrypt::verify(&payload.password, &admin.password_hash).unwrap_or(false);
@@ -276,24 +272,6 @@ pub async fn estadisticas_handler(
         "total_administradores": admin_count,
         "version": env!("CARGO_PKG_VERSION"),
     })))
-}
-
-/// Construye el router admin (YA NO USADO — las rutas se definen en main.rs).
-/// Se mantiene por referencia.
-#[allow(dead_code)]
-pub fn admin_router() -> Router<Database> {
-    // Las rutas protegidas comparten el mismo secret que está en Database
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        "educonect-rural-dev-secret".into()
-    });
-
-    Router::new()
-        // Login — público
-        .route("/admin/login", post(login_handler))
-        // Dashboard — protegido con middleware JWT
-        .route("/admin/dashboard", get(dashboard_handler))
-        .route("/admin/estadisticas", get(estadisticas_handler))
-        .layer(AuthLayer::new(secret))
 }
 
 #[cfg(test)]

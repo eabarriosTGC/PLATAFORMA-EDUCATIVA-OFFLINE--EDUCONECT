@@ -27,3 +27,8 @@ Thumbs.db
 *.db
 *.db-wal
 *.db-shm
+
+# Secrets
+.env
+.env.*
+!.env.example

@@ -8,10 +8,14 @@
 //
 // La función auditModule recibe una página NUEVA por llamada (contexto limpio)
 // y ejecuta la secuencia completa: carga escritorio, móvil 390x844, offline
-// (bloqueando requests a hosts externos), y navegación de regreso.
+// (bloqueando requests a origins externos), y navegación de regreso.
 
-const EXTERNAL_RE = /^https?:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)/;
-const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:8080';
+const { createOriginPolicy } = require('./origin-policy');
+
+// Interno = mismo origin que E2E_BASE_URL; externo = cualquier otro origin.
+const policy = createOriginPolicy(process.env.E2E_BASE_URL || 'http://localhost:8080');
+const BASE_URL = policy.baseUrl;
+const { isExternalRequest } = policy;
 
 /**
  * Recoge errores de consola, pageerror, requests fallidos y requests externos
@@ -42,7 +46,7 @@ function attachCollectors(page) {
     }
   });
   page.on('request', (req) => {
-    if (EXTERNAL_RE.test(req.url())) {
+    if (isExternalRequest(req.url())) {
       state.externalRequests.push(req.url());
     }
   });
@@ -88,7 +92,7 @@ async function countInteractiveControls(page) {
 /**
  * Comprueba si existe un enlace de regreso al catálogo y si navega a él.
  * Acepta los patrones reales del proyecto: '../', '../index.html',
- * '/modulos/', '/modulos' (volver.js inyecta el botón por JS, así que
+ * '/modulos/', '/modulos', '/app/' (volver.js puede inyectar el botón por JS, así que
  * se espera al DOM). Usa el requestContext global (no page.request, que
  * depende del estado de la página). Devuelve 'ok' | 'no-link' | 'broken'.
  */
@@ -105,6 +109,8 @@ async function checkBackNavigation(page, requestCtx, baseUrl) {
             h === '../index.html' ||
             h === '/modulos/' ||
             h === '/modulos' ||
+            h === '/app/' ||
+            h === '/app' ||
             h.endsWith('/modulos/')
           );
         return candidates.length ? candidates[0] : null;
@@ -112,10 +118,8 @@ async function checkBackNavigation(page, requestCtx, baseUrl) {
       .catch(() => null);
     const href = handle ? await handle.jsonValue() : null;
     if (!href) return 'no-link';
-    // Resuelve la URL de destino contra el directorio del módulo.
-    const target = href.startsWith('/')
-      ? `${baseUrl}${href}`
-      : `${baseUrl}/modulos/${href === '../index.html' ? 'index.html' : ''}`;
+    // Resuelve la URL como lo haría el navegador, sin asumir profundidad de carpeta.
+    const target = new URL(href, page.url()).toString();
     const resp = await requestCtx.get(target);
     return resp.status() === 200 ? 'ok' : 'broken';
   } catch (e) {
@@ -135,24 +139,36 @@ async function horizontalOverflowPx(page) {
 }
 
 /**
- * Carga la URL bloqueando requests a cualquier host externo (fuera de localhost).
+ * Carga la URL bloqueando requests a cualquier origin externo
+ * (distinto del origin de E2E_BASE_URL).
  * Devuelve true si la página carga con 200 y sin errores de red.
  */
 async function loadOffline(page, url) {
   let offlineFailed = false;
   const handler = (route) => route.abort();
-  await page.route(EXTERNAL_RE, handler);
+  await page.route((urlObj) => isExternalRequest(urlObj.href), handler);
   try {
     const ok = await loadOk(page, url);
     // Tras la carga, comprueba que ningún recurso crítico falló por el bloqueo.
     const failed = await page.evaluate(() => {
-      return performance.getEntriesByType('resource')
-        .filter((e) => !e.name.startsWith(location.origin))
+      return performance
+        .getEntriesByType('resource')
+        .filter((entry) => {
+          try {
+            const url = new URL(entry.name, location.href);
+            return (
+              (url.protocol === 'http:' || url.protocol === 'https:') &&
+              url.origin !== location.origin
+            );
+          } catch {
+            return false;
+          }
+        })
         .length;
     }).catch(() => 0);
     offlineFailed = !ok || failed > 0;
   } finally {
-    await page.unroute(EXTERNAL_RE, handler);
+    await page.unroute((urlObj) => isExternalRequest(urlObj.href), handler);
   }
   return !offlineFailed;
 }

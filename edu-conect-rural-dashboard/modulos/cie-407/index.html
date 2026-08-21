@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a12">
+  <meta name="description" content="Tiro parabólico en 3D offline: gravedad, ángulo de lanzamiento y la trayectoria parabólica de un proyectil.">
+  <title>Tiro Parabólico 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Física interactiva · 8° a 11°</span><h1>🚀 Tiro Parabólico 3D</h1><p>Lanza un proyectil y observa la parábola que dibuja la gravedad.</p></div>
+    <div class="progress"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Movimiento parabólico</h2><p>Arrastra para girar · rueda o pellizco para acercar · toca un elemento</p></div>
+        <div class="actions"><button id="rotateButton" type="button">⏸ Detener giro</button><button id="resetButton" type="button">⌂ Centrar</button></div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Simulación tridimensional educativa de un tiro parabólico">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Las fichas y preguntas siguen disponibles.</span></div>
+      </div>
+      <div class="toolbar">
+        <label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label>
+        <button id="launchButton" type="button">🎯 Disparar</button>
+        <button id="pauseButton" type="button">⏸ Pausa</button>
+        <strong id="heightReadout" class="readout" aria-live="polite">Altura: 0.0 m</strong>
+      </div>
+      <div id="partButtons" class="part-buttons" aria-label="Seleccionar elemento de la simulación"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="bodyType" class="badge">Elemento</span><h2 id="bodyName">Proyectil</h2>
+        <p id="bodyDescription">Esfera que sigue la trayectoria parabólica.</p>
+        <div class="fact-grid">
+          <div><span>Rapidez inicial</span><strong id="bodySpeed">12 m/s</strong></div>
+          <div><span>Ángulo</span><strong id="bodyAngle">45°</strong></div>
+          <div><span>Gravedad</span><strong id="bodyGravity">9.8 m/s²</strong></div>
+          <div><span>Altura máxima</span><strong id="bodyHeight">≈ 4.0 m</strong></div>
+        </div>
+        <p id="bodyExample" class="care">💡 En el punto más alto, la velocidad vertical es cero: solo queda la horizontal.</p>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión física</span><h2 id="missionTitle">Encuentra el objeto que sigue la parábola</h2><p id="missionHint">Toca la esfera amarilla que se lanza.</p><div id="missionStatus" class="status" aria-live="polite">Misión 1 de 6</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="question">¿Qué forma tiene la trayectoria del proyectil?</h2><div id="answers" class="answers"></div><p id="feedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Simulación didáctica sin rozamiento · EduConect Rural · Funciona sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

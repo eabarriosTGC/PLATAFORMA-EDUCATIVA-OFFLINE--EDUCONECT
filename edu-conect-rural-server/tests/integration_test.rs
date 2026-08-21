@@ -15,32 +15,30 @@ use tracing_subscriber::EnvFilter;
 #[derive(Clone)]
 struct TestState {
     db: edu_conect_rural_server::db::Database,
+    db_path: String,
 }
 
-fn setup_test_db() -> TestState {
+fn setup_test_db(nombre: &str) -> TestState {
     let _ = tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")),
         )
         .try_init();
 
-    let db_path = format!("data/test_integration_{}.db", std::process::id());
-    let db = edu_conect_rural_server::db::Database::open(&db_path)
+    let data_dir = std::path::Path::new("data");
+    let _ = std::fs::create_dir_all(data_dir);
+    // El bootstrap del admin requiere la variable (mismo valor en todos los tests).
+    std::env::set_var("ADMIN_INITIAL_PASSWORD", "integration-test-password-segura");
+    let db_path = format!("data/test_integration_{}_{}.db", std::process::id(), nombre);
+    let db = edu_conect_rural_server::db::Database::open(&db_path, "s".repeat(40))
         .expect("Fallo al abrir BD de test");
-    TestState { db }
+    TestState { db, db_path }
 }
 
-fn cleanup_test_db(_state: &TestState) {
-    if let Ok(entries) = std::fs::read_dir("data") {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            if name.starts_with("test_integration_") && name.ends_with(".db") {
-                let _ = std::fs::remove_file(entry.path());
-                let _ = std::fs::remove_file(format!("{}-wal", entry.path().display()));
-                let _ = std::fs::remove_file(format!("{}-shm", entry.path().display()));
-            }
-        }
-    }
+fn cleanup_test_db(state: &TestState) {
+    let _ = std::fs::remove_file(&state.db_path);
+    let _ = std::fs::remove_file(format!("{}-wal", state.db_path));
+    let _ = std::fs::remove_file(format!("{}-shm", state.db_path));
 }
 
 fn make_app(state: TestState) -> Router {
@@ -112,7 +110,7 @@ async fn guardar_progreso_de_test(
 
 #[tokio::test]
 async fn test_concurrent_reads_no_deadlock() {
-    let state = setup_test_db();
+    let state = setup_test_db("reads");
     let app = make_app(state.clone());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 0));
@@ -123,11 +121,11 @@ async fn test_concurrent_reads_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
     let mut handles = vec![];
 
     for _ in 0..10 {
-        let url = format!("{}/api/cursos", base);
+        let url = format!("{base}/api/cursos");
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.get(&url).send().await.unwrap();
@@ -151,7 +149,7 @@ async fn test_concurrent_reads_no_deadlock() {
 
 #[tokio::test]
 async fn test_concurrent_writes_no_deadlock() {
-    let state = setup_test_db();
+    let state = setup_test_db("writes");
     let app = make_app(state.clone());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 0));
@@ -162,11 +160,11 @@ async fn test_concurrent_writes_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
     let mut handles = vec![];
 
     for i in 0..10 {
-        let url = format!("{}/api/progreso", base);
+        let url = format!("{base}/api/progreso");
         let body = serde_json::json!({
             "usuario": "concurrente_test",
             "curso_id": 1,
@@ -175,7 +173,12 @@ async fn test_concurrent_writes_no_deadlock() {
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.post(&url).json(&body).send().await.unwrap();
-            assert!(resp.status().is_success());
+            let status = resp.status();
+            if !status.is_success() {
+                let txt = resp.text().await.unwrap();
+                eprintln!("DIAG body[{status}]: {txt}");
+            }
+            assert!(status.is_success());
         }));
     }
 
@@ -184,7 +187,7 @@ async fn test_concurrent_writes_no_deadlock() {
     }
 
     let resp = client
-        .get(format!("{}/api/progreso/concurrente_test", base))
+        .get(format!("{base}/api/progreso/concurrente_test"))
         .send()
         .await
         .unwrap();
@@ -202,7 +205,7 @@ async fn test_concurrent_writes_no_deadlock() {
 
 #[tokio::test]
 async fn test_concurrent_reads_and_writes_no_deadlock() {
-    let state = setup_test_db();
+    let state = setup_test_db("mixto");
     let app = make_app(state.clone());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 0));
@@ -213,11 +216,11 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
 
     // Semilla
     client
-        .post(format!("{}/api/progreso", base))
+        .post(format!("{base}/api/progreso"))
         .json(&serde_json::json!({"usuario": "mixto_test", "curso_id": 1, "porcentaje": 50.0}))
         .send()
         .await
@@ -226,7 +229,7 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     let mut handles = vec![];
 
     for _ in 0..5 {
-        let url = format!("{}/api/progreso/mixto_test", base);
+        let url = format!("{base}/api/progreso/mixto_test");
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.get(&url).send().await.unwrap();
@@ -235,7 +238,7 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     }
 
     for i in 0..3 {
-        let url = format!("{}/api/progreso", base);
+        let url = format!("{base}/api/progreso");
         let body = serde_json::json!({
             "usuario": "mixto_test", "curso_id": 1,
             "porcentaje": 30.0 * (i + 1) as f64
@@ -243,7 +246,12 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.post(&url).json(&body).send().await.unwrap();
-            assert!(resp.status().is_success());
+            let status = resp.status();
+            if !status.is_success() {
+                let txt = resp.text().await.unwrap();
+                eprintln!("DIAG body[{status}]: {txt}");
+            }
+            assert!(status.is_success());
         }));
     }
 

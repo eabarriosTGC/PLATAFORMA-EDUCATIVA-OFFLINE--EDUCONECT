@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#031018">
+  <meta name="description" content="Molécula de agua H₂O en 3D offline: átomos de oxígeno e hidrógeno, enlaces covalentes y el ángulo de 104.5°.">
+  <title>Molécula de Agua 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Química interactiva · 6° a 9°</span><h1>⚗️ Molécula de Agua 3D</h1><p>Observa cómo se unen el oxígeno y el hidrógeno con enlaces covalentes.</p></div>
+    <div class="progress"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Molécula de agua (H₂O)</h2><p>Arrastra para girar · rueda o pellizco para acercar · toca un átomo</p></div>
+        <div class="actions"><button id="rotateButton" type="button">⏸ Detener giro</button><button id="resetButton" type="button">⌂ Centrar</button></div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Modelo tridimensional educativo de la molécula de agua">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Las fichas y preguntas siguen disponibles.</span></div>
+      </div>
+      <div class="toolbar">
+        <label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label>
+      </div>
+      <div id="atomButtons" class="part-buttons" aria-label="Seleccionar parte de la molécula"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="atomType" class="badge">Átomo</span><h2 id="atomName">Oxígeno</h2>
+        <p id="atomDescription">Átomo central de la molécula de agua.</p>
+        <div class="fact-grid">
+          <div><span>Rol</span><strong id="atomRole">Atraer los electrones</strong></div>
+          <div><span>Dato</span><strong id="atomDetail">Símbolo O</strong></div>
+        </div>
+        <p id="atomExample" class="care">💡 El agua de los jagüeyes también está hecha de moléculas H₂O.</p>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión química</span><h2 id="missionTitle">Encuentra el átomo central</h2><p id="missionHint">Toca el átomo más grande de la molécula.</p><div id="missionStatus" class="status" aria-live="polite">Misión 1 de 6</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="question">¿Cuántos átomos de hidrógeno tiene el agua?</h2><div id="answers" class="answers"></div><p id="feedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Modelo didáctico, no a escala · EduConect Rural · Funciona sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

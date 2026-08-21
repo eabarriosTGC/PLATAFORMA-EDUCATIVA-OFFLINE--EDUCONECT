@@ -30,7 +30,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('edu-conect-rural-server/Cargo.lock') }}
 
       - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config libzim-dev
 
       - name: Check formatting
         run: cargo fmt --check

@@ -1,0 +1,15 @@
+{
+  "id": "cie-404",
+  "title": "Atlas del Cuerpo Humano 3D",
+  "subject": "Ciencias Naturales",
+  "grades": [5, 6, 7, 8],
+  "duration_minutes": 30,
+  "learning_objectives": [
+    "Identificar estructuras de cuatro sistemas corporales",
+    "Relacionar órganos con funciones y ubicaciones",
+    "Explicar el recorrido del oxígeno desde el aire hasta las células"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

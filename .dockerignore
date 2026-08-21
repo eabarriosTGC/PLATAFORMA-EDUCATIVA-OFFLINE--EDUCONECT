@@ -30,3 +30,7 @@ Thumbs.db
 *.md
 *.zim
 *.db*
+
+# Secrets (no deben viajar en el contexto de build)
+.env
+.env.*

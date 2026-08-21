@@ -63,7 +63,10 @@ mod tests {
     async fn test_rate_limiter_allows_under_limit() {
         let rl = RateLimiter::new(5, 60);
         for _ in 0..5 {
-            assert!(rl.check("127.0.0.1").await, "debería permitir intento dentro del límite");
+            assert!(
+                rl.check("127.0.0.1").await,
+                "debería permitir intento dentro del límite"
+            );
         }
     }
 
@@ -74,7 +77,10 @@ mod tests {
             assert!(rl.check("127.0.0.1").await);
         }
         // El 4to intento debe ser bloqueado
-        assert!(!rl.check("127.0.0.1").await, "debería bloquear el 4to intento");
+        assert!(
+            !rl.check("127.0.0.1").await,
+            "debería bloquear el 4to intento"
+        );
     }
 
     #[tokio::test]
@@ -83,7 +89,7 @@ mod tests {
         assert!(rl.check("10.0.0.1").await);
         assert!(rl.check("10.0.0.1").await);
         assert!(!rl.check("10.0.0.1").await); // IP 1 bloqueada
-        assert!(rl.check("10.0.0.2").await);  // IP 2 sin bloquear
+        assert!(rl.check("10.0.0.2").await); // IP 2 sin bloquear
         assert!(rl.check("10.0.0.2").await);
         assert!(!rl.check("10.0.0.2").await); // IP 2 ahora bloqueada
     }

@@ -60,9 +60,10 @@ fn public_base_url_desde(raw: &str) -> Option<String> {
     if raw.is_empty() {
         return None;
     }
-    Some(normalizar_public_base_url(raw).unwrap_or_else(|e| {
-        panic!("PUBLIC_BASE_URL inválida (\"{raw}\"): {e}")
-    }))
+    Some(
+        normalizar_public_base_url(raw)
+            .unwrap_or_else(|e| panic!("PUBLIC_BASE_URL inválida (\"{raw}\"): {e}")),
+    )
 }
 
 /// Valida una URL pública absoluta con un parser real (nunca regex):
@@ -72,17 +73,17 @@ fn normalizar_public_base_url(raw: &str) -> Result<String, String> {
     let url = url::Url::parse(raw).map_err(|e| format!("no es una URL válida: {e}"))?;
 
     if !matches!(url.scheme(), "http" | "https") {
-        return Err(format!("esquema \"{}\" no soportado (solo http/https)", url.scheme()));
+        return Err(format!(
+            "esquema \"{}\" no soportado (solo http/https)",
+            url.scheme()
+        ));
     }
 
     // Guard estricto contra autoridades vacías: WHATWG interpreta
     // "http:///ruta" como host "ruta" (primer segmento del path). La entrada
     // cruda debe tener un host explícito: "http://" + autoridad no vacía.
     let despues_esquema = &raw[url.scheme().len() + 3..]; // tras "://"
-    let autoridad = despues_esquema
-        .split(['/', '?', '#'])
-        .next()
-        .unwrap_or("");
+    let autoridad = despues_esquema.split(['/', '?', '#']).next().unwrap_or("");
     if autoridad.is_empty() {
         return Err("falta el host (IPv4, IPv6 o hostname)".to_string());
     }
@@ -260,7 +261,10 @@ mod tests_default_zim_dir {
 
     #[test]
     fn recorta_espacios() {
-        assert_eq!(default_zim_dir_desde("  /app/default-content/zim  "), "/app/default-content/zim");
+        assert_eq!(
+            default_zim_dir_desde("  /app/default-content/zim  "),
+            "/app/default-content/zim"
+        );
     }
 }
 
@@ -270,7 +274,10 @@ mod tests_default_biblioteca_dir {
 
     #[test]
     fn sin_variable_usa_default_relativo() {
-        assert_eq!(default_biblioteca_dir_desde(""), "default-content/biblioteca");
+        assert_eq!(
+            default_biblioteca_dir_desde(""),
+            "default-content/biblioteca"
+        );
     }
 
     #[test]
@@ -283,6 +290,9 @@ mod tests_default_biblioteca_dir {
 
     #[test]
     fn recorta_espacios() {
-        assert_eq!(default_biblioteca_dir_desde("  /app/default-content/biblioteca  "), "/app/default-content/biblioteca");
+        assert_eq!(
+            default_biblioteca_dir_desde("  /app/default-content/biblioteca  "),
+            "/app/default-content/biblioteca"
+        );
     }
 }

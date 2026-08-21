@@ -70,8 +70,8 @@ fn origin_desde_host(host: &str) -> String {
 /// Rendering local con crate puro Rust (sin CDN, sin red en runtime).
 /// El QR completo funciona sin internet.
 pub fn generar_svg_qr(url: &str) -> Result<String, String> {
-    let code = qrcode::QrCode::new(url.as_bytes())
-        .map_err(|e| format!("error generando el QR: {e}"))?;
+    let code =
+        qrcode::QrCode::new(url.as_bytes()).map_err(|e| format!("error generando el QR: {e}"))?;
     Ok(code
         .render::<qrcode::render::svg::Color>()
         .min_dimensions(280, 280)
@@ -95,7 +95,11 @@ mod tests {
 
     #[test]
     fn prefiere_configuracion() {
-        let r = construir_respuesta(Some("http://192.168.101.15:8080"), Some("localhost:8080"), LISTEN);
+        let r = construir_respuesta(
+            Some("http://192.168.101.15:8080"),
+            Some("localhost:8080"),
+            LISTEN,
+        );
         assert_eq!(r.access_url.as_deref(), Some("http://192.168.101.15:8080"));
         assert_eq!(r.source, "configured");
         assert_eq!(r.request_origin.as_deref(), Some("http://localhost:8080"));
@@ -115,7 +119,10 @@ mod tests {
         let r = construir_respuesta(None, Some("192.168.101.15:8080"), LISTEN);
         assert_eq!(r.access_url.as_deref(), Some("http://192.168.101.15:8080"));
         assert_eq!(r.source, "request_host");
-        assert_eq!(r.request_origin.as_deref(), Some("http://192.168.101.15:8080"));
+        assert_eq!(
+            r.request_origin.as_deref(),
+            Some("http://192.168.101.15:8080")
+        );
     }
 
     #[test]
@@ -136,7 +143,11 @@ mod tests {
 
     #[test]
     fn respuesta_nunca_filtra_secretos() {
-        let r = construir_respuesta(Some("http://192.168.101.15:8080"), Some("localhost:8080"), LISTEN);
+        let r = construir_respuesta(
+            Some("http://192.168.101.15:8080"),
+            Some("localhost:8080"),
+            LISTEN,
+        );
         let json = serde_json::to_string(&r).unwrap();
 
         // Sin secretos ni valores sensibles.
@@ -149,16 +160,26 @@ mod tests {
         let obj = value.as_object().unwrap();
         let mut keys: Vec<&String> = obj.keys().collect();
         keys.sort();
-        assert_eq!(keys, vec!["access_url", "listen_addr", "request_origin", "source"]);
+        assert_eq!(
+            keys,
+            vec!["access_url", "listen_addr", "request_origin", "source"]
+        );
     }
 
     // ── QR ─────────────────────────────────────────────────────────
 
     #[test]
     fn qr_svg_valido_para_url_configurada() {
-        let resp = construir_respuesta(Some("http://192.168.101.15:8080"), Some("localhost:8080"), LISTEN);
+        let resp = construir_respuesta(
+            Some("http://192.168.101.15:8080"),
+            Some("localhost:8080"),
+            LISTEN,
+        );
         let svg = svg_qr_para(&resp).expect("URL configurada debe generar QR");
-        assert!(svg.trim_start().starts_with("<?xml"), "debe empezar con el prologo XML");
+        assert!(
+            svg.trim_start().starts_with("<?xml"),
+            "debe empezar con el prologo XML"
+        );
         assert!(svg.contains("<svg xmlns=\"http://www.w3.org/2000/svg\""));
         assert!(svg.contains("viewBox"));
         assert!(svg.contains("<path"), "debe contener módulos dibujados");

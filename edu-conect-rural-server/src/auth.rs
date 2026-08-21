@@ -200,9 +200,7 @@ pub async fn login_handler(
     }
 
     // Buscar admin por usuario (error mapeado a 401 genérico)
-    let admin = db
-        .obtener_admin(&payload.usuario)
-        .map_err(|_| auth_401())?;
+    let admin = db.obtener_admin(&payload.usuario).map_err(|_| auth_401())?;
 
     // Verificar password con bcrypt
     let valida = bcrypt::verify(&payload.password, &admin.password_hash).unwrap_or(false);
@@ -275,7 +273,6 @@ pub async fn estadisticas_handler(
         "version": env!("CARGO_PKG_VERSION"),
     })))
 }
-
 
 #[cfg(test)]
 mod tests {

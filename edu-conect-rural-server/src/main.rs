@@ -161,7 +161,7 @@ fn detect_h264_encoder() -> &'static str {
 /// Genera un thumbnail para un video usando ffmpeg.
 /// Extrae un frame en el segundo 3 y lo guarda como {path}.thumb.jpg
 fn generar_thumbnail(video_path: &str) -> Option<String> {
-    let thumbnail_path = format!("{}.thumb.jpg", video_path);
+    let thumbnail_path = format!("{video_path}.thumb.jpg");
     let result = std::process::Command::new("ffmpeg")
         .args([
             "-i",
@@ -739,7 +739,7 @@ async fn servir_thumbnail(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ApiError>)> {
-    let id = id.replace('"', "").replace('\'', "").replace("..", "");
+    let id = id.replace(['"', '\''], "").replace("..", "");
     // Buscar archivo .thumb.jpg con ese nombre base en el directorio de videos
     let videos_dir = state.paths.videos.clone();
     if !videos_dir.is_dir() {
@@ -1257,7 +1257,7 @@ async fn generar_thumbnails_lote(
             if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if matches!(ext.to_lowercase().as_str(), "mp4" | "webm" | "ogg" | "mov") {
                     let video_path = path.to_string_lossy().to_string();
-                    let thumb_path_str = format!("{}.thumb.jpg", video_path);
+                    let thumb_path_str = format!("{video_path}.thumb.jpg");
                     if !std::path::Path::new(&thumb_path_str).exists() {
                         total += 1;
                         match generar_thumbnail(&video_path) {
@@ -1826,9 +1826,9 @@ fn scan_modulos_dir(dir_path: &str, is_phet: bool) -> Vec<ModuloInfo> {
             titulo,
             descripcion,
             path: if is_phet {
-                format!("/modulos/phet/{}/", dir_name)
+                format!("/modulos/phet/{dir_name}/")
             } else {
-                format!("/modulos/{}/", dir_name)
+                format!("/modulos/{dir_name}/")
             },
             icono,
             categoria,
@@ -1853,13 +1853,13 @@ fn extract_html_title(html: &str, fallback: &str) -> String {
         let end = after.find("</h1>").unwrap_or(after.len());
         let title = after[..end].trim().to_string();
         // Limpiar tags HTML dentro del h1
-        let clean = title.replace(|c: char| c == '<' || c == '>', "");
+        let clean = title.replace(['<', '>'], "");
         if !clean.is_empty() {
             return clean;
         }
     }
     // Fallback: nombre del directorio
-    fallback.replace('-', " ").replace('_', " ")
+    fallback.replace(['-', '_'], " ")
 }
 
 fn extract_meta_desc(html: &str) -> String {
@@ -1878,7 +1878,7 @@ fn extract_meta_desc(html: &str) -> String {
 }
 
 fn guess_icon(dir_name: &str, titulo: &str) -> String {
-    let combined = format!("{} {}", dir_name, titulo).to_lowercase();
+    let combined = format!("{dir_name} {titulo}").to_lowercase();
     if combined.contains("mate") || combined.contains("lógica") {
         return "🧮".into();
     }
@@ -1914,7 +1914,8 @@ fn guess_icon(dir_name: &str, titulo: &str) -> String {
     if dir_name.starts_with("qui-") {
         return "⚗️".into();
     }
-    if combined.contains("gráfica") || combined.contains("funciones") || combined.contains("onda") {
+    if combined.contains("gráfica") || combined.contains("funciones") || combined.contains("onda")
+    {
         return "📈".into();
     }
     if combined.contains("magn") || combined.contains("imán") || combined.contains("iman") {

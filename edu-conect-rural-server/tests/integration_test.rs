@@ -121,11 +121,11 @@ async fn test_concurrent_reads_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
     let mut handles = vec![];
 
     for _ in 0..10 {
-        let url = format!("{}/api/cursos", base);
+        let url = format!("{base}/api/cursos");
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.get(&url).send().await.unwrap();
@@ -160,11 +160,11 @@ async fn test_concurrent_writes_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
     let mut handles = vec![];
 
     for i in 0..10 {
-        let url = format!("{}/api/progreso", base);
+        let url = format!("{base}/api/progreso");
         let body = serde_json::json!({
             "usuario": "concurrente_test",
             "curso_id": 1,
@@ -187,7 +187,7 @@ async fn test_concurrent_writes_no_deadlock() {
     }
 
     let resp = client
-        .get(format!("{}/api/progreso/concurrente_test", base))
+        .get(format!("{base}/api/progreso/concurrente_test"))
         .send()
         .await
         .unwrap();
@@ -216,11 +216,11 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let client = reqwest::Client::new();
-    let base = format!("http://{}", actual_addr);
+    let base = format!("http://{actual_addr}");
 
     // Semilla
     client
-        .post(format!("{}/api/progreso", base))
+        .post(format!("{base}/api/progreso"))
         .json(&serde_json::json!({"usuario": "mixto_test", "curso_id": 1, "porcentaje": 50.0}))
         .send()
         .await
@@ -229,7 +229,7 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     let mut handles = vec![];
 
     for _ in 0..5 {
-        let url = format!("{}/api/progreso/mixto_test", base);
+        let url = format!("{base}/api/progreso/mixto_test");
         let client = client.clone();
         handles.push(tokio::spawn(async move {
             let resp = client.get(&url).send().await.unwrap();
@@ -238,7 +238,7 @@ async fn test_concurrent_reads_and_writes_no_deadlock() {
     }
 
     for i in 0..3 {
-        let url = format!("{}/api/progreso", base);
+        let url = format!("{base}/api/progreso");
         let body = serde_json::json!({
             "usuario": "mixto_test", "curso_id": 1,
             "porcentaje": 30.0 * (i + 1) as f64

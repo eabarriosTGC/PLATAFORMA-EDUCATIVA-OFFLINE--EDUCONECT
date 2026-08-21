@@ -776,7 +776,7 @@ impl Database {
         limite: i64,
     ) -> Result<Vec<serde_json::Value>, DbError> {
         let conn = self.conn()?;
-        let pattern = format!("{}%", prefijo);
+        let pattern = format!("{prefijo}%");
         let mut stmt = conn.prepare(
             "SELECT DISTINCT palabra FROM diccionario WHERE palabra LIKE ?1 ORDER BY palabra LIMIT ?2",
         )?;
@@ -967,13 +967,13 @@ mod tests {
     #[test]
     fn test_db_error_enum() {
         let e = DbError::NoEncontrado("test".into());
-        assert_eq!(format!("{}", e), "test");
+        assert_eq!(format!("{e}"), "test");
 
         let e = DbError::Validacion("bad".into());
-        assert_eq!(format!("{}", e), "bad");
+        assert_eq!(format!("{e}"), "bad");
 
         let e = DbError::Sqlite(rusqlite::Error::InvalidParameterName("x".into()));
-        assert!(format!("{}", e).contains("Error de base de datos"));
+        assert!(format!("{e}").contains("Error de base de datos"));
     }
 
     #[test]
@@ -1116,7 +1116,7 @@ mod tests {
             .unwrap();
         let handles: Vec<_> = conns
             .drain(..4)
-            .map(|mut c| {
+            .map(|c| {
                 std::thread::spawn(move || {
                     for i in 0..10 {
                         c.execute(

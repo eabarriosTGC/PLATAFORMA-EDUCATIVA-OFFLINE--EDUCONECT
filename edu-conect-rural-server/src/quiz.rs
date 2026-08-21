@@ -113,14 +113,14 @@ pub fn validar(p: &QuizPayload) -> Result<(), DbError> {
             && (q.options.len() != 2
                 || q.options[0] != "Verdadero"
                 || q.options[1] != "Falso"
-                || indice_respuesta(q).map_or(true, |a| a > 1))
+                || indice_respuesta(q).is_none_or(|a| a > 1))
         {
             return Err(DbError::Validacion(format!(
                 "Verdadero/Falso inválido en la pregunta {}",
                 i + 1
             )));
         }
-        if q.tipo == "choice" && indice_respuesta(q).map_or(true, |a| a >= q.options.len()) {
+        if q.tipo == "choice" && indice_respuesta(q).is_none_or(|a| a >= q.options.len()) {
             return Err(DbError::Validacion(format!(
                 "Respuesta correcta inválida en la pregunta {}",
                 i + 1
@@ -169,8 +169,14 @@ pub fn validar(p: &QuizPayload) -> Result<(), DbError> {
                 )));
             };
             let tol = q.tol.unwrap_or(0.0);
-            if !answer.is_finite() || !min.is_finite() || !max.is_finite() || !tol.is_finite()
-                || min > max || answer < min || answer > max || tol < 0.0
+            if !answer.is_finite()
+                || !min.is_finite()
+                || !max.is_finite()
+                || !tol.is_finite()
+                || min > max
+                || answer < min
+                || answer > max
+                || tol < 0.0
             {
                 return Err(DbError::Validacion(format!(
                     "Rango, respuesta o tolerancia inválidos en la pregunta {}",
@@ -187,7 +193,10 @@ fn indice_respuesta(q: &PreguntaQuiz) -> Option<usize> {
 }
 
 fn validar_textos(items: &[String], pregunta: usize, nombre: &str) -> Result<(), DbError> {
-    if items.iter().any(|v| v.trim().is_empty() || v.chars().count() > 200) {
+    if items
+        .iter()
+        .any(|v| v.trim().is_empty() || v.chars().count() > 200)
+    {
         return Err(DbError::Validacion(format!(
             "Hay {nombre} vacíos o demasiado largos en la pregunta {}",
             pregunta + 1

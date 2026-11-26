@@ -1,7 +1,22 @@
 #!/usr/bin/env bash
-# install.sh — Instalación completa de EduConect Rural en Raspberry Pi
-# Un solo comando: curl -sSL https://educonect.co/install | sudo bash
-# Compatible con: Raspberry Pi OS, Ubuntu Server ARM64, Alpine Linux ARM64
+# install.sh — Instalación completa de EduConect Rural (Raspberry Pi, PC Linux)
+#
+# Dos formas de invocación, las dos soportadas y probadas
+# (`edu-conect-rural-server/tests/instalador.sh`):
+#
+#   1. clonar el repositorio:   sudo bash edu-conect-rural-server/install.sh
+#   2. por tubería:             curl -sSL https://educonect.co/install | sudo bash
+#
+# La unidad systemd viaja **dentro de este script** (heredoc), no en un archivo
+# vecino: por tubería no hay vecindad, y depender de `deploy/educonect.service`
+# en disco rompía la forma 2 a mitad de la instalación (B1 de la verificación de
+# D-03). El template toma `DATA_DIR` como marcador porque debe recibir la ruta
+# **resuelta a absoluta**, igual que hace `config::cargar`; con una ruta relativa
+# `ReadWritePaths` no apuntaría a los datos reales (B2).
+#
+# `--print-unit` imprime el template sin instalar nada. `deploy/educonect.service`
+# es la copia versionada de esa misma salida: `tests/instalador.sh` exige que
+# ambas sean idénticas, así no se desincronizan.
 set -euo pipefail
 
 # ── Colores ──────────────────────────────────────────────────────────
@@ -12,15 +27,113 @@ ok()    { echo -e "${GREEN}✅${NC} $1"; }
 warn()  { echo -e "${YELLOW}⚠️${NC} $1"; }
 err()   { echo -e "${RED}❌${NC} $1"; }
 
+# ── Template de la unidad systemd (única fuente de verdad) ───────────
+# Marcadores: @APP_ROOT@, @BINARIO@, @DATA_DIR@, @ENV_FILE@. Los sustituye
+# `renderizar_unidad` con rutas **absolutas**.
+unidad_systemd() {
+    cat <<'UNITEOF'
+[Unit]
+Description=EduConect Rural — plataforma educativa offline
+Documentation=https://github.com/educonect/educonect
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+# Cuenta sin privilegios: `APP_ROOT` es de solo lectura (R-01) y los datos viven
+# en `DATA_DIR`, que es el único directorio con escritura.
+User=educonect
+Group=educonect
+
+# Estructura plana de §D-03.A: el ejecutable está en la RAÍZ de la aplicación,
+# junto a `modulos/`, `static/`, `frontend/` y `contenido/`. `APP_ROOT` se deriva
+# del ejecutable (`current_exe`), no del directorio de trabajo: por eso
+# `WorkingDirectory` no interviene en la resolución de recursos y puede cambiarse
+# sin romper `/modulos/*`.
+WorkingDirectory=@APP_ROOT@
+ExecStart=@BINARIO@
+
+# `DATA_DIR` fuera del paquete: reemplazar la aplicación no toca la base ni el
+# contenido generado. Respaldar es copiar un solo directorio.
+# En un PC sin privilegios, el mismo binario usa `$XDG_DATA_HOME/educonect`;
+# aquí, como servicio, declaramos la ruta explícita. @DATA_DIR@ ya viene
+# resuelta a absoluta: una ruta relativa dependería del CWD del servicio.
+Environment=DATA_DIR=@DATA_DIR@
+Environment=LISTEN_ADDR=0.0.0.0:8080
+
+# Secretos fuera de la unidad y fuera del repositorio (`chmod 600`).
+# Formato: JWT_SECRET=... y ADMIN_INITIAL_PASSWORD=...
+EnvironmentFile=@ENV_FILE@
+
+Restart=on-failure
+RestartSec=5
+
+# Endurecimiento coherente con R-01: el paquete no se escribe en ejecución.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# Sigue al `DATA_DIR` resuelto por el instalador: con `ProtectSystem=strict`, un
+# valor fijo aquí dejaría el directorio real de datos en solo lectura.
+ReadWritePaths=@DATA_DIR@
+
+[Install]
+WantedBy=multi-user.target
+UNITEOF
+}
+
+# ── Ayuda / generación del template versionado ───────────────────────
+case "${1:-}" in
+    --print-unit)
+        unidad_systemd
+        exit 0
+        ;;
+    --help|-h)
+        echo "Uso: sudo bash install.sh [--print-unit]"
+        echo "  (sin argumentos)  instala EduConect Rural en este equipo"
+        echo "  --print-unit      imprime el template systemd sin instalar nada"
+        echo ""
+        echo "Variables: INSTALL_DIR (def. /opt/educonect), DATA_DIR (def. /var/lib/educonect),"
+        echo "           ENV_FILE (def. /etc/educonect/educonect.env), SYSTEMD_DIR (def. /etc/systemd/system),"
+        echo "           JWT_SECRET, ADMIN_INITIAL_PASSWORD, SSID, PASSWORD, BIN_URL"
+        exit 0
+        ;;
+    "") ;;
+    *)
+        err "Argumento no reconocido: $1 (ver --help)"
+        exit 2
+        ;;
+esac
+
 # ── Configuración ────────────────────────────────────────────────────
 INSTALL_DIR="${INSTALL_DIR:-/opt/educonect}"
-DATA_DIR="${INSTALL_DIR}/data"
-CONTENT_DIR="${DATA_DIR}/contenido"
-ZIM_DIR="${CONTENT_DIR}/zim"
-VIDEO_DIR="${CONTENT_DIR}/videos"
-BIBLIO_DIR="${DATA_DIR}/biblioteca"
+# Directorio del script, si existe. Por tubería `BASH_SOURCE` no está definido
+# (`set -u` abortaría): el CWD solo sirve para el frontend opcional, nunca para
+# localizar la unidad.
+if [ -n "${BASH_SOURCE[0]:-}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR="$(pwd)"
+fi
+# DATA_DIR fuera de INSTALL_DIR: actualizar la aplicación no puede tocar los datos
+# (R-01). Como servicio Linux, la raíz por defecto es /var/lib/educonect. Una ruta
+# relativa se absolutiza en el paso 2, contra el CWD del instalador.
+DATA_DIR="${DATA_DIR:-/var/lib/educonect}"
+ENV_FILE="${ENV_FILE:-/etc/educonect/educonect.env}"
+# Destino de la unidad instalada. Configurable para empaquetado y para entornos
+# sin systemd en esa ruta (la prueba del instalador lo apunta a un temporal).
+SYSTEMD_DIR="${SYSTEMD_DIR:-/etc/systemd/system}"
 BIN_URL="${BIN_URL:-https://github.com/tuusuario/educonect/releases/latest/download/edu-conect-rural-server}"
 ZIM_URL="${ZIM_URL:-https://download.kiwix.org/zim/wikipedia}"
+
+# Sustituye los marcadores del template por rutas absolutas.
+renderizar_unidad() {
+    sed \
+        -e "s|@APP_ROOT@|${INSTALL_DIR}|g" \
+        -e "s|@BINARIO@|${BIN_PATH}|g" \
+        -e "s|@DATA_DIR@|${DATA_DIR}|g" \
+        -e "s|@ENV_FILE@|${ENV_FILE}|g"
+}
 
 # ── Detectar arquitectura ────────────────────────────────────────────
 ARCH=$(uname -m)
@@ -63,14 +176,37 @@ ok "Dependencias instaladas"
 
 # ── Paso 2: Crear directorios ────────────────────────────────────────
 info "Paso 2/6: Creando estructura de directorios..."
-mkdir -p "$INSTALL_DIR" "$INSTALL_DIR/bin" "$INSTALL_DIR/config" "$INSTALL_DIR/scripts"
+# Raíz de aplicación: recursos de solo lectura, junto al ejecutable.
+mkdir -p "$INSTALL_DIR"
+# La unidad no puede llevar una ruta relativa: el servicio arranca con otro CWD.
+INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd -P)"
+FRONTEND_DIR="${INSTALL_DIR}/frontend"
+mkdir -p "$INSTALL_DIR/config" "$INSTALL_DIR/scripts"
+mkdir -p "$INSTALL_DIR/modulos" "$INSTALL_DIR/static" "$FRONTEND_DIR"
+# Raíz de datos: lo único que el servicio escribe, y lo único que se respalda.
+# Mismo criterio que `config::cargar`: una DATA_DIR relativa se resuelve a
+# absoluta, aquí contra el CWD del instalador.
+mkdir -p "$DATA_DIR"
+DATA_DIR="$(cd "$DATA_DIR" && pwd -P)"
+CONTENT_DIR="${DATA_DIR}/contenido"
+ZIM_DIR="${CONTENT_DIR}/zim"
+VIDEO_DIR="${DATA_DIR}/videos"
+BIBLIO_DIR="${DATA_DIR}/biblioteca"
 mkdir -p "$ZIM_DIR" "$VIDEO_DIR" "$BIBLIO_DIR"
-mkdir -p "${INSTALL_DIR}/data/bin"     # Para scripts auxiliares
-ok "Directorios creados en $INSTALL_DIR"
+
+# El servicio no corre como root: APP_ROOT es de solo lectura y solo DATA_DIR
+# necesita escritura.
+if ! id educonect &>/dev/null; then
+    useradd --system --home "$INSTALL_DIR" --shell /usr/sbin/nologin educonect 2>/dev/null \
+        || warn "No se pudo crear el usuario educonect; la unidad lo necesita."
+fi
+chown -R educonect:educonect "$DATA_DIR"
+ok "Directorios creados: APP_ROOT=$INSTALL_DIR DATA_DIR=$DATA_DIR"
 
 # ── Paso 3: Descargar binario ────────────────────────────────────────
 info "Paso 3/6: Descargando binario principal..."
-BIN_PATH="${INSTALL_DIR}/bin/edu-conect-rural-server"
+# Plano: el ejecutable en la raíz de la aplicación (§D-03.A).
+BIN_PATH="${INSTALL_DIR}/edu-conect-rural-server"
 if [ ! -f "$BIN_PATH" ]; then
     wget -q -O "$BIN_PATH" "${BIN_URL}/${BINARY}" || {
         warn "No se pudo descargar binario precompilado."
@@ -177,30 +313,50 @@ ok "Hotspot configurado (SSID: ${SSID})"
 # ── Paso 5: Configurar servicio systemd ──────────────────────────────
 info "Paso 5/6: Configurando inicio automático..."
 
-cat > "${INSTALL_DIR}/config/educonect.service" << SYSTEMDEOF
-[Unit]
-Description=EduConect Rural — Plataforma educativa offline
-After=network.target network-online.target
-Wants=network-online.target
+# Un solo template, y viaja dentro de este script (`unidad_systemd`): funciona
+# igual por clonación y por tubería. Aquí solo se sustituyen las rutas absolutas
+# de esta instalación.
+mkdir -p "$(dirname "$ENV_FILE")"
+chmod 750 "$(dirname "$ENV_FILE")"
+if [ ! -f "$ENV_FILE" ]; then
+    cat > "$ENV_FILE" << ENVEOF
+# EduConect Rural — entorno del servicio. chmod 600: contiene secretos.
+DATA_DIR=${DATA_DIR}
+LISTEN_ADDR=0.0.0.0:8080
+ENVEOF
+    ok "Entorno del servicio creado: $ENV_FILE"
+fi
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=${INSTALL_DIR}
-ExecStartPre=${INSTALL_DIR}/scripts/setup-hotspot.sh
-ExecStart=${INSTALL_DIR}/bin/edu-conect-rural-server
-Restart=on-failure
-RestartSec=10
-Environment=DB_PATH=${DATA_DIR}/educonect.db
-Environment=FRONTEND_PATH=${INSTALL_DIR}/data/frontend
-Environment=LISTEN_ADDR=0.0.0.0:8080
+# Los secretos se provisionan aquí si el operador los pasó al instalador. Las
+# validaciones del servidor NO se relajan: mínimo 12 caracteres en la contraseña
+# y 32 en el secreto, con rechazo de los valores conocidos.
+if [ -n "${JWT_SECRET:-}" ] && [ -n "${ADMIN_INITIAL_PASSWORD:-}" ]; then
+    printf 'JWT_SECRET=%s\nADMIN_INITIAL_PASSWORD=%s\n' \
+        "$JWT_SECRET" "$ADMIN_INITIAL_PASSWORD" >> "$ENV_FILE"
+    ok "Secretos escritos en $ENV_FILE"
+else
+    warn "Faltan JWT_SECRET y/o ADMIN_INITIAL_PASSWORD en $ENV_FILE."
+    warn "El servicio NO arrancará hasta agregarlos:"
+    warn "  openssl rand -base64 48   # JWT_SECRET (mínimo 32 caracteres)"
+    warn "  openssl rand -base64 24   # ADMIN_INITIAL_PASSWORD (mínimo 12)"
+    warn "Verificá luego con: ${BIN_PATH} --check"
+fi
+chmod 600 "$ENV_FILE"
+chown -R root:educonect "$(dirname "$ENV_FILE")" 2>/dev/null || true
 
-[Install]
-WantedBy=multi-user.target
-SYSTEMDEOF
+unidad_systemd | renderizar_unidad > "${INSTALL_DIR}/config/educonect.service"
+# Un marcador sin sustituir produciría una unidad que systemd rechaza o, peor,
+# que apunta a un directorio literal `@DATA_DIR@`.
+if grep -q '@[A-Z_]*@' "${INSTALL_DIR}/config/educonect.service"; then
+    err "La unidad generada conserva marcadores sin sustituir:"
+    grep -n '@[A-Z_]*@' "${INSTALL_DIR}/config/educonect.service" || true
+    exit 1
+fi
+ok "Unidad generada (APP_ROOT=${INSTALL_DIR} DATA_DIR=${DATA_DIR})"
 
 if command -v systemctl &>/dev/null; then
-    cp "${INSTALL_DIR}/config/educonect.service" /etc/systemd/system/educonect.service
+    mkdir -p "$SYSTEMD_DIR"
+    cp "${INSTALL_DIR}/config/educonect.service" "${SYSTEMD_DIR}/educonect.service"
     systemctl daemon-reload
     systemctl enable educonect.service 2>/dev/null || true
     ok "Servicio instalado: systemctl start educonect"
@@ -257,10 +413,11 @@ echo "   Luego reinicia: systemctl restart educonect"
 DOWNLOADEOF
 chmod +x "${INSTALL_DIR}/scripts/download-content.sh"
 
-# Copiar frontend base (Next.js export) si existe
-if [ -d "${INSTALL_DIR}/../edu-conect-rural-dashboard/out/" ]; then
-    cp -r "${INSTALL_DIR}/../edu-conect-rural-dashboard/out/" "${INSTALL_DIR}/data/frontend/"
-    ok "Frontend copiado"
+# Copiar frontend base (Next.js export) si existe. En el paquete vive en
+# `APP_ROOT/frontend`, que es el valor por defecto de FRONTEND_PATH (D-03).
+if [ -d "${SCRIPT_DIR}/../edu-conect-rural-dashboard/out/" ]; then
+    cp -r "${SCRIPT_DIR}/../edu-conect-rural-dashboard/out/." "${FRONTEND_DIR}/"
+    ok "Frontend copiado a ${FRONTEND_DIR}"
 fi
 
 # ── Resumen final ────────────────────────────────────────────────────
@@ -269,18 +426,19 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  🎉 EduConect Rural INSTALADO${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo "  📂  Instalación: ${INSTALL_DIR}"
-echo "  🛠️   Binario:    ${INSTALL_DIR}/bin/edu-conect-rural-server"
+echo "  📂  Instalación: ${INSTALL_DIR}  (APP_ROOT, solo lectura)"
+echo "  💾  Datos:       ${DATA_DIR}  (escribible, es lo único a respaldar)"
+echo "  🛠️   Binario:    ${BIN_PATH}"
+echo "  🔐  Entorno:    ${ENV_FILE}  (secretos, chmod 600)"
 echo "  📡  WiFi:        SSID='${SSID}' / Clave='${PASSWORD}'"
 echo "  🌐  Plataforma:  http://10.0.0.1"
 echo ""
 echo -e "  ${YELLOW}Para activar el servidor ahora:${NC}"
-echo "    sudo ${INSTALL_DIR}/scripts/setup-hotspot.sh"
-echo "    sudo ${INSTALL_DIR}/bin/edu-conect-rural-server &"
-echo ""
-echo -e "  ${YELLOW}O usando systemd (recomendado):${NC}"
 echo "    sudo systemctl start educonect"
 echo "    sudo systemctl status educonect"
+echo ""
+echo -e "  ${YELLOW}Hotspot WiFi (opcional, ya no es la vía principal):${NC}"
+echo "    sudo ${INSTALL_DIR}/scripts/setup-hotspot.sh"
 echo ""
 echo -e "  ${YELLOW}Para descargar contenido:${NC}"
 echo "    sudo ${INSTALL_DIR}/scripts/download-content.sh mini"

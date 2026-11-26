@@ -201,7 +201,7 @@ if ss -tlnp 2>/dev/null | grep -q ":${SERVER_PORT} "; then
     check "Puerto ${SERVER_PORT} abierto" "pass" "Escuchando — ${SERVER_PROCES}"
 else
     check "Puerto ${SERVER_PORT} abierto" "fail" "NADIE escucha en puerto ${SERVER_PORT}"
-    info "    El servidor Axum debe iniciarse: sudo ${INSTALL_DIR}/bin/edu-conect-rural-server"
+    info "    El servidor Axum debe iniciarse: sudo ${INSTALL_DIR}/edu-conect-rural-server"
 fi
 
 # ── 9. Verificar resolución DNS local ────────────────────────────────
@@ -267,7 +267,9 @@ FILES=(
     "${INSTALL_DIR}/scripts/setup-hotspot.sh"
     "${INSTALL_DIR}/scripts/teardown-hotspot.sh"
     "${INSTALL_DIR}/scripts/check-hotspot.sh"
-    "${INSTALL_DIR}/bin/edu-conect-rural-server"
+    # Layout plano de §D-03.A: el ejecutable está en la raíz de APP_ROOT, junto a
+    # `modulos/` y `static/`; no hay subdirectorio `bin/`.
+    "${INSTALL_DIR}/edu-conect-rural-server"
 )
 
 for f in "${FILES[@]}"; do

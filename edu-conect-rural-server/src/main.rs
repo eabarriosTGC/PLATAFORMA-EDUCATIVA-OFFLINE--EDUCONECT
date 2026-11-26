@@ -39,6 +39,9 @@ use zim_proxy::{buscar_articulos, listar_zims, obtener_articulo, zim_inyectar_es
 struct AppState {
     db: Database,
     frontend_path: String,
+    /// Raíz de aplicación (D-03): directorio del ejecutable. `modulos/`,
+    /// `static/` y `frontend/` se sirven desde aquí, nunca desde el CWD.
+    app_root: PathBuf,
     paths: RuntimePaths,
     #[cfg(feature = "zim")]
     zim: SharedZim,
@@ -294,6 +297,15 @@ async fn main() {
     };
     config::informar(&conf.avisos);
 
+    // Prevalidación del entorno (D-03): `APP_ROOT` debe existir y `DATA_DIR`
+    // debe ser escribible. Corre **antes** de crear un solo directorio, así un
+    // `DATA_DIR` de solo lectura no deja una instalación a medio armar.
+    let entorno = config::verificar(&conf);
+    config::informar(&entorno);
+    if config::hay_error(&entorno) {
+        std::process::exit(1);
+    }
+
     // ── Recién acá empiezan los efectos ──
     let paths = RuntimePaths::nuevo(
         &conf.data_dir.to_string_lossy(),
@@ -332,6 +344,7 @@ async fn main() {
     let state = AppState {
         db: database.clone(),
         frontend_path: frontend_path.clone(),
+        app_root: conf.app_root.clone(),
         paths: paths.clone(),
         #[cfg(feature = "zim")]
         zim: zim.clone(),
@@ -471,7 +484,7 @@ fn app(state: AppState) -> Router {
             axum::response::Html(r#"<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>PhET — EduConect Rural</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1a1a2e;color:#e0e0e0;}div{text-align:center;padding:2rem;}h1{color:#f4a261;}p{color:#aaa;}</style></head><body><div><h1>🧪 PhET Simulaciones</h1><p>Simulaciones interactivas offline próximamente</p><p style="font-size:0.8rem;">EduConect Rural — La Guajira 🌵</p></div></body></html>"#)
         }))
         .route("/phet", get(|| async { axum::response::Redirect::to("/phet/") }))
-        .nest_service("/modulos", ServeDir::new("modulos").append_index_html_on_directories(true))
+        .nest_service("/modulos", ServeDir::new(state.app_root.join("modulos")).append_index_html_on_directories(true))
         .route("/biblioteca/{*path}", get(servir_biblioteca))
         .nest_service("/videos", ServeDir::new(&state.paths.videos))
         .route("/api/videos", get(listar_videos))
@@ -482,7 +495,7 @@ fn app(state: AppState) -> Router {
         .route("/videos-page/", get(videos_pagina))
         .route("/videos-page", get(|| async { axum::response::Redirect::to("/videos-page/") }))
         // ── Static assets (CSS, JS) ──
-        .nest_service("/static", ServeDir::new("static"))
+        .nest_service("/static", ServeDir::new(state.app_root.join("static")))
         // ── PWA ──
         .route("/sw.js", get(handler_sw_js))
         .route("/manifest.json", get(handler_manifest))
@@ -1898,12 +1911,16 @@ struct ModuloInfo {
 }
 
 /// GET /api/modulos — devuelve todas las experiencias educativas ejecutables
-async fn listar_modulos() -> Json<serde_json::Value> {
-    let mut modulos = scan_modulos_dir("modulos", false);
+///
+/// El árbol se escanea bajo `APP_ROOT` (D-03): antes era `"modulos"` relativo al
+/// CWD, y desde un servicio o un acceso directo la lista salía vacía.
+async fn listar_modulos(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let raiz = state.app_root.join("modulos");
+    let mut modulos = scan_modulos_dir(&raiz, false);
 
     // PhET contiene simulaciones individuales, no representa un módulo por sí mismo.
     modulos.retain(|modulo| modulo.id != "phet");
-    modulos.extend(scan_modulos_dir("modulos/phet", true));
+    modulos.extend(scan_modulos_dir(&raiz.join("phet"), true));
 
     modulos.sort_by(|a, b| {
         a.categoria
@@ -1918,16 +1935,16 @@ async fn listar_modulos() -> Json<serde_json::Value> {
 }
 
 /// GET /api/multimedia — solo módulos PhET (simulaciones interactivas)
-async fn listar_phet() -> Json<serde_json::Value> {
-    let phet_dir = "modulos/phet";
-    let phet = scan_modulos_dir(phet_dir, true);
+async fn listar_phet(State(state): State<AppState>) -> Json<serde_json::Value> {
+    let phet_dir = state.app_root.join("modulos").join("phet");
+    let phet = scan_modulos_dir(&phet_dir, true);
     Json(serde_json::json!({
         "multimedia": phet,
         "total": phet.len(),
     }))
 }
 
-fn scan_modulos_dir(dir_path: &str, is_phet: bool) -> Vec<ModuloInfo> {
+fn scan_modulos_dir(dir_path: &std::path::Path, is_phet: bool) -> Vec<ModuloInfo> {
     let mut modulos = Vec::new();
     let dir = match std::fs::read_dir(dir_path) {
         Ok(d) => d,
@@ -2236,6 +2253,7 @@ impl AppState {
         let state = AppState {
             db,
             frontend_path: dir.join("frontend").to_string_lossy().into_owned(),
+            app_root: dir.clone(),
             paths,
             h264_encoder: "libx264",
             login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),

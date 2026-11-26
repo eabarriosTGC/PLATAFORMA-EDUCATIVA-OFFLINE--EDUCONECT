@@ -1,35 +1,18 @@
 #!/usr/bin/env bash
-# deploy/install.sh
-# Instala y habilita el servicio systemd de EduConect Rural.
-# Ejecutar con sudo en la Raspberry Pi de destino.
-
+# deploy/install.sh — compatibilidad: delega en el instalador único.
+#
+# Este archivo copiaba a mano `${SCRIPT_DIR}/educonect.service`, una unidad con el
+# layout viejo (`User=pi`, `ExecStart=/opt/educonect/server/…`, `DB_PATH`,
+# `FRONTEND_PATH=/opt/educonect/dashboard/out`). Contradecía la estructura plana
+# de §D-03.A y el `ENVIRONMENT_FILE` con secretos que hoy exige el servidor.
+#
+# La unidad ya no vive en un archivo suelto: la genera `install.sh` desde su
+# template embebido y la instala en `SYSTEMD_DIR`. Se conserva este nombre para
+# no romper atajos ni documentación previos; el destino real es el mismo
+# instalador, con las mismas variables (INSTALL_DIR, DATA_DIR, ENV_FILE,
+# SYSTEMD_DIR, JWT_SECRET, ADMIN_INITIAL_PASSWORD).
 set -euo pipefail
 
-SERVICE_NAME="educonect.service"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ $EUID -ne 0 ]]; then
-  echo "❌ Este script debe ejecutarse como root (sudo $0)"
-  exit 1
-fi
-
-echo "📦 Copiando ${SERVICE_NAME} a /etc/systemd/system/ ..."
-install -m 0644 "${SCRIPT_DIR}/${SERVICE_NAME}" "/etc/systemd/system/${SERVICE_NAME}"
-
-echo "🔄 Recargando daemon de systemd ..."
-systemctl daemon-reload
-
-echo "✅ Habilitando e iniciando ${SERVICE_NAME} ..."
-systemctl enable --now "${SERVICE_NAME}"
-
-echo ""
-echo "═══════════════════════════════════════════"
-echo " Servicio EduConect instalado y en ejecución"
-echo "═══════════════════════════════════════════"
-echo ""
-echo " Comandos útiles:"
-echo "   systemctl status ${SERVICE_NAME}   # ver estado"
-echo "   journalctl -u ${SERVICE_NAME} -f   # ver logs en vivo"
-echo "   systemctl restart ${SERVICE_NAME}  # reiniciar"
-echo "   systemctl stop ${SERVICE_NAME}     # detener"
-echo ""
+exec bash "${SCRIPT_DIR}/../install.sh" "$@"

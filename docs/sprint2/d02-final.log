@@ -1,0 +1,16 @@
+### DEFAULT
+ Container educonect-dev-env-nodev-run-c2c7ee2edd3e Creating 
+ Container educonect-dev-env-nodev-run-c2c7ee2edd3e Created 
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.15s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.78s
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.22s
+test result: ok. 63 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 38.96s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+### CON ZIM
+ Container educonect-dev-env-dev-run-d285622178e9 Creating 
+ Container educonect-dev-env-dev-run-d285622178e9 Created 
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.78s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.64s
+test result: ok. 43 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.28s
+test result: ok. 68 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.17s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s

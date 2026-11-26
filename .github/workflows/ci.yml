@@ -63,7 +63,7 @@ jobs:
         run: cargo build --release ${{ matrix.features }}
 
       - name: Run tests
-        run: cargo test --lib --bins --test integration_test ${{ matrix.features }} -- --nocapture
+        run: cargo test --lib --bins --test integration_test --test arranque_sin_config ${{ matrix.features }} -- --nocapture
 
   docker:
     runs-on: ubuntu-latest

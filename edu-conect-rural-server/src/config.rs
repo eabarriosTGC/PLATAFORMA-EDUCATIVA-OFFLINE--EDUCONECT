@@ -13,57 +13,69 @@ const SECRETOS_CONOCIDOS: &[&str] = &[
 /// (64 chars con `openssl rand -base64 48`).
 const LONGITUD_MINIMA: usize = 32;
 
-/// Lee y valida `JWT_SECRET`. Falla con un mensaje claro si falta, está vacío,
-/// coincide con un default conocido o es demasiado corto.
-pub fn jwt_secret_requerido() -> String {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        panic!(
-            "JWT_SECRET no está definida. Crea un archivo .env en la raíz con: \
-             JWT_SECRET=$(openssl rand -base64 48)"
-        )
-    });
-    let secret = secret.trim();
+/// Contraseñas iniciales conocidas: jamás deben aceptarse para el administrador.
+const PASSWORDS_INICIALES_CONOCIDAS: &[&str] = &["admin123"];
+
+/// Longitud mínima para la contraseña inicial del administrador.
+const LONGITUD_MINIMA_PASSWORD: usize = 12;
+
+/// Política de `ADMIN_INITIAL_PASSWORD`. Sin estado, sin E/S.
+///
+/// Es la **única** fuente de verdad de esta regla: la usan tanto el arranque
+/// (`Database::open`) como el modo `--check`. Si divergieran, `--check` diría
+/// que todo está bien y el arranque fallaría igual.
+///
+/// Devuelve el mensaje de rechazo, que siempre nombra la variable para que el
+/// operador sepa qué corregir.
+pub fn validar_politica_password(candidata: &str) -> Result<(), String> {
+    let pwd = candidata.trim();
+    if pwd.is_empty() {
+        return Err("ADMIN_INITIAL_PASSWORD no está definida o está vacía. \
+                    Se necesita para crear o migrar el administrador inicial \
+                    (mínimo 12 caracteres)."
+            .into());
+    }
+    if PASSWORDS_INICIALES_CONOCIDAS.contains(&pwd) {
+        return Err(
+            "ADMIN_INITIAL_PASSWORD coincide con una contraseña conocida (admin123). \
+                    Genera una nueva con: openssl rand -base64 24"
+                .into(),
+        );
+    }
+    if pwd.len() < LONGITUD_MINIMA_PASSWORD {
+        return Err(format!(
+            "ADMIN_INITIAL_PASSWORD demasiado corta ({} chars, mínimo {}). \
+             Genera una con: openssl rand -base64 24",
+            pwd.len(),
+            LONGITUD_MINIMA_PASSWORD
+        ));
+    }
+    Ok(())
+}
+
+/// Valida `JWT_SECRET`. Sin estado, sin E/S, sin `panic!`.
+///
+/// Es la única fuente de la regla: la usa `cargar()`, y las pruebas la
+/// ejercitan sin tocar el entorno.
+pub fn validar_jwt_secret(candidata: &str) -> Result<(), String> {
+    let secret = candidata.trim();
     if secret.is_empty() {
-        panic!("JWT_SECRET está vacía. Genera una con: openssl rand -base64 48");
+        return Err("variable ausente o vacía. Genera una con: openssl rand -base64 48".into());
     }
     if SECRETOS_CONOCIDOS.contains(&secret) {
-        panic!(
-            "JWT_SECRET coincide con un valor por defecto conocido. \
-             Genera una nueva con: openssl rand -base64 48"
+        return Err(
+            "coincide con un valor por defecto conocido. Genera una nueva con: openssl rand -base64 48"
+                .into(),
         );
     }
     if secret.len() < LONGITUD_MINIMA {
-        panic!(
-            "JWT_SECRET demasiado corta ({} chars, mínimo {}). \
-             Genera una con: openssl rand -base64 48",
+        return Err(format!(
+            "demasiado corta ({} chars, mínimo {}). Genera una con: openssl rand -base64 48",
             secret.len(),
             LONGITUD_MINIMA
-        );
+        ));
     }
-    secret.to_string()
-}
-
-/// Lee y normaliza `PUBLIC_BASE_URL` (dirección LAN que otros dispositivos
-/// usarán para conectarse a EduConect).
-///
-/// - Ausente o vacía → `None`: el endpoint `/api/network` deriva la dirección
-///   del header `Host` de cada solicitud.
-/// - Inválida → panic al arrancar: un error de configuración debe ser ruidoso,
-///   no un fallback silencioso a una dirección equivocada.
-pub fn public_base_url() -> Option<String> {
-    public_base_url_desde(&std::env::var("PUBLIC_BASE_URL").unwrap_or_default())
-}
-
-/// Núcleo puro de la normalización (testeable sin tocar el entorno).
-fn public_base_url_desde(raw: &str) -> Option<String> {
-    let raw = raw.trim();
-    if raw.is_empty() {
-        return None;
-    }
-    Some(
-        normalizar_public_base_url(raw)
-            .unwrap_or_else(|e| panic!("PUBLIC_BASE_URL inválida (\"{raw}\"): {e}")),
-    )
+    Ok(())
 }
 
 /// Valida una URL pública absoluta con un parser real (nunca regex):
@@ -109,17 +121,6 @@ fn normalizar_public_base_url(raw: &str) -> Result<String, String> {
     Ok(format!("{}://{}{}", url.scheme(), host, puerto))
 }
 
-/// Directorio del contenido ZIM incluido en la imagen (solo lectura).
-/// `DEFAULT_ZIM_DIR` lo define el Dockerfile (`/app/default-content/zim`);
-/// fuera de Docker se usa una ruta relativa que probablemente no exista
-/// (el escaneo de zonas lo tolera y sigue con la zona persistente).
-///
-/// Solo existe con la feature `zim`: sin ella no hay lector que consuma esta ruta.
-#[cfg(feature = "zim")]
-pub fn default_zim_dir() -> String {
-    default_zim_dir_desde(&std::env::var("DEFAULT_ZIM_DIR").unwrap_or_default())
-}
-
 /// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
 #[cfg(feature = "zim")]
 fn default_zim_dir_desde(raw: &str) -> String {
@@ -129,13 +130,6 @@ fn default_zim_dir_desde(raw: &str) -> String {
     } else {
         dir.to_string()
     }
-}
-
-/// Directorio de la biblioteca incluida en la imagen (solo lectura).
-/// `DEFAULT_BIBLIOTECA_DIR` lo define el Dockerfile; fuera de Docker se usa una
-/// ruta relativa que probablemente no exista (el escaneo de zonas lo tolera).
-pub fn default_biblioteca_dir() -> String {
-    default_biblioteca_dir_desde(&std::env::var("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default())
 }
 
 /// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
@@ -231,18 +225,6 @@ mod tests_public_base_url {
         assert!(normalizar_public_base_url("no-es-una-url").is_err());
         assert!(normalizar_public_base_url("192.168.1.50:8080").is_err());
     }
-
-    #[test]
-    fn vacia_produce_none() {
-        assert_eq!(public_base_url_desde(""), None);
-        assert_eq!(public_base_url_desde("   "), None);
-    }
-
-    #[test]
-    #[should_panic(expected = "PUBLIC_BASE_URL inválida")]
-    fn invalida_rechazada_al_arrancar() {
-        let _ = public_base_url_desde("ftp://192.168.1.50");
-    }
 }
 
 #[cfg(all(test, feature = "zim"))]
@@ -298,5 +280,441 @@ mod tests_default_biblioteca_dir {
             default_biblioteca_dir_desde("  /app/default-content/biblioteca  "),
             "/app/default-content/biblioteca"
         );
+    }
+}
+
+// ══════════════════════════════════════════════
+//  Configuración centralizada (D-02)
+// ══════════════════════════════════════════════
+
+use std::net::SocketAddr;
+use std::path::PathBuf;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Gravedad {
+    Error,
+    Aviso,
+}
+
+/// Un problema o confirmación sobre una variable concreta.
+/// **Nunca contiene el valor de un secreto.**
+#[derive(Debug, Clone)]
+pub struct Hallazgo {
+    pub variable: &'static str,
+    pub gravedad: Gravedad,
+    pub motivo: String,
+}
+
+impl Hallazgo {
+    fn error(variable: &'static str, motivo: impl Into<String>) -> Self {
+        Self {
+            variable,
+            gravedad: Gravedad::Error,
+            motivo: motivo.into(),
+        }
+    }
+    fn aviso(variable: &'static str, motivo: impl Into<String>) -> Self {
+        Self {
+            variable,
+            gravedad: Gravedad::Aviso,
+            motivo: motivo.into(),
+        }
+    }
+}
+
+impl std::fmt::Display for Hallazgo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let etiqueta = match self.gravedad {
+            Gravedad::Error => "ERROR",
+            Gravedad::Aviso => "AVISO",
+        };
+        write!(f, "[{etiqueta}] {}: {}", self.variable, self.motivo)
+    }
+}
+
+/// Configuración ya validada: todos sus campos son usables sin más comprobaciones.
+///
+/// No deriva `Debug` a propósito: contiene el secreto JWT y la contraseña
+/// inicial del administrador, y un `{:?}` accidental los filtraría.
+#[derive(Clone)]
+pub struct Configuracion {
+    pub jwt_secret: String,
+    pub data_dir: PathBuf,
+    pub db_path: PathBuf,
+    pub frontend_path: PathBuf,
+    pub listen_addr: SocketAddr,
+    pub public_base_url: Option<String>,
+    pub default_biblioteca_dir: PathBuf,
+    #[cfg(feature = "zim")]
+    pub default_zim_dir: PathBuf,
+    pub admin_initial_password: Option<String>,
+    /// Avisos no bloqueantes detectados al cargar. Los errores abortan en `cargar`.
+    pub avisos: Vec<Hallazgo>,
+}
+
+fn leer(var: &str) -> Option<String> {
+    std::env::var(var)
+        .ok()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+fn ruta_absoluta(raw: &str) -> PathBuf {
+    let p = PathBuf::from(raw);
+    if p.is_absolute() {
+        p
+    } else {
+        std::env::current_dir().unwrap_or_default().join(p)
+    }
+}
+
+/// Lee y valida las ocho variables de entorno. **Sin efectos secundarios**: no
+/// crea directorios, no abre la base de datos, no lanza procesos.
+///
+/// Devuelve **todos** los errores juntos. Si hay al menos un `Gravedad::Error`,
+/// devuelve `Err` con la lista completa; si no, `Ok`.
+pub fn cargar() -> Result<Configuracion, Vec<Hallazgo>> {
+    let mut hallazgos: Vec<Hallazgo> = Vec::new();
+
+    // 1. JWT_SECRET
+    let jwt_secret = match leer("JWT_SECRET") {
+        None => {
+            hallazgos.push(Hallazgo::error(
+                "JWT_SECRET",
+                "variable ausente. Genera una con: openssl rand -base64 48",
+            ));
+            String::new()
+        }
+        Some(v) => match validar_jwt_secret(&v) {
+            Ok(()) => v,
+            Err(motivo) => {
+                hallazgos.push(Hallazgo::error("JWT_SECRET", motivo));
+                String::new()
+            }
+        },
+    };
+
+    // 2. PUBLIC_BASE_URL — ausente es válido; presente e inválida es error.
+    let public_base_url = match leer("PUBLIC_BASE_URL") {
+        None => None,
+        Some(v) => match normalizar_public_base_url(&v) {
+            Ok(u) => Some(u),
+            Err(e) => {
+                hallazgos.push(Hallazgo::error(
+                    "PUBLIC_BASE_URL",
+                    format!("inválida (\"{v}\"): {e}"),
+                ));
+                None
+            }
+        },
+    };
+
+    // 3-4. Directorios incluidos en la imagen. Ausentes → default.
+    let default_biblioteca_dir = PathBuf::from(default_biblioteca_dir_desde(
+        &leer("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default(),
+    ));
+    #[cfg(feature = "zim")]
+    let default_zim_dir = PathBuf::from(default_zim_dir_desde(
+        &leer("DEFAULT_ZIM_DIR").unwrap_or_default(),
+    ));
+
+    // 5. DATA_DIR — se resuelve a absoluta; la comprobación de escritura es de `verificar`.
+    let data_dir = ruta_absoluta(&leer("DATA_DIR").unwrap_or_else(|| "data".into()));
+    let db_path = data_dir.join("educonect.db");
+
+    // 6. FRONTEND_PATH
+    let frontend_path = ruta_absoluta(
+        &leer("FRONTEND_PATH").unwrap_or_else(|| "../edu-conect-rural-dashboard/out/".into()),
+    );
+
+    // 7. LISTEN_ADDR
+    let listen_addr_raw = leer("LISTEN_ADDR").unwrap_or_else(|| "0.0.0.0:8080".into());
+    let listen_addr = match listen_addr_raw.parse::<SocketAddr>() {
+        Ok(a) => a,
+        Err(e) => {
+            hallazgos.push(Hallazgo::error(
+                "LISTEN_ADDR",
+                format!("inválida (\"{listen_addr_raw}\"): {e}"),
+            ));
+            "0.0.0.0:8080".parse().expect("literal válido")
+        }
+    };
+
+    // 8. ADMIN_INITIAL_PASSWORD — ausente es AVISO, no error: solo se exige
+    //    cuando la base necesita crear o rotar el administrador, y eso no se
+    //    puede saber sin abrirla.
+    let admin_initial_password = match leer("ADMIN_INITIAL_PASSWORD") {
+        None => {
+            hallazgos.push(Hallazgo::aviso(
+                "ADMIN_INITIAL_PASSWORD",
+                "variable ausente. No se podrá crear ni rotar el administrador inicial si hiciera falta",
+            ));
+            None
+        }
+        Some(v) => match validar_politica_password(&v) {
+            Ok(()) => Some(v),
+            Err(motivo) => {
+                hallazgos.push(Hallazgo::error("ADMIN_INITIAL_PASSWORD", motivo));
+                None
+            }
+        },
+    };
+
+    if hallazgos.iter().any(|h| h.gravedad == Gravedad::Error) {
+        return Err(hallazgos);
+    }
+
+    Ok(Configuracion {
+        jwt_secret,
+        data_dir,
+        db_path,
+        frontend_path,
+        listen_addr,
+        public_base_url,
+        default_biblioteca_dir,
+        #[cfg(feature = "zim")]
+        default_zim_dir,
+        admin_initial_password,
+        avisos: hallazgos,
+    })
+}
+
+/// Imprime los hallazgos en stdout, uno por línea.
+///
+/// Nunca imprime el valor de un secreto: `Hallazgo.motivo` no los contiene.
+pub fn informar(hallazgos: &[Hallazgo]) {
+    for h in hallazgos {
+        println!("{h}");
+    }
+}
+
+/// `true` si la lista contiene al menos un `Gravedad::Error`.
+pub fn hay_error(hallazgos: &[Hallazgo]) -> bool {
+    hallazgos.iter().any(|h| h.gravedad == Gravedad::Error)
+}
+
+fn es_directorio_escribible(p: &std::path::Path) -> bool {
+    p.is_dir()
+        && !p
+            .metadata()
+            .map(|m| m.permissions().readonly())
+            .unwrap_or(true)
+}
+
+/// Primer ancestro que existe, empezando por `p` y subiendo.
+fn ancestro_existente(p: &std::path::Path) -> Option<std::path::PathBuf> {
+    let mut actual = Some(p);
+    while let Some(a) = actual {
+        if a.exists() {
+            return Some(a.to_path_buf());
+        }
+        actual = a.parent();
+    }
+    None
+}
+
+/// Comprueba el entorno contra una configuración ya validada.
+///
+/// **Solo lectura**: `exists`, `is_dir` y `permissions`. No crea directorios, no
+/// abre la base de datos, no lanza procesos y no abre sockets. La creación de
+/// directorios sigue siendo responsabilidad del arranque.
+pub(crate) fn verificar(conf: &Configuracion) -> Vec<Hallazgo> {
+    let mut hallazgos = Vec::new();
+
+    // DATA_DIR: se valida la ruta declarada, nunca se crea.
+    if conf.data_dir.exists() {
+        if !es_directorio_escribible(&conf.data_dir) {
+            hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} no es un directorio escribible. Revisá permisos o cambiá DATA_DIR",
+                    conf.data_dir.display()
+                ),
+            ));
+        }
+    } else {
+        match ancestro_existente(&conf.data_dir) {
+            Some(a) if es_directorio_escribible(&a) => hallazgos.push(Hallazgo::aviso(
+                "DATA_DIR",
+                format!(
+                    "{} no existe todavía; se creará al arrancar (su ancestro existente más cercano, {}, es escribible)",
+                    conf.data_dir.display(),
+                    a.display()
+                ),
+            )),
+            Some(a) => hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} no existe y su ancestro existente más cercano ({}) no es escribible",
+                    conf.data_dir.display(),
+                    a.display()
+                ),
+            )),
+            None => hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!("{} no existe y no tiene ningún ancestro válido", conf.data_dir.display()),
+            )),
+        }
+    }
+
+    // DB_PATH: si ya existe, no debe ser de solo lectura.
+    if conf.db_path.exists() {
+        let solo_lectura = conf
+            .db_path
+            .metadata()
+            .map(|m| m.permissions().readonly())
+            .unwrap_or(true);
+        if !conf.db_path.is_file() || solo_lectura {
+            hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} existe pero no es una base de datos escribible",
+                    conf.db_path.display()
+                ),
+            ));
+        }
+    }
+
+    // FRONTEND_PATH: ausente es aviso, no error — el default apunta a `out/`,
+    // que no está generado en desarrollo y bloquearía todo arranque.
+    if !conf.frontend_path.is_dir() {
+        hallazgos.push(Hallazgo::aviso(
+            "FRONTEND_PATH",
+            format!(
+                "{} no existe o no es un directorio; el dashboard no se servirá",
+                conf.frontend_path.display()
+            ),
+        ));
+    }
+
+    hallazgos
+}
+
+/// Modo `--check`: valida configuración y entorno **sin mutar nada**.
+///
+/// Devuelve el código de salida: `0` si no hay errores (los avisos no fallan),
+/// `1` si hay al menos uno. Escribe a stdout, no al log de `tracing`.
+pub fn check(verbose: bool) -> i32 {
+    let (mut hallazgos, errores_de_carga) = match cargar() {
+        Ok(conf) => {
+            let mut hs = conf.avisos.clone();
+            hs.extend(verificar(&conf));
+            (hs, false)
+        }
+        Err(hs) => (hs, true),
+    };
+
+    // Orden fijo: errores primero, después avisos.
+    hallazgos.sort_by_key(|h| match h.gravedad {
+        Gravedad::Error => 0,
+        Gravedad::Aviso => 1,
+    });
+
+    for h in &hallazgos {
+        println!("{h}");
+    }
+
+    let falla = errores_de_carga || hay_error(&hallazgos);
+    if falla {
+        println!("\nResultado: configuración no válida.");
+    } else if verbose {
+        println!("Resultado: configuración válida.");
+    }
+    println!("No se realizaron modificaciones.");
+
+    if falla {
+        1
+    } else {
+        0
+    }
+}
+
+#[cfg(test)]
+mod tests_verificar {
+    use super::*;
+
+    fn conf_con(data_dir: PathBuf, frontend_path: PathBuf) -> Configuracion {
+        Configuracion {
+            jwt_secret: "x".repeat(48),
+            db_path: data_dir.join("educonect.db"),
+            data_dir,
+            frontend_path,
+            listen_addr: "127.0.0.1:8080".parse().expect("addr"),
+            public_base_url: None,
+            default_biblioteca_dir: PathBuf::from("default-content/biblioteca"),
+            #[cfg(feature = "zim")]
+            default_zim_dir: PathBuf::from("default-content/zim"),
+            admin_initial_password: None,
+            avisos: Vec::new(),
+        }
+    }
+
+    fn temp(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("educonect-verif-{}-{tag}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        d
+    }
+
+    #[test]
+    fn data_dir_inexistente_es_aviso_y_no_lo_crea() {
+        let dir = temp("noexiste");
+        let hallazgos = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe")));
+        assert!(
+            hallazgos
+                .iter()
+                .any(|h| h.variable == "DATA_DIR" && h.gravedad == Gravedad::Aviso),
+            "DATA_DIR inexistente con ancestro escribible debe ser aviso"
+        );
+        assert!(
+            !dir.exists(),
+            "verificar no debe crear DATA_DIR: {} existe",
+            dir.display()
+        );
+    }
+
+    #[test]
+    fn frontend_inexistente_es_aviso_y_no_hay_error() {
+        let dir = temp("fe");
+        std::fs::create_dir_all(&dir).expect("dir");
+        let hallazgos = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe/frontend")));
+        assert!(hallazgos
+            .iter()
+            .any(|h| h.variable == "FRONTEND_PATH" && h.gravedad == Gravedad::Aviso));
+        assert!(
+            !hay_error(&hallazgos),
+            "un frontend ausente no debe bloquear el arranque"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn verificar_no_modifica_el_contenido_de_data_dir() {
+        let dir = temp("hash");
+        std::fs::create_dir_all(&dir).expect("dir");
+        std::fs::write(dir.join("existente.txt"), b"contenido intacto").expect("write");
+
+        let antes: Vec<_> = std::fs::read_dir(&dir)
+            .expect("read_dir")
+            .map(|e| e.expect("entry").file_name())
+            .collect();
+        let contenido_antes = std::fs::read(dir.join("existente.txt")).expect("read");
+
+        let _ = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe")));
+
+        let despues: Vec<_> = std::fs::read_dir(&dir)
+            .expect("read_dir")
+            .map(|e| e.expect("entry").file_name())
+            .collect();
+        let contenido_despues = std::fs::read(dir.join("existente.txt")).expect("read");
+
+        assert_eq!(
+            antes, despues,
+            "verificar creó o borró archivos en DATA_DIR"
+        );
+        assert_eq!(
+            contenido_antes, contenido_despues,
+            "verificar modificó el contenido de DATA_DIR"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

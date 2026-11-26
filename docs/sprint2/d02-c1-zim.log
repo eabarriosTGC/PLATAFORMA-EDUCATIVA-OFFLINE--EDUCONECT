@@ -1,0 +1,8 @@
+ Container educonect-dev-env-dev-run-0554d3029e55 Creating 
+ Container educonect-dev-env-dev-run-0554d3029e55 Created 
+### build con zim
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.54s
+### tests lib + bins con zim
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.07s
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 38.40s

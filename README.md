@@ -7,6 +7,30 @@
 
 ---
 
+## 🗂️ Documentación de trabajo — adaptación Windpeshi
+
+Este repositorio aloja además el trabajo de adaptación de EduConect a la iniciativa
+**Formando en la Diversidad – Windpeshi INNOVA**. Es documentación de ingeniería, distinta
+de la guía de uso de arriba.
+
+**Empezá por [`docs/sprint2/ESTADO-2026-11-26.md`](docs/sprint2/ESTADO-2026-11-26.md)**:
+tiene el índice completo, el estado de los PRs abiertos y qué sigue.
+
+Los tres documentos que más contexto dan:
+
+| Documento | Responde |
+|---|---|
+| [`docs/propuesta-windpeshi-innova.md`](docs/propuesta-windpeshi-innova.md) | Qué se propone a Ecopetrol y qué **no** se construye |
+| [`docs/contratos-integracion.md`](docs/contratos-integracion.md) | Identidad, propiedad de datos y contrato de API entre los tres desarrolladores |
+| [`docs/diagnostico-2026-11-25.md`](docs/diagnostico-2026-11-25.md) | Qué funciona y qué no en el repo, con `ruta:línea` en cada afirmación |
+
+> ⚠️ **Cambio de comportamiento en curso:** ZIM (Wikipedia offline) pasó a ser una feature
+> opcional, **desactivada por defecto**. Con el perfil predeterminado, `/zim/*` y
+> `/api/wikipedia/*` responden **503** con un mensaje explícito. Es deliberado: libera al
+> binario de `libzim`, `libxapian`, `libicu` y `libstdc++`. Ver PR #3.
+
+---
+
 ## 🧠 ¿Qué es EduConect Rural?
 
 EduConect Rural es un servidor educativo portátil que convierte cualquier computadora de bajo costo (Raspberry Pi, Orange Pi, laptop vieja) en un **punto de acceso educativo offline**. Los estudiantes se conectan con sus celulares, tablets o computadoras al WiFi del servidor y acceden a:

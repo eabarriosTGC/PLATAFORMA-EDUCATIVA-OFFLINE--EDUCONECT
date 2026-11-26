@@ -1,0 +1,16 @@
+ Volume educonect-dev-env_cargo-target Creating 
+ Network educonect-dev-env_default Creating 
+ Volume educonect-dev-env_cargo-home Creating 
+ Volume educonect-dev-env_cargo-git Creating 
+ Volume educonect-dev-env_cargo-target Created 
+ Volume educonect-dev-env_cargo-home Created 
+ Volume educonect-dev-env_cargo-git Created 
+ Network educonect-dev-env_default Created 
+ Container educonect-dev-env-dev-run-a7c872435fbe Creating 
+ Container educonect-dev-env-dev-run-a7c872435fbe Created 
+rustc 1.88.0 (6b00bc388 2025-06-23)
+cargo 1.88.0 (873a06493 2025-05-10)
+Debian clang version 14.0.6
+arch: amd64
+libzim: 8.1.1
+sqlite3: 3.40.1

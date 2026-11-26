@@ -1,0 +1,13 @@
+ Container educonect-dev-env-nodev-run-86ba406c3265 Creating 
+ Container educonect-dev-env-nodev-run-86ba406c3265 Created 
+### build default
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.45s
+### clippy default (CI)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.16s
+### tests lib+bins default
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.45s
+test result: ok. 60 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 39.38s
+### arranque_sin_config
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+### integration_test desde CWD escribible
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.42s

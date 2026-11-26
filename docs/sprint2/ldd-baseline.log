@@ -1,0 +1,44 @@
+ Container educonect-dev-env-dev-run-4f3d7af8da7c Creating 
+ Container educonect-dev-env-dev-run-4f3d7af8da7c Created 
+/opt/target/debug/edu-conect-rural-server: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=59b8353a51565850a2eb6dfebb73236738911d25, for GNU/Linux 3.2.0, with debug_info, not stripped
+--- ldd ---
+	linux-vdso.so.1 (0x00007fe8e862b000)
+	libzim.so.8 => /lib/x86_64-linux-gnu/libzim.so.8 (0x00007fe8e7133000)
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007fe8e6f19000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007fe8e8600000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fe8e6e39000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fe8e6c57000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fe8e862d000)
+	liblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x00007fe8e6c28000)
+	libzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x00007fe8e6b6c000)
+	libxapian.so.30 => /lib/x86_64-linux-gnu/libxapian.so.30 (0x00007fe8e693b000)
+	libicui18n.so.72 => /lib/x86_64-linux-gnu/libicui18n.so.72 (0x00007fe8e6611000)
+	libicuuc.so.72 => /lib/x86_64-linux-gnu/libicuuc.so.72 (0x00007fe8e6413000)
+	libuuid.so.1 => /lib/x86_64-linux-gnu/libuuid.so.1 (0x00007fe8e85f2000)
+	libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007fe8e85d3000)
+	libicudata.so.72 => /lib/x86_64-linux-gnu/libicudata.so.72 (0x00007fe8e4641000)
+=== dependencias propias de libzim.so.8 ===
+/lib64/ld-linux-x86-64.so.2
+libc.so.6
+libgcc_s.so.1
+libicudata.so.72
+libicui18n.so.72
+libicuuc.so.72
+liblzma.so.5
+libm.so.6
+libstdc++.so.6
+libuuid.so.1
+libxapian.so.30
+libz.so.1
+libzstd.so.1
+linux-vdso.so.1
+
+=== packaging de zim-sys ===
+12:fn find_libzim() -> Vec<PathBuf> {
+25:/// Find libzim binary using pkg_config
+28:    let libzim = pkg_config::probe_library("libzim").unwrap();
+30:    let include_paths: Vec<&Path> = libzim.include_paths.iter().map(PathBuf::as_path).collect();
+31:    let link_path = &libzim.link_paths[0];
+35:    libzim.include_paths
+38:/// Find libzim using env var `LIBZIM_INCLUDE`, `LIBZIM_LIB`.
+59:fn find_libzim() -> Vec<PathBuf> {

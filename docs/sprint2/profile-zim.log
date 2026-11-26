@@ -1,0 +1,61 @@
+ Container educonect-dev-env-dev-run-b295a877d7e7 Creating 
+ Container educonect-dev-env-dev-run-b295a877d7e7 Created 
+### perfil CON feature zim
+   Compiling bcrypt v0.16.0
+   Compiling zim-rs v0.1.1
+   Compiling qrcode v0.13.0
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 01s
+### clippy CON feature
+error: could not compile `edu-conect-rural-server` (test "integration_test") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: method `reset` is never used
+  --> src/rate_limit.rs:53:18
+   |
+21 | impl RateLimiter {
+   | ---------------- method in this implementation
+...
+53 |     pub async fn reset(&self) {
+   |                  ^^^^^
+   |
+   = note: `-D dead-code` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(dead_code)]`
+
+error: could not compile `edu-conect-rural-server` (bin "edu-conect-rural-server" test) due to 1 previous error
+### tests CON feature
+
+---- test_concurrent_reads_no_deadlock stdout ----
+
+thread 'test_concurrent_reads_no_deadlock' panicked at tests/integration_test.rs:34:10:
+Fallo al abrir BD de test: Sqlite(SqliteFailure(Error { code: CannotOpen, extended_code: 14 }, Some("unable to open database file: data/test_integration_6440_reads.db")))
+
+---- test_concurrent_writes_no_deadlock stdout ----
+
+thread 'test_concurrent_writes_no_deadlock' panicked at tests/integration_test.rs:34:10:
+Fallo al abrir BD de test: Sqlite(SqliteFailure(Error { code: CannotOpen, extended_code: 14 }, Some("unable to open database file: data/test_integration_6440_writes.db")))
+
+
+failures:
+    test_concurrent_reads_and_writes_no_deadlock
+    test_concurrent_reads_no_deadlock
+    test_concurrent_writes_no_deadlock
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--test integration_test`
+### ldd CON feature
+/lib64/ld-linux-x86-64.so.2
+libc.so.6
+libgcc_s.so.1
+libicudata.so.72
+libicui18n.so.72
+libicuuc.so.72
+liblzma.so.5
+libm.so.6
+libstdc++.so.6
+libuuid.so.1
+libxapian.so.30
+libz.so.1
+libzim.so.8
+libzstd.so.1
+linux-vdso.so.1

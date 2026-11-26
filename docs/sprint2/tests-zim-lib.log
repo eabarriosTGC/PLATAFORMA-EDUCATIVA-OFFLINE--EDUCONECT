@@ -1,0 +1,8 @@
+ Container educonect-dev-env-dev-run-ea52442fa57a Creating 
+ Container educonect-dev-env-dev-run-ea52442fa57a Created 
+### /opt/target/zim/debug/deps/edu_conect_rural_server-d578bc8e6271ee88
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.08s
+### /opt/target/zim/debug/deps/edu_conect_rural_server-98911500c0344d8f
+### /opt/target/zim/debug/deps/edu_conect_rural_server-00a32c52fc475204
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 64.76s
+### /opt/target/zim/debug/deps/edu_conect_rural_server-2ac42a225b979de6

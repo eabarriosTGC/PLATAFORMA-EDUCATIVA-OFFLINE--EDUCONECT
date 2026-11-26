@@ -1,0 +1,13 @@
+# Antes: x 1.0.0.  Después: x 1.0.0 y x 2.0.0 -> el superviviente GANA una versión.
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"
+dependencies = [
+ "x 1.0.0",
+]
+
+[[package]]
+name = "x"
+version = "1.0.0"

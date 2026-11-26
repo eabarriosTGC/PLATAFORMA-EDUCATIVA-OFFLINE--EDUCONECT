@@ -1,0 +1,150 @@
+### P1 AMBIGUEDAD
+lock anterior : docs/sprint2/fixtures/lock-ambiguedad.toml  (3 paquetes)
+lock posterior: docs/sprint2/fixtures/lock-ambiguedad.toml  (3 paquetes)
+pares (nombre, versión) con más de una fuente: 1
+  dup 1.0.0: ['registry+https://example.invalid/registro-a', 'git+https://example.invalid/repo-b']
+
+  AMBIGUA: raiz 0.1.0 -> dup (ambigua:2)
+=== RESUMEN ===
+clausura de raiz 0.1.0: 1 paquetes
+retirados: 0   agregados: 0
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 0
+  por nombre (una sola candidata) : 0
+  ambiguas                        : 1
+  irresolubles                    : 0
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  ninguno
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  raiz                          0.1.0                   conservado
+
+=== VEREDICTO ===
+  AUDITORÍA INVÁLIDA
+EXIT=1
+
+### P2 IRRESOLUBLE
+lock anterior : docs/sprint2/fixtures/lock-irresoluble.toml  (1 paquetes)
+lock posterior: docs/sprint2/fixtures/lock-irresoluble.toml  (1 paquetes)
+pares (nombre, versión) con más de una fuente: 0
+
+  IRRESOLUBLE: raiz 0.1.0 -> fantasma
+=== RESUMEN ===
+clausura de raiz 0.1.0: 1 paquetes
+retirados: 0   agregados: 0
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 0
+  por nombre (una sola candidata) : 0
+  ambiguas                        : 0
+  irresolubles                    : 1
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  ninguno
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  raiz                          0.1.0                   conservado
+
+=== VEREDICTO ===
+  AUDITORÍA INVÁLIDA
+EXIT=1
+
+### P3 AGREGADO
+lock anterior : docs/sprint2/fixtures/lock-antes-agregado.toml  (1 paquetes)
+lock posterior: docs/sprint2/fixtures/lock-despues-agregado.toml  (2 paquetes)
+pares (nombre, versión) con más de una fuente: 0
+
+=== RESUMEN ===
+clausura de raiz 0.1.0: 1 paquetes
+retirados: 0   agregados: 1
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 0
+  por nombre (una sola candidata) : 0
+  ambiguas                        : 0
+  irresolubles                    : 0
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  aparece              pierde=[] gana=['1.0.0'] quedan=['1.0.0']  -> CAMBIO REAL
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  raiz                          0.1.0                   conservado
+
+=== VEREDICTO ===
+  AUDITORÍA INVÁLIDA
+EXIT=1
+
+### P4 GANANCIA DE VERSIÓN
+lock anterior : docs/sprint2/fixtures/lock-antes-ganancia.toml  (2 paquetes)
+lock posterior: docs/sprint2/fixtures/lock-despues-ganancia.toml  (3 paquetes)
+pares (nombre, versión) con más de una fuente: 0
+
+=== RESUMEN ===
+clausura de raiz 0.1.0: 2 paquetes
+retirados: 0   agregados: 1
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 1
+  por nombre (una sola candidata) : 0
+  ambiguas                        : 0
+  irresolubles                    : 0
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  x                    pierde=[] gana=['2.0.0'] quedan=['1.0.0', '2.0.0']  -> CAMBIO REAL
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  raiz                          0.1.0                   conservado
+  x                             1.0.0                   conservado
+
+=== VEREDICTO ===
+  AUDITORÍA INVÁLIDA
+EXIT=1
+
+### P5 CONTROL VÁLIDO
+lock anterior : docs/sprint2/fixtures/lock-consistente.toml  (3 paquetes)
+lock posterior: docs/sprint2/fixtures/lock-consistente.toml  (3 paquetes)
+pares (nombre, versión) con más de una fuente: 0
+
+=== RESUMEN ===
+clausura de raiz 0.1.0: 3 paquetes
+retirados: 0   agregados: 0
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 1
+  por nombre (una sola candidata) : 1
+  ambiguas                        : 0
+  irresolubles                    : 0
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  ninguno
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  hijo                          1.2.3                   conservado
+  nieto                         0.9.0                   conservado
+  raiz                          0.1.0                   conservado
+
+=== VEREDICTO ===
+  AUDITORÍA VÁLIDA
+EXIT=0

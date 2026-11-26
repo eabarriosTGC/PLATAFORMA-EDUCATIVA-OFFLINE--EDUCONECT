@@ -1,0 +1,157 @@
+lock anterior : /tmp/lock-antes.toml  (372 paquetes)
+lock posterior: edu-conect-rural-server/Cargo.lock  (308 paquetes)
+pares (nombre, versión) con más de una fuente: 0
+
+=== RESUMEN ===
+clausura de zim 0.4.0: 124 paquetes
+retirados: 64   agregados: 0
+
+=== RESOLUCIÓN DE REFERENCIAS ===
+  exactas (versión explícita)     : 20
+  por nombre (una sola candidata) : 177
+  ambiguas                        : 0
+  irresolubles                    : 0
+
+=== CONTROL: retirados fuera de la clausura ===
+  0  
+
+=== CAMBIOS DE VERSIÓN EN SUPERVIVIENTES ===
+  getrandom            pierde=['0.3.4'] gana=[] quedan=['0.2.17', '0.4.2']  -> SOLO PIERDE DUPLICADO
+  num-bigint           pierde=['0.1.45'] gana=[] quedan=['0.4.6']  -> SOLO PIERDE DUPLICADO
+  r-efi                pierde=['5.3.0'] gana=[] quedan=['6.0.0']  -> SOLO PIERDE DUPLICADO
+  rand                 pierde=['0.4.6'] gana=[] quedan=['0.10.1', '0.8.6']  -> SOLO PIERDE DUPLICADO
+  rand_core            pierde=['0.3.1', '0.4.2'] gana=[] quedan=['0.10.1', '0.6.4']  -> SOLO PIERDE DUPLICADO
+  syn                  pierde=['1.0.109'] gana=[] quedan=['2.0.117']  -> SOLO PIERDE DUPLICADO
+  thiserror            pierde=['1.0.69'] gana=[] quedan=['2.0.18']  -> SOLO PIERDE DUPLICADO
+  thiserror-impl       pierde=['1.0.69'] gana=[] quedan=['2.0.18']  -> SOLO PIERDE DUPLICADO
+  windows-sys          pierde=['0.59.0'] gana=[] quedan=['0.52.0', '0.61.2']  -> SOLO PIERDE DUPLICADO
+
+=== MIEMBROS DE LA CLAUSURA ===
+  paquete                       versión                 estado
+  Inflector                     0.11.4                  RETIRADO
+  aliasable                     0.1.3                   RETIRADO
+  anstream                      1.0.0                   RETIRADO
+  anstyle                       1.0.14                  conservado
+  anstyle-parse                 1.0.0                   RETIRADO
+  anstyle-query                 1.1.5                   RETIRADO
+  anstyle-wincon                3.0.11                  RETIRADO
+  arrayvec                      0.7.6                   RETIRADO
+  autocfg                       1.5.1                   conservado
+  bitreader                     0.3.11                  RETIRADO
+  block-buffer                  0.10.4                  conservado
+  bumpalo                       3.20.3                  conservado
+  byteorder                     1.5.0                   conservado
+  cc                            1.2.63                  conservado
+  cfg-if                        1.0.4                   conservado
+  clap                          4.6.1                   conservado
+  clap_builder                  4.6.0                   conservado
+  clap_derive                   4.6.1                   RETIRADO
+  clap_lex                      1.1.0                   conservado
+  colorchoice                   1.0.5                   RETIRADO
+  console                       0.15.11                 RETIRADO
+  const-oid                     0.9.6                   conservado
+  crossbeam-channel             0.5.15                  RETIRADO
+  crossbeam-deque               0.8.6                   RETIRADO
+  crossbeam-epoch               0.9.18                  RETIRADO
+  crossbeam-utils               0.8.21                  RETIRADO
+  crypto-common                 0.1.7                   conservado
+  digest                        0.10.7                  conservado
+  either                        1.16.0                  RETIRADO
+  encode_unicode                1.0.0                   RETIRADO
+  find-msvc-tools               0.1.9                   conservado
+  fuchsia-cprng                 0.1.1                   RETIRADO
+  futures-core                  0.3.32                  conservado
+  futures-task                  0.3.32                  conservado
+  futures-util                  0.3.32                  conservado
+  generic-array                 0.14.7                  conservado
+  getrandom                     0.3.4                   RETIRADO
+  heck                          0.5.0                   conservado
+  hermit-abi                    0.5.2                   RETIRADO
+  hex                           0.4.3                   RETIRADO
+  indicatif                     0.17.11                 RETIRADO
+  is_terminal_polyfill          1.70.2                  RETIRADO
+  itoa                          1.0.18                  conservado
+  jobserver                     0.1.34                  RETIRADO
+  js-sys                        0.3.99                  conservado
+  libc                          0.2.186                 conservado
+  libm                          0.2.16                  conservado
+  lzma-sys                      0.1.20                  RETIRADO
+  md-5                          0.10.6                  RETIRADO
+  memmap                        0.7.0                   RETIRADO
+  num                           0.1.43                  RETIRADO
+  num-bigint                    0.1.45                  RETIRADO
+  num-complex                   0.1.44                  RETIRADO
+  num-format                    0.4.4                   RETIRADO
+  num-integer                   0.1.46                  conservado
+  num-iter                      0.1.45                  conservado
+  num-rational                  0.1.43                  RETIRADO
+  num-traits                    0.2.19                  conservado
+  num_cpus                      1.17.0                  RETIRADO
+  number_prefix                 0.4.0                   RETIRADO
+  once_cell                     1.21.4                  conservado
+  once_cell_polyfill            1.70.2                  RETIRADO
+  ouroboros                     0.15.6                  RETIRADO
+  ouroboros_macro               0.15.6                  RETIRADO
+  pbr                           1.1.1                   RETIRADO
+  pin-project-lite              0.2.17                  conservado
+  pkg-config                    0.3.33                  conservado
+  portable-atomic               1.13.1                  RETIRADO
+  proc-macro-error              1.0.4                   RETIRADO
+  proc-macro-error-attr         1.0.4                   RETIRADO
+  proc-macro2                   1.0.106                 conservado
+  quote                         1.0.45                  conservado
+  r-efi                         5.3.0                   RETIRADO
+  rand                          0.4.6                   RETIRADO
+  rand_core                     0.3.1                   RETIRADO
+  rand_core                     0.4.2                   RETIRADO
+  rayon                         1.12.0                  RETIRADO
+  rayon-core                    1.13.0                  RETIRADO
+  rdrand                        0.4.0                   RETIRADO
+  rustc-serialize               0.3.25                  RETIRADO
+  rustversion                   1.0.22                  conservado
+  shlex                         2.0.1                   conservado
+  slab                          0.4.12                  conservado
+  stopwatch                     0.0.7                   RETIRADO
+  strsim                        0.11.1                  conservado
+  subtle                        2.6.1                   conservado
+  syn                           1.0.109                 RETIRADO
+  syn                           2.0.117                 conservado
+  thiserror                     1.0.69                  RETIRADO
+  thiserror-impl                1.0.69                  RETIRADO
+  typenum                       1.20.1                  conservado
+  unicode-ident                 1.0.24                  conservado
+  unicode-width                 0.2.2                   conservado
+  utf8parse                     0.2.2                   RETIRADO
+  version_check                 0.9.5                   conservado
+  wasip2                        1.0.3+wasi-0.2.9        conservado
+  wasm-bindgen                  0.2.122                 conservado
+  wasm-bindgen-macro            0.2.122                 conservado
+  wasm-bindgen-macro-support    0.2.122                 conservado
+  wasm-bindgen-shared           0.2.122                 conservado
+  web-time                      1.1.0                   RETIRADO
+  winapi                        0.3.9                   RETIRADO
+  winapi-i686-pc-windows-gnu    0.4.0                   RETIRADO
+  winapi-x86_64-pc-windows-gnu  0.4.0                   RETIRADO
+  windows-link                  0.2.1                   conservado
+  windows-sys                   0.59.0                  RETIRADO
+  windows-sys                   0.61.2                  conservado
+  windows-targets               0.52.6                  conservado
+  windows_aarch64_gnullvm       0.52.6                  conservado
+  windows_aarch64_msvc          0.52.6                  conservado
+  windows_i686_gnu              0.52.6                  conservado
+  windows_i686_gnullvm          0.52.6                  conservado
+  windows_i686_msvc             0.52.6                  conservado
+  windows_x86_64_gnu            0.52.6                  conservado
+  windows_x86_64_gnullvm        0.52.6                  conservado
+  windows_x86_64_msvc           0.52.6                  conservado
+  wit-bindgen                   0.57.1                  conservado
+  xz2                           0.1.7                   RETIRADO
+  zeroize                       1.8.2                   conservado
+  zeroize_derive                1.4.3                   conservado
+  zim                           0.4.0                   RETIRADO
+  zstd                          0.12.4                  RETIRADO
+  zstd-safe                     6.0.6                   RETIRADO
+  zstd-sys                      2.0.16+zstd.1.5.7       RETIRADO
+
+=== VEREDICTO ===
+  AUDITORÍA VÁLIDA

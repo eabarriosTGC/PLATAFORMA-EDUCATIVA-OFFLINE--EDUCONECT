@@ -1,0 +1,10 @@
+ Container educonect-dev-env-dev-run-8208a5753fc4 Creating 
+ Container educonect-dev-env-dev-run-8208a5753fc4 Created 
+### [leg con-zim] cargo build --release --features zim
+   Compiling r2d2_sqlite v0.34.0
+   Compiling edu-conect-rural-server v0.1.0 (/tmp/ci2)
+    Finished `release` profile [optimized] target(s) in 1m 49s
+### [leg con-zim] cargo test --lib --bins --test integration_test --features zim
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.62s
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.10s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.71s

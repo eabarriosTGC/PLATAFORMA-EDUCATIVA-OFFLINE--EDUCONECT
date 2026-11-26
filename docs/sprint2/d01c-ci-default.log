@@ -1,0 +1,21 @@
+ Container educonect-dev-env-nodev-run-e93c5133b4bc Creating 
+ Container educonect-dev-env-nodev-run-e93c5133b4bc Created 
+### entorno sin libzim:
+  libzim ausente
+  libxapian ausente
+  icu-uc ausente
+### [leg default] cargo fmt --check
+  fmt OK
+### [leg default] cargo clippy -D warnings
+    Checking edu-conect-rural-server v0.1.0 (/tmp/ci)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 30.55s
+### [leg default] cargo build --release (SIN libzim)
+   Compiling r2d2_sqlite v0.34.0
+   Compiling edu-conect-rural-server v0.1.0 (/tmp/ci)
+    Finished `release` profile [optimized] target(s) in 1m 50s
+### [leg default] ldd del release
+ldd: target/release/edu-conect-rural-server: No such file or directory
+### [leg default] cargo test --lib --bins --test integration_test
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.52s
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.68s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.38s

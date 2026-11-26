@@ -145,6 +145,8 @@ El contrato se define por **contenido**, no por representación textual. **El or
 
 Observación de salida: hoy `serde_json::json!` emite las claves en orden alfabético (`capacidad` antes de `error`). Eso es un detalle de implementación, **no una garantía**. Ninguna prueba ni consumidor debe depender de él.
 
+El mensaje canónico `capacidad zim no incluida en esta compilación` aparece tanto en el JSON como en la página HTML, para que quien lea el navegador y quien consuma la API reciban el mismo texto. Un test de D-01b verifica ambas apariciones y, con eso, detecta cualquier divergencia futura entre los dos canales.
+
 Si en el futuro se necesita JSON canónico —para firmas, hashes o comparación byte a byte— será una decisión técnica independiente, y requerirá fijar el orden con una estructura `serde` explícita. Hoy no se requiere.
 
 ### 6.2 Las dos pruebas que sostienen la elección de 503

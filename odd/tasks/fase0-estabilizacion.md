@@ -126,9 +126,10 @@ commit en la tabla de tareas (D-03 en `5dc9087`, T7 en `82bfd27`, T9 en `9c08fcb
 
 **L9 — T10 cerrada y verificada por separado (26/11):**
 
-Slice de la unidad, en tres commits: `c3bd5d1` (rastro ODD: T9 con commit, T10 definida, decisiones
+Slice de la unidad, en cuatro commits: `c3bd5d1` (rastro ODD: T9 con commit, T10 definida, decisiones
 L6), `b35f253` (comportamiento: migración `008`, registro en `db.rs`, tres pruebas, corrección del
-documento de arquitectura) y `d50b7a3` (inventario de D-04 y esta evidencia). 659 líneas autoradas:
+documento de arquitectura), `25a624e` (inventario de D-04 y esta evidencia) y el commit que cierra el slice —el
+que contiene esta misma línea— con el estado de reanudación al día. 740 líneas autoradas:
 390 son la suite, que no se puede recortar sin perder el arranque real. La forma de entrega es un
 solo PR, con el commit de comportamiento en medio para que la revisión vea primero la migración.
 

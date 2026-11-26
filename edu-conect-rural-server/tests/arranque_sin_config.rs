@@ -886,3 +886,393 @@ fn base_heredada_dir_ilegible_no_arranca_vacia() {
 
     let _ = std::fs::remove_dir_all(&base);
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  D-04 / T10 — identidad de fila del diccionario.
+//  `diccionario` nació sin restricción única (seeds/006), así que su
+//  `INSERT OR IGNORE` no ignoraba nada y cada arranque apilaba el catálogo
+//  completo (~21.800 filas). El defecto solo se ve arrancando el binario real
+//  DOS veces sobre el mismo `DATA_DIR`, que es lo que hace esta suite.
+// ══════════════════════════════════════════════════════════════════════
+
+/// Índice único que define la identidad de fila de `diccionario`.
+const IDX_DICCIONARIO: &str = "idx_diccionario_identidad";
+
+/// Arranca el binario real hasta que `/health` responde y lo mata. Devuelve la
+/// salida ya leída, para usarla como evidencia si el arranque no llega a servir.
+///
+/// Nada de `output()`: el servidor se queda sirviendo y `output()` bloquea
+/// indefinidamente contra una tubería abierta (ver cabecera de la suite).
+fn arrancar_y_parar(base: &Path) -> String {
+    let data = base.join("data");
+    let puerto = puerto_libre();
+    let addr: SocketAddr = format!("127.0.0.1:{puerto}").parse().expect("addr");
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_edu-conect-rural-server"));
+    cmd.current_dir(base)
+        .env_remove("APP_ROOT")
+        .env("JWT_SECRET", "x".repeat(48))
+        .env("ADMIN_INITIAL_PASSWORD", "d04-password-segura-1234")
+        .env("DATA_DIR", &data)
+        .env("LISTEN_ADDR", format!("127.0.0.1:{puerto}"))
+        .env("RUST_LOG", "warn");
+    let mut servidor = Servidor::lanzar(&mut cmd);
+
+    let listo = esperar_arranque(&mut servidor, addr, LIMITE_ARRANQUE);
+    let (out, err) = servidor.matar_y_leer();
+    let salida = format!("{out}{err}");
+    assert!(
+        listo,
+        "el arranque sobre {} no llegó a servir /health. salida:\n{salida}",
+        data.display()
+    );
+    salida
+}
+
+/// Conexión de diagnóstico a la base del test. El servidor ya está muerto: se
+/// mide después de matarlo, nunca contra un proceso vivo.
+fn abrir_db(base: &Path) -> rusqlite::Connection {
+    let ruta = base.join("data").join("educonect.db");
+    rusqlite::Connection::open(&ruta)
+        .unwrap_or_else(|e| panic!("abrir {} para medir: {e}", ruta.display()))
+}
+
+fn contar(conn: &rusqlite::Connection, sql: &str) -> i64 {
+    conn.query_row(sql, [], |fila| fila.get(0))
+        .unwrap_or_else(|e| panic!("medir «{sql}»: {e}"))
+}
+
+/// Ids de `diccionario`, ordenados: la evidencia de qué filas sobrevivieron.
+fn ids_diccionario(conn: &rusqlite::Connection) -> Vec<i64> {
+    let mut stmt = conn
+        .prepare("SELECT id FROM diccionario ORDER BY id")
+        .expect("preparar la lectura de ids");
+    stmt.query_map([], |fila| fila.get::<_, i64>(0))
+        .expect("consultar ids")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("leer ids")
+}
+
+/// Filas de `diccionario` en el estado actual de la base: (total, ids).
+fn medir_diccionario(base: &Path) -> (i64, Vec<i64>) {
+    let conn = abrir_db(base);
+    let total = contar(&conn, "SELECT COUNT(*) FROM diccionario");
+    let ids = ids_diccionario(&conn);
+    (total, ids)
+}
+
+/// Defecto de D-04 medido por el binario real: dos arranques sobre el mismo
+/// `DATA_DIR` deben dejar exactamente las mismas filas del diccionario.
+///
+/// Además de la igualdad de conteo, se afirma lo que la reparación garantiza:
+/// ninguna identidad `(palabra, tipo, categoria)` repetida, y el `id` que
+/// sobrevive es el mínimo de su grupo (lo que prueba que no se reescribieron
+/// filas ni se reinsertaron con ids nuevos).
+#[test]
+fn diccionario_no_crece_entre_arranques() {
+    let base = dir_unico("d04-diccionario-conteo");
+
+    arrancar_y_parar(&base);
+    let (total1, ids1) = medir_diccionario(&base);
+
+    // Segundo arranque: MISMA base, mismo DATA_DIR.
+    let salida = arrancar_y_parar(&base);
+    let (total2, ids2) = medir_diccionario(&base);
+
+    let grupos_repetidos;
+    let filas_que_no_son_minimas;
+    {
+        let conn = abrir_db(&base);
+        grupos_repetidos = contar(
+            &conn,
+            "SELECT COUNT(*) FROM ( \
+                 SELECT 1 FROM diccionario GROUP BY palabra, tipo, categoria HAVING COUNT(*) > 1 \
+             )",
+        );
+        filas_que_no_son_minimas = contar(
+            &conn,
+            "SELECT COUNT(*) FROM diccionario d WHERE d.id <> ( \
+                 SELECT MIN(id) FROM diccionario \
+                 WHERE palabra = d.palabra AND tipo = d.tipo AND categoria = d.categoria \
+             )",
+        );
+    }
+
+    assert!(
+        total1 > 0,
+        "el primer arranque no sembró el diccionario: la prueba no mide nada"
+    );
+    assert_eq!(
+        total2,
+        total1,
+        "el segundo arranque duplicó el diccionario: {total1} filas después del primero, \
+         {total2} después del segundo (delta {}). salida del segundo arranque:\n{salida}",
+        total2 - total1
+    );
+    assert_eq!(
+        ids2, ids1,
+        "el segundo arranque cambió las filas del diccionario sin cambiar el conteo: \
+         se borraron o reinsertaron filas en un arranque que debe ser idempotente"
+    );
+    assert_eq!(
+        grupos_repetidos, 0,
+        "{grupos_repetidos} identidades (palabra, tipo, categoria) tienen más de una fila"
+    );
+    assert_eq!(
+        filas_que_no_son_minimas, 0,
+        "{filas_que_no_son_minimas} filas conservaron un id distinto del mínimo de su grupo"
+    );
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// Cara de reparación de la misma regla: una base creada por la versión anterior
+/// (sin índice único) ya trae duplicados. El arranque los elimina conservando el
+/// `id` mínimo de cada grupo y deja el índice creado, sin fallar por existir ya.
+#[test]
+fn diccionario_deduplica_al_arrancar_conservando_el_id_minimo() {
+    let base = dir_unico("d04-diccionario-dedupe");
+
+    arrancar_y_parar(&base);
+    let (total_limpio, _) = medir_diccionario(&base);
+
+    // Reproducir la base heredada: sin el índice único y con filas repetidas
+    // (lo que la versión anterior acumulaba en cada arranque).
+    {
+        let conn = abrir_db(&base);
+        let sql = format!(
+            "DROP INDEX IF EXISTS {IDX_DICCIONARIO}; \
+             INSERT INTO diccionario (palabra, definicion, tipo, categoria) \
+             SELECT palabra, definicion, tipo, categoria FROM diccionario LIMIT 500;"
+        );
+        conn.execute_batch(&sql)
+            .expect("reproducir el estado heredado de la base");
+    }
+    let (total_heredado, _) = medir_diccionario(&base);
+    assert_eq!(
+        total_heredado,
+        total_limpio + 500,
+        "la reproducción del estado heredado no agregó las filas repetidas"
+    );
+
+    // Los ids que DEBEN sobrevivir: el mínimo de cada identidad.
+    let minimos: Vec<i64> = {
+        let conn = abrir_db(&base);
+        let mut stmt = conn
+            .prepare("SELECT MIN(id) FROM diccionario GROUP BY palabra, tipo, categoria ORDER BY 1")
+            .expect("preparar los mínimos");
+        stmt.query_map([], |fila| fila.get::<_, i64>(0))
+            .expect("consultar los mínimos")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("leer los mínimos")
+    };
+
+    let salida = arrancar_y_parar(&base);
+    let (total_reparado, ids) = medir_diccionario(&base);
+
+    let indice_presente;
+    let indice_unico;
+    let rechaza_duplicado;
+    {
+        let conn = abrir_db(&base);
+        indice_presente = contar(
+            &conn,
+            &format!(
+                "SELECT COUNT(*) FROM sqlite_master \
+                 WHERE type = 'index' AND name = '{IDX_DICCIONARIO}'"
+            ),
+        );
+        indice_unico = contar(
+            &conn,
+            &format!(
+                "SELECT COUNT(*) FROM pragma_index_list('diccionario') \
+                 WHERE name = '{IDX_DICCIONARIO}' AND \"unique\" = 1"
+            ),
+        );
+        // Con el índice único puesto, la identidad ya no admite otra fila: es la
+        // razón por la que el OR IGNORE del seed por fin ignora.
+        rechaza_duplicado = conn
+            .execute(
+                "INSERT INTO diccionario (palabra, tipo, categoria) \
+                 SELECT palabra, tipo, categoria FROM diccionario LIMIT 1",
+                [],
+            )
+            .is_err();
+    }
+
+    assert_eq!(
+        ids, minimos,
+        "la deduplicación no conservó el id mínimo de cada (palabra, tipo, categoria). \
+         salida del arranque reparador:\n{salida}"
+    );
+    assert_eq!(
+        total_reparado, total_limpio,
+        "tras reparar quedaron {total_reparado} filas y la base limpia tenía {total_limpio}"
+    );
+    assert_eq!(
+        indice_presente, 1,
+        "el arranque no recreó el índice único {IDX_DICCIONARIO}"
+    );
+    assert_eq!(indice_unico, 1, "{IDX_DICCIONARIO} no es único");
+    assert!(
+        rechaza_duplicado,
+        "el índice único no rechaza una identidad (palabra, tipo, categoria) repetida"
+    );
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// Marca que llevan las filas repetidas de la base heredada en la prueba de FTS:
+/// un único token, para poder preguntarle al índice si todavía las responde.
+const MARCA_FTS: &str = "marcadorbasura";
+
+/// S6, cara de motor de búsqueda: deduplicar no basta si el índice FTS sigue
+/// respondiendo con filas que ya no existen. Tras reparar una base heredada, el
+/// índice debe reflejar exactamente el catálogo, no tener entradas huérfanas y
+/// pasar su propio `integrity-check`.
+#[test]
+fn diccionario_fts_queda_consistente_tras_deduplicar() {
+    let base = dir_unico("d04-diccionario-fts");
+
+    arrancar_y_parar(&base);
+    let (total_limpio, _) = medir_diccionario(&base);
+
+    // Base heredada: sin el índice único y con filas repetidas cuya definición
+    // lleva la marca, para distinguirlas por MATCH después.
+    {
+        let conn = abrir_db(&base);
+        let sql = format!(
+            "DROP INDEX IF EXISTS {IDX_DICCIONARIO}; \
+             INSERT INTO diccionario (palabra, definicion, tipo, categoria) \
+             SELECT palabra, '{MARCA_FTS}', tipo, categoria FROM diccionario LIMIT 500;"
+        );
+        conn.execute_batch(&sql)
+            .expect("reproducir el estado heredado de la base");
+    }
+
+    // Confirmar el estado ANTES de medir: las 500 filas marcadas existen y el
+    // índice ya las responde. Sin esta confirmación, un 0 después del arranque
+    // podría significar que la sonda no mide nada.
+    {
+        let conn = abrir_db(&base);
+        let en_tabla = contar(
+            &conn,
+            &format!("SELECT COUNT(*) FROM diccionario WHERE definicion = '{MARCA_FTS}'"),
+        );
+        let en_fts = contar(
+            &conn,
+            &format!(
+                "SELECT COUNT(*) FROM diccionario_fts WHERE diccionario_fts MATCH '{MARCA_FTS}'"
+            ),
+        );
+        assert_eq!(
+            en_tabla, 500,
+            "la reproducción del estado heredado no insertó las 500 filas marcadas"
+        );
+        assert_eq!(
+            en_fts, en_tabla,
+            "antes de reparar, el índice FTS debería responder las {en_tabla} filas marcadas; \
+             respondió {en_fts}, así que la sonda de MATCH no está midiendo el índice"
+        );
+    }
+
+    let salida = arrancar_y_parar(&base);
+    let (total_reparado, _) = medir_diccionario(&base);
+
+    let filas_fts;
+    let huerfanas;
+    let marcas_en_fts;
+    let integridad;
+    {
+        let conn = abrir_db(&base);
+        // Tres vistas complementarias del índice. Ojo: con una tabla FTS5 de
+        // contenido externo (`content='diccionario'`) solo la consulta MATCH
+        // detecta entradas obsoletas; el conteo total, el LEFT JOIN y el propio
+        // `integrity-check` leen la tabla de contenido y no ven una entrada
+        // huérfana (comprobado con un índice contaminado a mano). Por eso la
+        // aserción que sostiene esta prueba es `marcas_en_fts`.
+        filas_fts = contar(&conn, "SELECT COUNT(*) FROM diccionario_fts");
+        // Entradas del índice cuyo rowid ya no tiene fila en el catálogo.
+        huerfanas = contar(
+            &conn,
+            "SELECT COUNT(*) FROM diccionario_fts f \
+             LEFT JOIN diccionario d ON d.id = f.rowid WHERE d.id IS NULL",
+        );
+        marcas_en_fts = contar(
+            &conn,
+            &format!(
+                "SELECT COUNT(*) FROM diccionario_fts WHERE diccionario_fts MATCH '{MARCA_FTS}'"
+            ),
+        );
+        integridad = conn.execute(
+            "INSERT INTO diccionario_fts(diccionario_fts) VALUES('integrity-check')",
+            [],
+        );
+    }
+
+    assert_eq!(
+        total_reparado, total_limpio,
+        "tras reparar quedaron {total_reparado} filas y la base limpia tenía {total_limpio}"
+    );
+    assert_eq!(
+        filas_fts, total_reparado,
+        "el índice FTS quedó con {filas_fts} filas y el catálogo con {total_reparado}. \
+         salida del arranque reparador:\n{salida}"
+    );
+    assert_eq!(
+        huerfanas, 0,
+        "{huerfanas} entradas del índice FTS apuntan a ids que ya no existen en el diccionario"
+    );
+    assert_eq!(
+        marcas_en_fts, 0,
+        "el buscador todavía responde {marcas_en_fts} filas borradas por la deduplicación: \
+         el índice FTS no se reconstruyó tras el borrado"
+    );
+    assert!(
+        integridad.is_ok(),
+        "el integrity-check de diccionario_fts falló: {:?}",
+        integridad.err()
+    );
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// S6, cara de identidad: `(palabra, tipo, categoria)` no puede fusionar filas
+/// legítimas de la misma palabra. `seeds/006_diccionarios.sql` trae `leer` tres
+/// veces — verbo de `general`, sinónimo y verbo de la lista de `verbos` — y las
+/// tres son legítimas. Con `palabra` como identidad habría sobrevivido una sola:
+/// es exactamente la razón por la que se rechazó (decisión L6).
+#[test]
+fn diccionario_conserva_las_identidades_legitimas_de_una_misma_palabra() {
+    let base = dir_unico("d04-diccionario-leer");
+
+    arrancar_y_parar(&base);
+
+    let identidades: Vec<(String, String)> = {
+        let conn = abrir_db(&base);
+        let mut stmt = conn
+            .prepare(
+                "SELECT tipo, categoria FROM diccionario WHERE palabra = 'leer' \
+                 ORDER BY categoria, tipo",
+            )
+            .expect("preparar las identidades de 'leer'");
+        stmt.query_map([], |fila| {
+            Ok((fila.get::<_, String>(0)?, fila.get::<_, String>(1)?))
+        })
+        .expect("consultar las identidades de 'leer'")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("leer las identidades de 'leer'")
+    };
+
+    assert_eq!(
+        identidades,
+        vec![
+            ("verbo".to_string(), "general".to_string()),
+            ("sinónimo".to_string(), "sinonimos".to_string()),
+            ("verbo".to_string(), "verbos".to_string()),
+        ],
+        "la migración fusionó filas legítimas de 'leer': la identidad \
+         (palabra, tipo, categoria) debe conservar las tres que trae el seed"
+    );
+
+    let _ = std::fs::remove_dir_all(&base);
+}

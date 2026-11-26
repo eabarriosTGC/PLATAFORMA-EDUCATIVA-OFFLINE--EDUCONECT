@@ -274,7 +274,9 @@ Rust_rural/
 │   │   ├── 001_cursos.sql       ← Cursos precargados
 │   │   ├── 002_modulos.sql      ← Módulos educativos
 │   │   ├── 005_biblioteca_fts.sql ← Biblioteca con FTS5
-│   │   └── 006_diccionarios.sql ← 21,800 entradas (español + wayuunaiki)
+│   │   ├── 006_diccionarios.sql ← 21,800 entradas (español + wayuunaiki)
+│   │   ├── 007_biblioteca_unicos.sql ← Dedupe de biblioteca + índice único
+│   │   └── 008_diccionario_unicos.sql ← Dedupe de diccionario + índice único
 │   ├── tests/
 │   │   └── integration_test.rs  ← Tests concurrentes (r2d2 pool)
 │   ├── Cargo.toml               ← Dependencias Rust

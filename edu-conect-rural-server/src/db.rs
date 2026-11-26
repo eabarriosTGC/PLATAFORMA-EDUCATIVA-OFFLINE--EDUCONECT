@@ -40,10 +40,8 @@ pub struct Database {
     pub jwt_secret: String,
 }
 
-/// Contraseñas que jamás se aceptan como inicial (credenciales públicas conocidas).
-const PASSWORDS_INICIALES_CONOCIDAS: &[&str] = &["admin123"];
-/// Longitud mínima para la contraseña inicial del administrador.
-const LONGITUD_MINIMA_PASSWORD: usize = 12;
+// La política de `ADMIN_INITIAL_PASSWORD` vive en
+// `config::validar_politica_password`, que es la única fuente de la regla.
 
 impl Database {
     /// Helper privado: obtiene una conexión del pool o devuelve error.
@@ -366,33 +364,14 @@ impl Database {
         Ok(())
     }
 
-    /// Valida `ADMIN_INITIAL_PASSWORD` (recibida desde el entorno en `open`).
-    /// Rechaza: ausente, vacía, conocida (`admin123`) o menor de 12 caracteres.
+    /// Valida `ADMIN_INITIAL_PASSWORD` delegando la política en `config`.
+    ///
+    /// La regla vive en un solo lugar: `config::validar_politica_password`.
+    /// Este método solo aporta lo que es específico del arranque: exigir que la
+    /// variable exista cuando la base necesita crear o rotar el administrador.
     fn initial_password_requerida(candidata: Option<String>) -> Result<String, DbError> {
         let pwd = candidata.map(|s| s.trim().to_string()).unwrap_or_default();
-        if pwd.is_empty() {
-            return Err(DbError::Validacion(
-                "ADMIN_INITIAL_PASSWORD no está definida o está vacía. \
-                 Se necesita para crear o migrar el administrador inicial \
-                 (mínimo 12 caracteres)."
-                    .into(),
-            ));
-        }
-        if PASSWORDS_INICIALES_CONOCIDAS.contains(&pwd.as_str()) {
-            return Err(DbError::Validacion(
-                "ADMIN_INITIAL_PASSWORD coincide con una contraseña conocida (admin123). \
-                 Genera una nueva con: openssl rand -base64 24"
-                    .into(),
-            ));
-        }
-        if pwd.len() < LONGITUD_MINIMA_PASSWORD {
-            return Err(DbError::Validacion(format!(
-                "ADMIN_INITIAL_PASSWORD demasiado corta ({} chars, mínimo {}). \
-                 Genera una con: openssl rand -base64 24",
-                pwd.len(),
-                LONGITUD_MINIMA_PASSWORD
-            )));
-        }
+        crate::config::validar_politica_password(&pwd).map_err(DbError::Validacion)?;
         Ok(pwd)
     }
 

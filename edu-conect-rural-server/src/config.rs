@@ -13,6 +13,46 @@ const SECRETOS_CONOCIDOS: &[&str] = &[
 /// (64 chars con `openssl rand -base64 48`).
 const LONGITUD_MINIMA: usize = 32;
 
+/// Contraseñas iniciales conocidas: jamás deben aceptarse para el administrador.
+const PASSWORDS_INICIALES_CONOCIDAS: &[&str] = &["admin123"];
+
+/// Longitud mínima para la contraseña inicial del administrador.
+const LONGITUD_MINIMA_PASSWORD: usize = 12;
+
+/// Política de `ADMIN_INITIAL_PASSWORD`. Sin estado, sin E/S.
+///
+/// Es la **única** fuente de verdad de esta regla: la usan tanto el arranque
+/// (`Database::open`) como el modo `--check`. Si divergieran, `--check` diría
+/// que todo está bien y el arranque fallaría igual.
+///
+/// Devuelve el mensaje de rechazo, que siempre nombra la variable para que el
+/// operador sepa qué corregir.
+pub fn validar_politica_password(candidata: &str) -> Result<(), String> {
+    let pwd = candidata.trim();
+    if pwd.is_empty() {
+        return Err("ADMIN_INITIAL_PASSWORD no está definida o está vacía. \
+                    Se necesita para crear o migrar el administrador inicial \
+                    (mínimo 12 caracteres)."
+            .into());
+    }
+    if PASSWORDS_INICIALES_CONOCIDAS.contains(&pwd) {
+        return Err(
+            "ADMIN_INITIAL_PASSWORD coincide con una contraseña conocida (admin123). \
+                    Genera una nueva con: openssl rand -base64 24"
+                .into(),
+        );
+    }
+    if pwd.len() < LONGITUD_MINIMA_PASSWORD {
+        return Err(format!(
+            "ADMIN_INITIAL_PASSWORD demasiado corta ({} chars, mínimo {}). \
+             Genera una con: openssl rand -base64 24",
+            pwd.len(),
+            LONGITUD_MINIMA_PASSWORD
+        ));
+    }
+    Ok(())
+}
+
 /// Lee y valida `JWT_SECRET`. Falla con un mensaje claro si falta, está vacío,
 /// coincide con un default conocido o es demasiado corto.
 pub fn jwt_secret_requerido() -> String {

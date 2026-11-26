@@ -6,6 +6,7 @@ mod models;
 mod network;
 mod quiz;
 mod rate_limit;
+#[cfg(feature = "zim")]
 mod zim_proxy;
 
 use axum::{
@@ -31,6 +32,7 @@ use quiz::{
     EntregaQuiz, PublicacionQuiz, Quiz, QuizPayload, QuizPublico, QuizResumen, ResultadoQuiz,
 };
 use rate_limit::RateLimiter;
+#[cfg(feature = "zim")]
 use zim_proxy::{buscar_articulos, listar_zims, obtener_articulo, zim_inyectar_estilos, SharedZim};
 
 #[derive(Clone)]
@@ -38,6 +40,7 @@ struct AppState {
     db: Database,
     frontend_path: String,
     paths: RuntimePaths,
+    #[cfg(feature = "zim")]
     zim: SharedZim,
     h264_encoder: &'static str,
     login_limiter: std::sync::Arc<RateLimiter>,
@@ -298,9 +301,13 @@ async fn main() {
         .expect("Error al abrir la base de datos");
 
     // Inicializar lector ZIM (Wikipedia offline puro Rust) — dos zonas:
-    // bundled (imagen, solo lectura) + persistente (/data, pisa duplicados)
-    let zim_bundled = config::default_zim_dir();
-    let zim = zim_proxy::inicializar(&zim_bundled, &paths.contenido_zim.to_string_lossy()).await;
+    // bundled (imagen, solo lectura) + persistente (/data, pisa duplicados).
+    // Solo cuando la capacidad está compilada (feature `zim`).
+    #[cfg(feature = "zim")]
+    let zim = {
+        let zim_bundled = config::default_zim_dir();
+        zim_proxy::inicializar(&zim_bundled, &paths.contenido_zim.to_string_lossy()).await
+    };
 
     // Detectar encoder H.264 soportado por el hardware (Raspberry Pi → h264_v4l2m2m, x86 → libx264)
     let h264_encoder = detect_h264_encoder();
@@ -310,6 +317,7 @@ async fn main() {
         db: database.clone(),
         frontend_path: frontend_path.clone(),
         paths: paths.clone(),
+        #[cfg(feature = "zim")]
         zim: zim.clone(),
         h264_encoder,
         login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),
@@ -317,7 +325,53 @@ async fn main() {
         listen_addr: listen_addr_text,
     };
 
-    let app = Router::new()
+    let router = app(state);
+
+    tracing::info!("🚀 Servidor EduConect Rural escuchando en http://{listen_addr}");
+    tracing::info!("📁 Frontend estático servido desde: {frontend_path}");
+
+    let listener = tokio::net::TcpListener::bind(listen_addr).await.unwrap();
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.ok();
+        tracing::info!("Señal recibida — apagando EduConect Rural...");
+    })
+    .await
+    .unwrap();
+}
+
+/// Construye el router completo a partir del estado ya resuelto.
+///
+/// Extraído de `main()` sin cambios de lógica: no hace E/S, no lanza
+/// procesos externos y no lee variables de entorno. Todo eso ocurre al
+/// construir el `AppState`, que se recibe ya resuelto.
+fn app(state: AppState) -> Router {
+    // ── Rutas ZIM: siempre registradas, implementación según la compilación ──
+    // Sin la feature responden 503 explicando que la capacidad no está incluida.
+    // No se eliminan del router: un 404 del fallback sería indistinguible de una
+    // ruta mal escrita.
+    #[cfg(feature = "zim")]
+    let zim_routes: Router<AppState> = Router::new()
+        .route("/zim/", get(handler_zim_raiz))
+        .route("/zim", get(handler_zim_raiz))
+        .route("/zim/{*path}", get(handler_zim_articulo))
+        .route("/api/wikipedia/search", get(wikipedia_search))
+        .route("/api/wikipedia/article", get(wikipedia_article))
+        .route("/api/wikipedia/zims", get(wikipedia_zims));
+
+    #[cfg(not(feature = "zim"))]
+    let zim_routes: Router<AppState> = Router::new()
+        .route("/zim/", get(zim_no_disponible_html))
+        .route("/zim", get(zim_no_disponible_html))
+        .route("/zim/{*path}", get(zim_no_disponible_html))
+        .route("/api/wikipedia/search", get(zim_no_disponible_api))
+        .route("/api/wikipedia/article", get(zim_no_disponible_api))
+        .route("/api/wikipedia/zims", get(zim_no_disponible_api));
+
+    Router::new()
         // ── Health check (sin auth) ──
         .route("/health", get(|| async {
             Json(serde_json::json!({"status": "ok", "version": env!("CARGO_PKG_VERSION")}))
@@ -394,14 +448,8 @@ async fn main() {
                         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)),
                 )
                 .layer(auth::AuthLayer::new(state.db.jwt_secret.clone())),
-        )        // ── Wikipedia offline (lector ZIM puro Rust) ──
-        .route("/zim/", get(handler_zim_raiz))
-        .route("/zim", get(handler_zim_raiz))
-        .route("/zim/{*path}", get(handler_zim_articulo))
-        // ── Wikipedia API ──
-        .route("/api/wikipedia/search", get(wikipedia_search))
-        .route("/api/wikipedia/article", get(wikipedia_article))
-        .route("/api/wikipedia/zims", get(wikipedia_zims))
+        )        // ── Wikipedia offline: rutas siempre presentes, handler según feature ──
+        .merge(zim_routes)
         // ── PhET simulaciones (coming soon) ──
         .route("/phet/", get(|| async {
             axum::response::Html(r#"<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>PhET — EduConect Rural</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#1a1a2e;color:#e0e0e0;}div{text-align:center;padding:2rem;}h1{color:#f4a261;}p{color:#aaa;}</style></head><body><div><h1>🧪 PhET Simulaciones</h1><p>Simulaciones interactivas offline próximamente</p><p style="font-size:0.8rem;">EduConect Rural — La Guajira 🌵</p></div></body></html>"#)
@@ -424,22 +472,7 @@ async fn main() {
         .route("/manifest.json", get(handler_manifest))
         .route("/app-icon.svg", get(handler_app_icon))
         .fallback_service(ServeDir::new(&state.frontend_path).append_index_html_on_directories(true))
-        .with_state(state);
-
-    tracing::info!("🚀 Servidor EduConect Rural escuchando en http://{listen_addr}");
-    tracing::info!("📁 Frontend estático servido desde: {frontend_path}");
-
-    let listener = tokio::net::TcpListener::bind(listen_addr).await.unwrap();
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(async {
-        tokio::signal::ctrl_c().await.ok();
-        tracing::info!("Señal recibida — apagando EduConect Rural...");
-    })
-    .await
-    .unwrap();
+        .with_state(state)
 }
 
 // ── handlers API pública ──────────────────────────────────────────────
@@ -1572,10 +1605,63 @@ async fn contenido_listar_archivos(
 }
 
 // ══════════════════════════════════════════════
+//  ZIM desactivado en esta compilación (feature `zim` ausente)
+//  Las rutas están registradas y responden 503 de forma explícita.
+// ══════════════════════════════════════════════
+
+#[cfg(not(feature = "zim"))]
+const ZIM_NO_DISPONIBLE: &str = "capacidad zim no incluida en esta compilación";
+
+/// Página de `/zim/*` cuando la capacidad no está compilada. El mensaje canónico
+/// se inyecta desde `ZIM_NO_DISPONIBLE`: JSON y HTML no pueden divergir porque
+/// no existen dos copias del texto.
+#[cfg(not(feature = "zim"))]
+const ZIM_HTML_SIN_CAPACIDAD: &str = r#"<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Wikipedia Offline no disponible</title>
+<style>
+body{font-family:sans-serif;padding:2rem;background:#1a1a2e;color:#e0e0e0;max-width:800px;margin:auto;}
+h1{color:#e94560;}pre{background:#16213e;padding:1rem;border-radius:8px;overflow-x:auto;}
+a{color:#e94560;}
+.btn{background:#e94560;color:#fff;padding:.5rem 1rem;border-radius:8px;text-decoration:none;display:inline-block;margin-top:1rem;}
+</style></head><body>
+<h1>📖 Wikipedia Offline</h1>
+<p>Esta instalación de EduConect se compiló <strong>sin</strong> la capacidad ZIM.</p>
+<p>No es un error de configuración: la funcionalidad no está incluida en este binario.</p>
+<p><code>__MENSAJE_CANONICO__</code></p>
+<h2>Si necesitás esta funcionalidad:</h2>
+<pre><code>cargo build --features zim</code></pre>
+<p>Requiere <code>libzim-dev</code>, <code>libxapian-dev</code> e <code>libicu-dev</code> al compilar.</p>
+<a class="btn" href="/">← Volver al inicio</a>
+</body></html>"#;
+
+#[cfg(not(feature = "zim"))]
+async fn zim_no_disponible_api() -> (StatusCode, Json<serde_json::Value>) {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(serde_json::json!({
+            "error": ZIM_NO_DISPONIBLE,
+            "capacidad": "zim",
+        })),
+    )
+}
+
+#[cfg(not(feature = "zim"))]
+async fn zim_no_disponible_html() -> Response {
+    let html = ZIM_HTML_SIN_CAPACIDAD.replace("__MENSAJE_CANONICO__", ZIM_NO_DISPONIBLE);
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        Html(html),
+    )
+        .into_response()
+}
+
+// ══════════════════════════════════════════════
 //  ZIM — Wikipedia + Wikilibros offline (vía libzim)
 // ══════════════════════════════════════════════
 
 /// GET /zim/ — redirige a la página principal del ZIM por defecto
+#[cfg(feature = "zim")]
 async fn handler_zim_raiz(State(state): State<AppState>) -> axum::response::Response {
     let guard = state.zim.read().await;
     if guard.zims.is_empty() {
@@ -1592,6 +1678,7 @@ async fn handler_zim_raiz(State(state): State<AppState>) -> axum::response::Resp
 }
 
 /// GET /zim/{*path} — sirve un artículo del ZIM por defecto
+#[cfg(feature = "zim")]
 async fn handler_zim_articulo(State(state): State<AppState>, Path(path): Path<String>) -> Response {
     let guard = state.zim.read().await;
     let reader = match guard.zims.get(&guard.default_key) {
@@ -1604,6 +1691,7 @@ async fn handler_zim_articulo(State(state): State<AppState>, Path(path): Path<St
 
 // ── Wikipedia API endpoints ────────────────
 
+#[cfg(feature = "zim")]
 #[derive(serde::Deserialize)]
 struct WikiSearchQuery {
     q: String,
@@ -1612,6 +1700,7 @@ struct WikiSearchQuery {
 }
 
 /// GET /api/wikipedia/search?q=colombia[&zim=wikipedia_es_top]
+#[cfg(feature = "zim")]
 async fn wikipedia_search(
     State(state): State<AppState>,
     Query(params): Query<WikiSearchQuery>,
@@ -1631,6 +1720,7 @@ async fn wikipedia_search(
     })))
 }
 
+#[cfg(feature = "zim")]
 #[derive(serde::Deserialize)]
 struct WikiArticleQuery {
     path: String,
@@ -1639,6 +1729,7 @@ struct WikiArticleQuery {
 }
 
 /// GET /api/wikipedia/article?path=A/Colombia[&zim=wikipedia_es_top]
+#[cfg(feature = "zim")]
 async fn wikipedia_article(
     State(state): State<AppState>,
     Query(params): Query<WikiArticleQuery>,
@@ -1662,6 +1753,7 @@ async fn wikipedia_article(
 }
 
 /// GET /api/wikipedia/zims — lista los ZIMs disponibles
+#[cfg(feature = "zim")]
 async fn wikipedia_zims(State(state): State<AppState>) -> Json<serde_json::Value> {
     let guard = state.zim.read().await;
     Json(serde_json::json!({
@@ -1671,6 +1763,7 @@ async fn wikipedia_zims(State(state): State<AppState>) -> Json<serde_json::Value
 }
 
 /// Helper: sirve una entrada ZIM como HTML
+#[cfg(feature = "zim")]
 fn servir_entrada_zim(reader: &zim_proxy::ZimReader, path: &str) -> Response {
     let url = if path.trim().is_empty() || path == "A" {
         &reader.main_page_url
@@ -1723,6 +1816,7 @@ fn servir_entrada_zim(reader: &zim_proxy::ZimReader, path: &str) -> Response {
 
 // ── Páginas de error ───────────────────────
 
+#[cfg(feature = "zim")]
 fn zim_pagina_no_zims() -> Response {
     let html = r#"<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><title>Wikipedia Offline</title>
@@ -1750,6 +1844,7 @@ wget -P /data/contenido/zim/ \
         .into_response()
 }
 
+#[cfg(feature = "zim")]
 fn zim_pagina_no_encontrado(url: &str) -> Response {
     let html = format!(
         r#"<!DOCTYPE html>
@@ -2084,4 +2179,165 @@ fn guess_category(dir_name: &str) -> String {
         return "3D".into();
     }
     "General".into()
+}
+
+// ══════════════════════════════════════════════
+//  Tests del contrato de degradación (feature `zim` apagada)
+// ══════════════════════════════════════════════
+
+#[cfg(all(test, not(feature = "zim")))]
+impl AppState {
+    /// `AppState` utilizable en tests, sin efectos fuera de un directorio temporal.
+    ///
+    /// - No lee `JWT_SECRET`: el secreto se pasa literal a `Database::open`.
+    /// - No lanza `ffmpeg`: `h264_encoder` se fija.
+    /// - Exige `ADMIN_INITIAL_PASSWORD` porque el bootstrap del administrador lo
+    ///   valida y `open_internal` no es accesible desde un test.
+    ///
+    /// Devuelve también el directorio para que el test lo borre.
+    fn for_test(tag: &str) -> (Self, PathBuf) {
+        let dir =
+            std::env::temp_dir().join(format!("educonect-http-test-{}-{tag}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("crear directorio temporal de test");
+
+        std::env::set_var("ADMIN_INITIAL_PASSWORD", "test-password-segura-1234");
+
+        let paths = RuntimePaths::nuevo(dir.to_string_lossy().as_ref());
+        paths.ensure_dirs().expect("crear directorios de test");
+
+        let db =
+            Database::open(&paths.db.to_string_lossy(), "t".repeat(40)).expect("abrir BD de test");
+
+        let state = AppState {
+            db,
+            frontend_path: dir.join("frontend").to_string_lossy().into_owned(),
+            paths,
+            h264_encoder: "libx264",
+            login_limiter: std::sync::Arc::new(RateLimiter::new(5, 60)),
+            public_base_url: None,
+            listen_addr: "127.0.0.1:0".to_string(),
+        };
+        (state, dir)
+    }
+}
+
+#[cfg(all(test, not(feature = "zim")))]
+mod http_degradacion {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{header, Request, StatusCode};
+    use tower::ServiceExt;
+
+    const MENSAJE: &str = "capacidad zim no incluida en esta compilación";
+
+    /// Ejercita el router real: (estado, content-type, cuerpo).
+    async fn pedir(router: &Router, uri: &str) -> (StatusCode, String, String) {
+        let respuesta = router
+            .clone()
+            .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+            .await
+            .expect("el router debe responder");
+
+        let estado = respuesta.status();
+        let tipo = respuesta
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+        let cuerpo = axum::body::to_bytes(respuesta.into_body(), usize::MAX)
+            .await
+            .expect("cuerpo legible");
+        (estado, tipo, String::from_utf8_lossy(&cuerpo).into_owned())
+    }
+
+    #[tokio::test]
+    async fn rutas_zim_html_responden_503() {
+        let (state, dir) = AppState::for_test("html");
+        let router = app(state);
+
+        for uri in ["/zim/", "/zim", "/zim/A/Colombia"] {
+            let (estado, tipo, cuerpo) = pedir(&router, uri).await;
+            assert_eq!(
+                estado,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "{uri} debe responder 503"
+            );
+            assert!(
+                tipo.starts_with("text/html"),
+                "{uri}: Content-Type inesperado {tipo}"
+            );
+            assert!(
+                cuerpo.contains(MENSAJE),
+                "{uri} debe explicar que la capacidad no está incluida"
+            );
+            assert!(
+                cuerpo.contains("--features zim"),
+                "{uri} debe indicar cómo recompilar con la capacidad"
+            );
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn rutas_wikipedia_api_responden_503_con_json() {
+        let (state, dir) = AppState::for_test("api");
+        let router = app(state);
+
+        for uri in [
+            "/api/wikipedia/search?q=agua",
+            "/api/wikipedia/article?path=A/Colombia",
+            "/api/wikipedia/zims",
+        ] {
+            let (estado, tipo, cuerpo) = pedir(&router, uri).await;
+            assert_eq!(
+                estado,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "{uri} debe responder 503"
+            );
+            assert_eq!(tipo, "application/json", "{uri}: Content-Type inesperado");
+
+            let json: serde_json::Value = serde_json::from_str(&cuerpo)
+                .unwrap_or_else(|e| panic!("{uri}: JSON inválido ({e})"));
+            assert_eq!(
+                json["error"].as_str(),
+                Some(MENSAJE),
+                "{uri}: campo `error` ausente o con valor inesperado"
+            );
+            assert_eq!(
+                json["capacidad"].as_str(),
+                Some("zim"),
+                "{uri}: campo `capacidad` ausente o con valor inesperado"
+            );
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn health_responde_200_y_las_rutas_desconocidas_conservan_404() {
+        let (state, dir) = AppState::for_test("control");
+        let router = app(state);
+
+        let (estado, tipo, cuerpo) = pedir(&router, "/health").await;
+        assert_eq!(estado, StatusCode::OK, "/health debe seguir operativo");
+        assert_eq!(tipo, "application/json");
+        let json: serde_json::Value =
+            serde_json::from_str(&cuerpo).expect("JSON válido en /health");
+        assert_eq!(json["status"].as_str(), Some("ok"));
+
+        // El handler de degradación no debe comportarse como comodín.
+        for uri in ["/ruta-que-no-existe", "/api/noexiste"] {
+            let (estado, _, _) = pedir(&router, uri).await;
+            assert_eq!(
+                estado,
+                StatusCode::NOT_FOUND,
+                "{uri} debe conservar su 404, no heredar el 503"
+            );
+        }
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

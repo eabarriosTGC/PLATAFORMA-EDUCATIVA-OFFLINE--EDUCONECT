@@ -1,0 +1,10 @@
+ Container educonect-dev-env-dev-run-6ac7f8e6811c Creating 
+ Container educonect-dev-env-dev-run-6ac7f8e6811c Created 
+### ZIM: build
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.85s
+### ZIM: clippy (comando CI)
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.22s
+### ZIM: tests --bins (http_degradacion no debe existir)
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.96s

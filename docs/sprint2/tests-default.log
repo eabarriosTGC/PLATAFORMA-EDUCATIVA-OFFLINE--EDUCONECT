@@ -1,0 +1,21 @@
+ Container educonect-dev-env-nodev-run-04496367d820 Creating 
+ Container educonect-dev-env-nodev-run-04496367d820 Created 
+### [1] clippy DEFAULT con el comando del CI (sin --all-targets)
+    Checking multer v3.1.0
+    Checking tower v0.5.3
+    Checking tower-http v0.6.11
+    Checking axum v0.8.9
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.13s
+
+### [2] tests DEFAULT: integration_test desde CWD escribible
+  binario: /opt/target/default/debug/deps/integration_test-0cd872518e7457ff
+test test_concurrent_writes_no_deadlock ... ok
+test test_concurrent_reads_and_writes_no_deadlock ... ok
+test test_concurrent_reads_no_deadlock ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.90s
+
+
+### [3] integridad: el codigo fuente probado es el del repo
+  (la prueba se ejecuto contra el binario compilado desde /workspace, montaje de solo lectura)

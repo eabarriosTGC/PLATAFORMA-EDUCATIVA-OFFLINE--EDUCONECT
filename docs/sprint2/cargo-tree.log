@@ -1,0 +1,36 @@
+ Container educonect-dev-env-dev-run-63aaa329ad2a Creating 
+ Container educonect-dev-env-dev-run-63aaa329ad2a Created 
+=== quién depende de zim-rs ===
+zim-rs v0.1.1
+└── edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+
+=== dependencias de zim-rs (transitivas) ===
+zim-rs v0.1.1
+├── cxx v1.0.194
+│   ├── cxxbridge-macro v1.0.194 (proc-macro)
+│   │   ├── indexmap v2.14.0
+│   │   │   ├── equivalent v1.0.2
+│   │   │   └── hashbrown v0.17.1
+│   │   ├── proc-macro2 v1.0.106
+│   │   │   └── unicode-ident v1.0.24
+│   │   ├── quote v1.0.45
+│   │   │   └── proc-macro2 v1.0.106 (*)
+│   │   └── syn v2.0.117
+│   │       ├── proc-macro2 v1.0.106 (*)
+│   │       ├── quote v1.0.45 (*)
+│   │       └── unicode-ident v1.0.24
+│   ├── foldhash v0.2.0
+│   └── link-cplusplus v1.0.12
+│       [build-dependencies]
+│       └── cc v1.2.63
+│           ├── find-msvc-tools v0.1.9
+│           └── shlex v2.0.1
+│   [build-dependencies]
+│   ├── cc v1.2.63 (*)
+│   └── cxxbridge-flags v1.0.194
+└── zim-sys v0.1.0
+    └── cxx v1.0.194 (*)
+
+=== el crate zim aparece en el árbol? ===
+596
+  el crate zim NO aparece en el arbol compilado

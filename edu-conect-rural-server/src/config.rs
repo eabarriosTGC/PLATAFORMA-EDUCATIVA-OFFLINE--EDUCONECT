@@ -113,11 +113,15 @@ fn normalizar_public_base_url(raw: &str) -> Result<String, String> {
 /// `DEFAULT_ZIM_DIR` lo define el Dockerfile (`/app/default-content/zim`);
 /// fuera de Docker se usa una ruta relativa que probablemente no exista
 /// (el escaneo de zonas lo tolera y sigue con la zona persistente).
+///
+/// Solo existe con la feature `zim`: sin ella no hay lector que consuma esta ruta.
+#[cfg(feature = "zim")]
 pub fn default_zim_dir() -> String {
     default_zim_dir_desde(&std::env::var("DEFAULT_ZIM_DIR").unwrap_or_default())
 }
 
 /// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
+#[cfg(feature = "zim")]
 fn default_zim_dir_desde(raw: &str) -> String {
     let dir = raw.trim();
     if dir.is_empty() {
@@ -241,7 +245,7 @@ mod tests_public_base_url {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "zim"))]
 mod tests_default_zim_dir {
     use super::*;
 

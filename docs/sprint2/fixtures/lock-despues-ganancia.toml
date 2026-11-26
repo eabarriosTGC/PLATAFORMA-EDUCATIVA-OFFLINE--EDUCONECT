@@ -1,0 +1,16 @@
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"
+dependencies = [
+ "x 1.0.0",
+]
+
+[[package]]
+name = "x"
+version = "1.0.0"
+
+[[package]]
+name = "x"
+version = "2.0.0"

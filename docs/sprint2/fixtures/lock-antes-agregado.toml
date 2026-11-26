@@ -1,0 +1,6 @@
+# Antes: solo la raíz. Después: aparece un paquete nuevo. -> agregados > 0
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"

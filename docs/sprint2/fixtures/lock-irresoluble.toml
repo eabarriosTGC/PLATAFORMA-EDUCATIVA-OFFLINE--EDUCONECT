@@ -1,0 +1,9 @@
+# Fixture sintético: la raíz depende de un paquete que no existe en el lock.
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"
+dependencies = [
+ "fantasma",
+]

@@ -1,0 +1,20 @@
+ Container educonect-dev-env-dev-run-ebf3b1332304 Creating 
+ Container educonect-dev-env-dev-run-ebf3b1332304 Created 
+### [1] clippy CON feature, comando del CI
+    Checking tower v0.5.3
+    Checking tower-http v0.6.11
+    Checking axum v0.8.9
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.79s
+
+### [2] tests CON feature: unitarios
+  Executable unittests src/main.rs (/opt/target/zim/debug/deps/edu_conect_rural_server-d578bc8e6271ee88)
+  Executable tests/integration_test.rs (/opt/target/zim/debug/deps/integration_test-20dda23dc93c06f8)
+  unit: /opt/target/zim/debug/deps/edu_conect_rural_server-d578bc8e6271ee88
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.31s
+
+### [3] integration_test CON feature, desde CWD escribible
+test test_concurrent_reads_no_deadlock ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.93s
+

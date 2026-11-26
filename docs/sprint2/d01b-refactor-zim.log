@@ -1,0 +1,13 @@
+ Container educonect-dev-env-dev-run-3d5cd4a2fd24 Creating 
+ Container educonect-dev-env-dev-run-3d5cd4a2fd24 Created 
+### ZIM: build
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.50s
+### ZIM: clippy (comando CI)
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.95s
+### ZIM: tests --bins
+test result: ok. 67 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.99s
+### ZIM: precompilo integration_test
+  Executable tests/integration_test.rs (/opt/target/zim/debug/deps/integration_test-20dda23dc93c06f8)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.14s

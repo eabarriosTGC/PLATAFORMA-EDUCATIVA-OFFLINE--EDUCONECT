@@ -1,0 +1,44 @@
+[Unit]
+Description=EduConect Rural — plataforma educativa offline
+Documentation=https://github.com/educonect/educonect
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+# Cuenta sin privilegios: `APP_ROOT` es de solo lectura (R-01) y los datos viven
+# en `DATA_DIR`, que es el único directorio con escritura.
+User=educonect
+Group=educonect
+
+# Estructura plana de §D-03.A: el ejecutable está en la RAÍZ de la aplicación,
+# junto a `modulos/`, `static/`, `frontend/` y `contenido/`. `APP_ROOT` se deriva
+# del ejecutable (`current_exe`), no del directorio de trabajo: por eso
+# `WorkingDirectory` no interviene en la resolución de recursos y puede cambiarse
+# sin romper `/modulos/*`.
+WorkingDirectory=/opt/educonect
+ExecStart=/opt/educonect/edu-conect-rural-server
+
+# `DATA_DIR` fuera del paquete: reemplazar la aplicación no toca la base ni el
+# contenido generado. Respaldar es copiar un solo directorio.
+# En un PC sin privilegios, el mismo binario usa `$XDG_DATA_HOME/educonect`;
+# aquí, como servicio, declaramos la ruta explícita.
+Environment=DATA_DIR=/var/lib/educonect
+Environment=LISTEN_ADDR=0.0.0.0:8080
+
+# Secretos fuera de la unidad y fuera del repositorio (`chmod 600`).
+# Formato: JWT_SECRET=... y ADMIN_INITIAL_PASSWORD=...
+EnvironmentFile=/etc/educonect/educonect.env
+
+Restart=on-failure
+RestartSec=5
+
+# Endurecimiento coherente con R-01: el paquete no se escribe en ejecución.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/educonect
+
+[Install]
+WantedBy=multi-user.target

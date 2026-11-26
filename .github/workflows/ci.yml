@@ -62,6 +62,16 @@ jobs:
       - name: Build
         run: cargo build --release ${{ matrix.features }}
 
+      # D-CI 2 — el leg default demuestra el ENLACE, no solo la compilación.
+      # `cargo build` prueba que el perfil compila sin libzim-dev; este paso
+      # prueba que el binario resultante no arrastra la cadena de ZIM en su
+      # clausura dinámica (docs/sprint2/d01-verificacion.md §3). Falla nombrando
+      # la biblioteca infractora; sale con 2 si no pudo medir nada.
+      # Acotado a `default`: en `con-zim` esa cadena es intencional.
+      - name: Verify default link closure has no ZIM libraries (ldd)
+        if: matrix.perfil == 'default'
+        run: bash "$GITHUB_WORKSPACE/scripts/verificar-ldd-default.sh" target/release/edu-conect-rural-server
+
       - name: Run tests
         run: cargo test --lib --bins --test integration_test --test arranque_sin_config ${{ matrix.features }} -- --nocapture
 

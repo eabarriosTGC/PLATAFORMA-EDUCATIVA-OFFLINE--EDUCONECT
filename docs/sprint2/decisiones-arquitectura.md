@@ -208,9 +208,34 @@ Si más adelante se decide `bin/`, la regla cambia a una constante explícita y 
 | 1 | Prevalidación | Nada escrito | Reporta todos los errores (D-02) |
 | 2 | Creación del archivo | Sin archivo | Verifica directorio y permisos antes de crear |
 | 3 | Migraciones 001–005 | Reversión de la migración en curso | Una transacción por migración; versión registrada solo si aplica completa |
-| 4 | Semillas | Arranque continúa si no son críticas | Idempotentes y reejecutables |
+| 4 | Semillas | **Todo o nada**: la transacción se revierte completa y el arranque termina | Idempotentes y reejecutables |
 | 5 | Administrador inicial | Sin cambios | La contraseña ya fue validada en la fase 1 |
 | 6 | Apertura del servidor | Proceso termina | Mensaje con puerto y causa |
+
+### Política de fallo de las semillas: todo o nada
+
+Este documento afirmaba antes que el arranque «continúa si las semillas no son críticas». **No es lo
+que el código hace** y la política elegida el 26/11 es mantener la que existe (decisión registrada
+en L6 de `odd/tasks/fase0-estabilizacion.md`).
+
+Lo que hace `edu-conect-rural-server/src/db.rs` (`ejecutar_seeds`):
+
+- Las semillas se ejecutan **todas dentro de una única transacción**, en orden: `001_cursos`,
+  `002_modulos`, `005_biblioteca_fts`, `006_diccionarios`, `007_biblioteca_unicos` y
+  `008_diccionario_unicos`.
+- Cualquier error en cualquiera de ellas se propaga como `Err` y **aborta el arranque**: no hay
+  degradación, ni semillas «críticas» y «no críticas», ni servidor sirviendo con catálogo parcial
+  por esta vía.
+- `COMMIT` solo se ejecuta si las seis terminaron. Si una falla, la transacción se descarta y la
+  base queda como estaba antes de este arranque.
+- Consecuencia aceptada y ya documentada en el diagnóstico del Sprint 1: como las semillas corren
+  **antes** del primer paso que puede fallar por entorno (auth, puerto), un arranque fallido
+  posterior deja migraciones y semillas ya confirmadas, y el reintento parte de otro estado.
+
+La idempotencia es responsabilidad de cada archivo, no de la política de fallo: `INSERT OR IGNORE`
+solo funciona si la tabla tiene la restricción única correspondiente, y por eso `007` y `008`
+(deduplicar conservando el `id` mínimo y **después** crear el índice único) forman parte del mismo
+ciclo de semillas: `diccionario` se duplicaba en cada arranque porque nunca tuvo ese índice.
 
 ### Defecto adicional aceptado: los esquemas en `seeds/`
 

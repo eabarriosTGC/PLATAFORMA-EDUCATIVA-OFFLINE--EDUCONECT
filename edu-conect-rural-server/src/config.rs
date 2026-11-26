@@ -411,11 +411,11 @@ pub fn cargar() -> Result<Configuracion, Vec<Hallazgo>> {
 
     // 3-4. Directorios incluidos en la imagen. Ausentes → default.
     let default_biblioteca_dir = PathBuf::from(default_biblioteca_dir_desde(
-        &std::env::var("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default(),
+        &leer("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default(),
     ));
     #[cfg(feature = "zim")]
     let default_zim_dir = PathBuf::from(default_zim_dir_desde(
-        &std::env::var("DEFAULT_ZIM_DIR").unwrap_or_default(),
+        &leer("DEFAULT_ZIM_DIR").unwrap_or_default(),
     ));
 
     // 5. DATA_DIR — se resuelve a absoluta; la comprobación de escritura es de `verificar`.
@@ -485,5 +485,236 @@ pub fn cargar() -> Result<Configuracion, Vec<Hallazgo>> {
 pub fn informar(hallazgos: &[Hallazgo]) {
     for h in hallazgos {
         println!("{h}");
+    }
+}
+
+/// `true` si la lista contiene al menos un `Gravedad::Error`.
+pub fn hay_error(hallazgos: &[Hallazgo]) -> bool {
+    hallazgos.iter().any(|h| h.gravedad == Gravedad::Error)
+}
+
+fn es_directorio_escribible(p: &std::path::Path) -> bool {
+    p.is_dir()
+        && !p
+            .metadata()
+            .map(|m| m.permissions().readonly())
+            .unwrap_or(true)
+}
+
+/// Primer ancestro que existe, empezando por `p` y subiendo.
+fn ancestro_existente(p: &std::path::Path) -> Option<std::path::PathBuf> {
+    let mut actual = Some(p);
+    while let Some(a) = actual {
+        if a.exists() {
+            return Some(a.to_path_buf());
+        }
+        actual = a.parent();
+    }
+    None
+}
+
+/// Comprueba el entorno contra una configuración ya validada.
+///
+/// **Solo lectura**: `exists`, `is_dir` y `permissions`. No crea directorios, no
+/// abre la base de datos, no lanza procesos y no abre sockets. La creación de
+/// directorios sigue siendo responsabilidad del arranque.
+pub(crate) fn verificar(conf: &Configuracion) -> Vec<Hallazgo> {
+    let mut hallazgos = Vec::new();
+
+    // DATA_DIR: se valida la ruta declarada, nunca se crea.
+    if conf.data_dir.exists() {
+        if !es_directorio_escribible(&conf.data_dir) {
+            hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} no es un directorio escribible. Revisá permisos o cambiá DATA_DIR",
+                    conf.data_dir.display()
+                ),
+            ));
+        }
+    } else {
+        match ancestro_existente(&conf.data_dir) {
+            Some(a) if es_directorio_escribible(&a) => hallazgos.push(Hallazgo::aviso(
+                "DATA_DIR",
+                format!(
+                    "{} no existe todavía; se creará al arrancar (su ancestro existente más cercano, {}, es escribible)",
+                    conf.data_dir.display(),
+                    a.display()
+                ),
+            )),
+            Some(a) => hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} no existe y su ancestro existente más cercano ({}) no es escribible",
+                    conf.data_dir.display(),
+                    a.display()
+                ),
+            )),
+            None => hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!("{} no existe y no tiene ningún ancestro válido", conf.data_dir.display()),
+            )),
+        }
+    }
+
+    // DB_PATH: si ya existe, no debe ser de solo lectura.
+    if conf.db_path.exists() {
+        let solo_lectura = conf
+            .db_path
+            .metadata()
+            .map(|m| m.permissions().readonly())
+            .unwrap_or(true);
+        if !conf.db_path.is_file() || solo_lectura {
+            hallazgos.push(Hallazgo::error(
+                "DATA_DIR",
+                format!(
+                    "{} existe pero no es una base de datos escribible",
+                    conf.db_path.display()
+                ),
+            ));
+        }
+    }
+
+    // FRONTEND_PATH: ausente es aviso, no error — el default apunta a `out/`,
+    // que no está generado en desarrollo y bloquearía todo arranque.
+    if !conf.frontend_path.is_dir() {
+        hallazgos.push(Hallazgo::aviso(
+            "FRONTEND_PATH",
+            format!(
+                "{} no existe o no es un directorio; el dashboard no se servirá",
+                conf.frontend_path.display()
+            ),
+        ));
+    }
+
+    hallazgos
+}
+
+/// Modo `--check`: valida configuración y entorno **sin mutar nada**.
+///
+/// Devuelve el código de salida: `0` si no hay errores (los avisos no fallan),
+/// `1` si hay al menos uno. Escribe a stdout, no al log de `tracing`.
+pub fn check(verbose: bool) -> i32 {
+    let (mut hallazgos, errores_de_carga) = match cargar() {
+        Ok(conf) => {
+            let mut hs = conf.avisos.clone();
+            hs.extend(verificar(&conf));
+            (hs, false)
+        }
+        Err(hs) => (hs, true),
+    };
+
+    // Orden fijo: errores primero, después avisos.
+    hallazgos.sort_by_key(|h| match h.gravedad {
+        Gravedad::Error => 0,
+        Gravedad::Aviso => 1,
+    });
+
+    for h in &hallazgos {
+        println!("{h}");
+    }
+
+    let falla = errores_de_carga || hay_error(&hallazgos);
+    if falla {
+        println!("\nResultado: configuración no válida.");
+    } else if verbose {
+        println!("Resultado: configuración válida.");
+    }
+    println!("No se realizaron modificaciones.");
+
+    if falla {
+        1
+    } else {
+        0
+    }
+}
+
+#[cfg(test)]
+mod tests_verificar {
+    use super::*;
+
+    fn conf_con(data_dir: PathBuf, frontend_path: PathBuf) -> Configuracion {
+        Configuracion {
+            jwt_secret: "x".repeat(48),
+            db_path: data_dir.join("educonect.db"),
+            data_dir,
+            frontend_path,
+            listen_addr: "127.0.0.1:8080".parse().expect("addr"),
+            public_base_url: None,
+            default_biblioteca_dir: PathBuf::from("default-content/biblioteca"),
+            #[cfg(feature = "zim")]
+            default_zim_dir: PathBuf::from("default-content/zim"),
+            admin_initial_password: None,
+            avisos: Vec::new(),
+        }
+    }
+
+    fn temp(tag: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("educonect-verif-{}-{tag}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        d
+    }
+
+    #[test]
+    fn data_dir_inexistente_es_aviso_y_no_lo_crea() {
+        let dir = temp("noexiste");
+        let hallazgos = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe")));
+        assert!(
+            hallazgos
+                .iter()
+                .any(|h| h.variable == "DATA_DIR" && h.gravedad == Gravedad::Aviso),
+            "DATA_DIR inexistente con ancestro escribible debe ser aviso"
+        );
+        assert!(
+            !dir.exists(),
+            "verificar no debe crear DATA_DIR: {} existe",
+            dir.display()
+        );
+    }
+
+    #[test]
+    fn frontend_inexistente_es_aviso_y_no_hay_error() {
+        let dir = temp("fe");
+        std::fs::create_dir_all(&dir).expect("dir");
+        let hallazgos = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe/frontend")));
+        assert!(hallazgos
+            .iter()
+            .any(|h| h.variable == "FRONTEND_PATH" && h.gravedad == Gravedad::Aviso));
+        assert!(
+            !hay_error(&hallazgos),
+            "un frontend ausente no debe bloquear el arranque"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn verificar_no_modifica_el_contenido_de_data_dir() {
+        let dir = temp("hash");
+        std::fs::create_dir_all(&dir).expect("dir");
+        std::fs::write(dir.join("existente.txt"), b"contenido intacto").expect("write");
+
+        let antes: Vec<_> = std::fs::read_dir(&dir)
+            .expect("read_dir")
+            .map(|e| e.expect("entry").file_name())
+            .collect();
+        let contenido_antes = std::fs::read(dir.join("existente.txt")).expect("read");
+
+        let _ = verificar(&conf_con(dir.clone(), PathBuf::from("/no/existe")));
+
+        let despues: Vec<_> = std::fs::read_dir(&dir)
+            .expect("read_dir")
+            .map(|e| e.expect("entry").file_name())
+            .collect();
+        let contenido_despues = std::fs::read(dir.join("existente.txt")).expect("read");
+
+        assert_eq!(
+            antes, despues,
+            "verificar creó o borró archivos en DATA_DIR"
+        );
+        assert_eq!(
+            contenido_antes, contenido_despues,
+            "verificar modificó el contenido de DATA_DIR"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

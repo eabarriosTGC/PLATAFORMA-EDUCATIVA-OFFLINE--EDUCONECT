@@ -269,6 +269,14 @@ async fn network_qr(State(state): State<AppState>, headers: HeaderMap) -> Respon
 
 #[tokio::main]
 async fn main() {
+    // `--check` se resuelve antes de cualquier efecto y sin inicializar el log:
+    // es una herramienta de diagnóstico, y su salida va a stdout.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.iter().any(|a| a == "--check") {
+        let verbose = args.iter().any(|a| a == "--verbose");
+        std::process::exit(config::check(verbose));
+    }
+
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),

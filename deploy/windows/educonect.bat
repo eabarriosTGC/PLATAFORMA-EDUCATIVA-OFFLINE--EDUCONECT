@@ -11,6 +11,12 @@ rem
 rem  DATA_DIR: %LOCALAPPDATA%\EduConect (perfil del usuario, sin administrador).
 rem  Para un equipo compartido de colegio se puede fijar antes de lanzar:
 rem      set DATA_DIR=%ProgramData%\EduConect
+rem
+rem  Secretos: %DATA_DIR%\educonect.env, una variable por línea, sin comillas.
+rem  Vive junto a los datos (perfil del usuario) y no en el paquete, que en un
+rem  equipo de colegio puede ser una carpeta compartida legible por todos.
+rem  Se acepta el formato anterior %APP_ROOT%\config\educonect.env como respaldo.
+rem  El archivo nunca se versiona. Si falta, el servidor lo dice y no arranca.
 rem ==========================================================================
 setlocal
 
@@ -20,15 +26,21 @@ if "%APP_ROOT:~-1%"=="\" set "APP_ROOT=%APP_ROOT:~0,-1%"
 if not defined DATA_DIR set "DATA_DIR=%LOCALAPPDATA%\EduConect"
 if not defined LISTEN_ADDR set "LISTEN_ADDR=0.0.0.0:8080"
 
-rem Secretos: config\educonect.env, una variable por línea, sin comillas.
-rem Nunca se versiona. Si falta, el servidor lo dice y no arranca.
-if exist "%APP_ROOT%\config\educonect.env" (
-    for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%APP_ROOT%\config\educonect.env") do set "%%A=%%B"
+set "ENV_FILE=%DATA_DIR%\educonect.env"
+if not exist "%ENV_FILE%" set "ENV_FILE=%APP_ROOT%\config\educonect.env"
+
+if exist "%ENV_FILE%" (
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ENV_FILE%") do set "%%A=%%B"
+) else (
+    echo AVISO: no se encontro "%DATA_DIR%\educonect.env".
+    echo        El servidor no arrancara sin JWT_SECRET y ADMIN_INITIAL_PASSWORD.
+    echo        Generarlos con: powershell -ExecutionPolicy Bypass -File instalar-tarea.ps1
 )
 
 echo EduConect Rural
 echo   APP_ROOT : %APP_ROOT%
 echo   DATA_DIR : %DATA_DIR%
+echo   Secretos : %ENV_FILE%
 echo   Escucha  : %LISTEN_ADDR%
 echo   Panel    : http://localhost:8080/app/
 echo.

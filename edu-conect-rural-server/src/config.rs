@@ -467,12 +467,14 @@ pub fn resolver_app_root(
     // Resolver symlinks: un lanzador que apunte al binario desde otro sitio debe
     // seguir encontrando los recursos que están junto al ejecutable real.
     let exe = exe.canonicalize().unwrap_or_else(|_| exe.to_path_buf());
-    exe.parent().map(std::path::Path::to_path_buf).ok_or_else(|| {
-        format!(
-            "el ejecutable {} no tiene directorio padre: no hay raíz de aplicación",
-            exe.display()
-        )
-    })
+    exe.parent()
+        .map(std::path::Path::to_path_buf)
+        .ok_or_else(|| {
+            format!(
+                "el ejecutable {} no tiene directorio padre: no hay raíz de aplicación",
+                exe.display()
+            )
+        })
 }
 
 fn directorio_de_entorno(
@@ -509,19 +511,19 @@ pub fn resolver_data_dir(
         (So::Linux, true) => Ok(PathBuf::from("/var/lib/educonect")),
         // Windows como servicio: perfil de máquina, escribible por SYSTEM y no
         // por un usuario sin privilegios.
-        (So::Windows, true) => Ok(directorio_de_entorno(
-            entorno.program_data.as_deref(),
-            "ProgramData",
-            cwd,
-        )?
-        .join("EduConect")),
+        (So::Windows, true) => {
+            Ok(
+                directorio_de_entorno(entorno.program_data.as_deref(), "ProgramData", cwd)?
+                    .join("EduConect"),
+            )
+        }
         // Windows como usuario: perfil del usuario, sin pedir administrador.
-        (So::Windows, false) => Ok(directorio_de_entorno(
-            entorno.local_app_data.as_deref(),
-            "LOCALAPPDATA",
-            cwd,
-        )?
-        .join("EduConect")),
+        (So::Windows, false) => {
+            Ok(
+                directorio_de_entorno(entorno.local_app_data.as_deref(), "LOCALAPPDATA", cwd)?
+                    .join("EduConect"),
+            )
+        }
         // Linux como usuario, cualquier otro Unix, y cualquier plataforma sin
         // noción de servicio: XDG, con respaldo en el perfil.
         (_, _) => {
@@ -538,12 +540,10 @@ pub fn resolver_data_dir(
                 )?
                 .join("educonect"));
             }
-            Ok(
-                directorio_de_entorno(entorno.home.as_deref(), "HOME", cwd)?
-                    .join(".local")
-                    .join("share")
-                    .join("educonect"),
-            )
+            Ok(directorio_de_entorno(entorno.home.as_deref(), "HOME", cwd)?
+                .join(".local")
+                .join("share")
+                .join("educonect"))
         }
     }
 }
@@ -562,18 +562,47 @@ fn misma_ruta(a: &std::path::Path, b: &std::path::Path) -> bool {
 /// una base nueva y vacía en silencio: pérdida de datos. Devuelve la ruta
 /// heredada para que el arranque falle nombrándola, en lugar de migrar sola o
 /// de ignorarla.
+///
+/// `Err` cuando el sondeo **no puede responder**: un `data/` ilegible (EACCES y
+/// cualquier otro error que no sea «no existe») o un `educonect.db` que no es un
+/// archivo. `is_file()` colapsaba esos casos con «no existe» y el proceso
+/// arrancaba con una base nueva y vacía donde la versión anterior fallaba con
+/// ruido: el silencio era el defecto.
 pub fn base_de_instalacion_anterior(
     cwd: &std::path::Path,
     data_dir_resuelta: &std::path::Path,
-) -> Option<PathBuf> {
+) -> Result<Option<PathBuf>, String> {
     let heredada = cwd.join("data").join("educonect.db");
-    if !heredada.is_file() {
-        return None;
+    let directorio = cwd.join("data");
+
+    match std::fs::metadata(&heredada) {
+        // Existe y es un archivo: es la base a reutilizar (o la vigente).
+        Ok(meta) if meta.is_file() => {}
+        Ok(_) => {
+            return Err(format!(
+                "{} existe pero no es un archivo, así que no se puede reutilizar como base de \
+                 datos. Revisar esa ruta y renombrarla o moverla antes de arrancar: no se arranca \
+                 con una base nueva y vacía en silencio",
+                heredada.display()
+            ));
+        }
+        // Solo «no existe» significa que no hay nada que reutilizar.
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => {
+            return Err(format!(
+                "el directorio heredado {} no es legible: {e}. Revisar permisos o mover los \
+                 datos manualmente: si hay una base de una instalación anterior y este proceso \
+                 no puede comprobarlo, arrancar con una base nueva y vacía sería una pérdida de \
+                 datos silenciosa",
+                directorio.display()
+            ));
+        }
     }
+
     if misma_ruta(&heredada, &data_dir_resuelta.join("educonect.db")) {
-        return None;
+        return Ok(None);
     }
-    Some(heredada)
+    Ok(Some(heredada))
 }
 
 /// Lee y valida las ocho variables de entorno. **Sin efectos secundarios**: no
@@ -669,22 +698,28 @@ pub fn cargar() -> Result<Configuracion, Vec<Hallazgo>> {
     // se falla y se nombra la base heredada. Con `DATA_DIR` declarada la
     // elección es explícita y no se opina.
     if data_dir_declarada.is_none() {
-        if let Some(heredada) = base_de_instalacion_anterior(&cwd, &data_dir) {
-            let sugerida = heredada
-                .parent()
-                .map(|p| p.display().to_string())
-                .unwrap_or_else(|| heredada.display().to_string());
-            hallazgos.push(Hallazgo::error(
-                "DATA_DIR",
-                format!(
-                    "hay una base de datos de una instalación anterior en {} y la raíz de datos \
-                     resuelta ahora es {}. No se arranca con una base nueva y vacía en silencio: \
-                     definí DATA_DIR={sugerida} para reutilizar la instalación existente, o mové o \
-                     renombrá ese archivo si querés empezar de cero",
-                    heredada.display(),
-                    data_dir.display()
-                ),
-            ));
+        match base_de_instalacion_anterior(&cwd, &data_dir) {
+            // Con `DATA_DIR` sin declarar y una base heredada en otro lugar, o con
+            // un `data/` que no se puede sondear, se falla y se nombra la ruta.
+            Ok(None) => {}
+            Ok(Some(heredada)) => {
+                let sugerida = heredada
+                    .parent()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| heredada.display().to_string());
+                hallazgos.push(Hallazgo::error(
+                    "DATA_DIR",
+                    format!(
+                        "hay una base de datos de una instalación anterior en {} y la raíz de datos \
+                         resuelta ahora es {}. No se arranca con una base nueva y vacía en silencio: \
+                         definí DATA_DIR={sugerida} para reutilizar la instalación existente, o mové o \
+                         renombrá ese archivo si querés empezar de cero",
+                        heredada.display(),
+                        data_dir.display()
+                    ),
+                ));
+            }
+            Err(motivo) => hallazgos.push(Hallazgo::error("DATA_DIR", motivo)),
         }
     }
 
@@ -1230,7 +1265,10 @@ mod tests_raices {
     fn sin_base_heredada_no_se_reporta_nada() {
         let cwd = temp("heredada-sin");
         let nueva = temp("heredada-sin-nueva");
-        assert_eq!(base_de_instalacion_anterior(&cwd, &nueva), None);
+        assert_eq!(
+            base_de_instalacion_anterior(&cwd, &nueva).expect("sondear"),
+            None
+        );
         let _ = std::fs::remove_dir_all(&cwd);
         let _ = std::fs::remove_dir_all(&nueva);
     }
@@ -1244,7 +1282,7 @@ mod tests_raices {
         std::fs::write(&heredada, b"sqlite viejo").expect("escribir base heredada");
 
         assert_eq!(
-            base_de_instalacion_anterior(&cwd, &nueva),
+            base_de_instalacion_anterior(&cwd, &nueva).expect("sondear"),
             Some(heredada.clone()),
             "una base huérfana debe reportarse"
         );
@@ -1265,11 +1303,32 @@ mod tests_raices {
         std::fs::write(&heredada, b"sqlite vigente").expect("escribir base");
 
         assert_eq!(
-            base_de_instalacion_anterior(&cwd, &cwd.join("data")),
+            base_de_instalacion_anterior(&cwd, &cwd.join("data")).expect("sondear"),
             None,
             "si la raíz resuelta es la misma, la base no está huérfana"
         );
 
         let _ = std::fs::remove_dir_all(&cwd);
+    }
+
+    /// Un `educonect.db` que existe y **no** es un archivo (un directorio, por
+    /// ejemplo) tampoco se puede reutilizar: se falla nombrando la ruta en vez de
+    /// arrancar con una base vacía al lado.
+    #[test]
+    fn base_heredada_que_no_es_archivo_se_reporta() {
+        let cwd = temp("heredada-no-archivo");
+        let nueva = temp("heredada-no-archivo-nueva");
+        let heredada = cwd.join("data").join("educonect.db");
+        std::fs::create_dir_all(&heredada).expect("crear un educonect.db que es directorio");
+
+        let error = base_de_instalacion_anterior(&cwd, &nueva)
+            .expect_err("un educonect.db que no es archivo debe reportarse como error");
+        assert!(
+            error.contains(&heredada.to_string_lossy().to_string()),
+            "el mensaje debe nombrar la ruta: {error}"
+        );
+
+        let _ = std::fs::remove_dir_all(&cwd);
+        let _ = std::fs::remove_dir_all(&nueva);
     }
 }

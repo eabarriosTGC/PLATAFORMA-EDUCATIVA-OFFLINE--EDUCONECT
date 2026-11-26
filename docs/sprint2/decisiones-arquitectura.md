@@ -263,7 +263,7 @@ No toda la inicialización es transaccional. Hay que clasificarla antes de escri
 | Invocación de `ffmpeg` / `yt-dlp` | **No** | Procesos externos. Nunca dentro de una transacción abierta |
 | Generación de miniaturas | **No** | Ídem |
 
-Regla derivada: **ningún proceso externo se ejecuta con una transacción de SQLite abierta.** Hoy `main.rs` hace `shell-out` a `ffmpeg` al arrancar (`main.rs:145-151`); debe quedar fuera del ciclo de inicialización transaccional.
+Regla derivada: **ningún proceso externo se ejecuta con una transacción de SQLite abierta.** Hoy `main.rs` hace `shell-out` a `ffmpeg` al arrancar (`main.rs:146-162`); debe quedar fuera del ciclo de inicialización transaccional.
 
 **Prueba de aceptación:**
 1. `ADMIN_INITIAL_PASSWORD` inválida ⇒ la base **no existe** después del intento.

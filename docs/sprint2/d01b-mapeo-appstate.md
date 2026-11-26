@@ -31,7 +31,7 @@ Consecuencia: **la ubicación sugerida `tests/http_degradacion.rs` no es viable*
 | `frontend_path: String` | `FRONTEND_PATH` o default (`main.rs:283`) | Ninguno. Solo se usa en `fallback_service` |
 | `paths: RuntimePaths` | `RuntimePaths::nuevo(DATA_DIR)` + `ensure_dirs()` (`main.rs:283`) | **Crea directorios** en `DATA_DIR` |
 | `zim: SharedZim` | `zim_proxy::inicializar(...)` | **Solo con la feature**. El test corre sin ella |
-| `h264_encoder: &'static str` | `detect_h264_encoder()` (`main.rs:148`, llamado en `:313`) | **Ejecuta `ffmpeg` como proceso externo** |
+| `h264_encoder: &'static str` | `detect_h264_encoder()` (`main.rs:146-162`, llamado en `:329`) | **Ejecuta `ffmpeg` como proceso externo** |
 | `login_limiter: Arc<RateLimiter>` | `RateLimiter::new(5, 60)` | Barato |
 | `public_base_url: Option<String>` | `config::public_base_url()` | Barato |
 | `listen_addr: String` | `LISTEN_ADDR` | Barato |

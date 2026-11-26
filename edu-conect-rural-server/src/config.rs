@@ -53,57 +53,29 @@ pub fn validar_politica_password(candidata: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Lee y valida `JWT_SECRET`. Falla con un mensaje claro si falta, está vacío,
-/// coincide con un default conocido o es demasiado corto.
-pub fn jwt_secret_requerido() -> String {
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        panic!(
-            "JWT_SECRET no está definida. Crea un archivo .env en la raíz con: \
-             JWT_SECRET=$(openssl rand -base64 48)"
-        )
-    });
-    let secret = secret.trim();
+/// Valida `JWT_SECRET`. Sin estado, sin E/S, sin `panic!`.
+///
+/// Es la única fuente de la regla: la usa `cargar()`, y las pruebas la
+/// ejercitan sin tocar el entorno.
+pub fn validar_jwt_secret(candidata: &str) -> Result<(), String> {
+    let secret = candidata.trim();
     if secret.is_empty() {
-        panic!("JWT_SECRET está vacía. Genera una con: openssl rand -base64 48");
+        return Err("variable ausente o vacía. Genera una con: openssl rand -base64 48".into());
     }
     if SECRETOS_CONOCIDOS.contains(&secret) {
-        panic!(
-            "JWT_SECRET coincide con un valor por defecto conocido. \
-             Genera una nueva con: openssl rand -base64 48"
+        return Err(
+            "coincide con un valor por defecto conocido. Genera una nueva con: openssl rand -base64 48"
+                .into(),
         );
     }
     if secret.len() < LONGITUD_MINIMA {
-        panic!(
-            "JWT_SECRET demasiado corta ({} chars, mínimo {}). \
-             Genera una con: openssl rand -base64 48",
+        return Err(format!(
+            "demasiado corta ({} chars, mínimo {}). Genera una con: openssl rand -base64 48",
             secret.len(),
             LONGITUD_MINIMA
-        );
+        ));
     }
-    secret.to_string()
-}
-
-/// Lee y normaliza `PUBLIC_BASE_URL` (dirección LAN que otros dispositivos
-/// usarán para conectarse a EduConect).
-///
-/// - Ausente o vacía → `None`: el endpoint `/api/network` deriva la dirección
-///   del header `Host` de cada solicitud.
-/// - Inválida → panic al arrancar: un error de configuración debe ser ruidoso,
-///   no un fallback silencioso a una dirección equivocada.
-pub fn public_base_url() -> Option<String> {
-    public_base_url_desde(&std::env::var("PUBLIC_BASE_URL").unwrap_or_default())
-}
-
-/// Núcleo puro de la normalización (testeable sin tocar el entorno).
-fn public_base_url_desde(raw: &str) -> Option<String> {
-    let raw = raw.trim();
-    if raw.is_empty() {
-        return None;
-    }
-    Some(
-        normalizar_public_base_url(raw)
-            .unwrap_or_else(|e| panic!("PUBLIC_BASE_URL inválida (\"{raw}\"): {e}")),
-    )
+    Ok(())
 }
 
 /// Valida una URL pública absoluta con un parser real (nunca regex):
@@ -149,17 +121,6 @@ fn normalizar_public_base_url(raw: &str) -> Result<String, String> {
     Ok(format!("{}://{}{}", url.scheme(), host, puerto))
 }
 
-/// Directorio del contenido ZIM incluido en la imagen (solo lectura).
-/// `DEFAULT_ZIM_DIR` lo define el Dockerfile (`/app/default-content/zim`);
-/// fuera de Docker se usa una ruta relativa que probablemente no exista
-/// (el escaneo de zonas lo tolera y sigue con la zona persistente).
-///
-/// Solo existe con la feature `zim`: sin ella no hay lector que consuma esta ruta.
-#[cfg(feature = "zim")]
-pub fn default_zim_dir() -> String {
-    default_zim_dir_desde(&std::env::var("DEFAULT_ZIM_DIR").unwrap_or_default())
-}
-
 /// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
 #[cfg(feature = "zim")]
 fn default_zim_dir_desde(raw: &str) -> String {
@@ -169,13 +130,6 @@ fn default_zim_dir_desde(raw: &str) -> String {
     } else {
         dir.to_string()
     }
-}
-
-/// Directorio de la biblioteca incluida en la imagen (solo lectura).
-/// `DEFAULT_BIBLIOTECA_DIR` lo define el Dockerfile; fuera de Docker se usa una
-/// ruta relativa que probablemente no exista (el escaneo de zonas lo tolera).
-pub fn default_biblioteca_dir() -> String {
-    default_biblioteca_dir_desde(&std::env::var("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default())
 }
 
 /// Núcleo puro (testeable sin tocar el entorno): vacío/espacios → default.
@@ -271,18 +225,6 @@ mod tests_public_base_url {
         assert!(normalizar_public_base_url("no-es-una-url").is_err());
         assert!(normalizar_public_base_url("192.168.1.50:8080").is_err());
     }
-
-    #[test]
-    fn vacia_produce_none() {
-        assert_eq!(public_base_url_desde(""), None);
-        assert_eq!(public_base_url_desde("   "), None);
-    }
-
-    #[test]
-    #[should_panic(expected = "PUBLIC_BASE_URL inválida")]
-    fn invalida_rechazada_al_arrancar() {
-        let _ = public_base_url_desde("ftp://192.168.1.50");
-    }
 }
 
 #[cfg(all(test, feature = "zim"))]
@@ -338,5 +280,210 @@ mod tests_default_biblioteca_dir {
             default_biblioteca_dir_desde("  /app/default-content/biblioteca  "),
             "/app/default-content/biblioteca"
         );
+    }
+}
+
+// ══════════════════════════════════════════════
+//  Configuración centralizada (D-02)
+// ══════════════════════════════════════════════
+
+use std::net::SocketAddr;
+use std::path::PathBuf;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Gravedad {
+    Error,
+    Aviso,
+}
+
+/// Un problema o confirmación sobre una variable concreta.
+/// **Nunca contiene el valor de un secreto.**
+#[derive(Debug, Clone)]
+pub struct Hallazgo {
+    pub variable: &'static str,
+    pub gravedad: Gravedad,
+    pub motivo: String,
+}
+
+impl Hallazgo {
+    fn error(variable: &'static str, motivo: impl Into<String>) -> Self {
+        Self {
+            variable,
+            gravedad: Gravedad::Error,
+            motivo: motivo.into(),
+        }
+    }
+    fn aviso(variable: &'static str, motivo: impl Into<String>) -> Self {
+        Self {
+            variable,
+            gravedad: Gravedad::Aviso,
+            motivo: motivo.into(),
+        }
+    }
+}
+
+impl std::fmt::Display for Hallazgo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let etiqueta = match self.gravedad {
+            Gravedad::Error => "ERROR",
+            Gravedad::Aviso => "AVISO",
+        };
+        write!(f, "[{etiqueta}] {}: {}", self.variable, self.motivo)
+    }
+}
+
+/// Configuración ya validada: todos sus campos son usables sin más comprobaciones.
+///
+/// No deriva `Debug` a propósito: contiene el secreto JWT y la contraseña
+/// inicial del administrador, y un `{:?}` accidental los filtraría.
+#[derive(Clone)]
+pub struct Configuracion {
+    pub jwt_secret: String,
+    pub data_dir: PathBuf,
+    pub db_path: PathBuf,
+    pub frontend_path: PathBuf,
+    pub listen_addr: SocketAddr,
+    pub public_base_url: Option<String>,
+    pub default_biblioteca_dir: PathBuf,
+    #[cfg(feature = "zim")]
+    pub default_zim_dir: PathBuf,
+    pub admin_initial_password: Option<String>,
+    /// Avisos no bloqueantes detectados al cargar. Los errores abortan en `cargar`.
+    pub avisos: Vec<Hallazgo>,
+}
+
+fn leer(var: &str) -> Option<String> {
+    std::env::var(var)
+        .ok()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+fn ruta_absoluta(raw: &str) -> PathBuf {
+    let p = PathBuf::from(raw);
+    if p.is_absolute() {
+        p
+    } else {
+        std::env::current_dir().unwrap_or_default().join(p)
+    }
+}
+
+/// Lee y valida las ocho variables de entorno. **Sin efectos secundarios**: no
+/// crea directorios, no abre la base de datos, no lanza procesos.
+///
+/// Devuelve **todos** los errores juntos. Si hay al menos un `Gravedad::Error`,
+/// devuelve `Err` con la lista completa; si no, `Ok`.
+pub fn cargar() -> Result<Configuracion, Vec<Hallazgo>> {
+    let mut hallazgos: Vec<Hallazgo> = Vec::new();
+
+    // 1. JWT_SECRET
+    let jwt_secret = match leer("JWT_SECRET") {
+        None => {
+            hallazgos.push(Hallazgo::error(
+                "JWT_SECRET",
+                "variable ausente. Genera una con: openssl rand -base64 48",
+            ));
+            String::new()
+        }
+        Some(v) => match validar_jwt_secret(&v) {
+            Ok(()) => v,
+            Err(motivo) => {
+                hallazgos.push(Hallazgo::error("JWT_SECRET", motivo));
+                String::new()
+            }
+        },
+    };
+
+    // 2. PUBLIC_BASE_URL — ausente es válido; presente e inválida es error.
+    let public_base_url = match leer("PUBLIC_BASE_URL") {
+        None => None,
+        Some(v) => match normalizar_public_base_url(&v) {
+            Ok(u) => Some(u),
+            Err(e) => {
+                hallazgos.push(Hallazgo::error(
+                    "PUBLIC_BASE_URL",
+                    format!("inválida (\"{v}\"): {e}"),
+                ));
+                None
+            }
+        },
+    };
+
+    // 3-4. Directorios incluidos en la imagen. Ausentes → default.
+    let default_biblioteca_dir = PathBuf::from(default_biblioteca_dir_desde(
+        &std::env::var("DEFAULT_BIBLIOTECA_DIR").unwrap_or_default(),
+    ));
+    #[cfg(feature = "zim")]
+    let default_zim_dir = PathBuf::from(default_zim_dir_desde(
+        &std::env::var("DEFAULT_ZIM_DIR").unwrap_or_default(),
+    ));
+
+    // 5. DATA_DIR — se resuelve a absoluta; la comprobación de escritura es de `verificar`.
+    let data_dir = ruta_absoluta(&leer("DATA_DIR").unwrap_or_else(|| "data".into()));
+    let db_path = data_dir.join("educonect.db");
+
+    // 6. FRONTEND_PATH
+    let frontend_path = ruta_absoluta(
+        &leer("FRONTEND_PATH").unwrap_or_else(|| "../edu-conect-rural-dashboard/out/".into()),
+    );
+
+    // 7. LISTEN_ADDR
+    let listen_addr_raw = leer("LISTEN_ADDR").unwrap_or_else(|| "0.0.0.0:8080".into());
+    let listen_addr = match listen_addr_raw.parse::<SocketAddr>() {
+        Ok(a) => a,
+        Err(e) => {
+            hallazgos.push(Hallazgo::error(
+                "LISTEN_ADDR",
+                format!("inválida (\"{listen_addr_raw}\"): {e}"),
+            ));
+            "0.0.0.0:8080".parse().expect("literal válido")
+        }
+    };
+
+    // 8. ADMIN_INITIAL_PASSWORD — ausente es AVISO, no error: solo se exige
+    //    cuando la base necesita crear o rotar el administrador, y eso no se
+    //    puede saber sin abrirla.
+    let admin_initial_password = match leer("ADMIN_INITIAL_PASSWORD") {
+        None => {
+            hallazgos.push(Hallazgo::aviso(
+                "ADMIN_INITIAL_PASSWORD",
+                "variable ausente. No se podrá crear ni rotar el administrador inicial si hiciera falta",
+            ));
+            None
+        }
+        Some(v) => match validar_politica_password(&v) {
+            Ok(()) => Some(v),
+            Err(motivo) => {
+                hallazgos.push(Hallazgo::error("ADMIN_INITIAL_PASSWORD", motivo));
+                None
+            }
+        },
+    };
+
+    if hallazgos.iter().any(|h| h.gravedad == Gravedad::Error) {
+        return Err(hallazgos);
+    }
+
+    Ok(Configuracion {
+        jwt_secret,
+        data_dir,
+        db_path,
+        frontend_path,
+        listen_addr,
+        public_base_url,
+        default_biblioteca_dir,
+        #[cfg(feature = "zim")]
+        default_zim_dir,
+        admin_initial_password,
+        avisos: hallazgos,
+    })
+}
+
+/// Imprime los hallazgos en stdout, uno por línea.
+///
+/// Nunca imprime el valor de un secreto: `Hallazgo.motivo` no los contiene.
+pub fn informar(hallazgos: &[Hallazgo]) {
+    for h in hallazgos {
+        println!("{h}");
     }
 }

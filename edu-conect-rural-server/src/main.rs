@@ -55,7 +55,6 @@ struct AppState {
 #[derive(Clone, Debug)]
 struct RuntimePaths {
     data_dir: PathBuf,
-    db: PathBuf,
     videos: PathBuf,
     biblioteca: PathBuf,
     /// Biblioteca incluida en la imagen (solo lectura, `/app/default-content/biblioteca`)
@@ -65,13 +64,12 @@ struct RuntimePaths {
 }
 
 impl RuntimePaths {
-    fn nuevo(data_dir: &str) -> Self {
+    fn nuevo(data_dir: &str, biblioteca_bundled: &std::path::Path) -> Self {
         let data_dir = PathBuf::from(data_dir);
         Self {
-            db: data_dir.join("educonect.db"),
             videos: data_dir.join("videos"),
             biblioteca: data_dir.join("biblioteca"),
-            biblioteca_bundled: PathBuf::from(config::default_biblioteca_dir()),
+            biblioteca_bundled: biblioteca_bundled.to_path_buf(),
             contenido: data_dir.join("contenido"),
             contenido_zim: data_dir.join("contenido").join("zim"),
             data_dir,
@@ -277,35 +275,45 @@ async fn main() {
         )
         .init();
 
-    let data_dir = std::env::var("DATA_DIR").unwrap_or_else(|_| "data".into());
-    let paths = RuntimePaths::nuevo(&data_dir);
+    // Toda la configuración se lee y se valida antes de cualquier efecto.
+    // Si algo falla, no se crea ningún directorio ni se toca la base de datos.
+    let conf = match config::cargar() {
+        Ok(c) => c,
+        Err(hallazgos) => {
+            config::informar(&hallazgos);
+            std::process::exit(1);
+        }
+    };
+    config::informar(&conf.avisos);
+
+    // ── Recién acá empiezan los efectos ──
+    let paths = RuntimePaths::nuevo(
+        &conf.data_dir.to_string_lossy(),
+        &conf.default_biblioteca_dir,
+    );
     paths
         .ensure_dirs()
         .expect("Error creando directorios de datos");
     tracing::info!("📁 Directorio de datos: {}", paths.data_dir.display());
-    let frontend_path = std::env::var("FRONTEND_PATH")
-        .unwrap_or_else(|_| "../edu-conect-rural-dashboard/out/".into());
-    let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
-        .unwrap_or_else(|_| "0.0.0.0:8080".into())
-        .parse()
-        .expect("LISTEN_ADDR inválida");
+
+    let frontend_path = conf.frontend_path.to_string_lossy().into_owned();
+    let listen_addr = conf.listen_addr;
     let listen_addr_text = listen_addr.to_string();
+    let public_base_url = conf.public_base_url.clone();
 
-    let public_base_url = config::public_base_url();
-    if let Some(url) = &public_base_url {
-        tracing::info!("🌐 PUBLIC_BASE_URL configurada: {url}");
-    }
-
-    let jwt_secret = config::jwt_secret_requerido();
-    let database = Database::open(&paths.db.to_string_lossy(), jwt_secret)
-        .expect("Error al abrir la base de datos");
+    let database = Database::open(
+        &conf.db_path.to_string_lossy(),
+        &conf.jwt_secret,
+        conf.admin_initial_password.as_deref(),
+    )
+    .expect("Error al abrir la base de datos");
 
     // Inicializar lector ZIM (Wikipedia offline puro Rust) — dos zonas:
     // bundled (imagen, solo lectura) + persistente (/data, pisa duplicados).
     // Solo cuando la capacidad está compilada (feature `zim`).
     #[cfg(feature = "zim")]
     let zim = {
-        let zim_bundled = config::default_zim_dir();
+        let zim_bundled = conf.default_zim_dir.to_string_lossy().into_owned();
         zim_proxy::inicializar(&zim_bundled, &paths.contenido_zim.to_string_lossy()).await
     };
 
@@ -2203,11 +2211,19 @@ impl AppState {
 
         std::env::set_var("ADMIN_INITIAL_PASSWORD", "test-password-segura-1234");
 
-        let paths = RuntimePaths::nuevo(dir.to_string_lossy().as_ref());
+        let paths = RuntimePaths::nuevo(
+            dir.to_string_lossy().as_ref(),
+            &dir.join("biblioteca-bundled"),
+        );
         paths.ensure_dirs().expect("crear directorios de test");
 
-        let db =
-            Database::open(&paths.db.to_string_lossy(), "t".repeat(40)).expect("abrir BD de test");
+        let db_path = dir.join("educonect.db");
+        let db = Database::open(
+            &db_path.to_string_lossy(),
+            &"t".repeat(40),
+            Some("test-password-segura-1234"),
+        )
+        .expect("abrir BD de test");
 
         let state = AppState {
             db,

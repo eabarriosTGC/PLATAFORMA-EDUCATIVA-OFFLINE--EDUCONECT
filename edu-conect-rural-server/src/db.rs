@@ -62,9 +62,16 @@ impl Database {
     /// 3. Migraciones y seeds con exclusividad sobre la misma conexión.
     /// 4. Cierre del bootstrap.
     /// 5. Pool r2d2 definitivo (8 conexiones) con PRAGMAs por conexión.
-    pub fn open(path: &str, jwt_secret: String) -> Result<Self, DbError> {
-        let initial_password = std::env::var("ADMIN_INITIAL_PASSWORD").ok();
-        Self::open_internal(path, jwt_secret, initial_password)
+    pub fn open(
+        path: &str,
+        jwt_secret: &str,
+        initial_password: Option<&str>,
+    ) -> Result<Self, DbError> {
+        Self::open_internal(
+            path,
+            jwt_secret.to_string(),
+            initial_password.map(|s| s.to_string()),
+        )
     }
 
     /// Núcleo de `open`, testeable sin depender del entorno.

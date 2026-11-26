@@ -325,6 +325,30 @@ async fn main() {
         listen_addr: listen_addr_text,
     };
 
+    let router = app(state);
+
+    tracing::info!("🚀 Servidor EduConect Rural escuchando en http://{listen_addr}");
+    tracing::info!("📁 Frontend estático servido desde: {frontend_path}");
+
+    let listener = tokio::net::TcpListener::bind(listen_addr).await.unwrap();
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.ok();
+        tracing::info!("Señal recibida — apagando EduConect Rural...");
+    })
+    .await
+    .unwrap();
+}
+
+/// Construye el router completo a partir del estado ya resuelto.
+///
+/// Extraído de `main()` sin cambios de lógica: no hace E/S, no lanza
+/// procesos externos y no lee variables de entorno. Todo eso ocurre al
+/// construir el `AppState`, que se recibe ya resuelto.
+fn app(state: AppState) -> Router {
     // ── Rutas ZIM: siempre registradas, implementación según la compilación ──
     // Sin la feature responden 503 explicando que la capacidad no está incluida.
     // No se eliminan del router: un 404 del fallback sería indistinguible de una
@@ -347,7 +371,7 @@ async fn main() {
         .route("/api/wikipedia/article", get(zim_no_disponible_api))
         .route("/api/wikipedia/zims", get(zim_no_disponible_api));
 
-    let app = Router::new()
+    Router::new()
         // ── Health check (sin auth) ──
         .route("/health", get(|| async {
             Json(serde_json::json!({"status": "ok", "version": env!("CARGO_PKG_VERSION")}))
@@ -448,22 +472,7 @@ async fn main() {
         .route("/manifest.json", get(handler_manifest))
         .route("/app-icon.svg", get(handler_app_icon))
         .fallback_service(ServeDir::new(&state.frontend_path).append_index_html_on_directories(true))
-        .with_state(state);
-
-    tracing::info!("🚀 Servidor EduConect Rural escuchando en http://{listen_addr}");
-    tracing::info!("📁 Frontend estático servido desde: {frontend_path}");
-
-    let listener = tokio::net::TcpListener::bind(listen_addr).await.unwrap();
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(async {
-        tokio::signal::ctrl_c().await.ok();
-        tracing::info!("Señal recibida — apagando EduConect Rural...");
-    })
-    .await
-    .unwrap();
+        .with_state(state)
 }
 
 // ── handlers API pública ──────────────────────────────────────────────

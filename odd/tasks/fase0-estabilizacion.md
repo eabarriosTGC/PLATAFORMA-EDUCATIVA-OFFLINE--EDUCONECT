@@ -32,7 +32,7 @@ Documento de referencia: `docs/propuesta-windpeshi-innova.md` (Fase 0), `docs/co
 | T7 | Matriz de funciones por plataforma: qué se degrada fuera de Linux (`libzim`, `espeak-ng`, `ffmpeg`, `yt-dlp`) | S11 | `docs/` | — |
 | T8 | Arranque reproducible en al menos dos entornos (Linux y Windows), con evidencia registrada | S1, S9, S11 | — | — |
 | T9 | Traer al repo la receta de compilación cruzada de Windows: `Dockerfile.win`, servicio `win` del compose y verificación de que compila desde cero en un directorio limpio. Hoy vive en `~/educonect-dev-env`, fuera de git, y por eso nadie más puede reproducirla | S1, S9, S10, S11 | `docker/windows/` | 9c08fcb |
-| T10 | Una sola identidad de fila en el diccionario: migración versionada que deduplica conservando el `id` mínimo por `(palabra, tipo, categoria)` y **después** crea el índice único, con `rebuild` de FTS5; y corrección de `docs/sprint2/decisiones-arquitectura.md`, que hoy afirma que el arranque «continúa si las semillas no son críticas» cuando `db.rs` es todo o nada (L6) | S6, S10 | `edu-conect-rural-server/seeds/`, `edu-conect-rural-server/tests/`, `docs/sprint2/decisiones-arquitectura.md` | b35f253 |
+| T10 | Una sola identidad de fila en el diccionario: migración versionada que deduplica conservando el `id` mínimo por `(palabra, tipo, categoria)` y **después** crea el índice único, con `rebuild` de FTS5; y corrección de `docs/sprint2/decisiones-arquitectura.md`, que al abrirse T10 afirmaba que el arranque «continúa si las semillas no son críticas» cuando `db.rs` es todo o nada (L6; texto corregido en `b35f253`) | S6, S10 | `edu-conect-rural-server/seeds/`, `edu-conect-rural-server/tests/`, `docs/sprint2/decisiones-arquitectura.md` | b35f253 |
 
 ## Log
 
@@ -156,3 +156,48 @@ Pendientes que la verificación dejó fuera de alcance y no se tocan acá: `deci
 sigue afirmando que `seeds/002_admin.sql` «está vacío y se ejecuta» (mide 225 bytes y `db.rs` no lo
 ejecuta), y `docs/sprint2-baseline-runtime.md` ni `README.md` listan `008_diccionario_unicos.sql`.
 Ambas son ediciones de documentación, no reglas de T10.
+
+**L10 — Revisión de cierre de D-04 y hallazgo de polisemia (26/11, DEV3):**
+
+Estado de PR #14 al revisarlo: `test (default)` verde (2m53s), `test (con-zim)` verde (1m34s),
+`docker` omitido, `MERGEABLE` y sin conflictos con `main` en `4111df0`.
+
+**Hallazgo: 008 no borró duplicados técnicos, borró tres acepciones.** Los tres grupos con más de
+una fila en `diccionario` tienen **definiciones distintas**, no la misma fila repetida:
+
+| Palabra | Id conservado | Id borrado | Definiciones | Veredicto |
+|---|---|---|---|---|
+| `mochila` | 83 | 153 | «Bolsa que se carga en la espalda para llevar libros y útiles.» / «Bolsa tejida a mano por las artesanas wayuu con diseños tradicionales.» | polisemia legítima: objeto genérico vs. artesanía wayuu |
+| `atüjaa` | 195 | 266 | «Saludo en wayuunaiki. Se dice para saludar a alguien.» / «Saludar en wayuunaiki.» | polisemia débil: sustantivo vs. verbo del mismo sentido |
+| `a'yatawaa` | 212 | 262 | «Gracias. Expresión de agradecimiento en wayuunaiki.» / «Agradecimiento, dar las gracias en wayuunaiki.» | polisemia débil: dos glosas del mismo sentido |
+
+Los ids son los del orden de inserción de `seeds/006_diccionarios.sql` (filas 132/202, 244/315 y
+212/262 en el archivo). Procedencia: las seis filas vienen del mismo seed, categorías `general` y
+`wayuunaiki`; no hay dos fuentes que se pisen.
+
+Consecuencia de conservar sólo el `id` mínimo: en `mochila` se pierde la única definición que
+nombra la artesanía wayuu, en una plataforma dirigida a comunidades wayuu. Es pérdida semántica, no
+limpieza. En `atüjaa` y `a'yatawaa` se pierde una glosa alternativa del mismo sentido: pérdida menor,
+pero pérdida.
+
+**Alternativa propuesta, NO aplicada** (cambia el contrato de L6 y requiere decisión humana):
+identidad `UNIQUE(palabra, tipo, categoria, definicion)`. Conserva las tres acepciones, sigue
+cortando el crecimiento —`INSERT OR IGNORE` ignora al segundo arranque— y se aplica como migración
+`009` que reemplaza el índice por uno de cuatro columnas. Se auto-repara: las filas borradas por
+`008` vuelven a entrar desde `006` en el siguiente arranque, porque con el índice nuevo ya no
+colisionan, y no se duplican después. Coste: la identidad pasa a depender del texto exacto de la
+definición, así que dos glosas distintas de la misma acepción sobreviven las dos.
+
+**Correcciones documentales aplicadas en esta revisión:** `002_admin.sql` deja de figurar como
+ejecutado (225 bytes, cuatro comentarios, `db.rs` no lo incluye); el árbol propuesto de `migrations/`
+ya no lo lista; el inventario de D-04 pasa de cinco a seis semillas y documenta `008`; la tabla de
+semillas y la matriz de recuperación de `docs/sprint2-baseline-runtime.md` listan `007` y `008` y
+declaran el arranque todo o nada; el árbol de `README.md` lista las dos migraciones. El diagnóstico
+del 25/11 se deja intacto por ser un corte fechado.
+
+**D-04 NO queda cerrada.** T10 cerró la identidad de fila del diccionario. Siguen pendientes:
+esquemas `005`/`006` dentro de `seeds/` (el defecto central de D-04), decisión sobre
+`seeds/002_admin.sql`, doble `rebuild` de FTS por arranque, recuperación de un arranque que falla
+**después** de confirmar las semillas, prevalidación de puerto y de secreto antes de tocar SQLite
+(filas 1, 2, 5 y 6 de la matriz), y las pruebas de aceptación 1 y 4 (base inexistente tras
+contraseña inválida; reanudación tras interrupción sin duplicar). Nada de eso se aborda acá.

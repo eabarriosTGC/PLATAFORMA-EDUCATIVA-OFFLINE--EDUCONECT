@@ -176,11 +176,12 @@ Inventario:
 | Semilla | Observación |
 |---|---|
 | `001_cursos.sql` | Cursos base |
-| `002_admin.sql` | **archivo vacío** — residuo |
+| `002_admin.sql` | **no se ejecuta**: cuatro líneas de comentario y 225 bytes, sin sentencias; `db.rs` no lo incluye |
 | `002_modulos.sql` | Catálogo; los identificadores deben revisarse contra los directorios reales |
 | `005_biblioteca_fts.sql` | Esquema de biblioteca vive aquí, no en `migrations/` |
 | `006_diccionarios.sql` | Esquema de diccionario vive aquí, no en `migrations/` |
-| `007_biblioteca_unicos.sql` | Índices |
+| `007_biblioteca_unicos.sql` | Dedupe de biblioteca + índice único, con `rebuild` de FTS |
+| `008_diccionario_unicos.sql` | Dedupe de diccionario + índice único de `(palabra, tipo, categoria)`; sin él la tabla crecía ~21.800 filas por arranque |
 
 **Defecto de contrato:** dos esquemas (`biblioteca`, `diccionario`) se crean desde `seeds/` y se ejecutan en cada arranque. Las migraciones deberían ser la única fuente del esquema. Un esquema que se crea en el arranque no es versionable ni auditable.
 
@@ -192,7 +193,7 @@ Comportamiento observado hoy: si el paso 4 falla, los pasos 1 a 3 **quedan escri
 |---|---|---|---|---|
 | 1 | Creación del archivo de base de datos | Archivo `.db` | Desconocido | Verificar directorio y permisos **antes** de crear. Fallar sin dejar archivo |
 | 2 | Migraciones (001–005) | Tablas y registros de versión | Desconocido | Una transacción por migración. Fallo ⇒ reversión de esa migración, versión no registrada |
-| 3 | Semillas | Filas de contenido | Semillas aplicadas | Idempotentes (`INSERT … ON CONFLICT DO NOTHING`). Un fallo no debe impedir el arranque si la semilla no es crítica |
+| 3 | Semillas | Filas de contenido | Semillas aplicadas y confirmadas | Idempotentes: `INSERT OR IGNORE` sólo ignora si existe el índice único que lo respalde (ver `007` y `008`). Las seis corren en **una sola transacción**: un fallo revierte el lote completo y **aborta el arranque** (todo o nada, `db.rs:163-178`). No hay semillas «críticas» y «no críticas» |
 | 4 | Administrador inicial | — | **Pánico con base ya migrada y sembrada** | Validar `ADMIN_INITIAL_PASSWORD` **antes** de abrir la base (D-02) |
 | 5 | Inicio del servidor | — | Pánico si el puerto está ocupado | Mensaje accionable con el puerto y el proceso |
 

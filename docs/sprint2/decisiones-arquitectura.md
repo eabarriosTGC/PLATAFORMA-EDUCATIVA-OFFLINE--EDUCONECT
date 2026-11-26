@@ -246,7 +246,7 @@ Dos esquemas se crean desde semillas que se ejecutan **en cada arranque**:
 
 Ambos deben pasar a `migrations/` como migraciones versionadas. Un esquema que nace en el arranque no es auditable ni versionable, y hoy viola el contrato que el propio proyecto declara.
 
-Además: `seeds/002_admin.sql` está **vacío** y se ejecuta; debe retirarse o poblarse tras verificar si algo depende de su presencia.
+Además: `seeds/002_admin.sql` **no se ejecuta**. Son cuatro líneas de comentario y 225 bytes, sin una sola sentencia SQL, y `src/db.rs` (`ejecutar_seeds`, `:157-162`) no lo incluye: el administrador inicial se crea en código (`create_admin_default`). Debe retirarse o poblarse; hoy sólo confunde a quien enumera las semillas. (Corregido el 26/11: este documento afirmaba que el archivo estaba «vacío y se ejecuta».)
 
 ### Separación de migraciones y semillas
 
@@ -262,7 +262,6 @@ Estado final propuesto:
 ```
 migrations/
 ├── 001_initial_schema.sql
-├── 002_admin.sql
 ├── 003_library_schema.sql        ← sale de seeds/005_biblioteca_fts.sql
 └── 004_dictionary_schema.sql     ← sale de seeds/006_diccionarios.sql
 

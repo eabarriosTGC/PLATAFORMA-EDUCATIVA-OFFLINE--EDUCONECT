@@ -49,20 +49,22 @@ dependencia en las migraciones, en el mismo cambio.
 
 ## 3. Semillas — qué es esquema y qué es dato
 
-Se ejecutan cinco archivos, todos en **una sola transacción**.
+Se ejecutan seis archivos, todos en **una sola transacción**.
 
 | Archivo | Naturaleza |
 |---|---|
 | `001_cursos.sql` | dato, idempotente por PK explícita |
 | `002_modulos.sql` | dato, idempotente por PK explícita |
-| `002_admin.sql` | **archivo muerto**: cinco líneas de comentario, nunca referenciado |
+| `002_admin.sql` | **archivo muerto**: cuatro líneas de comentario y 225 bytes, sin sentencias; nunca referenciado |
 | `005_biblioteca_fts.sql` | **esquema + dato**: tabla, tabla FTS5, tres disparadores, 21 filas |
 | `006_diccionarios.sql` | **esquema + dato**: tabla, dos índices, FTS5, tres disparadores, ~21.800 filas |
 | `007_biblioteca_unicos.sql` | migración disfrazada: `DELETE` destructivo + índice único + `rebuild` de FTS |
+| `008_diccionario_unicos.sql` | migración disfrazada (T10): `DELETE` que conserva el `id` mínimo por `(palabra, tipo, categoria)` + índice único |
 
-Documentos en conflicto sobre `002_admin.sql`: `decisiones-arquitectura.md` dice que se ejecuta,
-`diagnostico-2026-11-25.md` dice que no. **El código dice que no.** Una de las dos afirmaciones
-hay que corregirla en el mismo commit que toque este punto.
+Sobre `002_admin.sql`, `decisiones-arquitectura.md` decía que se ejecutaba y
+`diagnostico-2026-11-25.md` que no. **El código dice que no**, y el documento de decisiones quedó
+corregido el 26/11. `diagnostico-2026-11-25.md` se deja como está a propósito: es un corte fechado
+del 25/11, no una descripción del estado actual.
 
 ## 4. Defecto encontrado que no estaba registrado
 

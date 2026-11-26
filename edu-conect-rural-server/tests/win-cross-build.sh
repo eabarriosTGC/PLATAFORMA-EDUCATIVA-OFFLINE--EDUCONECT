@@ -18,16 +18,19 @@
 #   exit 3   ninguna falló, pero alguna no pudo ejecutarse (incompleto)
 #   exit 77  omitida: no hay `docker compose` en el equipo (no es un aprobado)
 #
-# Entorno requerido (el mismo de docs/sprint2/win-cross-build.md):
-#   docker compose, imagen de cross-compilación con mingw-w64 y el target
-#   x86_64-pc-windows-gnu. Por defecto ese entorno vive en $EDUCONNECT_DEV_ENV
-#   (por defecto $HOME/educonect-dev-env), que es donde el proyecto guarda
-#   Dockerfile.win y el compose.yaml con el servicio `win`.
+# Entorno requerido: solo el repositorio y docker compose.
+#   La receta de cross-compilación está VERSIONADA en docker/windows/
+#   (Dockerfile.win + compose.yaml con el servicio `win`, mingw-w64 y el target
+#   x86_64-pc-windows-gnu). No se lee nada del HOME del operador: el compose
+#   monta el repositorio en /workspace vía ${EDUCONNECT_REPO:-../..}.
 #
 # Variables opcionales:
-#   EDUC               ruta del entorno de compilación (default $HOME/educonect-dev-env)
-#   EDUC_COMPOSE_FILE  compose alternativo con el servicio `win`
-#   EDUC_DOCKERFILE_WIN  Dockerfile.win alternativo
+#   EDUCONNECT_REPO      repositorio a montar (la prueba lo fija a su propia raíz)
+#   EDUCONNECT_COMPOSE_FILE     compose alternativo con el servicio `win`
+#   EDUCONNECT_DOCKERFILE_WIN   Dockerfile.win alternativo
+#   EDUCONNECT_DEV_ENV   compatibilidad hacia atrás: receta externa al repo
+#                        (si se define, los dos defaults anteriores salen de ahí;
+#                        su valor histórico era $HOME/educonect-dev-env)
 #   RUST_VERSION       toolchain a exigir (default 1.88.0)
 #   WIN_PROBE_PORT     puerto del sondeo HTTP bajo Wine (default: primero libre)
 #   SKIP_WINE=1        no ejecuta el punto 6 (se informa como no ejecutado)
@@ -38,9 +41,19 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
-DEV_ENV="${EDUCONNECT_DEV_ENV:-$HOME/educonect-dev-env}"
-COMPOSE_FILE="${EDUCONNECT_COMPOSE_FILE:-$DEV_ENV/compose.yaml}"
-DOCKERFILE_WIN="${EDUCONNECT_DOCKERFILE_WIN:-$DEV_ENV/Dockerfile.win}"
+
+# La receta vive en el repositorio. `EDUCONNECT_DEV_ENV` sigue funcionando como
+# override hacia una receta externa, para no romper la invocación documentada
+# antes de T9; sin esa variable no se consulta ningún directorio del HOME.
+RECIPE_DIR="$REPO_ROOT/docker/windows"
+if [ -n "${EDUCONNECT_DEV_ENV:-}" ]; then
+    RECIPE_DIR="$EDUCONNECT_DEV_ENV"
+    RECIPE_ORIGIN="externa (EDUCONNECT_DEV_ENV)"
+else
+    RECIPE_ORIGIN="del repositorio"
+fi
+COMPOSE_FILE="${EDUCONNECT_COMPOSE_FILE:-$RECIPE_DIR/compose.yaml}"
+DOCKERFILE_WIN="${EDUCONNECT_DOCKERFILE_WIN:-$RECIPE_DIR/Dockerfile.win}"
 SERVICE="win"
 RUST_VERSION="${RUST_VERSION:-1.88.0}"
 TARGET="x86_64-pc-windows-gnu"
@@ -86,7 +99,7 @@ record() {
 
 say "win-cross-build — EDUConect Rural D-WIN"
 say "repo:      $REPO_ROOT"
-say "entorno:   $DEV_ENV"
+say "receta:    $RECIPE_DIR ($RECIPE_ORIGIN)"
 say "compose:   $COMPOSE_FILE"
 say "rust:      $RUST_VERSION · target $TARGET"
 
@@ -117,26 +130,49 @@ compose() { ( cd -- "$COMPOSE_DIR" && timeout "$T_DOCKER" docker compose -f "$CO
 # ── 1. Receta de compilación ──────────────────────────────────────────
 # Se miran las INSTRUCCIONES, no los comentarios: el Dockerfile explica en un
 # comentario por qué no instala libzim-dev, y esa mención no es un enlace.
-CHECK1_NAME="Dockerfile.win usa mingw y no instala libzim (solo instrucciones)"
-head1 "1. Dockerfile.win — mingw presente, ZIM ausente"
+# Además la receta debe ser autocontenida: ni el Dockerfile ni el compose pueden
+# apuntar a un directorio personal del operador (HOME, ~, educonect-dev-env).
+CHECK1_NAME="receta: mingw presente, sin libzim, sin rutas del HOME"
+head1 "1. Receta — mingw presente, ZIM ausente, autocontenida"
 if [ ! -f "$DOCKERFILE_WIN" ]; then
     record 1 "$CHECK1_NAME" no-ejecutada \
         "no existe $DOCKERFILE_WIN" \
-        "defina EDUC o coloque la receta de cross-compilación en esa ruta"
+        "la receta debe estar versionada en docker/windows/" \
+        "(EDUCONNECT_DEV_ENV solo existe como override de compatibilidad)"
+elif [ ! -f "$COMPOSE_FILE" ]; then
+    record 1 "$CHECK1_NAME" no-ejecutada \
+        "no existe $COMPOSE_FILE" \
+        "receta incompleta: sin compose no hay servicio '$SERVICE' que construir"
 else
     INSTRUCCIONES="$SCRATCH/dockerfile-win.sinstrucciones"
     grep -v '^[[:space:]]*#' "$DOCKERFILE_WIN" > "$INSTRUCCIONES" 2>/dev/null || : > "$INSTRUCCIONES"
     MINGW_HITS="$(grep -ic "mingw" "$INSTRUCCIONES" || true)"
     ZIM_HITS="$(grep -ic "libzim" "$INSTRUCCIONES" || true)"
     ZIM_ANY="$(grep -ic "libzim" "$DOCKERFILE_WIN" || true)"
-    if [ "${MINGW_HITS:-0}" -gt 0 ] && [ "${ZIM_HITS:-0}" -eq 0 ]; then
+    HOME_HITS=0
+    HOME_WHERE=""
+    for RECIPE_FILE in "$DOCKERFILE_WIN" "$COMPOSE_FILE"; do
+        N_HITS="$(grep -cE '(/home/|~/|\$\{?HOME|educonect-dev-env)' "$RECIPE_FILE" 2>/dev/null || true)"
+        N_HITS="${N_HITS:-0}"
+        if [ "$N_HITS" -gt 0 ]; then
+            HOME_WHERE="$HOME_WHERE$(basename -- "$RECIPE_FILE") "
+        fi
+        HOME_HITS=$((HOME_HITS + N_HITS))
+    done
+    if [ "${MINGW_HITS:-0}" -gt 0 ] && [ "${ZIM_HITS:-0}" -eq 0 ] && [ "$HOME_HITS" -eq 0 ]; then
         record 1 "$CHECK1_NAME" ok \
             "instrucciones: mingw=$MINGW_HITS (se exige >0) · libzim=$ZIM_HITS (se exige 0)" \
+            "rutas del HOME en Dockerfile+compose: $HOME_HITS (se exige 0)" \
             "menciones de libzim en todo el archivo (comentarios incluidos): $ZIM_ANY"
-    else
+    elif [ "${MINGW_HITS:-0}" -eq 0 ] || [ "${ZIM_HITS:-0}" -gt 0 ]; then
         record 1 "$CHECK1_NAME" fallo \
             "instrucciones: mingw=$MINGW_HITS (se exige >0) · libzim=$ZIM_HITS (se exige 0)" \
             "$(grep -in "libzim" "$INSTRUCCIONES" | head -3 | tr '\n' ' ')"
+    else
+        record 1 "$CHECK1_NAME" fallo \
+            "rutas del HOME en Dockerfile+compose: $HOME_HITS (se exige 0), en: $HOME_WHERE" \
+            "la receta debe reproducirse desde el repositorio solo" \
+            "$(grep -nE '(/home/|~/|\$\{?HOME|educonect-dev-env)' "$DOCKERFILE_WIN" "$COMPOSE_FILE" | head -3 | tr '\n' ' ')"
     fi
 fi
 

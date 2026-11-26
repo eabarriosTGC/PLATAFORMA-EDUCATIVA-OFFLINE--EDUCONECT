@@ -1,0 +1,48 @@
+# Receta de compilación cruzada para Windows — EDUConect Rural (D-WIN / T8-T9).
+#
+# Autocontenida: este archivo y `Dockerfile.win` viven en el repositorio, así que
+# un clon reproduce el `.exe` sin depender de ningún directorio del HOME del
+# operador. Uso, desde cualquier directorio:
+#
+#   docker compose -f docker/windows/compose.yaml build win
+#   docker compose -f docker/windows/compose.yaml run -T --rm win bash -lc \
+#     'cd /workspace/edu-conect-rural-server && cargo build --locked --release \
+#      --target x86_64-pc-windows-gnu'
+#
+# `EDUCONNECT_REPO` es la ruta del repositorio a montar. Si no se define, vale
+# `../..` RELATIVO A ESTE ARCHIVO, que ya es la raíz del repositorio: el valor
+# por omisión no depende del directorio de trabajo.
+#
+# Nombre de proyecto fijo (`educonect-win-cross`): los volúmenes de caché
+# conservan el mismo nombre en cualquier clon, y la imagen resultante se llama
+# siempre `educonect-win-cross-win`. Dos compilaciones concurrentes sobre el
+# mismo volumen se serializan (Cargo toma el lock), no se corrompen.
+
+name: educonect-win-cross
+
+services:
+  # Cross-compilación para Windows. Montaje de solo lectura; target propio.
+  win:
+    build:
+      context: .
+      dockerfile: Dockerfile.win
+      args:
+        # Fijado a 1.88.0, el mismo valor que la línea base (`Dockerfile:7`,
+        # `rust:1.88-slim-bookworm`). Se puede sobreescribir por entorno.
+        RUST_VERSION: ${RUST_VERSION:-1.88.0}
+    working_dir: /workspace
+    volumes:
+      - type: bind
+        source: ${EDUCONNECT_REPO:-../..}
+        target: /workspace
+        read_only: true
+      - cargo-home-win:/usr/local/cargo/registry
+      - cargo-git-win:/usr/local/cargo/git
+      - cargo-target-win:/opt/target
+    stdin_open: true
+    tty: true
+
+volumes:
+  cargo-home-win:
+  cargo-git-win:
+  cargo-target-win:

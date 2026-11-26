@@ -15,6 +15,10 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Sin `name`, GitHub añade todos los valores de la matriz al nombre del
+    # check (`test (default, libssl-dev pkg-config)`), y una regla de branch
+    # protection sobre `test (default)` no matchearía.
+    name: test (${{ matrix.perfil }})
     strategy:
       fail-fast: false
       matrix:

@@ -3,8 +3,10 @@ name: Build & Test
 on:
   push:
     branches: [main]
+  # Sin filtro de rama base: un PR apilado sobre otra rama de feature también
+  # debe pasar por el pipeline. Con `branches: [main]` los PRs de la pila no
+  # ejecutaban CI, y la matriz de perfiles quedaba sin efecto observable.
   pull_request:
-    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always

@@ -20,6 +20,8 @@
 | Dependencias faltantes en `ldd` | **Ninguna** |
 | Cambios de código | **Ninguno** — verificado con `git status` al terminar |
 
+> **Vigencia (T9).** La receta de **compilación cruzada para Windows** ya está en el repositorio: `docker/windows/Dockerfile.win` y `docker/windows/compose.yaml` (servicio `win`). Todo lo que este documento registra sobre `dev`, `nodev` y `lockfile` sigue viviendo fuera del repositorio y no cambió en esta unidad; §8.1 documenta la receta versionada y cómo se reproduce desde un clon.
+
 ---
 
 ## 1. Correcciones al procedimiento original
@@ -174,6 +176,38 @@ La prueba de los tres CWD pertenece a la DoD de D-03, no a esta. Se ejecutará s
 
 ## 8. Cómo reproducirlo
 
+### 8.1 Compilación cruzada Windows — receta en el repositorio
+
+La receta que produce `edu-conect-rural-server.exe` para `x86_64-pc-windows-gnu` está versionada, con `RUST_VERSION` fijada a **1.88.0** por defecto:
+
+| Archivo | Qué aporta |
+|---|---|
+| `docker/windows/Dockerfile.win` | `debian:bookworm-slim` + `gcc-mingw-w64-x86-64` + target `x86_64-pc-windows-gnu`. **Sin** `libzim-dev`, `libxapian-dev` ni `libicu-dev` |
+| `docker/windows/compose.yaml` | servicio `win`; monta el repositorio en `/workspace` en **solo lectura**; proyecto `educonect-win-cross`, volúmenes `cargo-*-win` propios |
+
+Desde un clon, **sin ningún directorio del HOME**:
+
+```bash
+export RUST_VERSION=1.88.0
+export EDUCONNECT_REPO=$(git rev-parse --show-toplevel)   # opcional: por omisión `../..`, la raíz del repo
+
+timeout 900 docker compose -f docker/windows/compose.yaml build win
+timeout 900 docker compose -f docker/windows/compose.yaml run -T --rm win bash -lc \
+  'cd /workspace/edu-conect-rural-server && cargo build --locked --release --target x86_64-pc-windows-gnu'
+```
+
+Artefacto: volumen `educonect-win-cross_cargo-target-win`, ruta `/opt/target/x86_64-pc-windows-gnu/release/edu-conect-rural-server.exe`. Los seis controles (receta, compilación, formato PE, importaciones, `cargo tree` y arranque bajo Wine) los ejecuta, también desde el repositorio solo:
+
+```bash
+timeout 1500 ./edu-conect-rural-server/tests/win-cross-build.sh
+```
+
+Corrida de referencia de esta unidad, sobre una copia limpia del repositorio en `/tmp`: exit 0, **6 PASARON / 0 FALLARON / 0 NO EJECUTADAS**, imagen construida y `cargo build` completo desde target vacío en `2m 04s`, 0 warnings, 0 errores, artefacto de 9 279 488 bytes. Evidencia y advertencias: `docs/sprint2/win-cross-build.md`.
+
+### 8.2 Línea base de desarrollo (receta externa, sin cambios)
+
+Los servicios `dev`, `nodev` y `lockfile` **siguen fuera del repositorio** (receta del operador); esta unidad no los movió ni los copió. Órdenes tal como se registraron:
+
 ```bash
 export RUST_VERSION=1.88.0
 export EDUCONNECT_REPO=/home/x/Documentos/EduconetV2
@@ -198,6 +232,7 @@ Logs en `docs/sprint2/`: `build-image.log`, `versions.log`, `build-baseline.log`
 | Imagen | Propósito | Qué NO demuestra |
 |---|---|---|
 | **Desarrollo** (`educonect-dev-env-dev`) | Compilar, probar, auditar enlaces | Que el paquete sea portable |
+| **Cross-compilación Windows** (`educonect-win-cross-win`, **versionada en `docker/windows/`**) | Producir el `.exe` para `x86_64-pc-windows-gnu` | Que el `.exe` corra en Windows: la imagen no trae Wine y no ejecuta su propio artefacto |
 | **Distribución** (el paquete `APP_ROOT` + `DATA_DIR` de D-03) | Cómo se instala en un colegio | Nada, hasta que se pruebe en Linux y Windows |
 
 No se usará la imagen de desarrollo como evidencia de portabilidad. Son objetivos distintos y confundirlos es el error que este sprint debe evitar.

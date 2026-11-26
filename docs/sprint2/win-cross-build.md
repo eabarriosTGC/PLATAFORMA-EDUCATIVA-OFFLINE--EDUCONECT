@@ -13,7 +13,7 @@ La unidad Linux ya está registrada (`d01-verificacion.md`, `d02-final.log`). Es
 
 | # | Control | Estado | Evidencia |
 |---|---|---|---|
-| 1 | `Dockerfile.win` usa mingw y no instala `libzim` | **PASÓ** | §1 |
+| 1 | Receta (`Dockerfile.win`) con mingw, sin `libzim` y sin rutas del HOME | **PASÓ** | §1 |
 | 2 | `cargo build --locked --release --target x86_64-pc-windows-gnu` sale 0 | **PASÓ** | §2: `Finished` en 1m 46s, 0 warnings, 0 errores |
 | 3 | `file` reconoce `PE32+ executable … x86-64` | **PASÓ** | §3 |
 | 4 | `objdump -p`: 0 `sqlite3.dll`, 0 `libgcc_s_seh-1.dll`, 0 `libwinpthread-1.dll` | **PASÓ** | §4 |
@@ -22,16 +22,29 @@ La unidad Linux ya está registrada (`d01-verificacion.md`, `d02-final.log`). Es
 
 Los seis los ejecuta `edu-conect-rural-server/tests/win-cross-build.sh` (§8). No son comprobaciones manuales de una sola vez: quedan como prueba repetible.
 
+**Actualización T9 (receta versionada).** `docker/windows/Dockerfile.win` y `docker/windows/compose.yaml` están ya **en el repositorio**; la prueba toma esa receta por omisión y la corrida de referencia desde un clon limpio en `/tmp` volvió a dar **6 PASARON / 0 FALLARON / 0 NO EJECUTADAS**, exit 0, con compilación completa desde target vacío en `2m 04s`. El control 1 incorpora ahora la autocontención: la receta no puede mencionar rutas del HOME. §1, §2, §8, §10 y §13 quedan corregidos en consecuencia; el resto del documento es la evidencia original, intacta.
+
 ---
 
 ## 1. Entorno de compilación
 
-El entorno de cross-compilación **no vive dentro del repositorio**. Está en `$HOME/educonect-dev-env/`, fuera de control de versiones, con dos archivos:
+**Desde T9 la receta vive dentro del repositorio** (rama `chore/win-recipe`, base `c41dd42`):
+
+| Archivo en el repositorio | Contenido |
+|---|---|
+| `docker/windows/Dockerfile.win` | copia **byte a byte** del que estaba en `$HOME/educonect-dev-env/` (sha256 `55245bd878ad53c175cbc46d6ee3ad8e1f2c50d3223880cbb1ae6714131cda55`) |
+| `docker/windows/compose.yaml` | solo el servicio `win`, adaptado para no depender de ninguna ruta del HOME |
+
+Hasta T9 la receta estaba en `$HOME/educonect-dev-env/`, fuera de control de versiones: un clon del repositorio no la tenía y `git log --all -- Dockerfile.win` devolvía 0 commits. Este documento registraba ese hallazgo (§10) y recomendaba incorporarla; T9 lo ejecutó. Los números de §2 a §7 son de la corrida original con aquella copia externa, cuyo `Dockerfile.win` era idéntico al ahora versionado; §2 añade la corrida de referencia hecha ya con la receta del repositorio, desde una copia limpia en `/tmp`.
+
+Qué aporta cada archivo:
 
 | Archivo | Qué aporta |
 |---|---|
 | `Dockerfile.win` | `debian:bookworm-slim` + toolchain Rust 1.88.0 + `gcc-mingw-w64-x86-64` + target `x86_64-pc-windows-gnu` |
 | `compose.yaml` | servicio `win`, montaje del repo en `/workspace` **en solo lectura**, volumen propio `cargo-target-win` |
+
+La única diferencia con el compose externo es la que quitaba el acoplamiento al HOME: `source: ${EDUCONNECT_REPO:-../..}` (relativo al propio archivo, o sea la raíz del repo), `RUST_VERSION` con default `1.88.0` en vez de exigirse por entorno, y un nombre de proyecto fijo (`educonect-win-cross`) para que los volúmenes de caché se llamen igual en cualquier clon. Los servicios `dev`, `nodev` y `lockfile` **no** se copiaron: pertenecen al entorno de desarrollo del operador, no a esta unidad.
 
 Variables del Dockerfile que hacen el trabajo:
 
@@ -65,7 +78,7 @@ GNU objdump (GNU Binutils for Debian) 2.40
 
 ## 2. Compilación cruzada
 
-Órdenes exactas, desde el directorio del entorno:
+Órdenes exactas de la corrida original (T8, con la receta todavía **fuera** del repositorio):
 
 ```bash
 cd ~/educonect-dev-env
@@ -78,6 +91,29 @@ timeout 900 docker compose run -T --rm win bash -lc \
 ```
 
 `rm -rf` se ejecuta a propósito: sin él Cargo responde `Finished in 0.15s` y la corrida no prueba nada. Lo que sigue es un build completo desde cero.
+
+### 2.1 Corrida de referencia con la receta del repositorio (T9)
+
+Misma compilación, pero **desde un clon limpio y solo con archivos del repositorio**. Copia en `/tmp/t9-green` del árbol de la rama `chore/win-recipe`, ejecutada desde ahí:
+
+```bash
+timeout 2400 ./edu-conect-rural-server/tests/win-cross-build.sh
+```
+
+La prueba construye la imagen con `docker/windows/compose.yaml` y compila el crate en un target vacío (volumen nuevo), sin `rm -rf` ni `FRESH=1`. Medición:
+
+| Medición | Valor |
+|---|---|
+| `docker compose build win` | exit 0 · imagen `educonect-win-cross-win:latest`, ID **`122380db7aa4`** — el mismo ID que la imagen externa de §2: el `Dockerfile.win` es idéntico, así que solo cambió el nombre del proyecto, no las capas |
+| Compilación del crate | exit 0 · `Finished 'release' profile [optimized] target(s) in 2m 04s` |
+| Tiempo de pared de la prueba completa (imagen + build + Wine) | **149 s** |
+| `warning` / `error` | **0 / 0** |
+| Artefacto | 9 279 488 bytes · sha256 `d79acb02f675e6e525c68b8f2c6d624c05f6bea600f425d99fc945e36038c490` (difiere del de §3 por `TimeDateStamp`, como explica §3.1; el **tamaño** coincide) |
+| Resultado | exit 0 · **6 PASARON / 0 FALLARON / 0 NO EJECUTADAS** |
+
+El tamaño del artefacto coincide exactamente con el de la corrida externa (9 279 488 bytes): misma receta, mismo perfil, mismo toolchain. Que el sha256 difiera era lo esperado (§3.1).
+
+Medición de la corrida original (receta externa, T8):
 
 | Medición | Valor |
 |---|---|
@@ -101,7 +137,7 @@ Salida real, últimas líneas:
 CARGO_EXIT=0
 ```
 
-### 2.1 El riesgo registrado no se materializó
+### 2.2 El riesgo registrado no se materializó
 
 El riesgo anotado al abrir la unidad era: **`rusqlite` con `bundled` compila SQLite desde C bajo mingw**. Se materializó el escenario contrario.
 
@@ -297,9 +333,11 @@ Códigos de salida — **ninguno confunde «no corrió» con «pasó»**:
 | **3** | ninguna falló, pero alguna **no pudo ejecutarse** (incompleto, no es un aprobado) |
 | **77** | **omitida**: no hay `docker compose`. No se ejecutó nada |
 
-Variables: `EDUCONNECT_DEV_ENV` (default `$HOME/educonect-dev-env`), `EDUCONNECT_COMPOSE_FILE`, `EDUCONNECT_DOCKERFILE_WIN`, `RUST_VERSION`, `WIN_PROBE_PORT`, `SKIP_WINE=1`, `FRESH=1` (borra el target antes de compilar), `T_DOCKER`.
+Variables: `EDUCONNECT_REPO` (repositorio a montar; la prueba lo fija a su propia raíz), `EDUCONNECT_COMPOSE_FILE`, `EDUCONNECT_DOCKERFILE_WIN`, `RUST_VERSION`, `WIN_PROBE_PORT`, `SKIP_WINE=1`, `FRESH=1` (borra el target antes de compilar), `T_DOCKER`.
 
-Salida real de la corrida con `FRESH=1`:
+**Desde T9 la receta sale del repositorio**: `docker/windows/compose.yaml` (servicio `win`) y `docker/windows/Dockerfile.win`. `EDUCONNECT_DEV_ENV` **sigue existiendo como override de compatibilidad**: si se define, la receta se busca en ese directorio como antes (los otros dos overrides siguen funcionando igual). Sin esa variable, el script no lee nada del HOME, y el control 1 lo exige: falla si el Dockerfile o el compose mencionan `/home/…`, `~`, `$HOME` o `educonect-dev-env`. Verificado en esta unidad: con `EDUCONNECT_DEV_ENV` apuntando a la receta externa, la prueba sigue dando **6/6**, exit 0.
+
+Salida real de la corrida original con `FRESH=1` (receta **externa**, previa a T9):
 
 ```
 win-cross-build — EDUConect Rural D-WIN
@@ -353,11 +391,65 @@ Todos los controles se ejecutaron y pasaron.
 Esto NO prueba que el .exe funcione en Windows real: solo bajo Wine.
 ```
 
+Corrida de referencia con la receta del repositorio (T9), copia limpia en `/tmp/t9-green`, sin variables de receta y sin `FRESH`:
+
+```
+win-cross-build — EDUConect Rural D-WIN
+repo:      /tmp/t9-green
+receta:    /tmp/t9-green/docker/windows (del repositorio)
+compose:   /tmp/t9-green/docker/windows/compose.yaml
+rust:      1.88.0 · target x86_64-pc-windows-gnu
+docker:    Docker Compose version 5.7.1
+
+== 1. Receta — mingw presente, ZIM ausente, autocontenida
+[1] receta: mingw presente, sin libzim, sin rutas del HOME         PASO
+        instrucciones: mingw=3 (se exige >0) · libzim=0 (se exige 0)
+        rutas del HOME en Dockerfile+compose: 0 (se exige 0)
+        menciones de libzim en todo el archivo (comentarios incluidos): 1
+
+== 2. Compilación cruzada --locked --release --target x86_64-pc-windows-gnu
+  construyendo imagen win (RUST_VERSION=1.88.0)…
+  imagen construida. Compilando el crate…
+[2] compilación cruzada termina con exit 0                        PASO
+        cargo exit=0 · Finished `release` profile [optimized] target(s) in 2m 04s
+        warnings=0 · errors=0
+
+  artefacto: 9279488 bytes
+  sha256:    d79acb02f675e6e525c68b8f2c6d624c05f6bea600f425d99fc945e36038c490
+  ruta en el contenedor: /opt/target/x86_64-pc-windows-gnu/release/edu-conect-rural-server.exe (volumen cargo-target-win)
+
+== 3. Formato del artefacto
+[3] file: PE32+ executable … x86-64                              PASO
+        PE32+ executable for MS Windows 5.02 (console), x86-64 (stripped to external PDB), 10 sections
+
+== 4. Importaciones del PE (objdump -p)
+[4] objdump -p: 0 sqlite3.dll, 0 libgcc_s_seh-1.dll, 0 libwinpthread-1.dll PASO
+        sqlite3.dll=0 · libgcc_s_seh-1.dll=0 · libwinpthread-1.dll=0
+        DLL importadas: ADVAPI32.dll api-ms-win-core-synch-l1-2-0.dll bcrypt.dll bcryptprimitives.dll kernel32.dll KERNEL32.dll msvcrt.dll ntdll.dll ws2_32.dll
+
+== 5. cargo tree --target x86_64-pc-windows-gnu sin crate zim
+[5] cargo tree no contiene el crate zim                            PASO
+        0 coincidencias de 'zim v…' en 573 líneas de árbol (target x86_64-pc-windows-gnu)
+
+== 6. Arranque bajo Wine y GET /health
+[6] el .exe arranca bajo Wine y /health responde 200               PASO
+        wineboot exit=0 · /health -> {"status":"ok","version":"0.1.0"} · db=5062656 bytes
+        líneas de escucha en el log: 1 · puerto 18907 liberado tras kill: 1
+
+== Resumen
+PASARON:       6
+FALLARON:      0
+NO EJECUTADAS: 0
+```
+
+Antes de que la receta estuviera versionada, la misma prueba sobre el mismo árbol contestaba **exit 3** (6 «no ejecutadas»): sin receta en el repositorio no hay nada que medir, y eso no es un aprobado.
+
 Decisiones de la prueba que conviene dejar escritas:
 
 | Decisión | Motivo |
 |---|---|
 | Control 1 ignora comentarios | el Dockerfile explica en prosa por qué no instala `libzim-dev`; contar prosa daría un fallo falso. Se informa igual el total de menciones |
+| Control 1 exige además que la receta no mencione rutas del HOME (T9) | es la diferencia entre «la máquina que lo hizo una vez» y «cualquier clon»: un compose con `source: /home/<alguien>/…` reproduce el artefacto solo en esa máquina, y el script lo trata como fallo, no como advertencia |
 | Control 6 exige cuatro señales (`/health` 200 **y** línea de escucha **y** base creada **y** puerto liberado) | un 200 solo no distingue un servidor real de un socket heredado; y el puerto liberado detecta procesos huérfanos de Wine |
 | El `.exe` se extrae del volumen con `cat` y se ejecuta desde una copia en el scratch | el repo está montado en solo lectura y `DATA_DIR` debe ser escribible |
 | `WINEPREFIX` siempre en `mktemp -d /tmp/…` | nunca el `HOME` del operador; el trap limpia al salir |
@@ -432,7 +524,7 @@ Ninguna de las dos afirmaciones de la investigación era correcta, así que **no
 
 | Hallazgo | Verificación | Impacto |
 |---|---|---|
-| **La receta no está versionada.** Vive en `$HOME/educonect-dev-env/`, no en git | `git log --all -- Dockerfile.win` → 0 commits; el archivo no existe en el repo | **El más serio para S10/T8.** La evidencia está registrada, pero la máquina que la reproduce no se clona: se reconstruye a mano. Recomendación: incorporar `Dockerfile.win` y el servicio `win` al repositorio, junto a `Dockerfile` y `docker-compose.yml` |
+| **La receta no está versionada.** Vive en `$HOME/educonect-dev-env/`, no en git | `git log --all -- Dockerfile.win` → 0 commits; el archivo no existe en el repo | **El más serio para S10/T8.** La evidencia está registrada, pero la máquina que la reproduce no se clona: se reconstruye a mano. **Resuelto en T9**: `docker/windows/Dockerfile.win` (copia byte a byte) y `docker/windows/compose.yaml` (solo el servicio `win`, sin rutas del HOME) están en la rama `chore/win-recipe` (base `c41dd42`), y la prueba corre con esa receta por omisión. Queda pendiente **la referencia al commit** de esa rama: la unidad no commitea; cuando la coordinación lo cree, se anota el hash aquí |
 | `libsqlite3-dev` y `libssl-dev` no los usa este target | `cargo tree --target x86_64-pc-windows-gnu`: `libsqlite3-sys` es `bundled` (compila su SQLite) y TLS resuelve en `schannel`, sin `openssl-sys`. La imagen trae SQLite 3.40.1 y el binario lleva 3.51.3 | Peso muerto. Cuestan tiempo de build. **No se quitó en esta unidad** |
 | La imagen `win` no puede ejecutar su propio artefacto | `command -v wine` dentro del contenedor → ausente | Es una imagen de *compilación*, no de prueba. El sondeo de §6 corre en el host. Quien espere «compilar y probar en el contenedor» se equivoca. Opciones: instalar Wine en la imagen (más peso) o mantener la separación explícita, como está documentada aquí |
 | El repo se monta en **solo lectura** | `compose.yaml`: `read_only: true` | Correcto y deliberado: un build no puede tocar el árbol. Efecto lateral conocido: `tests/integration_test.rs` necesita CWD escribible (deuda de D-03) |
@@ -470,6 +562,8 @@ T8 pide «al menos dos entornos». La letra se cumple: Linux (D-01a/D-02) y Wind
 | Frontend servido en Windows | **NO VERIFICADO** | En el sondeo no se copió `frontend/out/`; `/` respondió desde `landing_page`, no desde el bundle |
 | `yt-dlp`, `ffmpeg` en Windows | **NO VERIFICADO** | No existen en un Windows limpio; la matriz de §7 solo cubre ZIM y TTS |
 | Migración de la base desde una instalación Linux | **NO VERIFICADO** | El arranque probado es de base nueva. Un `educonect.db` traído de Linux no se probó |
+| Cross-compilación Windows desde un clon sin nada del operador | **VERIFICADO en T9** | §2.1: copia limpia en `/tmp`, receta del repositorio, exit 0 con los seis controles |
+| Servicios `dev`, `nodev` y `lockfile` del entorno de desarrollo | **SIGUEN FUERA DEL REPOSITORIO** | No se copiaron: esta unidad movió solo la receta de cross-compilación. La línea base de desarrollo sigue dependiendo de la receta del operador (`entorno-compilacion.md` §8.2) |
 
 ### 12.1 Tipos de evidencia de este documento
 
@@ -491,7 +585,7 @@ T8 pide «al menos dos entornos». La letra se cumple: Linux (D-01a/D-02) y Wind
 | D-WIN | **Aceptación técnica del cruce de compilación.** Windows real sigue pendiente |
 | Perfil compilado | Default (sin feature `zim`), que es el que se distribuye |
 | Evidencia durable | `tests/win-cross-build.sh`: seis controles, exit 0/1/3/77, sin falsos aprobados |
-| `Dockerfile.win` y `compose.yaml` | **No modificados** y **no versionados**: hallazgo §10, recomendación de incorporarlos |
+| `Dockerfile.win` y `compose.yaml` | **Versionados en T9** en `docker/windows/`. El Dockerfile es copia byte a byte (sha256 `55245bd8…cda55`); el compose conserva servicio, montaje en solo lectura y volúmenes, cambia el `source` del bind por `${EDUCONNECT_REPO:-../..}`, fija `RUST_VERSION` a `1.88.0` por omisión y usa el nombre de proyecto `educonect-win-cross` |
 | `libsqlite3-dev` / `libssl-dev` en la imagen | Innecesarios para este target; **no se quitaron** |
 | H.264 | La detección es real y lanza `ffmpeg`; bajo Wine se leyó la rama de fallo. Documentación corregida solo en referencias de línea (§9.1) |
 | Reproducibilidad del hash | **No** se afirma. Solo el tamaño es estable entre builds |

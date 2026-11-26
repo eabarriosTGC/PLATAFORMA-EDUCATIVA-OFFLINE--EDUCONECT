@@ -1,0 +1,45 @@
+FROM debian:bookworm-slim
+
+# Imagen de compilación cruzada para Windows.
+# Propósito: compilar el perfil DEFAULT (sin feature `zim`) para
+# x86_64-pc-windows-gnu y comprobar que el binario que se distribuye no
+# requiere las dependencias nativas de ZIM en la plataforma de destino.
+#
+# Sin libzim-dev, sin libxapian-dev, sin libicu-dev: si la compilación
+# necesitara esas bibliotecas, este build fallaría.
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG RUST_VERSION
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:${PATH} \
+    CARGO_TARGET_DIR=/opt/target \
+    CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    cmake \
+    clang \
+    libclang-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    gcc-mingw-w64-x86-64 \
+    binutils-mingw-w64-x86-64 \
+    ca-certificates \
+    curl \
+    git \
+    file \
+    binutils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN test -n "${RUST_VERSION}" \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+       | sh -s -- -y --profile minimal --default-toolchain "${RUST_VERSION}"
+
+RUN rustup target add x86_64-pc-windows-gnu
+
+WORKDIR /workspace
+
+CMD ["bash"]

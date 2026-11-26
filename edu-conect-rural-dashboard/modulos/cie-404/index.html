@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10182e">
+  <meta name="description" content="Atlas 3D offline para explorar los sistemas óseo, respiratorio, circulatorio y digestivo del cuerpo humano.">
+  <title>Atlas del Cuerpo Humano 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Anatomía interactiva · 5° a 8°</span><h1>🫀 Atlas del Cuerpo Humano 3D</h1><p>Observa cómo trabajan juntos los sistemas del organismo.</p></div>
+    <div class="progress"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Vista general</h2><p>Arrastra para girar · rueda o pellizco para acercar · toca un órgano</p></div>
+        <div class="actions"><button id="rotateButton" type="button">⏸ Detener giro</button><button id="resetButton" type="button">⌂ Centrar</button></div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Modelo tridimensional educativo del cuerpo humano">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Las fichas, recorridos y preguntas siguen disponibles.</span></div>
+      </div>
+      <div class="system-controls" role="group" aria-label="Sistemas del cuerpo">
+        <button type="button" data-system="all" class="active">👤 Todos</button>
+        <button type="button" data-system="skeletal">🦴 Óseo</button>
+        <button type="button" data-system="respiratory">🫁 Respiratorio</button>
+        <button type="button" data-system="circulatory">🫀 Circulatorio</button>
+        <button type="button" data-system="digestive">🫃 Digestivo</button>
+      </div>
+      <div class="display-controls"><label><input id="bodyToggle" type="checkbox" checked> Silueta</label><label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label><label>Transparencia <input id="opacityRange" type="range" min="0.08" max="0.42" step="0.02" value="0.18"></label></div>
+      <div id="organButtons" class="organ-buttons" aria-label="Seleccionar estructura"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="organSystem" class="badge">Sistema circulatorio</span><h2 id="organName">Corazón</h2>
+        <p id="organDescription">Músculo que impulsa la sangre por todo el organismo.</p>
+        <div class="fact-grid"><div><span>Función</span><strong id="organFunction">Bombear sangre</strong></div><div><span>Ubicación</span><strong id="organLocation">Centro del tórax, ligeramente a la izquierda</strong></div></div>
+        <p id="organCare" class="care">💡 El movimiento diario ayuda a cuidar el sistema circulatorio.</p>
+      </section>
+
+      <section class="journey-card">
+        <span class="eyebrow">Recorrido guiado</span><h2>Del oxígeno a las células</h2>
+        <p id="journeyText">1. El aire entra por las vías respiratorias.</p>
+        <div class="journey-controls"><button id="journeyPrev" type="button">←</button><span id="journeyStep">1 / 5</span><button id="journeyNext" type="button">→</button></div>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión anatómica</span><h2 id="missionTitle">Encuentra el órgano que bombea sangre</h2><p id="missionHint">Selecciona el músculo ubicado en el tórax.</p><div id="missionStatus" class="status" aria-live="polite">Misión 1 de 6</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="question">¿Dónde ocurre el intercambio de oxígeno?</h2><div id="answers" class="answers"></div><p id="feedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Modelo didáctico, no diagnóstico · EduConect Rural · Funciona sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

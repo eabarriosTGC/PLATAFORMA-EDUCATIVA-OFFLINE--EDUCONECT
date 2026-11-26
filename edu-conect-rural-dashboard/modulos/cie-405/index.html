@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c0817">
+  <meta name="description" content="Cuerpos geométricos 3D offline: cubo, esfera, cilindro, cono y pirámide. Explora caras, aristas, vértices y volumen.">
+  <title>Clase de Geometría 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Geometría interactiva · 4° a 7°</span><h1>📐 Clase de Geometría 3D</h1><p>Gira los cuerpos geométricos y descubre sus caras, aristas y vértices.</p></div>
+    <div class="progress"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Cuerpos geométricos</h2><p>Arrastra para girar · rueda o pellizco para acercar · toca un cuerpo</p></div>
+        <div class="actions"><button id="rotateButton" type="button">⏸ Detener giro</button><button id="resetButton" type="button">⌂ Centrar</button></div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Modelo tridimensional educativo de cuerpos geométricos">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Las fichas y preguntas siguen disponibles.</span></div>
+      </div>
+      <div class="toolbar">
+        <label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label>
+        <label><input id="wireToggle" type="checkbox"> Armazón</label>
+      </div>
+      <div id="solidButtons" class="solid-buttons" aria-label="Seleccionar cuerpo geométrico"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="solidType" class="badge">Cuerpo geométrico</span><h2 id="solidName">Cubo</h2>
+        <p id="solidDescription">Sólido con seis caras cuadradas iguales.</p>
+        <div class="fact-grid">
+          <div><span>Caras</span><strong id="solidFaces">6</strong></div>
+          <div><span>Aristas</span><strong id="solidEdges">12</strong></div>
+          <div><span>Vértices</span><strong id="solidVertices">8</strong></div>
+          <div><span>Volumen</span><strong id="solidVolume">lado × lado × lado</strong></div>
+        </div>
+        <p id="solidExample" class="care">💡 Los bloques de sal de las salinas de Manaure se forman como cubos.</p>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión geométrica</span><h2 id="missionTitle">Encuentra el cuerpo con seis caras cuadradas</h2><p id="missionHint">Toca el sólido cuyas caras son todos cuadrados.</p><div id="missionStatus" class="status" aria-live="polite">Misión 1 de 6</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="question">¿Cuántas caras tiene un cubo?</h2><div id="answers" class="answers"></div><p id="feedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Material didáctico · EduConect Rural · Funciona sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

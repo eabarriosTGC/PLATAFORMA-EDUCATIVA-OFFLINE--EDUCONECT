@@ -1,0 +1,10 @@
+{
+  "id": "cie-402",
+  "title": "Explorador del Sistema Solar 3D",
+  "subject": "Ciencias Naturales",
+  "grades": [4, 5, 6, 7],
+  "duration_minutes": 20,
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

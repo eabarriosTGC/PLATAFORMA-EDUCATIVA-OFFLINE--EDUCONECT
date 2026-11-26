@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 description = "Servidor backend Rust/Axum para EduConect Rural — plataforma offline educativa para Raspberry Pi"
 
+[features]
+default = []
+# Wikipedia/Wikilibros offline (lector ZIM). Requiere libzim-dev, libxapian-dev
+# e libicu-dev en tiempo de COMPILACIÓN: zim-sys/build.rs ejecuta
+# pkg_config::probe_library("libzim").unwrap(), que aborta la compilación si
+# falta. Desactivada por defecto: el perfil predeterminado no requiere las
+# dependencias nativas de ZIM.
+zim = ["dep:zim-rs"]
+
 [dependencies]
 axum = { version = "0.8", features = ["multipart"] }
 tokio = { version = "1", features = ["full"] }
@@ -20,8 +29,9 @@ thiserror = "2"
 jsonwebtoken = { version = "10", features = ["rust_crypto"] }
 bcrypt = "0.16"
 chrono = { version = "0.4", features = ["serde"] }
-zim = { version = "0.4.0", optional = true }
-zim-rs = "0.1.1"
+zim-rs = { version = "0.1.1", optional = true }
+url = "2"
+qrcode = { version = "0.13", default-features = false, features = ["svg"] }
 
 [dev-dependencies]
 reqwest = { version = "0.12", features = ["json"] }

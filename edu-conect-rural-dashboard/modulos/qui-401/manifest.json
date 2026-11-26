@@ -1,0 +1,15 @@
+{
+  "id": "qui-401",
+  "title": "Laboratorio Molecular 3D",
+  "subject": "Química",
+  "grades": [6, 7, 8, 9],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Explorar la estructura de agua, oxígeno, CO₂, metano y amoníaco en 3D",
+    "Identificar átomos, enlaces y geometrías moleculares",
+    "Relacionar la forma de cada molécula con su función o presencia cotidiana"
+  ],
+  "capabilities": ["3d", "touch", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

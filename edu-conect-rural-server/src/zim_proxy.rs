@@ -1,10 +1,9 @@
 //! Lector ZIM multi-archivo — Wikipedia + Wikilibros + Vikidia offline.
 //!
-//! Escanea data/contenido/zim/ por archivos .zim, los abre todos,
+//! Escanea el directorio ZIM configurado por archivos .zim, los abre todos,
 //! y expone búsqueda textual + extracción de artículos vía libzim.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
@@ -18,11 +17,13 @@ use zim_rs::archive::Archive;
 /// Un lector ZIM individual
 pub struct ZimReader {
     pub archive: Archive,
-    pub nombre: String,         // nombre amigable (ej. "Wikipedia ES Top")
-    pub slug: String,           // clave interna (ej. "wikipedia_es_top")
+    pub nombre: String, // nombre amigable (ej. "Wikipedia ES Top")
+    pub slug: String,   // clave interna (ej. "wikipedia_es_top")
     pub main_page_url: String,
     pub article_count: u32,
-    pub icon: &'static str,     // emoji
+    pub icon: &'static str, // emoji
+    /// Origen del paquete: "bundled" (imagen, solo lectura) o "persistent" (/data)
+    pub source: &'static str,
 }
 
 /// Biblioteca de archivos ZIM cargados
@@ -35,13 +36,10 @@ pub struct ZimLibrary {
 /// Referencia compartida thread-safe
 pub type SharedZim = Arc<RwLock<ZimLibrary>>;
 
-const ZIM_DIR: &str = "data/contenido/zim";
-
 /// Valida que un archivo tenga el header ZIM correcto (magic bytes "ZIM\x04")
 fn validar_header_zim(path: &std::path::Path) -> Result<(), String> {
     use std::io::Read;
-    let mut file = std::fs::File::open(path)
-        .map_err(|e| format!("no se pudo abrir: {e}"))?;
+    let mut file = std::fs::File::open(path).map_err(|e| format!("no se pudo abrir: {e}"))?;
     let mut magic = [0u8; 4];
     file.read_exact(&mut magic)
         .map_err(|e| format!("no se pudo leer header: {e}"))?;
@@ -59,78 +57,151 @@ fn validar_header_zim(path: &std::path::Path) -> Result<(), String> {
 //  Inicialización
 // ============================================================
 
-/// Escanea data/contenido/zim/ y abre TODOS los .zim encontrados.
-/// Prioriza Wikipedia > Vikidia > Wikibooks para el default.
-pub async fn inicializar() -> SharedZim {
+/// Lista los `.zim` de un directorio etiquetándolos con su zona.
+/// Directorio inexistente → lista vacía (el bundled puede faltar en dev).
+fn recoger_archivos_zim(
+    dir: &str,
+    source: &'static str,
+) -> Vec<(std::path::PathBuf, &'static str)> {
+    let dir = std::path::PathBuf::from(dir);
+    if !dir.is_dir() {
+        return vec![];
+    }
+    let mut out = vec![];
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().map(|e| e == "zim").unwrap_or(false) {
+                out.push((path, source));
+            }
+        }
+    }
+    out
+}
+
+/// Deduplica por identificador (filename sin extensión, case-insensitive).
+/// `persistent` (/data) pisa al `bundled` (imagen) con el mismo nombre:
+/// un paquete personalizado nunca queda oculto por el de fábrica.
+/// Mantiene el orden relativo de la primera aparición de cada archivo.
+fn elegir_zonas(
+    archivos: Vec<(std::path::PathBuf, &'static str)>,
+) -> Vec<(std::path::PathBuf, &'static str)> {
+    let mut vistos: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut resultado: Vec<(std::path::PathBuf, &'static str)> = Vec::with_capacity(archivos.len());
+
+    for (path, source) in archivos {
+        let id = path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        if vistos.insert(id.clone()) {
+            resultado.push((path, source));
+        } else if source == "persistent" {
+            if let Some(slot) = resultado.iter_mut().find(|(p, s)| {
+                *s == "bundled"
+                    && p.file_stem().map(|s| s.to_string_lossy().to_lowercase()) == Some(id.clone())
+            }) {
+                *slot = (path, source);
+            }
+        }
+    }
+    resultado
+}
+
+/// Escanea las DOS zonas y abre todos los `.zim` encontrados.
+///
+/// - `bundled_dir`: contenido incluido en la imagen (solo lectura, puede no existir en dev).
+/// - `persistent_dir`: paquetes agregados por el docente (se crea, pisa duplicados).
+///
+/// Un ZIM corrupto se registra y NO derriba el arranque.
+pub async fn inicializar(bundled_dir: &str, persistent_dir: &str) -> SharedZim {
     let library = ZimLibrary {
         zims: HashMap::new(),
         default_key: String::new(),
     };
     let state: SharedZim = Arc::new(RwLock::new(library));
 
-    let dir = PathBuf::from(ZIM_DIR);
+    // La zona persistente se crea si falta; la bundled no (es de solo lectura).
+    let dir = std::path::PathBuf::from(persistent_dir);
     if !dir.exists() {
         let _ = tokio::fs::create_dir_all(&dir).await;
-        warn!("📁 Directorio ZIM creado en {ZIM_DIR}. Coloca archivos .zim allí.");
-        return state;
+        warn!("📁 Directorio ZIM persistente creado en {persistent_dir}.");
     }
 
-    let mut entries = match tokio::fs::read_dir(&dir).await {
-        Ok(e) => e,
-        Err(_) => return state,
-    };
+    // Zona 1 (bundled) primero, zona 2 (persistent) después → /data gana.
+    let mut archivos: Vec<(std::path::PathBuf, &'static str)> = Vec::new();
+    archivos.extend(recoger_archivos_zim(bundled_dir, "bundled"));
+    archivos.extend(recoger_archivos_zim(persistent_dir, "persistent"));
+    archivos = elegir_zonas(archivos);
 
-    let mut zims: Vec<PathBuf> = vec![];
-    while let Ok(Some(entry)) = entries.next_entry().await {
-        let path = entry.path();
-        if path.extension().map(|e| e == "zim").unwrap_or(false) {
-            zims.push(path);
-        }
-    }
-
-    if zims.is_empty() {
-        warn!("⚠️  No hay archivos .zim en {ZIM_DIR}.");
+    if archivos.is_empty() {
+        warn!("⚠️  No hay archivos .zim en {bundled_dir} ni en {persistent_dir}.");
+        info!("   El paquete incluido (Wikipedia ES Top Mini) vive en la imagen; coloca ZIMs adicionales en {persistent_dir}");
         info!("   Descarga ZIMs desde: https://download.kiwix.org/zim/wikipedia/");
         return state;
     }
 
     // Ordenar: Wikipedia primero, luego Vikidia, luego Wikilibros
-    zims.sort_by(|a, b| {
-        let a_str = a.to_string_lossy().to_lowercase();
-        let b_str = b.to_string_lossy().to_lowercase();
+    archivos.sort_by(|a, b| {
+        let a_str = a.0.to_string_lossy().to_lowercase();
+        let b_str = b.0.to_string_lossy().to_lowercase();
         // Prioridad: top > otros wikipedia > vikidia > wikibooks
-        let a_prio = if a_str.contains("top") { -1 } else if a_str.contains("wikipedia") { 0 } else if a_str.contains("vikidia") { 1 } else { 2 };
-        let b_prio = if b_str.contains("top") { -1 } else if b_str.contains("wikipedia") { 0 } else if b_str.contains("vikidia") { 1 } else { 2 };
+        let a_prio = if a_str.contains("top") {
+            -1
+        } else if a_str.contains("wikipedia") {
+            0
+        } else if a_str.contains("vikidia") {
+            1
+        } else {
+            2
+        };
+        let b_prio = if b_str.contains("top") {
+            -1
+        } else if b_str.contains("wikipedia") {
+            0
+        } else if b_str.contains("vikidia") {
+            1
+        } else {
+            2
+        };
         a_prio.cmp(&b_prio).then(a_str.cmp(&b_str))
     });
 
     let mut lock = state.write().await;
     let mut first_key = String::new();
 
-    for path in &zims {
+    for (path, source) in &archivos {
         let path_str = path.to_string_lossy().to_string();
-        let filename = path.file_stem()
+        let filename = path
+            .file_stem()
             .map(|s| s.to_string_lossy().to_string())
             .unwrap_or_default();
 
         // ── Validar header ZIM antes de intentar abrir ──
-        match validar_header_zim(path) {
-            Err(razon) => {
-                warn!("   ⚠️  {} — {}", filename, razon);
-                continue;
-            }
-            Ok(_) => {}
+        if let Err(razon) = validar_header_zim(path) {
+            warn!("   ⚠️  {} — {}", filename, razon);
+            continue;
         }
 
         // Generar nombre amigable y slug
         let (nombre, icon, slug) = classify_zim(&filename);
 
-        info!("📖 Abriendo ZIM: {} ({})", nombre, path.file_name().unwrap().to_string_lossy());
+        info!(
+            "📖 Abriendo ZIM: {} ({}, {})",
+            nombre,
+            path.file_name().unwrap().to_string_lossy(),
+            source
+        );
 
         match Archive::new(&path_str) {
             Ok(archive) => {
                 let count = archive.get_articlecount();
                 let (main_url, _) = encontrar_pagina_principal(&archive);
+
+                // Un paquete en /data con el mismo slug reemplaza al de la imagen.
+                if lock.zims.contains_key(&slug) {
+                    info!("↪️  {slug} ya estaba cargado; el paquete de {source} lo reemplaza.");
+                }
 
                 let reader = ZimReader {
                     archive,
@@ -139,9 +210,10 @@ pub async fn inicializar() -> SharedZim {
                     main_page_url: main_url,
                     article_count: count,
                     icon,
+                    source,
                 };
 
-                info!("   ✅ {} artículos — {}", count, nombre);
+                info!("   ✅ {} artículos — {} ({})", count, nombre, source);
 
                 if first_key.is_empty() {
                     first_key = slug.clone();
@@ -159,7 +231,11 @@ pub async fn inicializar() -> SharedZim {
     if lock.zims.is_empty() {
         warn!("❌ No se pudo abrir ningún archivo ZIM");
     } else {
-        info!("📚 {} archivos ZIM cargados. Default: {}", lock.zims.len(), lock.default_key);
+        info!(
+            "📚 {} archivos ZIM cargados. Default: {}",
+            lock.zims.len(),
+            lock.default_key
+        );
     }
 
     drop(lock);
@@ -172,13 +248,29 @@ fn classify_zim(filename: &str) -> (String, &'static str, String) {
     if lower.contains("wikipedia") && lower.contains("top") {
         ("Wikipedia ES (Top)".into(), "🌐", "wikipedia_es_top".into())
     } else if lower.contains("wikipedia") && lower.contains("mathematics") {
-        ("Wikipedia ES — Matemáticas".into(), "🧮", "wikipedia_es_math".into())
+        (
+            "Wikipedia ES — Matemáticas".into(),
+            "🧮",
+            "wikipedia_es_math".into(),
+        )
     } else if lower.contains("wikipedia") && lower.contains("physics") {
-        ("Wikipedia ES — Física".into(), "⚛️", "wikipedia_es_physics".into())
+        (
+            "Wikipedia ES — Física".into(),
+            "⚛️",
+            "wikipedia_es_physics".into(),
+        )
     } else if lower.contains("wikipedia") && lower.contains("chemistry") {
-        ("Wikipedia ES — Química".into(), "🧪", "wikipedia_es_chemistry".into())
+        (
+            "Wikipedia ES — Química".into(),
+            "🧪",
+            "wikipedia_es_chemistry".into(),
+        )
     } else if lower.contains("wikipedia") && lower.contains("climate") {
-        ("Wikipedia ES — Cambio Climático".into(), "🌍", "wikipedia_es_climate".into())
+        (
+            "Wikipedia ES — Cambio Climático".into(),
+            "🌍",
+            "wikipedia_es_climate".into(),
+        )
     } else if lower.contains("wikipedia") {
         ("Wikipedia ES".into(), "🌐", "wikipedia_es".into())
     } else if lower.contains("vikidia") {
@@ -186,7 +278,11 @@ fn classify_zim(filename: &str) -> (String, &'static str, String) {
     } else if lower.contains("wikibooks") {
         ("Wikilibros ES".into(), "📘", "wikibooks_es".into())
     } else {
-        ("ZIM Desconocido".into(), "📦", filename.to_lowercase().replace(' ', "_"))
+        (
+            "ZIM Desconocido".into(),
+            "📦",
+            filename.to_lowercase().replace(' ', "_"),
+        )
     }
 }
 
@@ -255,20 +351,30 @@ pub fn buscar_articulos(
     };
 
     for reader in zims {
-        if results.len() >= limit { break; }
+        if results.len() >= limit {
+            break;
+        }
 
-        // Usar sugerencias del índice ZIM (más rápido que iterar)
-        // Intentar búsqueda por prefijo en el namespace A/
-        let search_paths = [
-            format!("A/{}", query_lower),
-            format!("A/{}", capitalize_first(&query_lower)),
+        // Los paths del ZIM usan guion bajo y capitalizan CADA palabra
+        // (A/La_Guajira, A/Sistema_solar); el usuario escribe espacios.
+        // Probar las variantes: minúscula, capitalizada, con guion bajo.
+        let variantes = [
+            query_lower.clone(),
+            capitalize_first(&query_lower),
+            query_lower.replace(' ', "_"),
+            capitalize_first(&query_lower).replace(' ', "_"),
+            capitalize_words(&query_lower),
         ];
+        let search_paths: Vec<String> = variantes.iter().map(|v| format!("A/{v}")).collect();
 
         for search_path in &search_paths {
             if let Ok(entry) = reader.archive.get_entry_bypath_str(search_path) {
                 let title = entry.get_title();
                 let path = entry.get_path();
-                if !title.is_empty() && title.to_lowercase().contains(&query_lower) {
+                if !title.is_empty()
+                    && title.to_lowercase().contains(&query_lower)
+                    && !results.iter().any(|r| r.path == path)
+                {
                     results.push(WikiResult {
                         title,
                         path,
@@ -282,27 +388,35 @@ pub fn buscar_articulos(
 
         // Búsqueda por prefijo: intentar paths comunes
         // Wikipedia ZIM usa namespace A/ con título capitalizado
-        let mut prefixes = vec![format!("A/{}", capitalize_first(&query_lower))];
+        let mut prefixes = vec![
+            format!("A/{}", capitalize_first(&query_lower)),
+            format!("A/{}", capitalize_first(&query_lower).replace(' ', "_")),
+            format!("A/{}", capitalize_words(&query_lower)),
+        ];
         // También probar con el título exacto lowercase
         if query_lower != capitalize_first(&query_lower) {
-            prefixes.push(format!("A/{}", query_lower));
+            prefixes.push(format!("A/{query_lower}"));
+            prefixes.push(format!("A/{}", query_lower.replace(' ', "_")));
         }
 
         for prefix in &prefixes {
-            if results.len() >= limit { break; }
+            if results.len() >= limit {
+                break;
+            }
             if let Ok(entry) = reader.archive.get_entry_bypath_str(prefix) {
                 let title = entry.get_title();
                 let path = entry.get_path();
-                if !title.is_empty() && title.to_lowercase().contains(&query_lower) {
-                    if !results.iter().any(|r| r.path == path) {
-                        results.push(WikiResult {
-                            title,
-                            path,
-                            snippet: String::new(),
-                            zim_slug: reader.slug.clone(),
-                            zim_name: reader.nombre.clone(),
-                        });
-                    }
+                if !title.is_empty()
+                    && title.to_lowercase().contains(&query_lower)
+                    && !results.iter().any(|r| r.path == path)
+                {
+                    results.push(WikiResult {
+                        title,
+                        path,
+                        snippet: String::new(),
+                        zim_slug: reader.slug.clone(),
+                        zim_name: reader.nombre.clone(),
+                    });
                 }
             }
         }
@@ -318,6 +432,15 @@ fn capitalize_first(s: &str) -> String {
         None => String::new(),
         Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
     }
+}
+
+/// Capitaliza cada palabra y las une con guion bajo: "la guajira" → "La_Guajira"
+/// (el formato canónico de paths en Wikipedia ZIM).
+fn capitalize_words(s: &str) -> String {
+    s.split(' ')
+        .map(capitalize_first)
+        .collect::<Vec<_>>()
+        .join("_")
 }
 
 /// Resultado de un artículo completo
@@ -342,14 +465,17 @@ pub fn obtener_articulo(
         library.zims.get(slug)?
     } else {
         // Intentar en cada ZIM
-        library.zims.values().find(|r| {
-            r.archive.get_entry_bypath_str(path).is_ok()
-        })?
+        library
+            .zims
+            .values()
+            .find(|r| r.archive.get_entry_bypath_str(path).is_ok())?
     };
 
     let entry = reader.archive.get_entry_bypath_str(path).ok()?;
     let item = entry.get_item(true).ok()?;
-    let mime = item.get_mimetype().unwrap_or_else(|_| "text/html; charset=utf-8".into());
+    let mime = item
+        .get_mimetype()
+        .unwrap_or_else(|_| "text/html; charset=utf-8".into());
     let blob = item.get_data().ok()?;
     let data = blob.data().to_vec();
 
@@ -370,16 +496,21 @@ pub fn obtener_articulo(
     })
 }
 
-/// Lista de ZIMs disponibles
+/// Lista de ZIMs disponibles (sin rutas internas — solo metadata pública)
 pub fn listar_zims(library: &ZimLibrary) -> Vec<serde_json::Value> {
-    library.zims.values().map(|r| {
-        serde_json::json!({
-            "slug": r.slug,
-            "nombre": r.nombre,
-            "icon": r.icon,
-            "articles": r.article_count,
+    library
+        .zims
+        .values()
+        .map(|r| {
+            serde_json::json!({
+                "slug": r.slug,
+                "nombre": r.nombre,
+                "icon": r.icon,
+                "articles": r.article_count,
+                "source": r.source,
+            })
         })
-    }).collect()
+        .collect()
 }
 
 /// Inyecta estilos oscuros en HTML de ZIM — para visualización standalone (/zim/)
@@ -408,7 +539,9 @@ img{max-width:100%;height:auto;}
         let mut result = String::with_capacity(html.len() + css.len() + 50);
         result.push_str(&html[..pos]);
         if !html.contains("viewport") {
-            result.push_str(r#"<meta name="viewport" content="width=device-width, initial-scale=1">"#);
+            result.push_str(
+                r#"<meta name="viewport" content="width=device-width, initial-scale=1">"#,
+            );
         }
         result.push_str(css);
         result.push_str(&html[pos..]);
@@ -450,5 +583,124 @@ pub fn zim_inyectar_estilos_api(html: &str) -> String {
         result
     } else {
         format!("{css}\n{html}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    fn dir_tmp(nombre: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "educonect-zim-test-{}-{nombre}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn crear_zim(dir: &std::path::Path, nombre: &str) {
+        fs::write(dir.join(nombre), b"ZIM\x04").unwrap();
+    }
+
+    #[test]
+    fn recoger_ignora_directorio_inexistente() {
+        let dir = dir_tmp("inexistente");
+        let no_existe = dir.join("nope");
+        let archivos = recoger_archivos_zim(no_existe.to_str().unwrap(), "bundled");
+        assert!(archivos.is_empty());
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn recoger_solo_extension_zim() {
+        let dir = dir_tmp("solo-zim");
+        crear_zim(&dir, "a.zim");
+        crear_zim(&dir, "b.zim");
+        fs::write(dir.join("nota.txt"), "no soy zim").unwrap();
+        let archivos = recoger_archivos_zim(dir.to_str().unwrap(), "persistent");
+        assert_eq!(archivos.len(), 2);
+        assert!(archivos
+            .iter()
+            .all(|(p, s)| p.extension().unwrap() == "zim" && *s == "persistent"));
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn persistente_pisa_bundled_duplicado() {
+        let bundled = dir_tmp("bundled");
+        let persistente = dir_tmp("persistente");
+        crear_zim(&bundled, "wikipedia_es_top_mini_2026-07.zim");
+        crear_zim(&bundled, "vikidia_es.zim");
+        crear_zim(&persistente, "wikipedia_es_top_mini_2026-07.zim");
+        crear_zim(&persistente, "wikibooks_es.zim");
+
+        let mut archivos = Vec::new();
+        archivos.extend(recoger_archivos_zim(bundled.to_str().unwrap(), "bundled"));
+        archivos.extend(recoger_archivos_zim(
+            persistente.to_str().unwrap(),
+            "persistent",
+        ));
+        let elegidos = elegir_zonas(archivos);
+
+        assert_eq!(elegidos.len(), 3, "el duplicado no debe abrirse dos veces");
+        let top = elegidos
+            .iter()
+            .find(|(p, _)| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .contains("top_mini")
+            })
+            .unwrap();
+        assert_eq!(top.1, "persistent", "/data gana sobre la imagen");
+        let vikidia = elegidos
+            .iter()
+            .find(|(p, _)| p.file_name().unwrap().to_string_lossy().contains("vikidia"))
+            .unwrap();
+        assert_eq!(
+            vikidia.1, "bundled",
+            "sin duplicado, el bundled se conserva"
+        );
+        let wikibooks = elegidos
+            .iter()
+            .find(|(p, _)| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .contains("wikibooks")
+            })
+            .unwrap();
+        assert_eq!(wikibooks.1, "persistent");
+        fs::remove_dir_all(&bundled).ok();
+        fs::remove_dir_all(&persistente).ok();
+    }
+
+    #[test]
+    fn duplicado_persistent_no_duplica_ni_reemplaza_el_primero() {
+        let persistente = dir_tmp("dup-persistente");
+        crear_zim(&persistente, "mismo.zim");
+        crear_zim(&persistente, "MISMO.zim"); // mismo id case-insensitive
+        let archivos = recoger_archivos_zim(persistente.to_str().unwrap(), "persistent");
+        let elegidos = elegir_zonas(archivos);
+        assert_eq!(
+            elegidos.len(),
+            1,
+            "mismo identificador en la misma zona → un solo paquete"
+        );
+        fs::remove_dir_all(&persistente).ok();
+    }
+
+    #[test]
+    fn capitalize_words_une_con_guion_bajo() {
+        // Capitaliza CADA palabra (nombre propio: "La Guajira" → "La_Guajira").
+        // El caso "Sistema_solar" (solo primera mayúscula) lo cubre la variante
+        // capitalize_first + underscore del buscador, no capitalize_words.
+        assert_eq!(capitalize_words("la guajira"), "La_Guajira");
+        assert_eq!(capitalize_words("sistema solar"), "Sistema_Solar");
+        assert_eq!(capitalize_words("colombia"), "Colombia");
+        assert_eq!(capitalize_words(""), "");
     }
 }

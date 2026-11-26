@@ -1,0 +1,17 @@
+ Container educonect-dev-env-nodev-run-266d5ac15661 Creating 
+ Container educonect-dev-env-nodev-run-266d5ac15661 Created 
+### fmt --check
+  fmt OK
+### build default
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.31s
+### clippy default (comando CI)
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.77s
+### tests --bins default
+test http_degradacion::health_responde_200_y_las_rutas_desconocidas_conservan_404 ... ok
+test http_degradacion::rutas_zim_html_responden_503 ... ok
+test http_degradacion::rutas_wikipedia_api_responden_503_con_json ... ok
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 44.41s
+### integration_test default
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.49s

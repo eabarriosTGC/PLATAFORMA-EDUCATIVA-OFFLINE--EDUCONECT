@@ -49,6 +49,15 @@
         </div>
       </a>
 
+      <a href="#cuestionarios" data-view="cuestionarios" class="sidebar-item sidebar-item-sm">
+        <span class="sidebar-item-icon">🧠</span>
+        <div class="sidebar-item-text">
+          <span class="sidebar-item-title">Cuestionarios</span>
+          <span class="sidebar-item-desc">Practica y comprueba lo aprendido</span>
+        </div>
+        <span class="nav-badge" id="badge-quizzes">0</span>
+      </a>
+
       <a href="#categoria" data-cat="Ciencias y Naturaleza" class="sidebar-item sidebar-item-sm">
         <span class="sidebar-item-icon">🔬</span>
         <div class="sidebar-item-text">
@@ -151,7 +160,7 @@
     <!-- Sección: Gestión Docente -->
     <div class="sidebar-section">
       <div class="sidebar-section-title">GESTIÓN DOCENTE</div>
-      <a href="#profesores" data-view="profesores" class="sidebar-item sidebar-item-sm">
+      <a href="/profesor/" class="sidebar-item sidebar-item-sm">
         <span class="sidebar-item-icon">👨‍🏫</span>
         <div class="sidebar-item-text">
           <span class="sidebar-item-title">Panel de Profesores</span>
@@ -182,10 +191,10 @@
   <main id="main-content">
     <!-- Header con saludo + búsqueda + estado conexión -->
     <header id="header">
-      <span class="header-greeting">
+      <button class="header-greeting" id="student-profile-btn" type="button" title="Cambiar estudiante" style="border:0;background:transparent;color:inherit;cursor:pointer;font-family:inherit;">
         <span class="wave-emoji">👋</span>
         <span id="greeting-text">¡Hola, Estudiante!</span>
-      </span>
+      </button>
       <div class="search-wrapper">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="search-input" placeholder="Buscar cursos, libros, videos..." autocomplete="off">
@@ -240,6 +249,11 @@
               </div>
               <span class="qa-arrow">→</span>
             </div>
+            <div class="qa-card card-clickable" data-view="cuestionarios">
+              <div class="qa-icon">🧠</div>
+              <div class="qa-info"><div class="qa-label">Cuestionarios</div><div class="qa-value" id="qa-quizzes-count">0</div></div>
+              <span class="qa-arrow">→</span>
+            </div>
           </div>
         </section>
 
@@ -258,6 +272,13 @@
         <div class="section-title">📚 Todos los Cursos</div>
         <div class="filters-bar" id="cursos-filters"></div>
         <div class="curso-grid" id="cursos-grid"></div>
+      </section>
+
+      <section id="view-cuestionarios" class="view-section view-hidden">
+        <div class="section-title">🧠 Cuestionarios</div>
+        <p class="quiz-intro">Elige una actividad, responde a tu ritmo y recibe el resultado al terminar.</p>
+        <div id="quiz-catalog" class="quiz-catalog"></div>
+        <div id="quiz-player" class="quiz-player" hidden></div>
       </section>
 
       <!-- Vista biblioteca -->
@@ -292,25 +313,15 @@
         <div class="empty-state" id="videos-empty" style="display:none;">No hay videos descargados. Usá el panel de administración para descargar videos educativos.</div>
       </section>
 
-      <!-- Vista Panel de Profesores -->
-      <section id="view-profesores" class="view-section view-hidden">
-        <div class="section-title">👨‍🏫 Panel de Profesores</div>
-        <div class="empty-state" style="padding:48px 24px;text-align:center;">
-          <div style="font-size:3rem;margin-bottom:16px;">👨‍🏫</div>
-          <p style="font-size:1.1rem;color:var(--text);margin-bottom:8px;">Accede como Docente para ver estadísticas</p>
-          <p style="font-size:0.85rem;color:var(--text-muted);">Activa el modo Docente en el panel lateral para ver el progreso de tus estudiantes.</p>
-        </div>
-      </section>
-
       <!-- Vista Wikipedia Offline -->
       <section id="view-wikipedia" class="view-section view-hidden">
         <div class="section-title">🌐 Wikipedia Offline</div>
         <!-- Buscador -->
         <div style="position:relative;margin-bottom:16px;">
           <input type="text" id="wiki-search-input" placeholder="Buscar en Wikipedia (ej: Colombia, Agricultura, Ciencia)..."
-            style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:1rem;"
+            style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--card, #fff);color:var(--text);font-size:1rem;"
             autocomplete="off">
-          <div id="wiki-search-results" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:320px;overflow-y:auto;z-index:10;display:none;"></div>
+          <div id="wiki-search-results" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card, #fff);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(61,44,30,0.18);max-height:320px;overflow-y:auto;z-index:80;display:none;"></div>
         </div>
         <!-- Selector de ZIM -->
         <div id="wiki-zim-selector" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"></div>
@@ -335,6 +346,26 @@
   </main>
 
   <!-- Overlays / Modals -->
+  <!-- Identidad local del estudiante -->
+  <div class="modal-overlay" id="student-profile-modal">
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="student-profile-title">
+      <div class="modal-header">
+        <span class="modal-title" id="student-profile-title">¿Quién está aprendiendo?</span>
+      </div>
+      <form class="modal-body" id="student-profile-form" style="padding:24px 20px;">
+        <p style="color:var(--text-muted);margin-bottom:14px;">Escribe el nombre con el que aparecerá tu progreso ante el profesor.</p>
+        <label for="student-profile-name" style="display:block;font-weight:600;margin-bottom:6px;">Nombre del estudiante</label>
+        <input id="student-profile-name" maxlength="40" autocomplete="name" required
+          style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card,#fff);color:var(--text);font-size:1rem;">
+        <div id="student-profile-error" style="display:none;color:var(--danger);font-size:.82rem;margin-top:8px;" role="alert"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+          <button class="modal-btn modal-btn-secondary" id="student-profile-cancel" type="button">Cancelar</button>
+          <button class="modal-btn modal-btn-primary" type="submit">Guardar nombre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Video Player Modal -->
   <div class="modal-overlay" id="video-modal">
     <div class="modal">
@@ -430,6 +461,7 @@
   <script src="/static/js/sidebar-badges.js"></script>
   <script src="/static/js/wikipedia-viewer.js"></script>
   <script src="/static/js/modulos-viewer.js"></script>
+  <script src="/static/js/quizzes-estudiante.js"></script>
   <script src="/static/js/dashboard.js"></script>
 
 </body>

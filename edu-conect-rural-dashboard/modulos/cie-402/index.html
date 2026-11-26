@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07142b">
+  <title>Explorador del Sistema Solar 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html" aria-label="Volver al catálogo">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Laboratorio interactivo · 4° a 7°</span><h1>🪐 Explorador del Sistema Solar 3D</h1></div>
+    <div class="progress" aria-label="Progreso"><span id="progressText">0%</span><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Observatorio</h2><p>Arrastra para girar · pellizca o usa la rueda para acercar · toca un planeta</p></div>
+        <div class="toolbar">
+          <button id="playButton" type="button" aria-pressed="false">⏸ Pausar</button>
+          <button id="resetButton" type="button">⌂ Centrar</button>
+        </div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Modelo tridimensional interactivo del Sistema Solar">
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Puedes explorar los planetas con los botones y completar el reto.</span></div>
+      </div>
+      <div class="controls">
+        <label>Velocidad <input id="speed" type="range" min="0" max="3" step="0.25" value="1"><output id="speedValue">1×</output></label>
+        <label class="check"><input id="orbits" type="checkbox" checked> Ver órbitas</label>
+        <label class="check"><input id="scale" type="checkbox"> Comparar tamaños</label>
+      </div>
+      <div id="planetButtons" class="planet-buttons" aria-label="Seleccionar planeta"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="planetBadge" class="planet-badge">☀️ Estrella</span>
+        <h2 id="planetName">Sol</h2>
+        <p id="planetSummary">La estrella que ilumina y calienta nuestro sistema planetario.</p>
+        <dl><div><dt>Distancia al Sol</dt><dd id="planetDistance">0 km</dd></div><div><dt>Año</dt><dd id="planetYear">—</dd></div><div><dt>Dato sorprendente</dt><dd id="planetFact">Concentra casi toda la masa del Sistema Solar.</dd></div></dl>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión guiada</span><h2 id="missionTitle">Encuentra el planeta rojo</h2>
+        <p id="missionHint">Selecciona el planeta conocido por el óxido de hierro de su superficie.</p>
+        <div id="missionStatus" class="status" aria-live="polite">Misión 1 de 4</div>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Comprueba lo aprendido</span><h2 id="question">¿Cuál es el planeta más cercano al Sol?</h2>
+        <div id="answers" class="answers"></div>
+        <p id="quizFeedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+
+  <footer>Creado para EduConect Rural · Funciona completamente sin internet</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

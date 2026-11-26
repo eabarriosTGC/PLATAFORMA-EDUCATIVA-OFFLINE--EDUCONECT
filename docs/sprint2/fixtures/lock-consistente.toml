@@ -1,0 +1,22 @@
+# Fixture sintético de control: grafo mínimo bien formado.
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"
+dependencies = [
+ "hijo 1.2.3",
+]
+
+[[package]]
+name = "hijo"
+version = "1.2.3"
+source = "registry+https://example.invalid/registro-a"
+dependencies = [
+ "nieto",
+]
+
+[[package]]
+name = "nieto"
+version = "0.9.0"
+source = "registry+https://example.invalid/registro-a"

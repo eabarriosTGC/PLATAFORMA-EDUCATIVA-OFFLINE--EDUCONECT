@@ -1,0 +1,15 @@
+{
+  "id": "cie-409",
+  "title": "Gráficas de Funciones 3D",
+  "subject": "Matemáticas",
+  "grades": [4, 5, 6, 7],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Observar cómo una función de dos variables genera una superficie",
+    "Relacionar los ejes X y Z con la altura del punto (Y)",
+    "Reconocer la cuadrícula como referencia espacial de la gráfica"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

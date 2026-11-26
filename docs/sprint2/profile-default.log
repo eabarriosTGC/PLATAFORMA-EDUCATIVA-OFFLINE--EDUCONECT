@@ -1,0 +1,50 @@
+ Container educonect-dev-env-nodev-run-ebc5a37b0ed5 Creating 
+ Container educonect-dev-env-nodev-run-ebc5a37b0ed5 Created 
+### entorno: sin bibliotecas ZIM de desarrollo
+  libzim ausente
+  libxapian ausente
+  icu-uc ausente
+
+### build perfil DEFAULT (sin feature) en imagen sin ZIM
+   Compiling r2d2_sqlite v0.34.0
+   Compiling url v2.5.8
+   Compiling bcrypt v0.16.0
+   Compiling qrcode v0.13.0
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 32s
+
+### clippy perfil DEFAULT
+  --> src/rate_limit.rs:53:18
+   |
+21 | impl RateLimiter {
+   | ---------------- method in this implementation
+...
+53 |     pub async fn reset(&self) {
+   |                  ^^^^^
+   |
+   = note: `-D dead-code` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(dead_code)]`
+
+error: could not compile `edu-conect-rural-server` (bin "edu-conect-rural-server" test) due to 1 previous error
+
+### tests perfil DEFAULT
+running 23 tests
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.76s
+running 59 tests
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.05s
+running 3 tests
+failures:
+failures:
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+error: test failed, to rerun pass `--test integration_test`
+
+### ldd del binario DEFAULT
+/lib64/ld-linux-x86-64.so.2
+libc.so.6
+libgcc_s.so.1
+libm.so.6
+linux-vdso.so.1
+
+### presencia de bibliotecas ZIM en los enlaces
+0
+  0 coincidencias zim/xapian/icu

@@ -1,0 +1,20 @@
+# Fixture sintético: dos paquetes con igual (nombre, versión) y distinto source.
+# Una referencia de un solo campo a ese nombre debe resultar AMBIGUA.
+version = 3
+
+[[package]]
+name = "raiz"
+version = "0.1.0"
+dependencies = [
+ "dup",
+]
+
+[[package]]
+name = "dup"
+version = "1.0.0"
+source = "registry+https://example.invalid/registro-a"
+
+[[package]]
+name = "dup"
+version = "1.0.0"
+source = "git+https://example.invalid/repo-b"

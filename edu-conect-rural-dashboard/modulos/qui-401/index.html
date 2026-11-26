@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123c50">
+  <title>Laboratorio Molecular 3D — EduConect</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="../index.html" aria-label="Volver al catálogo">← Volver al catálogo</a>
+    <div><strong>⚗️ Laboratorio Molecular 3D</strong><small>Química · Offline</small></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">MICROMUNDO INTERACTIVO</p><h1>Construye conocimiento átomo por átomo</h1>
+      <p>Gira cada molécula, toca sus átomos y descubre por qué su forma importa.</p></div>
+      <div class="score" aria-live="polite"><span>⭐</span><strong id="score">0</strong><small>puntos</small></div>
+    </section>
+    <section class="lab">
+      <aside class="picker" aria-label="Moléculas disponibles">
+        <h2>Moléculas</h2>
+        <button class="molecule active" data-id="water"><b>H₂O</b><span>Agua</span></button>
+        <button class="molecule" data-id="oxygen"><b>O₂</b><span>Oxígeno</span></button>
+        <button class="molecule" data-id="carbon"><b>CO₂</b><span>Dióxido de carbono</span></button>
+        <button class="molecule" data-id="methane"><b>CH₄</b><span>Metano</span></button>
+        <button class="molecule" data-id="ammonia"><b>NH₃</b><span>Amoníaco</span></button>
+      </aside>
+      <section class="viewer-card">
+        <div id="scene" role="img" aria-label="Modelo molecular tridimensional"></div>
+        <div class="controls">
+          <button id="rotate" type="button">⏸ Pausar</button>
+          <button id="zoomIn" type="button" aria-label="Acercar">＋</button>
+          <button id="zoomOut" type="button" aria-label="Alejar">−</button>
+          <button id="reset" type="button">↺ Centrar</button>
+        </div>
+      </section>
+      <aside class="facts">
+        <p class="eyebrow">FICHA CIENTÍFICA</p><h2 id="moleculeName">Agua</h2>
+        <div class="formula" id="formula">H₂O</div><p id="description"></p>
+        <dl><div><dt>Geometría</dt><dd id="geometry"></dd></div><div><dt>Uso o presencia</dt><dd id="use"></dd></div></dl>
+        <div class="atom-fact" id="atomFact">Toca un átomo para identificarlo.</div>
+      </aside>
+    </section>
+    <section class="mission">
+      <div><p class="eyebrow">MISIÓN</p><h2 id="missionTitle">Encuentra el oxígeno del agua</h2>
+      <p id="missionText">Selecciona el átomo rojo de la molécula.</p></div>
+      <div id="missionStatus" class="status">Pendiente</div>
+    </section>
+    <section class="quiz">
+      <p class="eyebrow">COMPRUEBA LO APRENDIDO</p><h2>¿Qué molécula tiene geometría lineal?</h2>
+      <div class="answers"><button data-answer="water">H₂O</button><button data-answer="carbon">CO₂</button><button data-answer="methane">CH₄</button></div>
+      <p id="quizFeedback" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

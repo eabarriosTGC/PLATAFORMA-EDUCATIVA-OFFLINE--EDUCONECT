@@ -101,15 +101,11 @@
     // Toggle rol
     if (rolCheckbox) {
       rolCheckbox.addEventListener('change', function() {
-        AppState.isTeacher = rolCheckbox.checked;
-        AppState.usuario = AppState.isTeacher ? 'profesor' : 'estudiante';
-        if (rolLabel) {
-          rolLabel.textContent = AppState.isTeacher ? 'Docente' : 'Estudiante';
-        }
-        updateGreeting();
-        loadProgreso();
+        if (rolCheckbox.checked) window.location.href = '/profesor/';
       });
     }
+
+    configurarPerfilEstudiante();
 
     // Biblioteca filters
     if (bibliotecaFilters) {
@@ -168,11 +164,53 @@
 
   function updateGreeting() {
     if (!greetingText) return;
-    if (AppState.isTeacher) {
-      greetingText.textContent = '¡Hola, Docente! 👨‍🏫';
-    } else {
-      greetingText.textContent = '¡Hola, Estudiante! 👋';
+    greetingText.textContent = AppState.usuario ? '¡Hola, ' + AppState.usuario + '!' : '¡Hola, Estudiante!';
+  }
+
+  function configurarPerfilEstudiante() {
+    var modal = document.getElementById('student-profile-modal');
+    var form = document.getElementById('student-profile-form');
+    var input = document.getElementById('student-profile-name');
+    var cancel = document.getElementById('student-profile-cancel');
+    var open = document.getElementById('student-profile-btn');
+    var error = document.getElementById('student-profile-error');
+    if (!modal || !form || !input) return;
+
+    function mostrar() {
+      input.value = AppState.usuario || '';
+      error.style.display = 'none';
+      cancel.style.display = AppState.usuario ? '' : 'none';
+      modal.classList.add('visible');
+      setTimeout(function() { input.focus(); }, 0);
     }
+    function cerrar() { if (AppState.usuario) modal.classList.remove('visible'); }
+    if (open) open.addEventListener('click', mostrar);
+    cancel.addEventListener('click', cerrar);
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var nombre = input.value.trim().replace(/\s+/g, ' ');
+      if (nombre.length < 2) {
+        error.textContent = 'Escribe un nombre de al menos 2 caracteres.';
+        error.style.display = 'block';
+        return;
+      }
+      var cambio = AppState.usuario !== nombre;
+      AppState.usuario = nombre;
+      localStorage.setItem('educonect_estudiante', nombre);
+      modal.classList.remove('visible');
+      updateGreeting();
+      if (cambio) {
+        getProgreso(AppState.usuario).then(function(data) {
+          AppState.progreso = data || [];
+          notifyState();
+        }).catch(function() {
+          AppState.progreso = [];
+          notifyState();
+        });
+      }
+    });
+    updateGreeting();
+    if (!AppState.usuario) mostrar();
   }
 
   function loadAllData() {
@@ -237,13 +275,13 @@
       renderVideos();
       updateProgresoUI();
 
-      // Set initial view (shows dashboard by default)
-      setView('dashboard');
+      // Respeta enlaces directos como /app/#cuestionarios.
+      setView(location.hash === '#cuestionarios' ? 'cuestionarios' : 'dashboard');
     }).catch(function() {
       AppState.loading = false;
       notifyState();
       // Set initial view even on error
-      setView('dashboard');
+      setView(location.hash === '#cuestionarios' ? 'cuestionarios' : 'dashboard');
     });
   }
 
@@ -502,23 +540,32 @@
 
     var archivoPath = (libro.archivo_path || '').replace('data/biblioteca/', '');
 
+    // Sin archivo real (ni bundled ni /data): no se ofrece Abrir ni PDF.
+    var acciones = '';
+    if (libro.disponible) {
+      acciones =
+        '<button class="libro-btn libro-btn-abrir">Abrir</button>' +
+        '<a class="libro-btn libro-btn-pdf" href="/biblioteca/' + escAttr(archivoPath) + '" download>PDF</a>';
+    } else {
+      acciones = '<span class="libro-badge" style="font-size:0.72rem;">📦 Disponible por USB</span>';
+    }
+
     card.innerHTML =
       '<div class="libro-thumb ' + thumbClass + '">📖</div>' +
       '<div class="libro-title">' + escHtml(libro.titulo) + '</div>' +
       badgeHtml +
-      '<div class="libro-actions">' +
-        '<button class="libro-btn libro-btn-abrir">Abrir</button>' +
-        '<a class="libro-btn libro-btn-pdf" href="/biblioteca/' + escAttr(archivoPath) + '" download>PDF</a>' +
-      '</div>';
+      '<div class="libro-actions">' + acciones + '</div>';
 
-    card.querySelector('.libro-btn-abrir').addEventListener('click', function(e) {
-      e.stopPropagation();
-      abrirLibro(libro);
-    });
+    if (libro.disponible) {
+      card.querySelector('.libro-btn-abrir').addEventListener('click', function(e) {
+        e.stopPropagation();
+        abrirLibro(libro);
+      });
 
-    card.addEventListener('click', function() {
-      abrirLibro(libro);
-    });
+      card.addEventListener('click', function() {
+        abrirLibro(libro);
+      });
+    }
 
     return card;
   }

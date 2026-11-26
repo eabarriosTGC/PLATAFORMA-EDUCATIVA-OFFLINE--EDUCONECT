@@ -1,0 +1,130 @@
+[
+  {
+    "nombre": "01-de-viva-voz.pdf",
+    "ruta_final": "cuentos/01-de-viva-voz.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/1_De_viva_voz.pdf",
+    "sha256": "5ab0c34a07d02bdf4cbb2510d5982f0fc4da9ec0c97349a4212d61e411ec2daf",
+    "tamano": 1376864,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "02-con-pombo-y-platillos.pdf",
+    "ruta_final": "cuentos/02-con-pombo-y-platillos.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/2_Con_Pombo_y_platillos.pdf",
+    "sha256": "8815d4b66274737824935e5f0c7c8afcd0e5b21179e118ecb30134b60fd90170",
+    "tamano": 3616115,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "03-puro-cuento.pdf",
+    "ruta_final": "cuentos/03-puro-cuento.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/3_Puro_cuento.pdf",
+    "sha256": "eae35fffef881e45928296341bd3243607fc9df60d53c5715256636d13a1fa5a",
+    "tamano": 1661889,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "04-barbas-pelos-cenizas.pdf",
+    "ruta_final": "cuentos/04-barbas-pelos-cenizas.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/4_Barbas_pelos_y_cenizas.pdf",
+    "sha256": "a8897d5138c5e2e0126f14c2cea8e983b6d6a4ea78d0a043acf26c052e6bc31f",
+    "tamano": 4815708,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "05-canta-palabra.pdf",
+    "ruta_final": "cuentos/05-canta-palabra.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/5_Canta_palabra.pdf",
+    "sha256": "c609cfefe72ee201d8d51c3bf50dc660bed828790daf6ae7c57490d314ff9ac7",
+    "tamano": 2470124,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "06-bosque-adentro.pdf",
+    "ruta_final": "cuentos/06-bosque-adentro.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/6_Bosque_adentro.pdf",
+    "sha256": "30fea959942618a6df48fe0fa67940d8127a644a6565fae38154e781127ab711",
+    "tamano": 1226359,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "07-de-animales-y-de-ninos.pdf",
+    "ruta_final": "cuentos/07-de-animales-y-de-ninos.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/7_De_animales_y_de_ninos.pdf",
+    "sha256": "eb31ea26fcffa11dc8a2ad4e33785fcd9aeea6ad9a1cc44f2753be4496c1ea4a",
+    "tamano": 16322822,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "08-en-la-diestra-de-dios-padre.pdf",
+    "ruta_final": "cuentos/08-en-la-diestra-de-dios-padre.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/8_En_la_diestra_de_dios_padre.pdf",
+    "sha256": "236193db3ca511fc8c67e335882b9355446697fdfb4fcb4438d27cd6860cf4d8",
+    "tamano": 4023214,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "13-don-quijote.pdf",
+    "ruta_final": "cuentos/13-don-quijote.pdf",
+    "url": "https://colombiaaprende.edu.co/sites/default/files/files_public/plan-lectura-2021/leer-es-mi-cuento-parte-1/13_Don_Quijote_de_la_Mancha.pdf",
+    "sha256": "4c2b8231ff78abb7550ee37984ed16af6169353aa8ea5287794cfd810abb9e48",
+    "tamano": 6371392,
+    "licencia": "Dominio público educativo (Colombia Aprende / MinEducación)"
+  },
+  {
+    "nombre": "arrullos-jaamo.pdf",
+    "ruta_final": "cuentos/arrullos-jaamo.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2018/06/libro_arrullos_jaamo_multilingue.pdf",
+    "sha256": "88b40823b760c67cf7ddf0dcb7118e7d05d7cdb800c0bd84f80825bac23508af",
+    "tamano": 2057385,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "la-muneca-negra.pdf",
+    "ruta_final": "cuentos/la-muneca-negra.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2025/10/lemc_65_la-muneca-negra-maguare-web.pdf",
+    "sha256": "3be70ae07dbdd9883249e708f9fc4f8ac1ad1ed9b31d11830a548285f38a08a0",
+    "tamano": 11613223,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "tiki-tiki-tai.pdf",
+    "ruta_final": "cuentos/tiki-tiki-tai.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2017/12/511_tiki-tiki-tai.pdf",
+    "sha256": "e5c5c2ee11207cfdf95d144907391b6262e1ee8892c6ef1ad5cf50989b2c0f0a",
+    "tamano": 5844375,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "tortuguita-veni-baila.pdf",
+    "ruta_final": "cuentos/tortuguita-veni-baila.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2017/12/491-tortuguita-veni-baila-antologia-musical.pdf",
+    "sha256": "7b85850cee94bb1c5bc531b1e7a8cdefbb95a20d55064ae89e29c0b0bed71df2",
+    "tamano": 3832433,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "una-morena-en-la-ronda.pdf",
+    "ruta_final": "cuentos/una-morena-en-la-ronda.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2017/12/495_Una-Morena-en-la-Ronda.pdf",
+    "sha256": "8a0b175f902e44f9bf1d9905596545a827f85c2d8e15767bf2d06647ae6d9030",
+    "tamano": 2539820,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "la-voz-de-los-hermanos-mayores.pdf",
+    "ruta_final": "wayuu/la-voz-de-los-hermanos-mayores.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2025/10/lemc_67_la-voz-de-los-hermanos-mayores-maguare-web.pdf",
+    "sha256": "65da6913f8ba183f6ee44644f7e51960efd3d5ca9bc5091f426df7d55521277a",
+    "tamano": 15592136,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  },
+  {
+    "nombre": "putunkaa-serruma.pdf",
+    "ruta_final": "wayuu/putunkaa-serruma.pdf",
+    "url": "https://maguare.gov.co/wp-content/uploads/2017/12/493_putunka-serruma.pdf",
+    "sha256": "5176cb8b9200f19fe442eb1ac5bd9e7fda1941760aed549125ba4f509e8786a2",
+    "tamano": 7697506,
+    "licencia": "CC BY 4.0 (Maguaré / MinEducación)"
+  }
+]

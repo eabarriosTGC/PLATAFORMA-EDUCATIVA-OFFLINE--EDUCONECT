@@ -1,0 +1,15 @@
+{
+  "id": "cie-408",
+  "title": "Cadena de ADN 3D",
+  "subject": "Biología",
+  "grades": [7, 8, 9, 10],
+  "duration_minutes": 25,
+  "learning_objectives": [
+    "Identificar la estructura de doble hélice del ADN",
+    "Reconocer el esqueleto de azúcar-fosfato y las bases nitrogenadas",
+    "Relacionar el emparejamiento de bases (A-T, C-G) con el código genético"
+  ],
+  "capabilities": ["3d", "touch", "keyboard", "offline", "progress", "fallback"],
+  "entrypoint": "index.html",
+  "external_dependencies": []
+}

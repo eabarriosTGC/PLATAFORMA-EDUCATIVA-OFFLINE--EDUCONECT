@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071c25">
+  <meta name="description" content="Compara células animales y vegetales, explora sus orgánulos y relaciona cada estructura con su función.">
+  <title>Laboratorio de la Célula 3D | EduConect Rural</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="back" href="../index.html">← Catálogo</a>
+  <header>
+    <div><span class="eyebrow">Biología interactiva · 4° a 7°</span><h1>🧫 Laboratorio de la Célula 3D</h1><p>Explora la unidad fundamental de los seres vivos.</p></div>
+    <div class="progress" aria-label="Progreso del laboratorio"><strong id="progressText">0%</strong><i><b id="progressBar"></b></i></div>
+  </header>
+
+  <main>
+    <section class="viewer-card" aria-labelledby="viewerTitle">
+      <div class="viewer-head">
+        <div><h2 id="viewerTitle">Célula animal</h2><p>Arrastra para girar · usa la rueda o pellizca para acercar · toca un orgánulo</p></div>
+        <div class="type-switch" role="group" aria-label="Tipo de célula">
+          <button type="button" data-cell="animal" class="active">🐾 Animal</button>
+          <button type="button" data-cell="plant">🌿 Vegetal</button>
+        </div>
+      </div>
+      <div id="scene" class="scene" role="img" aria-label="Modelo tridimensional de una célula animal">
+        <div id="labels" class="labels" aria-hidden="true"></div>
+        <div id="fallback" class="fallback" hidden><strong>Vista 3D no disponible</strong><span>Los botones, retos y contenidos continúan funcionando.</span></div>
+      </div>
+      <div class="toolbar">
+        <button id="rotateButton" type="button">⏸ Detener giro</button>
+        <button id="resetButton" type="button">⌂ Centrar</button>
+        <label><input id="labelsToggle" type="checkbox" checked> Etiquetas</label>
+        <label><input id="membraneToggle" type="checkbox" checked> Membrana</label>
+      </div>
+      <div id="organelleButtons" class="organelle-buttons" aria-label="Seleccionar orgánulo"></div>
+    </section>
+
+    <aside class="learning">
+      <section class="fact-card" aria-live="polite">
+        <span id="organelleKind" class="badge">Estructura celular</span>
+        <h2 id="organelleName">Membrana celular</h2>
+        <p id="organelleDescription">Envuelve la célula y controla qué sustancias entran y salen.</p>
+        <div class="function"><span>Su trabajo</span><strong id="organelleFunction">Proteger y regular el intercambio</strong></div>
+        <p id="cellPresence" class="presence">Presente en células animales y vegetales.</p>
+      </section>
+
+      <section class="mission-card">
+        <span class="eyebrow">Misión del microscopio</span><h2 id="missionTitle">Encuentra el centro de control</h2>
+        <p id="missionHint">Selecciona el orgánulo que contiene la mayor parte del ADN.</p>
+        <div id="missionStatus" class="status" aria-live="polite">Misión 1 de 5</div>
+      </section>
+
+      <section class="compare-card">
+        <span class="eyebrow">Comparador</span><h2>¿Animal o vegetal?</h2>
+        <div class="compare-grid"><div><strong>🐾 Animal</strong><span>Forma flexible</span><span>Sin pared celular</span><span>Sin cloroplastos</span></div><div><strong>🌿 Vegetal</strong><span>Pared rígida</span><span>Cloroplastos</span><span>Gran vacuola central</span></div></div>
+      </section>
+
+      <section class="assembly-card">
+        <span class="eyebrow">Ensambla la célula</span><h2 id="assemblyQuestion">¿Qué orgánulo produce energía?</h2>
+        <div id="assemblyOptions" class="answers"></div>
+        <p id="assemblyFeedback" class="feedback" aria-live="polite"></p>
+      </section>
+
+      <section class="quiz-card">
+        <span class="eyebrow">Reto final</span><h2 id="quizQuestion">¿Qué estructura da rigidez a la célula vegetal?</h2>
+        <div id="quizOptions" class="answers"></div>
+        <p id="quizFeedback" class="feedback" aria-live="polite"></p>
+      </section>
+    </aside>
+  </main>
+  <footer>Creado para EduConect Rural · Sin descargas ni conexiones externas</footer>
+  <script src="../comun/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

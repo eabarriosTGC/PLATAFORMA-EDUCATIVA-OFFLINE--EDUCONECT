@@ -13,6 +13,21 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Perfil default, SIN bibliotecas de ZIM.
+          # Este job es el que demuestra la independencia: si alguien reintroduce
+          # una dependencia dura de libzim sin gatearla, falla en la compilación
+          # — no en el enlace de una biblioteca que ya estaba instalada.
+          - perfil: default
+            paquetes: libssl-dev pkg-config
+            features: ""
+          # Perfil con la capacidad ZIM compilada.
+          - perfil: con-zim
+            paquetes: libssl-dev pkg-config libzim-dev
+            features: --features zim
     defaults:
       run:
         working-directory: edu-conect-rural-server
@@ -27,22 +42,22 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             edu-conect-rural-server/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('edu-conect-rural-server/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.perfil }}-${{ hashFiles('edu-conect-rural-server/Cargo.lock') }}
 
       - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config libzim-dev
+        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.paquetes }}
 
       - name: Check formatting
         run: cargo fmt --check
 
       - name: Run clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy ${{ matrix.features }} -- -D warnings
 
       - name: Build
-        run: cargo build --release
+        run: cargo build --release ${{ matrix.features }}
 
       - name: Run tests
-        run: cargo test --bins --test integration_test -- --nocapture
+        run: cargo test --lib --bins --test integration_test ${{ matrix.features }} -- --nocapture
 
   docker:
     runs-on: ubuntu-latest

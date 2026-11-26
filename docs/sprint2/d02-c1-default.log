@@ -1,0 +1,11 @@
+ Container educonect-dev-env-nodev-run-960d0ef0c340 Creating 
+ Container educonect-dev-env-nodev-run-960d0ef0c340 Created 
+### build default
+   Compiling edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.07s
+### clippy default (CI)
+    Checking edu-conect-rural-server v0.1.0 (/workspace/edu-conect-rural-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.83s
+### tests lib + bins default
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.31s
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 47.54s

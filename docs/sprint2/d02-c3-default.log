@@ -1,0 +1,32 @@
+ Container educonect-dev-env-nodev-run-dfab56d6f724 Creating 
+ Container educonect-dev-env-nodev-run-dfab56d6f724 Created 
+### build default
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.10s
+### clippy default (CI)
+2
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.31s
+### tests default
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.74s
+test result: ok. 63 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.80s
+
+########## --check con configuración VÁLIDA
+[AVISO] DATA_DIR: /tmp/tmp.AAgKTiQJlX/data no existe todavía; se creará al arrancar (su ancestro existente más cercano, /tmp/tmp.AAgKTiQJlX, es escribible)
+No se realizaron modificaciones.
+  exit=0
+  ¿creó DATA_DIR? no
+
+########## --check con AVISOS (sin admin password, data inexistente, frontend ausente)
+[AVISO] ADMIN_INITIAL_PASSWORD: variable ausente. No se podrá crear ni rotar el administrador inicial si hiciera falta
+[AVISO] DATA_DIR: /tmp/tmp.AAgKTiQJlX/otro no existe todavía; se creará al arrancar (su ancestro existente más cercano, /tmp/tmp.AAgKTiQJlX, es escribible)
+[AVISO] FRONTEND_PATH: /no/existe no existe o no es un directorio; el dashboard no se servirá
+No se realizaron modificaciones.
+  exit=0
+
+########## --check con ERRORES (sin JWT, addr inválida, password corta)
+[ERROR] JWT_SECRET: variable ausente. Genera una con: openssl rand -base64 48
+[ERROR] LISTEN_ADDR: inválida ("no-es-addr"): invalid socket address syntax
+[ERROR] ADMIN_INITIAL_PASSWORD: ADMIN_INITIAL_PASSWORD demasiado corta (5 chars, mínimo 12). Genera una con: openssl rand -base64 24
+
+Resultado: configuración no válida.
+No se realizaron modificaciones.
+  exit=1

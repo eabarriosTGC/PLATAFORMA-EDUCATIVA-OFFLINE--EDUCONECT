@@ -1,0 +1,6 @@
+### con el bug inyectado: el test DEBE fallar
+test sin_jwt_secret_no_crea_directorios ... FAILED
+test con_configuracion_valida_crea_los_directorios ... ok
+thread 'sin_jwt_secret_no_crea_directorios' panicked at tests/arranque_sin_config.rs:43:5:
+el arranque creó /tmp/educonect-arranque-3295-sin-jwt/data antes de validar la configuración
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s

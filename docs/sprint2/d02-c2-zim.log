@@ -1,0 +1,12 @@
+ Container educonect-dev-env-dev-run-9242b6c2a2a9 Creating 
+ Container educonect-dev-env-dev-run-9242b6c2a2a9 Created 
+### build con zim
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.93s
+### clippy con zim (CI)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.11s
+### tests lib+bins con zim
+test result: ok. 40 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.50s
+test result: ok. 65 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.72s
+### arranque_sin_config con zim
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+ed; 0 filtered out; finished in 0.05s

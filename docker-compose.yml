@@ -1,6 +1,32 @@
+# Despliegue de EduConect Rural (D-05 — perfiles Core / Full).
+#
+# El servicio y el volumen conservan sus nombres: `docker compose up -d --build`
+# sobre una instalación existente sigue funcionando igual que antes, y produce
+# el perfil `core`.
+#
+#   perfil core (por omisión) — docker compose up -d --build
+#   perfil full               — EDUCONECT_PROFILE=full docker compose up -d --build
+#
+# El contenido ZIM NUNCA viaja en la imagen, ni en core ni en full. En `full` se
+# monta un directorio externo en /data/contenido/zim (zona que el servidor ya
+# escanea y donde el administrador también puede subir paquetes). Para
+# habilitarlo, agregá el montaje en este archivo o en un override local:
+#
+#   volumes:
+#     - educonect-data:/data
+#     - /srv/zim:/data/contenido/zim:ro
+#
+# Sin ese montaje, `full` arranca igual y responde con el listado vacío: es un
+# estado legítimo («soportada pero sin contenido»), distinto de «roto».
 services:
   educonect:
-    build: .
+    build:
+      context: .
+      # El perfil es del ARTEFACTO, no de una variable de runtime: el target
+      # decide qué compila la imagen (`core` sin la feature `zim`, `full` con
+      # `--features zim`) y ninguna variable de entorno vuelve `full` a un
+      # binario `core` ni al revés.
+      target: ${EDUCONECT_PROFILE:-core}
     container_name: educonect-rural
     ports:
       - "8080:8080"
@@ -9,6 +35,9 @@ services:
       - educonect-data:/data
     environment:
       - "JWT_SECRET=${JWT_SECRET:?Crea un archivo .env con un JWT_SECRET seguro}"
+      # Sin default inseguro: si queda vacía, el arranque falla con un mensaje
+      # que nombra la variable. Nunca se arranca con un administrador sin
+      # contraseña.
       - "ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}"
       - "PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}"
     restart: unless-stopped

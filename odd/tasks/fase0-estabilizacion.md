@@ -32,7 +32,7 @@ Documento de referencia: `docs/propuesta-windpeshi-innova.md` (Fase 0), `docs/co
 | T7 | Matriz de funciones por plataforma: qué se degrada fuera de Linux (`libzim`, `espeak-ng`, `ffmpeg`, `yt-dlp`) | S11 | `docs/` | — |
 | T8 | Arranque reproducible en al menos dos entornos (Linux y Windows), con evidencia registrada | S1, S9, S11 | — | — |
 | T9 | Traer al repo la receta de compilación cruzada de Windows: `Dockerfile.win`, servicio `win` del compose y verificación de que compila desde cero en un directorio limpio. Hoy vive en `~/educonect-dev-env`, fuera de git, y por eso nadie más puede reproducirla | S1, S9, S10, S11 | `docker/windows/` | 9c08fcb |
-| T10 | Una sola identidad de fila en el diccionario: migración versionada que deduplica conservando el `id` mínimo por `(palabra, tipo, categoria)` y **después** crea el índice único, con `rebuild` de FTS5; y corrección de `docs/sprint2/decisiones-arquitectura.md`, que hoy afirma que el arranque «continúa si las semillas no son críticas» cuando `db.rs` es todo o nada (L6) | S6, S10 | `edu-conect-rural-server/seeds/`, `edu-conect-rural-server/tests/`, `docs/sprint2/decisiones-arquitectura.md` | — |
+| T10 | Una sola identidad de fila en el diccionario: migración versionada que deduplica conservando el `id` mínimo por `(palabra, tipo, categoria)` y **después** crea el índice único, con `rebuild` de FTS5; y corrección de `docs/sprint2/decisiones-arquitectura.md`, que hoy afirma que el arranque «continúa si las semillas no son críticas» cuando `db.rs` es todo o nada (L6) | S6, S10 | `edu-conect-rural-server/seeds/`, `edu-conect-rural-server/tests/`, `docs/sprint2/decisiones-arquitectura.md` | b35f253 |
 
 ## Log
 
@@ -123,3 +123,35 @@ Regla de secuencia registrada por el mismo mensaje, tras el error de merge de D-
 (`docs/canal-coordinacion`), #11 (`feature/d03-app-root`), #12 (`docs/t7-matriz-plataforma`), #13
 (`chore/win-recipe`). `main` quedó en `4111df0` sin PRs abiertos. Con eso T3, T4, T7 y T9 tienen
 commit en la tabla de tareas (D-03 en `5dc9087`, T7 en `82bfd27`, T9 en `9c08fcb`).
+
+**L9 — T10 cerrada y verificada por separado (26/11):**
+
+Slice de la unidad, en tres commits: `c3bd5d1` (rastro ODD: T9 con commit, T10 definida, decisiones
+L6), `b35f253` (comportamiento: migración `008`, registro en `db.rs`, tres pruebas, corrección del
+documento de arquitectura) y `d50b7a3` (inventario de D-04 y esta evidencia). 659 líneas autoradas:
+390 son la suite, que no se puede recortar sin perder el arranque real. La forma de entrega es un
+solo PR, con el commit de comportamiento en medio para que la revisión vea primero la migración.
+
+Verificación independiente (`gentle-ai-verify`), sobre una copia scratch y con el binario real:
+
+- Defecto reproducido contra el código previo: `21826 → 43652 → 65478` filas en tres arranques
+  (+21.826 exactos por arranque). Con la migración: `21823 → 21823 → 21823`, índice presente, cero
+  grupos duplicados. La diferencia de tres filas son tres identidades repetidas dentro del propio
+  texto de `006` (`a'yatawaa`, `atüjaa`, `mochila`).
+- Base heredada de 65.478 filas: repara a 21.823 conservando exactamente los `MIN(id)`, sin
+  reinserciones (`diff` vacío), `integrity-check` pasa y la búsqueda deja de repetir (`leer` 9→3,
+  `sol` 10→5).
+- Atomicidad: una sentencia inválida inyectada después del borrado aborta el arranque y deja la base
+  byte-idéntica. El `DELETE` no encuentra la trampa `NOT IN`/NULL: `palabra`, `tipo` y `categoria`
+  son `NOT NULL` y `id` es `INTEGER PRIMARY KEY`.
+- Coste: no es regresión, es más rápido. Fase de semillas 3.640 ms → 3.379 ms (default) porque `006`
+  deja de insertar 21.826 filas por arranque; reparar una base ya inflada cuesta +538 ms una sola vez.
+- Hallazgo que corrige una creencia: con FTS5 de contenido externo, el conteo total, el `LEFT JOIN`
+  de huérfanas y el propio `integrity-check` **no** detectan entradas obsoletas; solo una consulta
+  `MATCH` las ve. La sonda de FTS se sostiene en esa aserción, y el worker la validó por mutación
+  (quitando el disparador `AFTER DELETE` y el rebuild) hasta verla fallar con 500 marcas vivas.
+
+Pendientes que la verificación dejó fuera de alcance y no se tocan acá: `decisiones-arquitectura.md`
+sigue afirmando que `seeds/002_admin.sql` «está vacío y se ejecuta» (mide 225 bytes y `db.rs` no lo
+ejecuta), y `docs/sprint2-baseline-runtime.md` ni `README.md` listan `008_diccionario_unicos.sql`.
+Ambas son ediciones de documentación, no reglas de T10.

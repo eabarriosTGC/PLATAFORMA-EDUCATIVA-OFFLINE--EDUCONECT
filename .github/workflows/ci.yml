@@ -42,7 +42,7 @@ jobs:
         run: cargo build --release
 
       - name: Run tests
-        run: cargo test --test integration_test -- --nocapture
+        run: cargo test --bins --test integration_test -- --nocapture
 
   docker:
     runs-on: ubuntu-latest

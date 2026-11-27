@@ -28,13 +28,25 @@ códigos de `motivo`). Base de partida registrada: `main` @ `dc38c9e`.
 | ID | Tarea | Specs | Ruta | Commit |
 |---|---|---|---|---|
 | T1 | **D-05a** — `Dockerfile` multi-etapa con targets `core` y `full` (`rust-builder` → `runtime-base` → `core`/`full`); `core` sin `libzim` ni feature, `full` con `--features zim` y `libzim`; ningún `.zim` dentro de la imagen; contenido sólo por montaje externo en `full`; compose por perfil; el mismo chequeo exige resultados **opuestos** en las dos patas | S1-S10, S13, S14 | `Dockerfile`, `Dockerfile.local`, `docker-compose*.yml` | — |
-| T2 | **D-05b** — fixture ZIM mínimo con procedencia, licencia y sha256 | — | `tests/fixtures/` | — |
-| T3 | **D-05c** — CI diferenciado con las siete detecciones | — | `.github/workflows/ci.yml`, `scripts/` | — |
+| T2 | **D-05b** — fixture ZIM mínimo con procedencia, licencia y sha256 | — | `tests/fixtures/` | `86c0f34` (PR #17) |
+| T3 | **D-05c** — CI diferenciado con las siete detecciones | — | `.github/workflows/ci.yml`, `scripts/` | `5d1dc8c` |
 | T4 | **D-05d** — `/api/capacidades` (espera a D-03, ya en `main`) | — | `src/main.rs` | — |
 | T5 | **D-05e** — el frontend consume las capacidades | — | `edu-conect-rural-dashboard/`, `static/` | — |
 | T6 | **D-05f** — `install.sh` consciente del perfil + actualización de T7 | — | `install.sh`, `docs/` | — |
 
-T2 a T6 están **pendientes y no se tocan** en este cambio (S12).
+Estado real (corregido el 27/11 tras la revisión de D-04 y el cierre de la Fase 0):
+
+- **T1 (D-05a)** — cerrada; publicada.
+- **T2 (D-05b)** — **cerrada y verificada** (24/24, exit 0), en `main` por el PR #17 (`2858404`).
+- **T3 (D-05c)** — **cerrada**, en `main` por `fix/d05c-ci-docker`.
+- **T4 (D-05d)** — contrato **publicado y aprobado con correcciones** en
+  `docs/equipo/contratos/api-capacidades-v1.md`; **sin implementar**. No se toca el router hasta
+  que el contrato esté incorporado (S11).
+- **T5 (D-05e)** — **no autorizada todavía**; depende de que D-05d exista en código.
+- **T6 (D-05f)** — pendiente.
+
+La frase anterior («T2 a T6 están pendientes y no se tocan») describía el instante en que se abrió
+este documento y quedó desactualizada al aterrizar D-05b y D-05c.
 
 ## Log
 

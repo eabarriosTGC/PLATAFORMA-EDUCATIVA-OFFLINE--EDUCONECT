@@ -57,7 +57,7 @@ el `.exe` no se ejecutó en Windows real.
 | D-CI 2 — compuerta `ldd` | `chore/ci-ldd-leg` | **mergeada** (PR #8, `58ddd3b`) |
 | D-WIN — evidencia Windows | `chore/win-cross-build` | **mergeada** (PR #9, `c41dd42`); T9 en PR #13 (`9c08fcb`) |
 | D-03 — `APP_ROOT` / `DATA_DIR` | `feature/d03-app-root` | **mergeada** (PR #11, `5dc9087`) |
-| D-04 — identidad de fila del diccionario | `feat/d04-diccionario-unico` | **cerrada y verificada** (T10): migración `008`, tres pruebas, documento corregido. Commits `c3bd5d1`, `b35f253`, `25a624e`. Falta push y PR |
+| D-04 — identidad de fila del diccionario | `feat/d04-diccionario-unico` | **T10 cerrada y verificada**: deduplicación del diccionario, migración `008`, tres pruebas, documento corregido. Commits `c3bd5d1`, `b35f253`, `25a624e`; publicada en `main` por el PR #17 (`2858404`) dentro de la línea base `educonect-baseline-v1`. **Esto NO cierra la persistencia en general**: no existe ledger de migraciones (`P1-06`) y siguen abiertos los pendientes de D-04 listados en `odd/tasks/fase0-estabilizacion.md` (L10). |
 
 ## Hallazgos verificados que no hay que re-descubrir
 

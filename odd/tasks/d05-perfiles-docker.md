@@ -147,3 +147,73 @@ y el constructor clásico rechaza `--progress` y compila las etapas de `full` au
 La comprobación devuelve 2 —«no verificable»— ante un log que no es de BuildKit, en lugar de aprobar
 en falso; en `ubuntu-latest` sí aplica. Es un punto de mantenimiento si BuildKit cambia el formato de
 las cabeceras de etapa.
+
+**L4 — D-05b: el fixture ZIM mínimo, integrado y montado en las dos patas (27/11):**
+
+T2 deja de ser preparación externa: el fixture vive en el repositorio y la sonda de perfiles lo usa.
+Nada de D-05b–f se implementó en D-05a; esto es la unidad de D-05b, en su propia rama
+(`feat/d05b-fixture-zim`, desde `ca49362`).
+
+**Qué se integró** (todo bajo `tests/fixtures/zim/`, el único binario del repositorio):
+
+| Ruta | Tamaño | Qué es |
+|---|---|---|
+| `fixture_d05b.zim` | **37 777 B** | el paquete; `sha256` **`16c061a95a897967fc92e690a4702f12f90178998092fcf51a916f3f95b9893b`** |
+| `paginas/portada.html`, `observatorio-del-rio.html`, `estacion-la-esperanza.html`, `glosario.html` | 1 641 / 1 347 / 1 389 / 1 096 B | las cuatro fuentes CC0-1.0 que lo producen |
+| `LICENCIA.md` | 1 592 B | CC0-1.0 del contenido + GPL-3.0-or-later de la herramienta |
+| `FICHA.md` | 18 674 B | procedencia, checksums, HTTP medido, pasos de reproducción |
+| `generar-fixture.py` | 12 902 B | el generador determinista (`--out`, `--paginas`, `--fecha`, `--uuid`, `--uuid-xapian`, `--crudo`) |
+| `.gitignore` | — | exceptúa `fixture_d05b.zim` (y sólo ése) de la regla `*.zim` del `.gitignore` raíz |
+
+El binario no se regeneró: se copió tal cual el material aceptado y su `sha256` se verificó al copiarlo.
+Lo único que se adaptó del generador son sus **dos rutas por defecto** (`fixture_d05b.zim` y `paginas/`,
+hermanas del script); el contenido no cambia. Comprobado sin red: con las fuentes versionadas y el
+generador adaptado, la rueda ya presente en la máquina reproduce el paquete **idéntico byte a byte**
+(`cmp` sin diferencias, mismo `sha256`, 37 777 B).
+
+**Cómo se mide ahora: la sonda existente, no una segunda.** `tests/docker/verificar-perfiles.sh` pasó de
+15 a **24 comprobaciones**. Se conservan todas las anteriores y se agregan:
+
+- **Sección 0 (nueva, antes de medir):** el paquete que se va a montar es el declarado. La comprobación
+  es `tests/docker/verificar-fixture-zim.sh` (nuevo): tamaño, `sha256` y que estén las cuatro páginas, la
+  licencia y el generador. **Sin red, sin `pip`, sin python-libzim**: sólo `sha256sum`. Si el `.zim`
+  difiere en un byte, la sonda falla en voz alta y no monta nada.
+- **Secciones 3-4 (extendidas):** el **mismo** directorio `tests/fixtures/zim/` se monta read-only en
+  `/data/contenido/zim` en **las dos** patas. `full` debe listar el paquete (200, `slug=fixture_d05b`,
+  `articles=4`, `default=fixture_d05b`), redirigir `/zim/` con 307 a `/zim/A/Portada` y servir las cuatro
+  páginas con 200 y su texto declarado. `core` debe responder 503 con el cuerpo canónico en las mismas
+  rutas y **sin una sola línea del contenido**. El contraste se exige sobre estados medidos (200/503) y,
+  además, sobre el contenido (4.6).
+
+Resultados opuestos observados con el fixture montado en las dos patas (imágenes `educonect-rural:d05a-core`
+y `:d05a-full`): `full` 200 con `{"default":"fixture_d05b","zims":[{…,"articles":4,"slug":"fixture_d05b"…}]}`,
+`/zim/` 307 → `/zim/A/Portada`, y 200 en `Portada` (2 860 B), `Observatorio_del_R%C3%ADo` (2 568 B),
+`Estaci%C3%B3n_La_Esperanza` (2 593 B) y `Glosario` (2 316 B); `core` 503 en `/api/wikipedia/zims` y en
+`/zim/A/Portada` con el mismo montaje. Sonda: **24/24, exit 0**.
+
+**Control negativo.** `tests/docker/autoprueba-d05c.sh` pasó de 18 a **24 comprobaciones contadas**
+(más las aserciones de texto): pincha la copia alterada en un byte (debe salir 1 y nombrar el `sha256`),
+el directorio sin paquete (1), y corre la sonda entera contra un `docker` falso que modela los dos
+perfiles —con el fixture montado (0), con un `core` que sirve el paquete que debía ignorar (1, nombrando
+la pata) y con el paquete alterado (1, sin medir nada más)—. Sin ese control, las comprobaciones nuevas
+del fixture podrían estar aprobando siempre. `tests/docker/autoprueba-verificar-perfiles.sh` sigue
+pasando sin cambios: **el verificador falla cuando debe y reserva 2 para «no verificable»**.
+
+**Procedencia aceptada (desviación declarada).** La rueda de `python-libzim` 4.1.0 se descomprimió con
+`zipfile` de la biblioteca estándar en un contenedor que ya tenía Python 3.11.2, porque ninguna imagen
+local trae `pip` e instalarlo habría sido una descarga no autorizada. Es la misma rueda (20 020 495 B,
+`sha256` `cd26c60e…`) y el mismo libzim 9.8.2; el producto no gana ninguna dependencia de Python.
+Documentado en `tests/fixtures/zim/FICHA.md` §9.1. En esta unidad no se instaló ni descargó nada.
+
+**Hallazgo de CI (no se tocó `ci.yml`).** No hace falta un paso nuevo: el job `docker` ya ejecuta
+`verificar-perfiles.sh` sobre el checkout, así que las comprobaciones del fixture viajan con él; el
+fixture se versiona gracias a la excepción de `.gitignore` descrita arriba, y `ubuntu-latest` tiene
+`python3` y `sha256sum`, que es todo lo que la sección 0 necesita. Si algún día CI dejara de tener
+`sha256sum`, la sonda devuelve 2 —«no verificable»—, nunca 0.
+
+**Lo que no se verificó acá.** Las imágenes no se reconstruyeron desde esta rama (se usaron las de D-05a,
+que son las que hay en este host); ningún lector de ZIM abre el paquete en el repositorio (`zimcheck`,
+`kiwix-manage` y python-libzim no están en CI, y la lectura la ejerce el producto al servir las páginas);
+`kiwix-serve` y `/api/wikipedia/search` siguen sin medirse, como en D-05b. No se tocaron `src/`, el
+frontend, `install.sh` ni el contrato de capacidades (S11), ni `esperar-salud.sh`, ni los otros dos
+verificadores de D-05c.

@@ -164,3 +164,21 @@ dependen de T4 y T5.
 
 - **L7** — Ninguna implementación de producto en esta fase: sin cambios en `src/`, sin router, sin
   `src/models.rs`, sin tocar los worktrees de Codex (S11, S21, S22).
+
+- **L8** — Slices de revisión. Los 2519 renglones de esta fase no son una unidad de revisión única.
+  Fronteras declaradas, en el orden en que se commitearon:
+
+  | Slice | Commit | Contenido | Renglones |
+  |---|---|---|---|
+  | 1 | `1ca4ef8` | Línea base verificada + corrección documental de D-04 y D-05 + documento de feature | ~200 |
+  | 2 | `da2a8a0` | Área `docs/equipo/` + contrato D-05d (md + JSON Schema) + modelo educativo S1-S5/E1-E12 | ~640 |
+  | 3 | `88c9326` | Seis correcciones de RD-02C + propuesta en siete ejes + backlog de seguridad + tarea H3 | ~570 |
+  | 4 | `38e32ff` | Inventario jurídico en cuatro categorías + libzim por fuentes primarias | ~320 |
+  | 5 | `13e61ec` | Paquetes de incorporación DEV1 y DEV2 + agenda conjunta | ~790 |
+
+  **Forma de entrega recomendada:** dos PR encadenados si el revisor lo prefiere — (1) baseline y
+  correcciones documentales, (2) documentación compartida y contratos. Los slices 3, 4 y 5 son
+  independientes entre sí y pueden revisarse en cualquier orden.
+
+- **L9** — Nada se publicó salvo el tag, que estaba autorizado explícitamente. La rama
+  `docs/fase1-baseline-onboarding` queda local, sin push y sin PR.

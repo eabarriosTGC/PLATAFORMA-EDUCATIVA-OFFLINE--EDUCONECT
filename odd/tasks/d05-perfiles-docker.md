@@ -113,3 +113,37 @@ nombrando la variable.
 **Hallazgo para unidad posterior, no implementado (S11):** con `full` sin contenido, el mensaje de
 arranque de `src/zim_proxy.rs` («El paquete incluido vive en la imagen») pasó a ser falso, porque la
 imagen ya no incluye el paquete. Es texto de `src/` y va como hallazgo, no como parte de D-05a.
+
+**L3 — D-05c: el CI de Docker, recuperado (27/11):**
+
+El job `docker` estaba **rojo en `main` desde `dc38c9e`**, antes de D-05a, y nadie lo veía: su
+condición era `if: github.event_name == 'push' && github.ref == 'refs/heads/main'` (`ci.yml:81` al
+integrar #15), así que en los PR salía **omitido** y el check aparecía verde. Al integrar, el job sí
+corrió y falló en `main` dos veces seguidas.
+
+Causa, reproducida con el comando exacto del workflow: `JWT_SECRET=test-secreto-para-ci` tiene 20
+caracteres y D-02 exige 32 como mínimo. El contenedor arranca, la validación lo mata con exit 1,
+`sleep 10` espera un proceso ya muerto y `curl -sf` devuelve 7 sin mostrar la razón. Faltaba además
+`ADMIN_INITIAL_PASSWORD`, que una base nueva necesita para inicializar el administrador.
+
+Lo que el job mide ahora, reutilizando las sondas de D-05a en vez de duplicar lógica:
+
+| Comprobación | Dónde |
+|---|---|
+| Construcción explícita `--target core` y `--target full` | `ci.yml` |
+| Aislamiento de BuildKit en las dos direcciones, desde `--progress=plain` | `verificar-aislamiento-buildkit.sh` |
+| Ausencia de `.zim`, clausura `ldd` por perfil, sanidad sobre volumen nuevo, contraste 503/200, contraseña vacía | `verificar-perfiles.sh` (D-05a, reutilizada) |
+| Espera acotada de `/health` con el log adjunto, puerto publicado con `-P` | `esperar-salud.sh` |
+| Tres configuraciones inválidas, exigiendo exit ≠ 0 y la variable nombrada con su motivo | `verificar-configuracion.sh` |
+| Que las sondas puedan fallar | `autoprueba-d05c.sh` (18 comprobaciones, sin demonio) |
+| Limpieza por etiqueta de corrida en `if: always()` | `ci.yml` |
+
+Ninguna validación del producto se relajó: el producto sigue rechazando la configuración mala y es CI
+la que ahora manda configuración buena (secreto de 64 caracteres y contraseña efímeros, volumen nuevo
+por corrida).
+
+**Limitación declarada:** el aislamiento de BuildKit **no se puede probar en este host** (sin `buildx`,
+y el constructor clásico rechaza `--progress` y compila las etapas de `full` aun con `--target core`).
+La comprobación devuelve 2 —«no verificable»— ante un log que no es de BuildKit, en lugar de aprobar
+en falso; en `ubuntu-latest` sí aplica. Es un punto de mantenimiento si BuildKit cambia el formato de
+las cabeceras de etapa.

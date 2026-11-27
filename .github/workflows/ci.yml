@@ -99,7 +99,10 @@ jobs:
       # etiqueta y por nombre, nunca con `prune` a ciegas sobre la máquina.
       D05C_ETIQUETA: educonect-d05c=${{ github.run_id }}-${{ github.run_attempt }}
       # Los logs de build viven en el temporal del runner, nunca en el repo.
-      D05C_LOGS: ${{ runner.temp }}/d05c-logs
+      # OJO: `runner.*` no existe en el `env` de un job (sólo dentro de los pasos),
+      # así que la ruta se resuelve en cada paso con $RUNNER_TEMP. Ponerla acá
+      # hacía que GitHub rechazara el workflow entero: «Unrecognized named-value:
+      # 'runner'», y el run quedaba sin jobs.
 
     steps:
       - uses: actions/checkout@v4
@@ -110,15 +113,18 @@ jobs:
       - name: Build perfil core (--target core)
         run: |
           set -euo pipefail
-          mkdir -p "$D05C_LOGS"
+          LOGS="${RUNNER_TEMP}/d05c-logs"
+          mkdir -p "$LOGS"
           docker build --progress=plain --target core \
-            -t educonect-rural:core . 2>&1 | tee "$D05C_LOGS/core.log"
+            -t educonect-rural:core . 2>&1 | tee "$LOGS/core.log"
 
       - name: Build perfil full (--target full)
         run: |
           set -euo pipefail
+          LOGS="${RUNNER_TEMP}/d05c-logs"
+          mkdir -p "$LOGS"
           docker build --progress=plain --target full \
-            -t educonect-rural:full . 2>&1 | tee "$D05C_LOGS/full.log"
+            -t educonect-rural:full . 2>&1 | tee "$LOGS/full.log"
 
       # Los dos targets existen para que `core` no pague la cadena ZIM. En la
       # imagen eso no se ve: con el constructor clásico la imagen `core` queda
@@ -129,8 +135,9 @@ jobs:
       # sin encabezados de BuildKit sale 2 (no verificable), nunca 0.
       - name: Aislamiento de etapas BuildKit (core no compila la pata ZIM)
         run: |
+          LOGS="${RUNNER_TEMP}/d05c-logs"
           bash tests/docker/verificar-aislamiento-buildkit.sh \
-            "$D05C_LOGS/core.log" "$D05C_LOGS/full.log"
+            "$LOGS/core.log" "$LOGS/full.log"
 
       # Primero el control negativo: deja probado que las sondas pueden fallar
       # antes de creerles el verde. `autoprueba-verificar-perfiles.sh` es el

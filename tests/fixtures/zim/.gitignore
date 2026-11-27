@@ -1,0 +1,10 @@
+# Excepción deliberada a la regla `*.zim` del .gitignore de la raíz.
+#
+# El fixture D-05b es el ÚNICO binario versionado del repositorio: 37 777 bytes,
+# sha256 16c061a9…893b, cuatro páginas CC0-1.0. Sin él, la sonda de perfiles no
+# puede medir el contraste 200/503 sobre contenido real y volvería a depender de
+# un ZIM enciclopédico de 24 MB descargado a mano.
+#
+# La excepción nombra ese archivo y nada más: no abre la puerta a otros `.zim`.
+# Cualquier paquete nuevo se declara acá a mano, con su ficha y su sha256.
+!fixture_d05b.zim

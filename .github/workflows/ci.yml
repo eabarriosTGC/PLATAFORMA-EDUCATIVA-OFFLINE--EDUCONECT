@@ -75,23 +75,125 @@ jobs:
       - name: Run tests
         run: cargo test --lib --bins --test integration_test --test arranque_sin_config ${{ matrix.features }} -- --nocapture
 
+  # D-05c — Perfiles Docker verificados en cada PR.
+  #
+  # Este job estaba limitado a `push` sobre `main`, así que en los PRs aparecía
+  # verde por la única razón de no haber corrido nunca: el fallo llegó a main sin
+  # que ninguna puerta lo frenara (run 45908897509, job `docker`, paso «Verify
+  # image starts»). Un check que no corre no es un check: ahora corre en PR y en
+  # push a main. Y lo que corría tampoco medía lo que decía medir —`JWT_SECRET`
+  # de 20 caracteres, sin `ADMIN_INITIAL_PASSWORD`, `sleep 10` fijo, ningún
+  # diagnóstico—, así que cada comprobación se delega en una sonda con contrato
+  # de salida explícito (0 mide y cumple, 1 mide y falla, 2 no se pudo medir) y
+  # su propio control negativo.
+  #
+  # Nada de claves en este YAML: cada sonda genera sus secretos efímeros con
+  # `openssl rand` y los pasa como entorno. Si CI enviara un secreto débil, la
+  # respuesta correcta es enviar configuración válida, no aflojar la validación
+  # del producto (por eso además se prueban los rechazos).
   docker:
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      # Etiqueta por corrida: la limpieza borra SÓLO lo que creó este job, por
+      # etiqueta y por nombre, nunca con `prune` a ciegas sobre la máquina.
+      D05C_ETIQUETA: educonect-d05c=${{ github.run_id }}-${{ github.run_attempt }}
+      # Los logs de build viven en el temporal del runner, nunca en el repo.
+      D05C_LOGS: ${{ runner.temp }}/d05c-logs
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t educonect-rural .
-
-      - name: Verify image starts
+      # Builds explícitos por target. `--progress=plain` no es cosmética: es la
+      # única salida donde se ve el grafo de etapas que construyó BuildKit, y la
+      # evidencia que consume el chequeo de aislamiento (ver abajo).
+      - name: Build perfil core (--target core)
         run: |
-          docker run -d --name educonect-test -p 8080:8080 \
-            -e JWT_SECRET=test-secreto-para-ci \
-            educonect-rural
-          sleep 10
-          curl -sf http://localhost:8080/health || exit 1
-          echo "✅ Health check passed!"
-          docker stop educonect-test
+          set -euo pipefail
+          mkdir -p "$D05C_LOGS"
+          docker build --progress=plain --target core \
+            -t educonect-rural:core . 2>&1 | tee "$D05C_LOGS/core.log"
+
+      - name: Build perfil full (--target full)
+        run: |
+          set -euo pipefail
+          docker build --progress=plain --target full \
+            -t educonect-rural:full . 2>&1 | tee "$D05C_LOGS/full.log"
+
+      # Los dos targets existen para que `core` no pague la cadena ZIM. En la
+      # imagen eso no se ve: con el constructor clásico la imagen `core` queda
+      # igual de correcta y `binario-full`/`full` se compilan de todos modos. Se
+      # mide en el log de BuildKit, en las dos direcciones. La máquina de
+      # desarrollo de D-05c no tiene buildx (`docker build --progress` responde
+      # «unknown flag»), así que esta comprobación sólo se puede ejecutar en CI;
+      # sin encabezados de BuildKit sale 2 (no verificable), nunca 0.
+      - name: Aislamiento de etapas BuildKit (core no compila la pata ZIM)
+        run: |
+          bash tests/docker/verificar-aislamiento-buildkit.sh \
+            "$D05C_LOGS/core.log" "$D05C_LOGS/full.log"
+
+      # Primero el control negativo: deja probado que las sondas pueden fallar
+      # antes de creerles el verde. `autoprueba-verificar-perfiles.sh` es el
+      # control negativo durable de la sonda de perfiles (D-05a) y sigue en el
+      # bucle: retirarlo dejaría la sonda sin prueba de que discrimina.
+      - name: Control negativo de las sondas (pueden fallar)
+        run: |
+          bash tests/docker/autoprueba-d05c.sh
+          bash tests/docker/autoprueba-verificar-perfiles.sh educonect-rural:core
+
+      # La sonda de perfiles (D-05a) se reutiliza tal cual: ausencia de .zim,
+      # clausura `ldd` por perfil (esta es la verificación de dependencias: no se
+      # reimplementa en YAML), salud sobre volumen NUEVO con secretos efímeros
+      # (espera acotada con plazo, no `sleep`), resultados OPUESTOS del mismo
+      # chequeo (core 503 / full 200) y fallo ruidoso con contraseña vacía.
+      - name: Perfiles core y full — contenido, enlace, salud y contraste
+        run: |
+          bash tests/docker/verificar-perfiles.sh \
+            educonect-rural:core educonect-rural:full
+
+      # El puerto publicado, que es lo que el job original intentaba probar: el
+      # contenedor arranca con secretos efímeros sobre volumen nuevo y se sondea
+      # /health con plazo. Si no llega, el paso muestra el estado y el log del
+      # contenedor en vez de un `curl` mudo.
+      - name: Disponibilidad por el puerto publicado (espera acotada)
+        run: |
+          bash tests/docker/esperar-salud.sh educonect-rural:core
+          bash tests/docker/esperar-salud.sh educonect-rural:full
+
+      # El otro lado de la moneda: lo que el producto debe RECHAZAR. Si alguien
+      # relajara el mínimo de 32 bytes del `JWT_SECRET` para «hacer pasar CI»,
+      # esta comprobación falla.
+      - name: Configuración inválida debe fallar nombrando la variable
+        run: |
+          bash tests/docker/verificar-configuracion.sh \
+            educonect-rural:core educonect-rural:full
+
+      # Limpieza garantizada, por etiqueta y por nombre: contenedores, volúmenes
+      # anónimos asociados y redes que el job haya dejado vivos (una sonda
+      # interrumpida no ejecuta su trap). Nunca `docker system prune`.
+      - name: Limpieza de lo que creó este job
+        if: always()
+        run: |
+          set -uo pipefail
+          echo "Etiqueta de la corrida: $D05C_ETIQUETA"
+
+          contenedores="$(docker ps -aq --filter "label=$D05C_ETIQUETA")"
+          if [ -n "$contenedores" ]; then
+            echo "Contenedores del job: $contenedores"
+            # -v arrastra los volúmenes anónimos de esos contenedores.
+            docker rm -f -v $contenedores || true
+          fi
+          for volumen in $(docker volume ls -q --filter "label=$D05C_ETIQUETA"); do
+            docker volume rm "$volumen" || true
+          done
+          for red in $(docker network ls -q --filter "label=$D05C_ETIQUETA"); do
+            docker network rm "$red" || true
+          done
+          docker image rm -f educonect-rural:core educonect-rural:full >/dev/null 2>&1 || true
+
+          restantes="$( { docker ps -aq --filter "label=$D05C_ETIQUETA"
+                          docker volume ls -q --filter "label=$D05C_ETIQUETA"
+                          docker network ls -q --filter "label=$D05C_ETIQUETA"; } \
+                        | grep -c . || true )"
+          echo "Recursos con la etiqueta que siguen vivos: ${restantes:-0}"
+          [ "${restantes:-0}" -eq 0 ] || { echo "Quedaron recursos sin borrar"; exit 1; }

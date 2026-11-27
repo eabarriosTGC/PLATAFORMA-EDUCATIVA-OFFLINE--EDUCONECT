@@ -28,7 +28,13 @@
 # Es idempotente: cada corrida crea sus propios contenedores con nombre único,
 # usa volúmenes anónimos nuevos (se descartan con `--rm`) y no deja nada
 # corriendo ni temporales en el árbol de trabajo. No construye imágenes: eso lo
-# decide quien invoca (CI en D-05c).
+# decide quien invoca (D-05c).
+#
+# Etiqueta de limpieza (D-05c): los contenedores que sobreviven más de un paso
+# se crean con `--label ${D05C_ETIQUETA:-educonect-d05c=1}`. El `trap` los borra
+# igual, pero si el script muere sin ejecutarlo (paso cancelado, timeout del
+# job), el job de CI puede borrar exactamente los suyos por etiqueta en lugar de
+# recurrir a un `prune` a ciegas sobre la máquina.
 #
 # Uso:
 #   tests/docker/verificar-perfiles.sh <imagen-core> <imagen-full>
@@ -201,6 +207,7 @@ fi
 arrancar_y_sondear() {
     local perfil="$1" imagen="$2" contenedor="$3"
     docker run -d --rm --name "$contenedor" \
+        --label "${D05C_ETIQUETA:-educonect-d05c=1}" \
         -v /data \
         -e "JWT_SECRET=$JWT_EFIMERO" \
         -e "ADMIN_INITIAL_PASSWORD=$PASSWORD_EFIMERA" \
@@ -307,7 +314,7 @@ fi
 # ── 5. ADMIN_INITIAL_PASSWORD vacía → fallo ruidoso (S5) ────────────
 echo "== 5. Fallo ruidoso con ADMIN_INITIAL_PASSWORD vacía (S5) =="
 for imagen in "$IMAGEN_CORE" "$IMAGEN_FULL"; do
-    salida="$(timeout 300 docker run --rm -v /data \
+    salida="$(timeout 300 docker run --rm --label "${D05C_ETIQUETA:-educonect-d05c=1}" -v /data \
         -e "JWT_SECRET=$JWT_EFIMERO" \
         -e "ADMIN_INITIAL_PASSWORD=" \
         "$imagen" 2>&1)"

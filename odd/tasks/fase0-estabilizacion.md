@@ -195,9 +195,21 @@ semillas y la matriz de recuperación de `docs/sprint2-baseline-runtime.md` list
 declaran el arranque todo o nada; el árbol de `README.md` lista las dos migraciones. El diagnóstico
 del 25/11 se deja intacto por ser un corte fechado.
 
-**D-04 NO queda cerrada.** T10 cerró la identidad de fila del diccionario. Siguen pendientes:
+**D-04 queda cerrada sólo en su alcance de T10.** T10 cerró la identidad de fila del diccionario
+(`UNIQUE(palabra, tipo, categoria)` sobre `diccionario`, migración `008`, tres pruebas).
+
+**Lo que T10 no implica, y conviene leer junto:**
+
+1. **No existe un ledger de migraciones.** Las migraciones se siguen re-ejecutando por
+   `include_str!` en cada arranque y su idempotencia depende de `IF NOT EXISTS`; no hay tabla que
+   registre qué corrió ni en qué orden. Eso es el hallazgo `P1-06` y sigue abierto.
+2. **La persistencia no está resuelta en general.** Sigue pendiente:
 esquemas `005`/`006` dentro de `seeds/` (el defecto central de D-04), decisión sobre
 `seeds/002_admin.sql`, doble `rebuild` de FTS por arranque, recuperación de un arranque que falla
 **después** de confirmar las semillas, prevalidación de puerto y de secreto antes de tocar SQLite
 (filas 1, 2, 5 y 6 de la matriz), y las pruebas de aceptación 1 y 4 (base inexistente tras
-contraseña inválida; reanudación tras interrupción sin duplicar). Nada de eso se aborda acá.
+contraseña inválida; reanudación tras interrupción sin duplicar).
+
+Los pendientes del punto 2 no se abordan acá. El punto 1 es una precondición de cualquier
+migración nueva: **ninguna unidad de esquema debe empezar sin ledger** (gate G1 de
+`docs/equipo/agenda-decisiones-conjuntas.md`).

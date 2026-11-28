@@ -173,6 +173,121 @@ Modelo:
 
 ---
 
+## 7 bis. Política exacta de versiones y extensiones aditivas
+
+Precisa el §6 y lo sustituye donde haya conflicto.
+
+Sea
+
+```
+C = {zim, biblioteca, tts, videos}                                  (conjunto cerrado de capacidades)
+M = {ok, no_compilada, contenido_ausente, contenido_invalido,
+     dependencia_ausente, dependencia_fallida}                       (conjunto cerrado de motivos)
+```
+
+**Regla de incremento.** `version` incrementa **si y sólo si** cambia `C` o cambia `M`. Nada más la
+incrementa: ni un cambio de implementación, ni un arreglo de bug, ni un cambio de estado en runtime.
+Un artefacto compilado publicado tiene una `version` **constante**: es un hecho del build, igual que
+`soportada`.
+
+**Tabla de resolución cliente ↔ servidor:**
+
+| Cliente | Servidor | Comportamiento exigido al cliente |
+|---|---|---|
+| `version = n` | `version = n` | Normal |
+| `version = n` | `version = m > n` | Usa las claves de `C` que reconoce. **Ignora en silencio** las claves desconocidas. Trata un `motivo` desconocido como **no disponible para esa capacidad**, dejando las demás intactas. **No rechaza el cuerpo entero.** |
+| `version = n` | `version = m < n` | No ocurre dentro de un artefacto (la versión no decrece). Si ocurre, es un fallo de despliegue: modo conservador global. |
+| cualquiera | cuerpo inválido, ausente o `version` no entera | **Todo no disponible** (fail-closed global) |
+| cualquiera | `200` pero `Content-Type` no es JSON | Todo no disponible |
+
+**Reglas del servidor:**
+
+1. Emite **sólo** claves de `C` y **sólo** motivos de `M` en su `version`.
+2. **Nunca** reutiliza un código de `M` con significado distinto. Cambiar el significado de `ok`, por
+ejemplo, exige una `version` nueva y una nota de retirada; no es un cambio de texto.
+3. **No** negocia versiones: ignora `Accept-Version` y cualquier cabecera equivalente. El cliente se
+adapta, el servidor declara.
+4. **No** emite datos volátiles dentro de `capacidades` (sin timestamps, uptime, contadores, conteos de
+contenido, versiones de biblioteca).
+
+**Escala de degradación, de más local a más global.** El cliente debe degradar en el punto más estrecho
+posible:
+
+```
+motivo desconocido     → esa capacidad no disponible      (las demás siguen)
+clave desconocida       → se ignora                        (las demás siguen)
+capacidad ausente       → esa capacidad no disponible
+version desconocida     → capacidades reconocidas siguen, el resto no disponible
+cuerpo inválido/ausente → TODO no disponible
+```
+
+**Por qué per-capacidad y no global:** un `tts` desconocido no debe apagar la biblioteca. Degradar de
+más es un error tan caro como degradar de menos, y el aula pierde funciones que sí funcionaban.
+
+---
+
+## 7 ter. Ventana de frescura: techo de revalidación, no excusa
+
+La ventana de **10 s es provisional** y es configurable. Pero su significado es más estrecho de lo que
+parece, y conviene fijarlo:
+
+**La ventana gobierna únicamente la detección proactiva.** Es el intervalo máximo entre dos
+revalidaciones *programadas* de las comprobaciones caras (presencia del binario de TTS, codificador de
+vídeo, recorrido del directorio de contenido).
+
+**La ventana NO gobierna la propagación de un fallo observado.** Regla dura:
+
+> Si el servidor **observa** que una capacidad falla mientras atiende una operación —el proceso murió,
+el contenido no se puede abrir, la dependencia sale con código distinto de cero—, esa capacidad pasa a
+`disponible=false` **antes de responder a la petición siguiente**. No se espera a que expire la ventana.
+
+Es decir: la ventana acota cuánto puede tardar el servidor en **enterarse** de algo que no ha visto.
+Nunca autoriza a **seguir anunciando** algo que ya vio fallar. Un fallo conocido y no propagado no es
+un desfase aceptable: es el defecto H2 de RD-02C servido con un contrato encima.
+
+Consecuencia comprobable: `A13` exige que tras provocar un fallo, la **primera** petición siguiente a
+`/api/capacidades` ya lo refleje, sin importar cuánto falte para los 10 s.
+
+---
+
+## 7 quater. Dos clases de garantía
+
+Este contrato declara dos cosas distintas y confundirlas es el error que hay que evitar.
+
+### Garantía A — disponibilidad declarada (`/api/capacidades`)
+
+Es una **afirmación sobre el estado conocido**, no una promesa de servicio.
+
+- Alcance: «en el momento en que se calculó la instantánea, y hasta la próxima invalidación o
+revalidación, esta es nuestra lectura del estado».
+- Puede ser **optimista dentro de la ventana** (§7 ter).
+- Su valor para el cliente es **decidir qué ofrecer en la interfaz**, no saber si una operación concreta
+  va a funcionar.
+- No se cachea (`no-store`), porque un valor viejo convierte una lectura optimista en una mentira.
+
+### Garantía B — garantía por operación (cada ruta real)
+
+Es la garantía **fuerte** y es **por petición**.
+
+- `/zim/{*path}`, `/api/wikipedia/zims`, `/api/wikipedia/search`, la ruta de TTS y la de vídeo responden
+  **200 sólo si la operación se completó**. Si la capacidad falla, responden **503** con el mensaje
+  canónico de degradación.
+- No admite caché de intermediario: un `200` de hace una hora no es una garantía de ahora.
+- **Nunca** responde 200 sobre contenido que no puede servir. Un 200 sobre contenido ilegible está
+  prohibido por este contrato, aunque la instantánea diga `disponible=true`. Es el caso H2 de RD-02C y
+  es la razón de que esta distinción exista.
+
+### Precedencia
+
+> **B manda siempre sobre A.** Cuando las dos discrepan, gana la ruta real. `A` puede decir que sí y `B`
+> responder 503; eso es correcto y el cliente debe tolerarlo. Lo que **no** puede pasar es que `B`
+> devuelva 200 sobre algo inservible, porque eso ya no es una discrepancia de anuncio: es una mentira.
+
+Corolario para el cliente: **una interfaz no debe inferir éxito de una operación a partir de `A`.** `A`
+habilita el botón; `B` decide si la acción funcionó.
+
+---
+
 ## 8. Semántica HTTP
 
 | Aspecto | Decisión |
@@ -228,10 +343,12 @@ Sobre los mecanismos de `tests/docker/` (presentes en la línea base `educonect-
 | **A10** | Sin dependencia de identidad | la misma petición **sin** `Authorization` → `200` | — |
 | **A11** | **Control negativo del validador** | se le entregan al validador **seis documentos inválidos** (uno por invariante `I1`–`I6`); **todos deben ser rechazados** | **Nueva**: prueba que el validador muerde |
 | **A12** | **Contenido corrupto** | se trunca una **copia** del fixture → `contenido_invalido`, ruta `503`; se restaura → vuelve a `ok` | **Nueva** |
-| **A13** | **Cambio de disponibilidad sin reinicio** | montar y desmontar contenido en caliente → `contenido_ausente ⇄ ok` en ambos sentidos; repetir dentro de la ventana de frescura **no** lanza nuevas sondas (se comprueba que no se crean procesos ni se recorre el directorio) | **Nueva** |
+| **A13** | **Cambio de disponibilidad sin reinicio, y propagación inmediata de un fallo** | (a) montar y desmontar contenido en caliente → `contenido_ausente ⇄ ok` en ambos sentidos; (b) repetir dentro de la ventana de frescura **no** lanza nuevas sondas (no se crean procesos ni se recorre el directorio); (c) **provocar un fallo conocido y comprobar que la petición inmediatamente siguiente a `/api/capacidades` ya lo refleja**, sin esperar los 10 s | **Nueva (b) y corregida (c)**: la ventana es techo de revalidación, no excusa para anunciar un fallo ya observado (§7 ter) |
 | **A14** | **`dependencia_ausente` ≠ `dependencia_fallida`** | con el binario de TTS ausente → `dependencia_ausente`; con el binario presente pero que sale con código distinto de cero → `dependencia_fallida` | **Nueva**: es la prueba que justifica el sexto código |
 | **A15** | **Control negativo de A4–A6** | se invierte artificialmente un campo y la sonda **debe fallar**; si no falla, la sonda no muerde y A4–A6 no valen | **Mantenida** de `pi-011` |
 | **A16** | `Cache-Control` | la cabecera es `no-store` | **Nueva** |
+| **A17** | **Precedencia de la garantía por operación sobre la declarada** | con la instantánea en `disponible=true` para `zim`, se rompe el contenido **sin** invalidar la instantánea (se fuerza el caso) → la ruta real devuelve **503**, no 200; el cliente tolera la discrepancia | **Nueva**: es la prueba de §7 quater |
+| **A18** | **Degradación per-capacidad, no global** | con un `motivo` desconocido inyectado en una sola capacidad → el cliente deshabilita **esa** y mantiene las demás operativas; con un cuerpo inválido → deshabilita **todas** | **Nueva**: la escala de degradación de §7 bis |
 
 **Sobre A9 y A11 juntas:** A11 valida el validador con datos sintéticos; A9 valida el servidor con
 datos reales. Ninguna de las dos, sola, prueba lo mismo. Sin A11, un validador roto hace pasar A9

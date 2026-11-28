@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://educonect.local/schemas/api-capacidades-v1.schema.json",
+  "title": "CapacidadesResponse",
+  "description": "Contrato D-05d v1 de GET /api/capacidades. Las invariantes I1-I6 son ejecutables: un cuerpo que las viole es invalido por construccion, no por revision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "capacidades"],
+  "properties": {
+    "version": {
+      "description": "Entero monotonico que nunca decrece. Incrementa ante cualquier cambio en los conjuntos cerrados (capacidades o codigos de motivo).",
+      "type": "integer",
+      "minimum": 1
+    },
+    "capacidades": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zim", "biblioteca", "tts", "videos"],
+      "properties": {
+        "zim": { "$ref": "#/$defs/capacidad" },
+        "biblioteca": { "$ref": "#/$defs/capacidad" },
+        "tts": { "$ref": "#/$defs/capacidad" },
+        "videos": { "$ref": "#/$defs/capacidad" }
+      }
+    }
+  },
+  "$defs": {
+    "codigoMotivo": {
+      "description": "Conjunto cerrado de seis codigos. Anadir uno es un cambio de contrato con incremento de version.",
+      "type": "string",
+      "enum": [
+        "ok",
+        "no_compilada",
+        "contenido_ausente",
+        "contenido_invalido",
+        "dependencia_ausente",
+        "dependencia_fallida"
+      ]
+    },
+    "capacidad": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["soportada", "disponible", "motivo"],
+      "properties": {
+        "soportada": {
+          "description": "Hecho estatico del build. Nunca cambia en runtime.",
+          "type": "boolean"
+        },
+        "disponible": {
+          "description": "Usable ahora: contenido valido y dependencia que responde.",
+          "type": "boolean"
+        },
+        "motivo": { "$ref": "#/$defs/codigoMotivo" }
+      },
+      "allOf": [
+        {
+          "$comment": "I1 (ida): disponible=true => soportada=true y motivo=ok",
+          "if": { "required": ["disponible"], "properties": { "disponible": { "const": true } } },
+          "then": {
+            "properties": {
+              "soportada": { "const": true },
+              "motivo": { "const": "ok" }
+            }
+          }
+        },
+        {
+          "$comment": "I1 (vuelta) / I2: motivo=ok => disponible=true y soportada=true",
+          "if": { "required": ["motivo"], "properties": { "motivo": { "const": "ok" } } },
+          "then": {
+            "properties": {
+              "disponible": { "const": true },
+              "soportada": { "const": true }
+            }
+          }
+        },
+        {
+          "$comment": "I3: soportada=false => disponible=false y motivo=no_compilada",
+          "if": { "required": ["soportada"], "properties": { "soportada": { "const": false } } },
+          "then": {
+            "properties": {
+              "disponible": { "const": false },
+              "motivo": { "const": "no_compilada" }
+            }
+          }
+        },
+        {
+          "$comment": "I4: motivo=no_compilada => soportada=false y disponible=false",
+          "if": { "required": ["motivo"], "properties": { "motivo": { "const": "no_compilada" } } },
+          "then": {
+            "properties": {
+              "soportada": { "const": false },
+              "disponible": { "const": false }
+            }
+          }
+        },
+        {
+          "$comment": "I6: motivos de contenido o dependencia => soportada=true y disponible=false",
+          "if": {
+            "required": ["motivo"],
+            "properties": {
+              "motivo": {
+                "enum": [
+                  "contenido_ausente",
+                  "contenido_invalido",
+                  "dependencia_ausente",
+                  "dependencia_fallida"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "soportada": { "const": true },
+              "disponible": { "const": false }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -86,8 +86,9 @@ pertenece al modal de vídeo.
 
 - `LISTEN_ADDR` por defecto es **`0.0.0.0:8080`** (`src/config.rs:734`; `Dockerfile` lo fija igual).
 - Observado: `GET /api/network` → `"listen_addr":"0.0.0.0:8080"`.
-- Alcanzable desde la LAN en la prueba: `curl http://192.168.18.56:18082/zim/A/Sonda` → **200**, con las
-  mismas cabeceras.
+- Alcanzable desde la LAN en la prueba: `curl http://<ip-lan-del-host>:18082/zim/A/Sonda` → **200**, con
+  las mismas cabeceras. **La dirección concreta se omite a propósito:** es un dato de red privada y no
+  hace falta para reproducir el hallazgo.
 
 **Consecuencia:** no es un problema de un usuario en su equipo. Cualquier dispositivo de la red del
 colegio alcanza el mismo origen y el mismo contenido ZIM. Un aula con contenido montado por un docente
